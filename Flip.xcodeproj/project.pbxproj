@@ -6,6 +6,24 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		423C3E9B2D52893600847E76 /* SwiftUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 426C2A2A2D4E59290016880D /* SwiftUI.framework */; };
+		423C3E9C2D52893600847E76 /* SwiftUI.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 426C2A2A2D4E59290016880D /* SwiftUI.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
+		423C3E9D2D52893800847E76 /* WidgetKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 426C2A282D4E59290016880D /* WidgetKit.framework */; };
+		423C3E9E2D52893800847E76 /* WidgetKit.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 426C2A282D4E59290016880D /* WidgetKit.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
+		423C3EA42D5289B700847E76 /* ActivityKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 423C3EA22D52899E00847E76 /* ActivityKit.framework */; };
+		423C3EA52D5289B700847E76 /* ActivityKit.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 423C3EA22D52899E00847E76 /* ActivityKit.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
+		423C3EA82D5289CE00847E76 /* ActivityKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 423C3EA22D52899E00847E76 /* ActivityKit.framework */; };
+		423C3EA92D5289CE00847E76 /* ActivityKit.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 423C3EA22D52899E00847E76 /* ActivityKit.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
+		426C2A692D4E65220016880D /* FlipTypes.swift in Sources */ = {isa = PBXBuildFile; fileRef = 426C2A552D4E65220016880D /* FlipTypes.swift */; };
+		426C2A6E2D4E65220016880D /* Themes.swift in Sources */ = {isa = PBXBuildFile; fileRef = 426C2A5B2D4E65220016880D /* Themes.swift */; };
+		426C2A862D4E65220016880D /* FlipActivityAttributes.swift in Sources */ = {isa = PBXBuildFile; fileRef = 426C2A792D4E65220016880D /* FlipActivityAttributes.swift */; };
+		42ED1DC82D526E35009CC1CE /* Widget2Extension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 42ED1DB72D526E2D009CC1CE /* Widget2Extension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		42ED1DD22D526F40009CC1CE /* FlipActivityAttributes.swift in Sources */ = {isa = PBXBuildFile; fileRef = 426C2A792D4E65220016880D /* FlipActivityAttributes.swift */; };
+		42ED1DD32D526F46009CC1CE /* Themes.swift in Sources */ = {isa = PBXBuildFile; fileRef = 426C2A5B2D4E65220016880D /* Themes.swift */; };
+		42ED1DD42D526F4C009CC1CE /* FlipTypes.swift in Sources */ = {isa = PBXBuildFile; fileRef = 426C2A552D4E65220016880D /* FlipTypes.swift */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXContainerItemProxy section */
 		427002912D479F6000CB2153 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
@@ -21,17 +39,83 @@
 			remoteGlobalIDString = 4270027F2D479F5A00CB2153;
 			remoteInfo = Flip;
 		};
+		42ED1DC62D526E35009CC1CE /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 427002782D479F5A00CB2153 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 42ED1DB62D526E2D009CC1CE;
+			remoteInfo = Widget2Extension;
+		};
 /* End PBXContainerItemProxy section */
 
+/* Begin PBXCopyFilesBuildPhase section */
+		423C3E9A2D52893500847E76 /* Embed Frameworks */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 10;
+			files = (
+				423C3EA92D5289CE00847E76 /* ActivityKit.framework in Embed Frameworks */,
+				423C3E9C2D52893600847E76 /* SwiftUI.framework in Embed Frameworks */,
+				423C3E9E2D52893800847E76 /* WidgetKit.framework in Embed Frameworks */,
+			);
+			name = "Embed Frameworks";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		423C3EA62D5289B700847E76 /* Embed Frameworks */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 10;
+			files = (
+				423C3EA52D5289B700847E76 /* ActivityKit.framework in Embed Frameworks */,
+			);
+			name = "Embed Frameworks";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		426C2A3D2D4E59320016880D /* Embed Foundation Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				42ED1DC82D526E35009CC1CE /* Widget2Extension.appex in Embed Foundation Extensions */,
+			);
+			name = "Embed Foundation Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
 /* Begin PBXFileReference section */
+		423C3E972D52887300847E76 /* Widget2Extension.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = Widget2Extension.entitlements; sourceTree = "<group>"; };
+		423C3EA22D52899E00847E76 /* ActivityKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = ActivityKit.framework; path = System/Library/Frameworks/ActivityKit.framework; sourceTree = SDKROOT; };
+		426C2A282D4E59290016880D /* WidgetKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = WidgetKit.framework; path = System/Library/Frameworks/WidgetKit.framework; sourceTree = SDKROOT; };
+		426C2A2A2D4E59290016880D /* SwiftUI.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SwiftUI.framework; path = System/Library/Frameworks/SwiftUI.framework; sourceTree = SDKROOT; };
+		426C2A552D4E65220016880D /* FlipTypes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FlipTypes.swift; sourceTree = "<group>"; };
+		426C2A5B2D4E65220016880D /* Themes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Themes.swift; sourceTree = "<group>"; };
+		426C2A792D4E65220016880D /* FlipActivityAttributes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FlipActivityAttributes.swift; sourceTree = "<group>"; };
 		427002802D479F5A00CB2153 /* Flip.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Flip.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		427002902D479F6000CB2153 /* FlipTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = FlipTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		4270029A2D479F6000CB2153 /* FlipUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = FlipUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		42ED1DB72D526E2D009CC1CE /* Widget2Extension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = Widget2Extension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
+
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		423C3EAA2D528C4B00847E76 /* Exceptions for "Flip" folder in "Flip" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = 4270027F2D479F5A00CB2153 /* Flip */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		427002822D479F5A00CB2153 /* Flip */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				423C3EAA2D528C4B00847E76 /* Exceptions for "Flip" folder in "Flip" target */,
+			);
 			path = Flip;
 			sourceTree = "<group>";
 		};
@@ -45,6 +129,11 @@
 			path = FlipUITests;
 			sourceTree = "<group>";
 		};
+		42ED1DBA2D526E2E009CC1CE /* Widget2 */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = Widget2;
+			sourceTree = "<group>";
+		};
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -52,6 +141,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				423C3EA42D5289B700847E76 /* ActivityKit.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -69,15 +159,49 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		42ED1DB42D526E2D009CC1CE /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				423C3EA82D5289CE00847E76 /* ActivityKit.framework in Frameworks */,
+				423C3E9B2D52893600847E76 /* SwiftUI.framework in Frameworks */,
+				423C3E9D2D52893800847E76 /* WidgetKit.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		426C29DF2D4BA1860016880D /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				423C3EA22D52899E00847E76 /* ActivityKit.framework */,
+				426C2A282D4E59290016880D /* WidgetKit.framework */,
+				426C2A2A2D4E59290016880D /* SwiftUI.framework */,
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
+		426C2A922D4E6BB10016880D /* Shared */ = {
+			isa = PBXGroup;
+			children = (
+				426C2A552D4E65220016880D /* FlipTypes.swift */,
+				426C2A792D4E65220016880D /* FlipActivityAttributes.swift */,
+				426C2A5B2D4E65220016880D /* Themes.swift */,
+			);
+			path = Shared;
+			sourceTree = SOURCE_ROOT;
+		};
 		427002772D479F5A00CB2153 = {
 			isa = PBXGroup;
 			children = (
+				423C3E972D52887300847E76 /* Widget2Extension.entitlements */,
+				426C2A922D4E6BB10016880D /* Shared */,
 				427002822D479F5A00CB2153 /* Flip */,
 				427002932D479F6000CB2153 /* FlipTests */,
 				4270029D2D479F6000CB2153 /* FlipUITests */,
+				42ED1DBA2D526E2E009CC1CE /* Widget2 */,
+				426C29DF2D4BA1860016880D /* Frameworks */,
 				427002812D479F5A00CB2153 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -88,6 +212,7 @@
 				427002802D479F5A00CB2153 /* Flip.app */,
 				427002902D479F6000CB2153 /* FlipTests.xctest */,
 				4270029A2D479F6000CB2153 /* FlipUITests.xctest */,
+				42ED1DB72D526E2D009CC1CE /* Widget2Extension.appex */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -102,10 +227,13 @@
 				4270027C2D479F5A00CB2153 /* Sources */,
 				4270027D2D479F5A00CB2153 /* Frameworks */,
 				4270027E2D479F5A00CB2153 /* Resources */,
+				426C2A3D2D4E59320016880D /* Embed Foundation Extensions */,
+				423C3EA62D5289B700847E76 /* Embed Frameworks */,
 			);
 			buildRules = (
 			);
 			dependencies = (
+				42ED1DC72D526E35009CC1CE /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
 				427002822D479F5A00CB2153 /* Flip */,
@@ -163,6 +291,29 @@
 			productReference = 4270029A2D479F6000CB2153 /* FlipUITests.xctest */;
 			productType = "com.apple.product-type.bundle.ui-testing";
 		};
+		42ED1DB62D526E2D009CC1CE /* Widget2Extension */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 42ED1DC92D526E35009CC1CE /* Build configuration list for PBXNativeTarget "Widget2Extension" */;
+			buildPhases = (
+				42ED1DB32D526E2D009CC1CE /* Sources */,
+				42ED1DB42D526E2D009CC1CE /* Frameworks */,
+				42ED1DB52D526E2D009CC1CE /* Resources */,
+				423C3E9A2D52893500847E76 /* Embed Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				42ED1DBA2D526E2E009CC1CE /* Widget2 */,
+			);
+			name = Widget2Extension;
+			packageProductDependencies = (
+			);
+			productName = Widget2Extension;
+			productReference = 42ED1DB72D526E2D009CC1CE /* Widget2Extension.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -184,6 +335,9 @@
 						CreatedOnToolsVersion = 16.2;
 						TestTargetID = 4270027F2D479F5A00CB2153;
 					};
+					42ED1DB62D526E2D009CC1CE = {
+						CreatedOnToolsVersion = 16.2;
+					};
 				};
 			};
 			buildConfigurationList = 4270027B2D479F5A00CB2153 /* Build configuration list for PBXProject "Flip" */;
@@ -203,6 +357,7 @@
 				4270027F2D479F5A00CB2153 /* Flip */,
 				4270028F2D479F6000CB2153 /* FlipTests */,
 				427002992D479F6000CB2153 /* FlipUITests */,
+				42ED1DB62D526E2D009CC1CE /* Widget2Extension */,
 			);
 		};
 /* End PBXProject section */
@@ -229,6 +384,13 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		42ED1DB52D526E2D009CC1CE /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
@@ -236,6 +398,9 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				426C2A862D4E65220016880D /* FlipActivityAttributes.swift in Sources */,
+				426C2A692D4E65220016880D /* FlipTypes.swift in Sources */,
+				426C2A6E2D4E65220016880D /* Themes.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -253,6 +418,16 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		42ED1DB32D526E2D009CC1CE /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				42ED1DD42D526F4C009CC1CE /* FlipTypes.swift in Sources */,
+				42ED1DD22D526F40009CC1CE /* FlipActivityAttributes.swift in Sources */,
+				42ED1DD32D526F46009CC1CE /* Themes.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
@@ -265,6 +440,11 @@
 			isa = PBXTargetDependency;
 			target = 4270027F2D479F5A00CB2153 /* Flip */;
 			targetProxy = 4270029B2D479F6000CB2153 /* PBXContainerItemProxy */;
+		};
+		42ED1DC72D526E35009CC1CE /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 42ED1DB62D526E2D009CC1CE /* Widget2Extension */;
+			targetProxy = 42ED1DC62D526E35009CC1CE /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
 
@@ -393,23 +573,31 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = Flip/FlipDebug.entitlements;
+				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_ASSET_PATHS = "\"Flip/Preview Content\"";
+				DEVELOPMENT_TEAM = 2HAG477YT9;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = Flip/Info.plist;
+				INFOPLIST_KEY_NSMotionUsageDescription = "This app uses motion data to track if your phone is flipped over during focus sessions.";
+				INFOPLIST_KEY_NSSupportsLiveActivities = YES;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = jexpearce.Flip;
+				PRODUCT_BUNDLE_IDENTIFIER = com.jexpearce.Flip;
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE_SPECIFIER = "";
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
@@ -421,23 +609,31 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = Flip/Flipent.entitlements;
+				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_ASSET_PATHS = "\"Flip/Preview Content\"";
+				DEVELOPMENT_TEAM = 2HAG477YT9;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = Flip/Info.plist;
+				INFOPLIST_KEY_NSMotionUsageDescription = "This app uses motion data to track if your phone is flipped over during focus sessions.";
+				INFOPLIST_KEY_NSSupportsLiveActivities = YES;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = jexpearce.Flip;
+				PRODUCT_BUNDLE_IDENTIFIER = com.jexpearce.Flip;
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE_SPECIFIER = "";
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
@@ -450,6 +646,7 @@
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 2HAG477YT9;
 				GENERATE_INFOPLIST_FILE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 18.2;
 				MARKETING_VERSION = 1.0;
@@ -468,6 +665,7 @@
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 2HAG477YT9;
 				GENERATE_INFOPLIST_FILE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 18.2;
 				MARKETING_VERSION = 1.0;
@@ -483,8 +681,10 @@
 		427002AB2D479F6000CB2153 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 2HAG477YT9;
 				GENERATE_INFOPLIST_FILE = YES;
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = jexpearce.FlipUITests;
@@ -499,8 +699,10 @@
 		427002AC2D479F6000CB2153 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 2HAG477YT9;
 				GENERATE_INFOPLIST_FILE = YES;
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = jexpearce.FlipUITests;
@@ -509,6 +711,64 @@
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
 				TEST_TARGET_NAME = Flip;
+			};
+			name = Release;
+		};
+		42ED1DCA2D526E35009CC1CE /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME = WidgetBackground;
+				CODE_SIGN_ENTITLEMENTS = Widget2Extension.entitlements;
+				CODE_SIGN_IDENTITY = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 2HAG477YT9;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = Widget2/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = Widget2;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.jexpearce.Flip.Widget2;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		42ED1DCB2D526E35009CC1CE /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME = WidgetBackground;
+				CODE_SIGN_ENTITLEMENTS = Widget2Extension.entitlements;
+				CODE_SIGN_IDENTITY = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 2HAG477YT9;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = Widget2/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = Widget2;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.jexpearce.Flip.Widget2;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
 			};
 			name = Release;
 		};
@@ -547,6 +807,15 @@
 			buildConfigurations = (
 				427002AB2D479F6000CB2153 /* Debug */,
 				427002AC2D479F6000CB2153 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		42ED1DC92D526E35009CC1CE /* Build configuration list for PBXNativeTarget "Widget2Extension" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				42ED1DCA2D526E35009CC1CE /* Debug */,
+				42ED1DCB2D526E35009CC1CE /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;

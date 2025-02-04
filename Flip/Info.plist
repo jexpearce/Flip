@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>com.apple.developer.activity.live</key>
+    <true/>
+    <key>com.apple.developer.live-activity-management</key>
+    <true/>
+    <key>NSSupportsLiveActivities</key>
+    <true/>
+    <key>BGTaskSchedulerPermittedIdentifiers</key>
+    <array>
+        <string>com.jexpearce.Flip.refresh</string>
+    </array>
+    <key>NSLiveActivitiesUsageDescription</key>
+    <string>Used to show current timer status on lock screen</string>
+    <key>UIBackgroundModes</key>
+    <array>
+        <string>fetch</string>
+        <string>processing</string>
+        <string>motion</string>
+        <string>location</string>
+        <string>remote-notification</string>
+    </array>
+</dict>
+</plist>
