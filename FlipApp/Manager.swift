@@ -114,6 +114,7 @@ class Manager: NSObject, ObservableObject {
             }
         }
     }
+    
     private func notifyCountdownFailed() {
         let content = UNMutableNotificationContent()
         content.title = "Session Not Started"
