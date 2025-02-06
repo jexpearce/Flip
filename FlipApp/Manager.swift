@@ -494,7 +494,7 @@ class Manager: NSObject, ObservableObject {
             do {
                 // End any existing activities first
                 if let currentActivity = activity {
-                    await currentActivity.end(dismissalPolicy: .immediate)
+                    await currentActivity.end(currentActivity.content, dismissalPolicy: .immediate)
                     activity = nil
                 }
                 
