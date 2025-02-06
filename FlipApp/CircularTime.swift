@@ -56,11 +56,11 @@ struct CircularTime: View {
             .pickerStyle(WheelPickerStyle())
             .frame(width: circleSize * 0.7, height: circleSize * 0.7) // Made picker larger
         }
-        .onChange(of: selectedMinutes) { newValue in
+        .onChange(of: selectedMinutes) {
             withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
-                animationAmount = Double(newValue)
+                animationAmount = Double(selectedMinutes)
             }
-            previousValue = newValue
+            previousValue = selectedMinutes
         }
     }
     
