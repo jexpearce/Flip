@@ -124,8 +124,8 @@ struct ContentView: View {
                     title: "PAUSE",
                     content: {
                         Toggle("", isOn: $flipManager.allowPause)
-                            .onChange(of: flipManager.allowPause) { newValue in
-                                if newValue && flipManager.allowedFlips == 0 {
+                            .onChange(of: flipManager.allowPause) {
+                                if flipManager.allowPause && flipManager.allowedFlips == 0 {
                                     flipManager.allowedFlips = 1
                                 }
                             }
