@@ -141,7 +141,9 @@ class Manager: NSObject, ObservableObject {
         if #available(iOS 16.1, *) {
             Task {
                 if let existingActivity = activity {
-                    await existingActivity.end(dismissalPolicy: .immediate)
+                    await existingActivity.end(
+                        existingActivity.content,
+                        dismissalPolicy: .immediate)
                     activity = nil
                     print("Ended existing Live Activity")
                 }
