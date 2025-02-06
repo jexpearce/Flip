@@ -315,7 +315,6 @@ class Manager: NSObject, ObservableObject {
     }
     
     // MARK: - Background Processing
-    // MARK: - Background Processing
     private func beginBackgroundProcessing() {
         // Clean up any existing task first
         if backgroundTask != .invalid {
