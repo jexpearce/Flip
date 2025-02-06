@@ -7,7 +7,7 @@ struct FlipApp: App {
     init() {
         // Register tasks first, before scheduling anything
         BGTaskScheduler.shared.register(
-            forTaskWithIdentifier: "com.jexpearce.flip.refresh",
+            forTaskWithIdentifier: Manager.backgroundRefreshIdentifier,
             using: nil) { task in
                 // Handle the task here
                 Manager.shared.handleBackgroundRefresh(task: task as! BGAppRefreshTask)

@@ -5,6 +5,7 @@ import BackgroundTasks
 import ActivityKit
 
 class Manager: NSObject, ObservableObject {
+    static var backgroundRefreshIdentifier = "com.jexpearce.flip.refresh"
     static let shared = Manager()
     
     // MARK: - Published Properties
@@ -375,20 +376,19 @@ class Manager: NSObject, ObservableObject {
     
     // MARK: - Background Task Registration
     func registerBackgroundTasks() {
-        let identifier = "com.jexpearce.flip.refresh"
         BGTaskScheduler.shared.register(
-            forTaskWithIdentifier: identifier,
+            forTaskWithIdentifier: Manager.backgroundRefreshIdentifier,
             using: .main) { [weak self] task in
                 self?.handleBackgroundRefresh(task: task as! BGAppRefreshTask)
             }
     }
     
     func scheduleBackgroundRefresh() {
-        let request = BGAppRefreshTaskRequest(identifier: "com.jexpearce.flip.refresh")
+        let request = BGAppRefreshTaskRequest(identifier: Manager.backgroundRefreshIdentifier)
         request.earliestBeginDate = Date(timeIntervalSinceNow: 60)
         
         do {
-            BGTaskScheduler.shared.cancel(taskRequestWithIdentifier: "com.jexpearce.flip.refresh")
+            BGTaskScheduler.shared.cancel(taskRequestWithIdentifier: Manager.backgroundRefreshIdentifier)
             try BGTaskScheduler.shared.submit(request)
         } catch {
             print("Error scheduling background task: \(error)")
