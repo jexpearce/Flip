@@ -569,12 +569,8 @@ class Manager: NSObject, ObservableObject {
                 staleDate: Calendar.current.date(byAdding: .minute, value: 1, to: Date())
             )
             
-            do {
-                await activity.update(content)
-                print("Live Activity updated successfully")
-            } catch {
-                print("Error updating Live Activity: \(error)")
-            }
+            await activity.update(content)
+            print("Live Activity updated successfully")
         }
     }
     
