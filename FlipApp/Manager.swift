@@ -376,7 +376,7 @@ class Manager: NSObject, ObservableObject {
     
     // MARK: - Background Task Registration
     func registerBackgroundTasks() {
-        let identifier = "com.jexpearce.Flip.refresh"
+        let identifier = "com.jexpearce.flip.refresh"
         BGTaskScheduler.shared.register(
             forTaskWithIdentifier: identifier,
             using: .main) { [weak self] task in
@@ -385,11 +385,11 @@ class Manager: NSObject, ObservableObject {
     }
     
     func scheduleBackgroundRefresh() {
-        let request = BGAppRefreshTaskRequest(identifier: "com.jexpearce.Flip.refresh")
+        let request = BGAppRefreshTaskRequest(identifier: "com.jexpearce.flip.refresh")
         request.earliestBeginDate = Date(timeIntervalSinceNow: 60)
         
         do {
-            BGTaskScheduler.shared.cancel(taskRequestWithIdentifier: "com.jexpearce.Flip.refresh")
+            BGTaskScheduler.shared.cancel(taskRequestWithIdentifier: "com.jexpearce.flip.refresh")
             try BGTaskScheduler.shared.submit(request)
         } catch {
             print("Error scheduling background task: \(error)")

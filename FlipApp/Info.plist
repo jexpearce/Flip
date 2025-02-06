@@ -4,7 +4,7 @@
 <dict>
 	<key>BGTaskSchedulerPermittedIdentifiers</key>
 	<array>
-		<string>com.jexpearce.Flip.refresh</string>
+		<string>com.jexpearce.flip.refresh</string>
 	</array>
 	<key>NSLiveActivitiesUsageDescription</key>
 	<string>Used to show current timer status on lock screen</string>
