@@ -41,7 +41,7 @@ struct CircularTime: View {
                                 weight: selectedMinutes == minutes ? .black : .medium,
                                 design: .rounded
                             ))
-                        Text("min")
+                        Text("minute" + (minutes == 1 ? "" : "s"))
                             .font(.system(
                                 size: selectedMinutes == minutes ? 16 : 12,
                                 weight: .medium,
