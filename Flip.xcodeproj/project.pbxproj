@@ -51,6 +51,7 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		1AA35AD42D543FF30008CAA5 /* .gitignore */ = {isa = PBXFileReference; lastKnownFileType = text; path = .gitignore; sourceTree = "<group>"; };
 		42CADC862D52A72500D41EB9 /* FlipApp.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = FlipApp.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		42CADC962D52A72B00D41EB9 /* FlipTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = FlipTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		42CADCA02D52A72B00D41EB9 /* FlipUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = FlipUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -70,10 +71,10 @@
 		42CADCDC2D52A91400D41EB9 /* Exceptions for "Shared" folder in "FlipWidget" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
-				TestFlipActivityAttributes.swift,
-				TestFlipActivityController.swift,
-				TestFlipTypes.swift,
+				ActivityAttributes.swift,
+				ActivityController.swift,
 				Themes.swift,
+				Types.swift,
 			);
 			target = 42CADCB62D52A75900D41EB9 /* FlipWidget */;
 		};
@@ -160,6 +161,7 @@
 		42CADC7D2D52A72500D41EB9 = {
 			isa = PBXGroup;
 			children = (
+				1AA35AD42D543FF30008CAA5 /* .gitignore */,
 				42CADCD12D52A8BF00D41EB9 /* Shared */,
 				42CADC882D52A72500D41EB9 /* FlipApp */,
 				42CADC992D52A72B00D41EB9 /* FlipTests */,

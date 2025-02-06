@@ -1,5 +1,3 @@
-// FlipTypes.swift (Create new file)
-// FlipTypes.swift
 import Foundation
 
 enum FlipState: String, CaseIterable {
