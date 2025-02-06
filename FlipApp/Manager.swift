@@ -180,7 +180,7 @@ class Manager: NSObject, ObservableObject {
                         staleDate: Calendar.current.date(byAdding: .minute, value: selectedMinutes + 1, to: Date())
                     )
                     
-                    activity = try await Activity.request(
+                    activity = try Activity.request(
                         attributes: FlipActivityAttributes(),
                         content: activityContent,
                         pushType: nil
@@ -514,7 +514,7 @@ class Manager: NSObject, ObservableObject {
                 )
                 let attributes = FlipActivityAttributes()
                 
-                activity = try await Activity.request( //used to have 'await' after try
+                activity = try Activity.request(
                     attributes: attributes,
                     content: activityContent,
                     pushType: nil
@@ -690,7 +690,7 @@ class Manager: NSObject, ObservableObject {
             // Just update the LiveActivity instead of restarting session
             if #available(iOS 16.1, *) {
                 Task {
-                    await updateLiveActivity()
+                    updateLiveActivity()
                 }
             }
         }
