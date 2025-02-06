@@ -315,8 +315,8 @@ struct ContentView: View {
                                     .strokeBorder(Theme.neonYellow.opacity(0.3), lineWidth: 1)
                             )
                     )
-                }
             }
+        }
         
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(Theme.mainGradient)

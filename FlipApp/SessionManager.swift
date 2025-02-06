@@ -51,7 +51,7 @@ class SessionManager: ObservableObject {
         return totalFocusTime / sessions.count
     }
     var longestSession: Int {
-            sessions.reduce(0) { max($0, $1.actualDuration) }
-        }
+        sessions.reduce(0) { max($0, $1.actualDuration) }
+    }
 }
 

@@ -93,42 +93,42 @@ class Manager: NSObject, ObservableObject {
     
     // MARK: - Session Management
     func startCountdown() {
-            print("Starting countdown") // Debug
-            currentState = .countdown
-            countdownSeconds = 5
+        print("Starting countdown") // Debug
+        currentState = .countdown
+        countdownSeconds = 5
+        
+        countdownTimer?.invalidate()
+        countdownTimer = Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { [weak self] timer in
+            guard let self = self else { return }
             
-            countdownTimer?.invalidate()
-            countdownTimer = Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { [weak self] timer in
-                guard let self = self else { return }
+            self.countdownSeconds -= 1
+            
+            if self.countdownSeconds <= 0 {
+                timer.invalidate()
+                print("Countdown finished, starting session") // Debug
                 
-                self.countdownSeconds -= 1
-                
-                if self.countdownSeconds <= 0 {
-                            timer.invalidate()
-                            print("Countdown finished, starting session") // Debug
-                            
-                            // Important: Dispatch to main thread
-                            DispatchQueue.main.async {
-                                self.startTrackingSession()
-                            }
-                        }
+                // Important: Dispatch to main thread
+                DispatchQueue.main.async {
+                    self.startTrackingSession()
+                }
             }
         }
+    }
     private func notifyCountdownFailed() {
-            let content = UNMutableNotificationContent()
-            content.title = "Session Not Started"
-            content.body = "Phone must be face down when timer reaches zero"
-            content.sound = .default
-            
-            notificationCenter.add(UNNotificationRequest(
-                identifier: UUID().uuidString,
-                content: content,
-                trigger: nil
-            ))
-        }
+        let content = UNMutableNotificationContent()
+        content.title = "Session Not Started"
+        content.body = "Phone must be face down when timer reaches zero"
+        content.sound = .default
+        
+        notificationCenter.add(UNNotificationRequest(
+            identifier: UUID().uuidString,
+            content: content,
+            trigger: nil
+        ))
+    }
     
-
-
+    
+    
     private func startTrackingSession() {
         print("Starting tracking session")
         
@@ -272,31 +272,31 @@ class Manager: NSObject, ObservableObject {
         saveSessionState()
     }
     private func startFlipBackTimer() {
-            flipBackTimer?.invalidate()
-            flipBackTimeRemaining = 10
+        flipBackTimer?.invalidate()
+        flipBackTimeRemaining = 10
+        
+        flipBackTimer = Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { [weak self] timer in
+            guard let self = self else { return }
             
-            flipBackTimer = Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { [weak self] timer in
-                guard let self = self else { return }
-                
-                self.flipBackTimeRemaining -= 1
-                
-                if #available(iOS 16.1, *) {
-                    self.updateLiveActivity() // Update Live Activity to show countdown
-                }
-                
-                if self.flipBackTimeRemaining <= 0 {
-                    timer.invalidate()
-                    if !self.isFaceDown {
-                        if self.remainingFlips > 0 {
-                            self.remainingFlips -= 1
-                            self.notifyFlipUsed()
-                        } else {
-                            self.failSession()
-                        }
+            self.flipBackTimeRemaining -= 1
+            
+            if #available(iOS 16.1, *) {
+                self.updateLiveActivity() // Update Live Activity to show countdown
+            }
+            
+            if self.flipBackTimeRemaining <= 0 {
+                timer.invalidate()
+                if !self.isFaceDown {
+                    if self.remainingFlips > 0 {
+                        self.remainingFlips -= 1
+                        self.notifyFlipUsed()
+                    } else {
+                        self.failSession()
                     }
                 }
             }
         }
+    }
     
     private func handlePhoneLifted() {
         guard currentState == .tracking else { return }
@@ -337,7 +337,7 @@ class Manager: NSObject, ObservableObject {
             self?.endBackgroundTask()
         }
     }
-
+    
     private func endBackgroundTask() {
         guard backgroundTask != .invalid else { return }
         
@@ -507,9 +507,9 @@ class Manager: NSObject, ObservableObject {
                 )
                 
                 let activityContent = ActivityContent(
-                                    state: state,
-                                    staleDate: Calendar.current.date(byAdding: .minute, value: selectedMinutes + 1, to: Date())
-                                )
+                    state: state,
+                    staleDate: Calendar.current.date(byAdding: .minute, value: selectedMinutes + 1, to: Date())
+                )
                 let attributes = FlipActivityAttributes()
                 
                 activity = try await Activity.request( //used to have 'await' after try
@@ -523,28 +523,28 @@ class Manager: NSObject, ObservableObject {
             }
         }
     }
-
-        @available(iOS 16.1, *)
-        private func endLiveActivity() {
-            Task {
-                guard let currentActivity = activity else { return }
-                let finalState = FlipActivityAttributes.ContentState(
-                    remainingTime: remainingTimeString,
-                    remainingFlips: remainingFlips,
-                    isPaused: false,
-                    isFailed: currentState == .failed,
-                    flipBackTimeRemaining: nil,
-                    lastUpdate: Date()
-                )
-                await currentActivity.end(
-                    ActivityContent(state: finalState, staleDate: nil),
-                    dismissalPolicy: .immediate
-                )
-                activity = nil
-                print("Live Activity ended")
-            }
+    
+    @available(iOS 16.1, *)
+    private func endLiveActivity() {
+        Task {
+            guard let currentActivity = activity else { return }
+            let finalState = FlipActivityAttributes.ContentState(
+                remainingTime: remainingTimeString,
+                remainingFlips: remainingFlips,
+                isPaused: false,
+                isFailed: currentState == .failed,
+                flipBackTimeRemaining: nil,
+                lastUpdate: Date()
+            )
+            await currentActivity.end(
+                ActivityContent(state: finalState, staleDate: nil),
+                dismissalPolicy: .immediate
+            )
+            activity = nil
+            print("Live Activity ended")
         }
-
+    }
+    
     @available(iOS 16.1, *)
     private func updateLiveActivity() {
         guard let activity = activity else {
@@ -578,20 +578,20 @@ class Manager: NSObject, ObservableObject {
     
     // MARK: - Notifications
     private func notifyFlipUsed() {
-            let content = UNMutableNotificationContent()
-            content.title = "Flip Used"
-            content.body = remainingFlips > 0 ?
-                "\(remainingFlips) flips remaining, you have \(flipBackTimeRemaining) seconds to pause or flip back over" :
-                "No flips remaining, you have \(flipBackTimeRemaining) seconds to pause or flip back over"
-            content.sound = .default
-            content.categoryIdentifier = "FLIP_ALERT"
-            
-            notificationCenter.add(UNNotificationRequest(
-                identifier: UUID().uuidString,
-                content: content,
-                trigger: nil
-            ))
-        }
+        let content = UNMutableNotificationContent()
+        content.title = "Flip Used"
+        content.body = remainingFlips > 0 ?
+        "\(remainingFlips) flips remaining, you have \(flipBackTimeRemaining) seconds to pause or flip back over" :
+        "No flips remaining, you have \(flipBackTimeRemaining) seconds to pause or flip back over"
+        content.sound = .default
+        content.categoryIdentifier = "FLIP_ALERT"
+        
+        notificationCenter.add(UNNotificationRequest(
+            identifier: UUID().uuidString,
+            content: content,
+            trigger: nil
+        ))
+    }
     
     private func notifyCompletion() {
         let content = UNMutableNotificationContent()
@@ -646,42 +646,42 @@ class Manager: NSObject, ObservableObject {
     
     // MARK: - App Lifecycle
     private func addObservers() {
-            // Add existing observers
-            NotificationCenter.default.addObserver(
-                self,
-                selector: #selector(appWillResignActive),
-                name: UIApplication.willResignActiveNotification,
-                object: nil
-            )
-            NotificationCenter.default.addObserver(
-                self,
-                selector: #selector(appDidBecomeActive),
-                name: UIApplication.didBecomeActiveNotification,
-                object: nil
-            )
-            
-            // Add new observers for widget actions
-            NotificationCenter.default.addObserver(
-                self,
-                selector: #selector(handlePauseRequest),
-                name: Notification.Name("PauseTimerRequest"),
-                object: nil
-            )
-            NotificationCenter.default.addObserver(
-                self,
-                selector: #selector(handleResumeRequest),
-                name: Notification.Name("ResumeTimerRequest"),
-                object: nil
-            )
-        }
+        // Add existing observers
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(appWillResignActive),
+            name: UIApplication.willResignActiveNotification,
+            object: nil
+        )
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(appDidBecomeActive),
+            name: UIApplication.didBecomeActiveNotification,
+            object: nil
+        )
         
-        @objc private func handlePauseRequest() {
-            pauseSession()
-        }
-        
-        @objc private func handleResumeRequest() {
-            startResumeCountdown()
-        }
+        // Add new observers for widget actions
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(handlePauseRequest),
+            name: Notification.Name("PauseTimerRequest"),
+            object: nil
+        )
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(handleResumeRequest),
+            name: Notification.Name("ResumeTimerRequest"),
+            object: nil
+        )
+    }
+    
+    @objc private func handlePauseRequest() {
+        pauseSession()
+    }
+    
+    @objc private func handleResumeRequest() {
+        startResumeCountdown()
+    }
     
     @objc private func appWillResignActive() {
         saveSessionState()
