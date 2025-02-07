@@ -20,9 +20,13 @@ struct FlipApp: App {
   }
 
   @StateObject private var appManager = AppManager.shared
+  @StateObject private var sessionManager = SessionManager.shared
+
   var body: some Scene {
     WindowGroup {
       MainView()
-    }.environmentObject(appManager)
+    }
+    .environmentObject(appManager)
+    .environmentObject(sessionManager)
   }
 }

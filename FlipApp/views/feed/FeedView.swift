@@ -1,7 +1,7 @@
 import SwiftUI
 
 struct FeedView: View {
-  @StateObject private var sessionManager = SessionManager.shared
+  @EnvironmentObject var sessionManager: SessionManager
 
   var body: some View {
     ScrollView {
