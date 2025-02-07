@@ -25,6 +25,8 @@ class Manager: NSObject, ObservableObject {
   @Published var pausedRemainingSeconds = 0
   @Published var pausedRemainingFlips = 0
 
+  private var sessionManager = SessionManager.shared
+
   // MARK: - Motion Properties
   private let motionManager = CMMotionManager()
   private let activityManager = CMMotionActivityManager()
@@ -442,7 +444,7 @@ class Manager: NSObject, ObservableObject {
     generator.notificationOccurred(.success)
     notifyCompletion()  // Send success notification
 
-    SessionManager.shared.addSession(
+    sessionManager.addSession(
       duration: selectedMinutes,
       wasSuccessful: true,
       actualDuration: selectedMinutes
@@ -479,7 +481,7 @@ class Manager: NSObject, ObservableObject {
     saveSessionState()
     notifyFailure()  // Send failure notification
 
-    SessionManager.shared.addSession(
+    sessionManager.addSession(
       duration: selectedMinutes,
       wasSuccessful: false,
       actualDuration: (selectedMinutes * 60 - remainingSeconds) / 60
