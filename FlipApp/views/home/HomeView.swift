@@ -21,10 +21,7 @@ struct HomeView: View {
         completionView
       }
 
-      Spacer()
     }
-    .frame(maxWidth: .infinity, maxHeight: .infinity)
-    .background(Color.black.edgesIgnoringSafeArea(.all))  // Keep this!
   }
 
   private var failureView: some View {
@@ -160,7 +157,6 @@ struct HomeView: View {
 
       Spacer()
     }
-    .background(Theme.mainGradient)
   }
 
   // Helper view for control buttons
@@ -331,6 +327,6 @@ struct HomeView: View {
     }
 
     .frame(maxWidth: .infinity, maxHeight: .infinity)
-    .background(Theme.mainGradient)
+
   }
 }

@@ -18,7 +18,6 @@ struct FeedView: View {
       }
       .padding(.horizontal)
     }
-    .background(Theme.mainGradient)
   }
 }
 

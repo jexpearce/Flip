@@ -73,7 +73,6 @@ struct ProfileView: View {
         }
       }
     }
-    .background(Theme.mainGradient)
   }
 }
 

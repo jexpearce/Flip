@@ -1,24 +1,22 @@
 import SwiftUI
 
 struct MainView: View {
-  @State private var selectedTab: NavigationBar.Tab = .home
-
   var body: some View {
-    ZStack(alignment: .bottom) {
+    TabView {
       Group {
-        switch selectedTab {
-        case .home:
-          HomeView()
-        case .feed:
-          FeedView()
-        case .profile:
-          ProfileView()
+        HomeView().tabItem {
+          Label("Home", systemImage: "house.fill")
         }
-      }
-      .ignoresSafeArea(.keyboard)
-
-      NavigationBar(selectedTab: $selectedTab)
+        FeedView().tabItem {
+          Label("Feed", systemImage: "list.bullet.rectangle.fill")
+        }
+        ProfileView().tabItem {
+          Label("Profile", systemImage: "person.fill")
+        }
+      }.background(Theme.mainGradient)
+        .toolbarBackground(Theme.darkGray, for: .tabBar)
+        .toolbarBackground(.visible, for: .tabBar)
     }
-    .background(Color.black.ignoresSafeArea())
+    .accentColor(Theme.neonYellow)
   }
 }
