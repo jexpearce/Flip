@@ -1,7 +1,7 @@
 import SwiftUI
 
 struct CountdownView: View {
-  @EnvironmentObject var flipManager: Manager
+  @EnvironmentObject var appManager: AppManager
   var body: some View {
     VStack(spacing: 25) {
       Text("GET READY")
@@ -9,10 +9,10 @@ struct CountdownView: View {
         .tracking(5)
         .foregroundColor(Theme.neonYellow)
 
-      Text("\(flipManager.countdownSeconds)")
+      Text("\(appManager.countdownSeconds)")
         .font(.system(size: 120, weight: .black))
         .foregroundColor(.white)
-        .animation(.spring(), value: flipManager.countdownSeconds)  // This replaces contentTransition
+        .animation(.spring(), value: appManager.countdownSeconds)  // This replaces contentTransition
         .scaleEffect(1.2)  // Makes the number slightly larger
 
       Text("1. LOCK YOUR PHONE")

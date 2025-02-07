@@ -1,33 +1,33 @@
 import SwiftUI
 
 struct TrackingView: View {
-  @EnvironmentObject var flipManager: Manager
+  @EnvironmentObject var appManager: AppManager
 
   var body: some View {
     VStack(spacing: 30) {
       // Status Icon
       Image(
-        systemName: flipManager.isFaceDown
+        systemName: appManager.isFaceDown
           ? "checkmark.circle.fill" : "xmark.circle.fill"
       )
       .font(.system(size: 60))
-      .foregroundColor(flipManager.isFaceDown ? Theme.neonYellow : .red)
+      .foregroundColor(appManager.isFaceDown ? Theme.neonYellow : .red)
 
       // Status Text
-      Text(flipManager.isFaceDown ? "STAY FOCUSED!" : "FLIP YOUR PHONE!")
+      Text(appManager.isFaceDown ? "STAY FOCUSED!" : "FLIP YOUR PHONE!")
         .font(.system(size: 32, weight: .heavy))
         .tracking(2)
-        .foregroundColor(flipManager.isFaceDown ? Theme.neonYellow : .red)
+        .foregroundColor(appManager.isFaceDown ? Theme.neonYellow : .red)
         .multilineTextAlignment(.center)
 
       VStack(spacing: 15) {
-        if flipManager.isFaceDown {
+        if appManager.isFaceDown {
           Text("REMAINING")
             .font(.system(size: 16, weight: .heavy))
             .tracking(4)
             .foregroundColor(Theme.neonYellow.opacity(0.7))
         }
-        Text(flipManager.remainingTimeString)
+        Text(appManager.remainingTimeString)
           .font(.system(size: 50, weight: .heavy))
           .foregroundColor(.white)
           .padding(.horizontal, 40)

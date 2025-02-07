@@ -2,11 +2,11 @@
 import SwiftUI
 
 struct HomeView: View {
-  @EnvironmentObject var flipManager: Manager
+  @EnvironmentObject var appManager: AppManager
 
   var body: some View {
     VStack(spacing: 30) {
-      switch flipManager.currentState {
+      switch appManager.currentState {
       case .initial:
         SetupView()
       case .paused:

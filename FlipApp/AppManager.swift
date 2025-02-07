@@ -4,9 +4,9 @@ import CoreMotion
 import SwiftUI
 import UserNotifications
 
-class Manager: NSObject, ObservableObject {
+class AppManager: NSObject, ObservableObject {
   static var backgroundRefreshIdentifier = "com.jexpearce.flip.refresh"
-  static let shared = Manager()
+  static let shared = AppManager()
 
   // MARK: - Published Properties
   @Published var currentState: FlipState = .initial {
@@ -395,7 +395,7 @@ class Manager: NSObject, ObservableObject {
   // MARK: - Background Task Registration
   func registerBackgroundTasks() {
     BGTaskScheduler.shared.register(
-      forTaskWithIdentifier: Manager.backgroundRefreshIdentifier,
+      forTaskWithIdentifier: AppManager.backgroundRefreshIdentifier,
       using: .main
     ) { [weak self] task in
       self?.handleBackgroundRefresh(task: task as! BGAppRefreshTask)
@@ -404,12 +404,12 @@ class Manager: NSObject, ObservableObject {
 
   func scheduleBackgroundRefresh() {
     let request = BGAppRefreshTaskRequest(
-      identifier: Manager.backgroundRefreshIdentifier)
+      identifier: AppManager.backgroundRefreshIdentifier)
     request.earliestBeginDate = Date(timeIntervalSinceNow: 60)
 
     do {
       BGTaskScheduler.shared.cancel(
-        taskRequestWithIdentifier: Manager.backgroundRefreshIdentifier)
+        taskRequestWithIdentifier: AppManager.backgroundRefreshIdentifier)
       try BGTaskScheduler.shared.submit(request)
     } catch {
       print("Error scheduling background task: \(error)")

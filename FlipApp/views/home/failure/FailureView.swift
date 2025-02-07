@@ -8,7 +8,7 @@
 import SwiftUI
 
 struct FailureView: View {
-  @EnvironmentObject var flipManager: Manager
+  @EnvironmentObject var appManager: AppManager
 
   var body: some View {
 
@@ -24,11 +24,11 @@ struct FailureView: View {
 
       VStack(spacing: 20) {
         Button(action: {
-          flipManager.startCountdown()
+          appManager.startCountdown()
         }) {
           HStack {
             Text("Try Again")
-            Text("(\(flipManager.selectedMinutes) min)")
+            Text("(\(appManager.selectedMinutes) min)")
           }
           .font(.system(size: 20, weight: .bold))
           .foregroundColor(.black)
@@ -38,7 +38,7 @@ struct FailureView: View {
         }
 
         Button(action: {
-          flipManager.currentState = .initial
+          appManager.currentState = .initial
         }) {
           Text("Change Time")
             .font(.system(size: 18, weight: .medium))

@@ -1,7 +1,7 @@
 import SwiftUI
 
 struct PausedView: View {
-  @EnvironmentObject var flipManager: Manager
+  @EnvironmentObject var appManager: AppManager
 
   var body: some View {
     VStack(spacing: 30) {
@@ -15,18 +15,18 @@ struct PausedView: View {
           .foregroundColor(.white)
 
         Text(
-          "\(flipManager.pausedRemainingSeconds / 60):\(String(format: "%02d", flipManager.pausedRemainingSeconds % 60)) remaining"
+          "\(appManager.pausedRemainingSeconds / 60):\(String(format: "%02d", appManager.pausedRemainingSeconds % 60)) remaining"
         )
         .font(.system(size: 40, design: .monospaced))
         .foregroundColor(Theme.neonYellow)
 
-        Text("\(flipManager.pausedRemainingFlips) retries left")
+        Text("\(appManager.pausedRemainingFlips) retries left")
           .font(.title3)
           .foregroundColor(.white)
       }
 
       Button(action: {
-        flipManager.startResumeCountdown()
+        appManager.startResumeCountdown()
       }) {
         Text("Resume")
           .font(.system(size: 24, weight: .black))

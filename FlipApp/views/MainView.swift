@@ -1,6 +1,7 @@
 import SwiftUI
 
 struct MainView: View {
+
   var body: some View {
     TabView {
       Group {
@@ -18,5 +19,6 @@ struct MainView: View {
         .toolbarBackground(.visible, for: .tabBar)
     }
     .accentColor(Theme.neonYellow)
+
   }
 }

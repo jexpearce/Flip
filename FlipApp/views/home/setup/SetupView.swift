@@ -1,7 +1,7 @@
 import SwiftUI
 
 struct SetupView: View {
-  @EnvironmentObject var flipManager: Manager
+  @EnvironmentObject var appManager: AppManager
 
   var body: some View {
     VStack(spacing: 30) {
@@ -26,7 +26,7 @@ struct SetupView: View {
         .padding(.bottom, -10)
 
       // Circular Time Picker
-      CircularTime(selectedMinutes: $flipManager.selectedMinutes)
+      CircularTime(selectedMinutes: $appManager.selectedMinutes)
 
       // Settings Controls
       HStack(spacing: 20) {
@@ -35,7 +35,7 @@ struct SetupView: View {
           title: "RETRIES",
           content: {
             Menu {
-              Picker("", selection: $flipManager.allowedFlips) {
+              Picker("", selection: $appManager.allowedFlips) {
                 Text("NONE").tag(0)
                 ForEach(1...5, id: \.self) { number in
                   Text("\(number)").tag(number)
@@ -44,8 +44,8 @@ struct SetupView: View {
             } label: {
               HStack {
                 Text(
-                  flipManager.allowedFlips == 0
-                    ? "NONE" : "\(flipManager.allowedFlips)"
+                  appManager.allowedFlips == 0
+                    ? "NONE" : "\(appManager.allowedFlips)"
                 )
                 .font(.system(size: 16, weight: .bold, design: .rounded))
                 .foregroundColor(Theme.neonYellow)
@@ -61,10 +61,10 @@ struct SetupView: View {
         ControlButton(
           title: "PAUSE",
           content: {
-            Toggle("", isOn: $flipManager.allowPause)
-              .onChange(of: flipManager.allowPause) {
-                if flipManager.allowPause && flipManager.allowedFlips == 0 {
-                  flipManager.allowedFlips = 1
+            Toggle("", isOn: $appManager.allowPause)
+              .onChange(of: appManager.allowPause) {
+                if appManager.allowPause && appManager.allowedFlips == 0 {
+                  appManager.allowedFlips = 1
                 }
               }
               .labelsHidden()
@@ -77,7 +77,7 @@ struct SetupView: View {
 
       // Begin Button
       Button(action: {
-        flipManager.startCountdown()
+        appManager.startCountdown()
       }) {
         Text("BEGIN")
           .font(.system(size: 24, weight: .black, design: .rounded))

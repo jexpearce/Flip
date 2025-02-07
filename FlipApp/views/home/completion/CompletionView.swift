@@ -1,7 +1,7 @@
 import SwiftUI
 
 struct CompletionView: View {
-  @EnvironmentObject var manager: Manager
+  @EnvironmentObject var appManager: AppManager
 
   var body: some View {
     VStack(spacing: 30) {
@@ -18,7 +18,7 @@ struct CompletionView: View {
           .font(.system(size: 20))
           .foregroundColor(.white)
 
-        Text("\(manager.selectedMinutes) minutes")
+        Text("\(appManager.selectedMinutes) minutes")
           .font(.system(size: 40, weight: .bold))
           .foregroundColor(.white)
 
@@ -28,7 +28,7 @@ struct CompletionView: View {
       }
 
       Button(action: {
-        manager.currentState = .initial
+        appManager.currentState = .initial
       }) {
         Text("Back to Home")
           .font(.system(size: 20, weight: .bold))
