@@ -6,12 +6,7 @@ struct FeedView: View {
   var body: some View {
     ScrollView {
       VStack(spacing: 25) {
-        Text("FEED")
-          .font(.system(size: 28, weight: .black))
-          .tracking(5)
-          .foregroundColor(Theme.neonYellow)
-          .padding(.top, 50)
-
+        Text("FEED").title()
         ForEach(sessionManager.sessions) { session in
           FeedSessionCard(session: session)
         }
@@ -20,5 +15,3 @@ struct FeedView: View {
     }
   }
 }
-
-

@@ -9,9 +9,7 @@ struct CompletionView: View {
         .font(.system(size: 60))
         .foregroundColor(Theme.neonYellow)
 
-      Text("Congratulations!")
-        .font(.system(size: 34, weight: .bold, design: .rounded))
-        .foregroundColor(Theme.neonYellow)
+      Text("Congratulations!").title()
 
       VStack(spacing: 15) {
         Text("You completed")
@@ -39,6 +37,8 @@ struct CompletionView: View {
       }
       .padding(.top, 30)
     }
+    .background(Theme.mainGradient)
     .padding(.horizontal, 30)
   }
+
 }

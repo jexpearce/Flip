@@ -15,8 +15,7 @@ struct TrackingView: View {
 
       // Status Text
       Text(appManager.isFaceDown ? "STAY FOCUSED!" : "FLIP YOUR PHONE!")
-        .font(.system(size: 32, weight: .heavy))
-        .tracking(2)
+        .title()
         .foregroundColor(appManager.isFaceDown ? Theme.neonYellow : .red)
         .multilineTextAlignment(.center)
 

@@ -4,10 +4,7 @@ struct CountdownView: View {
   @EnvironmentObject var appManager: AppManager
   var body: some View {
     VStack(spacing: 25) {
-      Text("GET READY")
-        .font(.system(size: 24, weight: .heavy))
-        .tracking(5)
-        .foregroundColor(Theme.neonYellow)
+      Text("GET READY").title()
 
       Text("\(appManager.countdownSeconds)")
         .font(.system(size: 120, weight: .black))

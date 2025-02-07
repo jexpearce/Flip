@@ -13,3 +13,13 @@ struct Theme {
     endPoint: .bottom
   )
 }
+
+extension Text {
+  func title() -> Text {
+    return
+      self
+      .font(.system(size: 28, weight: .black, design: .rounded))
+      .tracking(5)
+      .foregroundColor(Theme.neonYellow)
+  }
+}

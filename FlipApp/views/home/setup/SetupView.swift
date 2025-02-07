@@ -19,11 +19,9 @@ struct SetupView: View {
       .padding(.top, 30)
 
       // Set Time Title
-      Text("SET TIME")
-        .font(.system(size: 28, weight: .black, design: .rounded))
-        .tracking(4)
-        .foregroundColor(Theme.neonYellow)
-        .padding(.bottom, -10)
+      Text("SET TIME").title()
+      
+
 
       // Circular Time Picker
       CircularTime(selectedMinutes: $appManager.selectedMinutes)
