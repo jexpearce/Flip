@@ -8,7 +8,7 @@
 import SwiftUI
 
 struct FailureView: View {
-  @StateObject private var flipManager = Manager.shared
+  @EnvironmentObject var flipManager: Manager
 
   var body: some View {
 

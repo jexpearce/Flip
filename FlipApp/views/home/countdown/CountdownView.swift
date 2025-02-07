@@ -1,7 +1,7 @@
 import SwiftUI
 
 struct CountdownView: View {
-  @StateObject private var flipManager = Manager.shared
+  @EnvironmentObject var flipManager: Manager
   var body: some View {
     VStack(spacing: 25) {
       Text("GET READY")

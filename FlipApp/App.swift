@@ -4,6 +4,8 @@ import UserNotifications
 
 @main
 struct FlipApp: App {
+  @StateObject private var manager = Manager.shared
+
   init() {
     // Register tasks first, before scheduling anything
     BGTaskScheduler.shared.register(
@@ -15,12 +17,12 @@ struct FlipApp: App {
     }
 
     // Now it's safe to schedule
-    Manager.shared.scheduleBackgroundRefresh()
+    manager.scheduleBackgroundRefresh()
   }
 
   var body: some Scene {
     WindowGroup {
       MainView()
-    }
+    }.environmentObject(manager)
   }
 }

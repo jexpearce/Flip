@@ -1,7 +1,8 @@
 import SwiftUI
 
 struct SetupView: View {
-  @StateObject private var flipManager = Manager.shared
+  @EnvironmentObject var flipManager: Manager
+
   var body: some View {
     VStack(spacing: 30) {
       // Title with icon

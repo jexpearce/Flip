@@ -1,7 +1,7 @@
 import SwiftUI
 
 struct CompletionView: View {
-  @StateObject private var flipManager = Manager.shared
+  @EnvironmentObject var manager: Manager
 
   var body: some View {
     VStack(spacing: 30) {
@@ -18,7 +18,7 @@ struct CompletionView: View {
           .font(.system(size: 20))
           .foregroundColor(.white)
 
-        Text("\(flipManager.selectedMinutes) minutes")
+        Text("\(manager.selectedMinutes) minutes")
           .font(.system(size: 40, weight: .bold))
           .foregroundColor(.white)
 
@@ -28,7 +28,7 @@ struct CompletionView: View {
       }
 
       Button(action: {
-        flipManager.currentState = .initial
+        manager.currentState = .initial
       }) {
         Text("Back to Home")
           .font(.system(size: 20, weight: .bold))
