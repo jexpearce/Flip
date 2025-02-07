@@ -9,19 +9,6 @@ struct NavigationBar: View {
     case profile
   }
 
-  static var keyWindowBottom: CGFloat {
-    guard
-      let window = UIApplication.shared.connectedScenes
-        .compactMap({ $0 as? UIWindowScene })
-        .flatMap({ $0.windows })
-        .first(where: { $0.isKeyWindow })
-    else {
-      return 0
-    }
-    return window.safeAreaInsets.bottom
-
-  }
-
   var body: some View {
     HStack(spacing: 0) {
       ForEach([Tab.home, Tab.feed, Tab.profile], id: \.self) { tab in
@@ -44,7 +31,7 @@ struct NavigationBar: View {
     }
     .padding(.horizontal, 30)
     .padding(.top, 8)
-    .padding(.bottom, max(NavigationBar.keyWindowBottom, 8))
+    .padding(.bottom, 0)
     .background(
       Theme.darkGray
         .overlay(

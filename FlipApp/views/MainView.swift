@@ -8,7 +8,7 @@ struct MainView: View {
       Group {
         switch selectedTab {
         case .home:
-          ContentView()
+          HomeView()
         case .feed:
           FeedView()
         case .profile:

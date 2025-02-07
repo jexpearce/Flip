@@ -1,7 +1,7 @@
 // ContentView.swift
 import SwiftUI
 
-struct ContentView: View {
+struct HomeView: View {
   @StateObject private var flipManager = Manager.shared
 
   var body: some View {
@@ -202,7 +202,11 @@ struct ContentView: View {
         .animation(.spring(), value: flipManager.countdownSeconds)  // This replaces contentTransition
         .scaleEffect(1.2)  // Makes the number slightly larger
 
-      Text("FLIP YOUR PHONE")
+      Text("1. LOCK YOUR PHONE")
+        .font(.system(size: 20, weight: .heavy))
+        .tracking(2)
+        .foregroundColor(Theme.neonYellow.opacity(0.7))
+      Text("2. FLIP IT OVER!")
         .font(.system(size: 20, weight: .heavy))
         .tracking(2)
         .foregroundColor(Theme.neonYellow.opacity(0.7))
