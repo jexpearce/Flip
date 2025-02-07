@@ -265,7 +265,7 @@ class Manager: NSObject, ObservableObject {
       [weak self] motion, error in
       guard let self = self,
         let motion = motion,
-        self.currentState == .tracking
+        currentState == .tracking
       else { return }
 
       let newFaceDown = motion.gravity.z > 0.8
@@ -365,7 +365,7 @@ class Manager: NSObject, ObservableObject {
     activityManager.startActivityUpdates(to: .main) { [weak self] activity in
       guard let self = self,
         let activity = activity,
-        self.currentState == .tracking,
+        currentState == .tracking,
         activity.stationary
       else { return }
 
