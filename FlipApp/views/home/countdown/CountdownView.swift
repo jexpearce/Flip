@@ -1,0 +1,30 @@
+import SwiftUI
+
+struct CountdownView: View {
+  @StateObject private var flipManager = Manager.shared
+  var body: some View {
+    VStack(spacing: 25) {
+      Text("GET READY")
+        .font(.system(size: 24, weight: .heavy))
+        .tracking(5)
+        .foregroundColor(Theme.neonYellow)
+
+      Text("\(flipManager.countdownSeconds)")
+        .font(.system(size: 120, weight: .black))
+        .foregroundColor(.white)
+        .animation(.spring(), value: flipManager.countdownSeconds)  // This replaces contentTransition
+        .scaleEffect(1.2)  // Makes the number slightly larger
+
+      Text("1. LOCK YOUR PHONE")
+        .font(.system(size: 20, weight: .heavy))
+        .tracking(2)
+        .foregroundColor(Theme.neonYellow.opacity(0.7))
+      Text("2. FLIP IT OVER!")
+        .font(.system(size: 20, weight: .heavy))
+        .tracking(2)
+        .foregroundColor(Theme.neonYellow.opacity(0.7))
+    }
+    .frame(maxWidth: .infinity, maxHeight: .infinity)
+    .background(Theme.mainGradient)
+  }
+}
