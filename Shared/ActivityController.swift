@@ -33,7 +33,7 @@ public class FlipActivityController {
 
     Task {
       do {
-        try await notificationCenter.add(request) 
+        try await notificationCenter.add(request)
       } catch {
         print("Error showing pause notification: \(error.localizedDescription)")
       }

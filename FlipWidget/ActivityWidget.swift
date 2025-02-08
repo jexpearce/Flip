@@ -5,7 +5,7 @@ import WidgetKit
 // MARK: - Lock Screen Views
 struct LockScreenLiveActivityView: View {
   let context: ActivityViewContext<FlipActivityAttributes>
-
+  
   var body: some View {
     ZStack {
       Color.black
@@ -27,11 +27,11 @@ private struct FailedStateView: View {
       Image(systemName: "xmark.circle.fill")
         .font(.system(size: 40))
         .foregroundColor(.red)
-
+      
       Text("Session Failed")
         .font(.system(size: 24, weight: .bold))
         .foregroundColor(.red)
-
+      
       Text("Phone was moved too many times")
         .font(.system(size: 16))
         .foregroundColor(.white)
@@ -42,7 +42,7 @@ private struct FailedStateView: View {
 
 private struct ActiveStateView: View {
   let context: ActivityViewContext<FlipActivityAttributes>
-
+  
   var body: some View {
     VStack(spacing: 12) {
       // Timer and Flips Row
@@ -52,14 +52,14 @@ private struct ActiveStateView: View {
         )
         .font(.system(size: 20))
         .foregroundColor(Theme.neonYellow)
-
+        
         Text(context.state.remainingTime)
           .font(.system(size: 24, weight: .bold, design: .monospaced))
           .foregroundColor(.white)
           .frame(minWidth: 80)
-
+        
         Spacer()
-
+        
         if context.state.remainingFlips > 0 {
           HStack(spacing: 4) {
             Text("\(context.state.remainingFlips)")
@@ -70,14 +70,14 @@ private struct ActiveStateView: View {
           .foregroundColor(Theme.neonYellow)
         }
       }
-
+      
       // Flip Back Counter if active
       if let flipBackTime = context.state.flipBackTimeRemaining {
         Text("\(flipBackTime) seconds to flip back")
           .font(.system(size: 16, weight: .medium))
           .foregroundColor(Theme.neonYellow)
       }
-
+      
       // Pause/Resume Button
       if context.state.isPaused {
         Button(intent: ResumeIntent()) {
@@ -93,7 +93,7 @@ private struct ActiveStateView: View {
           .cornerRadius(20)
         }
       } else {
-
+        
         Button(intent: PauseIntent()) {
           HStack {
             Image(systemName: "pause.circle.fill")
@@ -124,14 +124,14 @@ struct ActivityWidget: Widget {
             Text(context.state.remainingTime)
               .font(.system(size: 24, weight: .bold, design: .monospaced))
               .foregroundColor(.white)
-
+            
             if !context.state.isPaused {
               Image(systemName: "timer")
                 .foregroundColor(Theme.neonYellow)
             }
           }
         }
-
+        
         DynamicIslandExpandedRegion(.bottom) {
           if context.state.isPaused {
             Button(intent: ResumeIntent()) {
