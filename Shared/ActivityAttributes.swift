@@ -3,9 +3,7 @@ import Foundation
 
 @available(iOS 16.1, *)
 struct FlipActivityAttributes: ActivityAttributes {
-  public typealias ContentState = FlipContentState
-
-  public struct FlipContentState: Codable, Hashable {
+  public struct ContentState: Codable, Hashable {
     var remainingTime: String
     var remainingFlips: Int
     var isPaused: Bool
