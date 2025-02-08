@@ -68,6 +68,7 @@ class AppManager: NSObject, ObservableObject {
       print("Live Activities enabled: \(enabled)")
     }
 
+    startLiveActivity()
     setupMotionManager()
     setupNotifications()
     restoreSessionState()
@@ -100,44 +101,13 @@ class AppManager: NSObject, ObservableObject {
     notificationCenter.setNotificationCategories(Set(categories))
   }
 
+
+
   // MARK: - Session Management
   func startCountdown() {
     print("Starting countdown")  // Debug
     currentState = .countdown
     countdownSeconds = 5
-
-    // Start Live Activity immediately
-    if #available(iOS 16.1, *) {
-      Task {
-        // End any existing activity
-        if let existingActivity = activity {
-          await existingActivity.end(
-            existingActivity.content, dismissalPolicy: .immediate)
-          activity = nil
-        }
-
-        let state = FlipActivityAttributes.ContentState(
-          remainingTime: "\(selectedMinutes):00",
-          remainingFlips: allowedFlips,
-          isPaused: false,
-          isFailed: false,
-          flipBackTimeRemaining: nil,
-          lastUpdate: Date()
-        )
-
-        let activityContent = ActivityContent(
-          state: state,
-          staleDate: Calendar.current.date(
-            byAdding: .minute, value: selectedMinutes + 1, to: Date())
-        )
-
-        activity = try? await Activity.request(
-          attributes: FlipActivityAttributes(),
-          content: activityContent,
-          pushType: nil
-        )
-      }
-    }
 
     countdownTimer?.invalidate()
     countdownTimer = Timer.scheduledTimer(withTimeInterval: 1, repeats: true) {
@@ -576,6 +546,7 @@ class AppManager: NSObject, ObservableObject {
 
   @available(iOS 16.1, *)
   private func startLiveActivity() {
+   
     // Check if Live Activities are enabled
     guard ActivityAuthorizationInfo().areActivitiesEnabled else {
       print("Live Activities not enabled")
@@ -591,7 +562,6 @@ class AppManager: NSObject, ObservableObject {
           activity = nil
         }
 
-        //let attributes = FlipActivityAttributes()
         let state = FlipActivityAttributes.ContentState(
           remainingTime: remainingTimeString,
           remainingFlips: remainingFlips,
