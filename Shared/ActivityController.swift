@@ -3,7 +3,7 @@ import Foundation
 import SwiftUI
 import UserNotifications
 
-@available(iOS 16.0, *)
+@available(iOS 16.1, *)
 public class FlipActivityController {
   public static let shared = FlipActivityController()
   private let notificationCenter = UNUserNotificationCenter.current()

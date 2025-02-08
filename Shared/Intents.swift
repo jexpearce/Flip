@@ -3,7 +3,7 @@ import AppIntents
 import SwiftUI
 import UserNotifications
 
-@available(iOS 16.0, *)
+@available(iOS 16.1, *)
 struct PauseIntent: AppIntent {
   static var title: LocalizedStringResource = "Pause Timer"
 
