@@ -14,5 +14,10 @@
 		<string>processing</string>
 		<string>motion</string>
 	</array>
+    <key>AppIntents</key>
+    <array>
+        <string>PauseIntent</string>
+        <string>ResumeIntent</string>
+    </array>
 </dict>
 </plist>

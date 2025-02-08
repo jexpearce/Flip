@@ -14,11 +14,9 @@ struct PausedView: View {
           .font(.title)
           .foregroundColor(.white)
 
-        Text(
-          "\(appManager.pausedRemainingSeconds / 60):\(String(format: "%02d", appManager.pausedRemainingSeconds % 60)) remaining"
-        )
-        .font(.system(size: 40, design: .monospaced))
-        .foregroundColor(Theme.neonYellow)
+        Text(formatTime(seconds: appManager.pausedRemainingSeconds))
+                            .font(.system(size: 40, design: .monospaced))
+                            .foregroundColor(Theme.neonYellow)
 
         Text("\(appManager.pausedRemainingFlips) retries left")
           .font(.title3)
@@ -26,17 +24,25 @@ struct PausedView: View {
       }
 
       Button(action: {
-        appManager.startResumeCountdown()
-      }) {
-        Text("Resume")
-          .font(.system(size: 24, weight: .black))
-          .foregroundColor(.black)
-          .frame(width: 200, height: 50)
-          .background(Theme.neonYellow)
-          .cornerRadius(25)
-      }
-    }
+                      appManager.startResumeCountdown()
+                  }) {
+                      HStack {
+                          Image(systemName: "play.circle.fill")
+                          Text("Resume")
+                      }
+                      .font(.system(size: 24, weight: .black))
+                      .foregroundColor(.black)
+                      .frame(width: 200, height: 50)
+                      .background(Theme.neonYellow)
+                      .cornerRadius(25)
+                  }
+              }
     .padding()
     .background(Theme.mainGradient)
   }
+  private func formatTime(seconds: Int) -> String {
+          let minutes = seconds / 60
+          let remainingSeconds = seconds % 60
+          return String(format: "%d:%02d", minutes, remainingSeconds)
+      }
 }

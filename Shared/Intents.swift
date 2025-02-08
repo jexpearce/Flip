@@ -13,6 +13,7 @@ struct PauseIntent: AppIntent {
 
   func perform() async throws -> some IntentResult {
     await MainActor.run {
+      print("PauseIntent: perform called")
       FlipActivityController.shared.pauseSession()
     }
     return .result()

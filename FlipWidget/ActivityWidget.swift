@@ -93,6 +93,7 @@ private struct ActiveStateView: View {
           .cornerRadius(20)
         }
       } else {
+
         Button(intent: PauseIntent()) {
           HStack {
             Image(systemName: "pause.circle.fill")

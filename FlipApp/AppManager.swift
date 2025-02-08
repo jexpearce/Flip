@@ -11,7 +11,9 @@ class AppManager: NSObject, ObservableObject {
   // MARK: - Published Properties
   @Published var currentState: FlipState = .initial {
     didSet {
-      updateLiveActivity()
+      if currentState != .paused {
+                  updateLiveActivity()
+              }
     }
   }
   @Published var selectedMinutes = 1
@@ -103,6 +105,37 @@ class AppManager: NSObject, ObservableObject {
     print("Starting countdown")  // Debug
     currentState = .countdown
     countdownSeconds = 5
+    
+    // Start Live Activity immediately
+        if #available(iOS 16.1, *) {
+            Task {
+                // End any existing activity
+                if let existingActivity = activity {
+                    await existingActivity.end(existingActivity.content, dismissalPolicy: .immediate)
+                    activity = nil
+                }
+                
+                let state = FlipActivityAttributes.ContentState(
+                    remainingTime: "\(selectedMinutes):00",
+                    remainingFlips: allowedFlips,
+                    isPaused: false,
+                    isFailed: false,
+                    flipBackTimeRemaining: nil,
+                    lastUpdate: Date()
+                )
+                
+                let activityContent = ActivityContent(
+                    state: state,
+                    staleDate: Calendar.current.date(byAdding: .minute, value: selectedMinutes + 1, to: Date())
+                )
+                
+                activity = try? await Activity.request(
+                    attributes: FlipActivityAttributes(),
+                    content: activityContent,
+                    pushType: nil
+                )
+            }
+        }
 
     countdownTimer?.invalidate()
     countdownTimer = Timer.scheduledTimer(withTimeInterval: 1, repeats: true) {
@@ -144,64 +177,13 @@ class AppManager: NSObject, ObservableObject {
     countdownTimer?.invalidate()
     sessionTimer?.invalidate()
     motionManager.stopDeviceMotionUpdates()
-
-    // 2. End any existing Live Activity first
-    if #available(iOS 16.1, *) {
-      Task {
-        if let existingActivity = activity {
-          await existingActivity.end(
-            existingActivity.content,
-            dismissalPolicy: .immediate)
-          activity = nil
-          print("Ended existing Live Activity")
-        }
-      }
-    }
-
-    // 3. Set up basic state
+    
     currentState = .tracking
     remainingSeconds = selectedMinutes * 60
     remainingFlips = allowedFlips
+
     saveSessionState()
     print("Basic state set up: \(currentState.rawValue), \(remainingSeconds)s")
-
-    // 4. Start Live Activity before core components
-    if #available(iOS 16.1, *) {
-      guard ActivityAuthorizationInfo().areActivitiesEnabled else {
-        print("Live Activities not enabled")
-        return
-      }
-
-      Task {
-        do {
-          let state = FlipActivityAttributes.ContentState(
-            remainingTime: remainingTimeString,
-            remainingFlips: remainingFlips,
-            isPaused: false,
-            isFailed: false,
-            flipBackTimeRemaining: nil,
-            lastUpdate: Date()
-          )
-
-          let activityContent = ActivityContent(
-            state: state,
-            staleDate: Calendar.current.date(
-              byAdding: .minute, value: selectedMinutes + 1, to: Date())
-          )
-
-          activity = try Activity.request(
-            attributes: FlipActivityAttributes(),
-            content: activityContent,
-            pushType: nil
-          )
-          print("Live Activity started successfully")
-        } catch {
-          print("Live Activity Error: \(error)")
-        }
-      }
-    }
-
-    // 5. Start core components after Live Activity
     startMotionUpdates()
     startSessionTimer()
     beginBackgroundProcessing()
@@ -210,30 +192,89 @@ class AppManager: NSObject, ObservableObject {
     print("Tracking session started successfully")
   }
   func pauseSession() {
-    isPaused = true
-    pausedRemainingSeconds = remainingSeconds
-    pausedRemainingFlips = remainingFlips
-
-    sessionTimer?.invalidate()
-    motionManager.stopDeviceMotionUpdates()
-    currentState = .paused
-
-    if #available(iOS 16.1, *) {
-      updateLiveActivity()
-    }
+      print("Pausing session...")
+      
+      // Stop timer first
+      sessionTimer?.invalidate()
+      sessionTimer = nil
+      
+      // Update state
+      isPaused = true
+      pausedRemainingSeconds = remainingSeconds
+      pausedRemainingFlips = remainingFlips
+      currentState = .paused
+      
+      // Stop motion updates
+      motionManager.stopDeviceMotionUpdates()
+      
+      // Update Live Activity with paused state
+      if #available(iOS 16.1, *) {
+          Task {
+              guard let activity = activity else {
+                  print("No activity to pause")
+                  return
+              }
+              
+              print("Updating Live Activity to paused state")
+              let state = FlipActivityAttributes.ContentState(
+                  remainingTime: remainingTimeString,
+                  remainingFlips: remainingFlips,
+                  isPaused: true,
+                  isFailed: false,
+                  flipBackTimeRemaining: nil,
+                  lastUpdate: Date()
+              )
+              
+              do {
+                  await activity.update(ActivityContent(
+                      state: state,
+                      staleDate: Calendar.current.date(byAdding: .minute, value: selectedMinutes + 1, to: Date())
+                  ))
+                  print("Live Activity paused successfully")
+              } catch {
+                  print("Error updating Live Activity: \(error)")
+              }
+          }
+      }
+      
+      // Add debug print
+      print("Session paused. Time remaining: \(remainingTimeString)")
   }
 
   func startResumeCountdown() {
-    remainingSeconds = pausedRemainingSeconds
-    remainingFlips = pausedRemainingFlips
-    startCountdown()
+      isPaused = false  // Reset pause state
+      remainingSeconds = pausedRemainingSeconds
+      remainingFlips = pausedRemainingFlips
+      
+      if #available(iOS 16.1, *) {
+          Task {
+              guard let activity = activity else { return }
+              let state = FlipActivityAttributes.ContentState(
+                  remainingTime: remainingTimeString,
+                  remainingFlips: remainingFlips,
+                  isPaused: false,
+                  isFailed: false,
+                  flipBackTimeRemaining: nil,
+                  lastUpdate: Date()
+              )
+              
+              await activity.update(ActivityContent(
+                  state: state,
+                  staleDate: Calendar.current.date(byAdding: .minute, value: selectedMinutes + 1, to: Date())
+              ))
+          }
+      }
+      
+      startCountdown()
   }
 
   private func startSessionTimer() {
     sessionTimer?.invalidate()
+    guard !isPaused else { return }
     sessionTimer = Timer.scheduledTimer(withTimeInterval: 1, repeats: true) {
       [weak self] _ in
       guard let self = self else { return }
+      
 
       if self.remainingSeconds > 0 {
         self.remainingSeconds -= 1
@@ -433,31 +474,57 @@ class AppManager: NSObject, ObservableObject {
 
   // MARK: - Session Completion
   private func completeSession() {
-    if #available(iOS 16.1, *) {
-      endLiveActivity()
-      activity = nil
-    }
-    endSession()
-    saveSessionState()
-
-    let generator = UINotificationFeedbackGenerator()
-    generator.notificationOccurred(.success)
-    notifyCompletion()  // Send success notification
-
-    sessionManager.addSession(
-      duration: selectedMinutes,
-      wasSuccessful: true,
-      actualDuration: selectedMinutes
-    )
-
-    DispatchQueue.main.async {
-      self.currentState = .completed
-    }
+      // 1. Handle Live Activity first
+      if #available(iOS 16.1, *) {
+          Task {
+              if let currentActivity = activity {
+                  let finalState = FlipActivityAttributes.ContentState(
+                      remainingTime: "0:00",
+                      remainingFlips: remainingFlips,
+                      isPaused: false,
+                      isFailed: false,
+                      flipBackTimeRemaining: nil,
+                      lastUpdate: Date()
+                  )
+                  
+                  await currentActivity.end(
+                      ActivityContent(state: finalState, staleDate: nil),
+                      dismissalPolicy: .immediate
+                  )
+              }
+              activity = nil
+          }
+      }
+      
+      // 2. Clean up session
+      endSession()
+      
+      // 3. Save final state
+      saveSessionState()
+      
+      // 4. Provide haptic feedback
+      let generator = UINotificationFeedbackGenerator()
+      generator.notificationOccurred(.success)
+      
+      // 5. Send completion notification
+      notifyCompletion()
+      
+      // 6. Record session
+      sessionManager.addSession(
+          duration: selectedMinutes,
+          wasSuccessful: true,
+          actualDuration: selectedMinutes
+      )
+      
+      // 7. Update UI state
+      DispatchQueue.main.async {
+          self.currentState = .completed
+      }
   }
 
   private func failSession() {
     if #available(iOS 16.1, *) {
-      let state = FlipActivityAttributes.FlipContentState(
+      let state = FlipActivityAttributes.ContentState(
         remainingTime: remainingTimeString,
         remainingFlips: 0,
         isPaused: false,
@@ -704,6 +771,7 @@ class AppManager: NSObject, ObservableObject {
   }
 
   @objc private func handlePauseRequest() {
+    print("AppManager: handlePauseRequest received")
     pauseSession()
   }
 

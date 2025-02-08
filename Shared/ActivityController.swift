@@ -11,6 +11,8 @@ public class FlipActivityController {
   public init() {}  // Important: Make init public for shared access
 
   public func pauseSession() {
+    print(" pauseSession() called!")
+    print("FlipActivityController: pauseSession called")
     // Post notification to main app for pausing
     NotificationCenter.default.post(
       name: Notification.Name("PauseTimerRequest"),
@@ -31,7 +33,7 @@ public class FlipActivityController {
 
     Task {
       do {
-        try await notificationCenter.add(request)
+        try await notificationCenter.add(request) 
       } catch {
         print("Error showing pause notification: \(error.localizedDescription)")
       }
