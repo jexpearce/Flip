@@ -1,7 +1,10 @@
 import Foundation
+import FirebaseFirestore
 
 struct Session: Codable, Identifiable {
   let id: UUID
+  let userId: String  // Add this
+  let username: String // Add this
   let startTime: Date
   let duration: Int  // in minutes
   let wasSuccessful: Bool
