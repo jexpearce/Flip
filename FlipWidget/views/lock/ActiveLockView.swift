@@ -2,15 +2,17 @@ import ActivityKit
 import SwiftUI
 import WidgetKit
 
-struct ActiveStateView: View {
+struct ActiveLockView: View {
   let context: ActivityViewContext<FlipActivityAttributes>
 
   var body: some View {
+    let isPaused = context.state.isPaused
+
     VStack(spacing: 12) {
       // Timer and Flips Row
       HStack {
         Image(
-          systemName: context.state.isPaused ? "pause.circle.fill" : "timer"
+          systemName: isPaused ? "pause.circle.fill" : "timer"
         )
         .font(.system(size: 20))
         .foregroundColor(Theme.neonYellow)
@@ -41,34 +43,25 @@ struct ActiveStateView: View {
       }
 
       // Pause/Resume Button
-      if context.state.isPaused {
-        Button(intent: ResumeIntent()) {
+      (isPaused
+        ? Button(intent: ResumeIntent()) {
           HStack {
             Image(systemName: "play.circle.fill")
-            Text("Resume Session")
+            Text("Resume")
           }
-          .font(.system(size: 16, weight: .medium))
-          .foregroundColor(Theme.neonYellow)
-          .padding(.horizontal, 20)
-          .padding(.vertical, 8)
-          .background(Color.black.opacity(0.5))
-          .cornerRadius(20)
         }
-      } else {
-
-        Button(intent: PauseIntent()) {
+        : Button(intent: PauseIntent()) {
           HStack {
             Image(systemName: "pause.circle.fill")
             Text("Pause")
           }
-          .font(.system(size: 16, weight: .medium))
-          .foregroundColor(Theme.neonYellow)
-          .padding(.horizontal, 20)
-          .padding(.vertical, 8)
-          .background(Color.black.opacity(0.5))
-          .cornerRadius(20)
-        }
-      }
+        })
+        .font(.system(size: 16, weight: .medium))
+        .foregroundColor(Theme.neonYellow)
+        .padding(.horizontal, 20)
+        .padding(.vertical, 8)
+        .background(Color.black.opacity(0.5))
+        .cornerRadius(20)
     }
   }
 }

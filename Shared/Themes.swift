@@ -16,8 +16,7 @@ struct Theme {
 
 extension Text {
   func title() -> Text {
-    return
-      self
+    self
       .font(.system(size: 28, weight: .black, design: .rounded))
       .tracking(5)
       .foregroundColor(Theme.neonYellow)

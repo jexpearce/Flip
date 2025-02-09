@@ -2,7 +2,7 @@ import ActivityKit
 import SwiftUI
 import WidgetKit
 
-struct LockScreenView: View {
+struct LockView: View {
   let context: ActivityViewContext<FlipActivityAttributes>
 
   var body: some View {
@@ -10,9 +10,9 @@ struct LockScreenView: View {
       Color.black
       VStack(spacing: 12) {
         if context.state.isFailed {
-          FailedStateView()
+          FailedLockView()
         } else {
-          ActiveStateView(context: context)
+          ActiveLockView(context: context)
         }
       }
       .padding()

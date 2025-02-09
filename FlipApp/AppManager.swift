@@ -101,8 +101,6 @@ class AppManager: NSObject, ObservableObject {
     notificationCenter.setNotificationCategories(Set(categories))
   }
 
-
-
   // MARK: - Session Management
   func startCountdown() {
     print("Starting countdown")  // Debug
@@ -197,17 +195,13 @@ class AppManager: NSObject, ObservableObject {
           lastUpdate: Date()
         )
 
-        do {
-          await activity.update(
-            ActivityContent(
-              state: state,
-              staleDate: Calendar.current.date(
-                byAdding: .minute, value: selectedMinutes + 1, to: Date())
-            ))
-          print("Live Activity paused successfully")
-        } catch {
-          print("Error updating Live Activity: \(error)")
-        }
+        await activity.update(
+          ActivityContent(
+            state: state,
+            staleDate: Calendar.current.date(
+              byAdding: .minute, value: selectedMinutes + 1, to: Date())
+          ))
+        print("Live Activity paused successfully")
       }
     }
 
@@ -546,7 +540,7 @@ class AppManager: NSObject, ObservableObject {
 
   @available(iOS 16.1, *)
   private func startLiveActivity() {
-   
+
     // Check if Live Activities are enabled
     guard ActivityAuthorizationInfo().areActivitiesEnabled else {
       print("Live Activities not enabled")

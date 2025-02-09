@@ -6,7 +6,7 @@ import WidgetKit
 struct ActivityWidget: Widget {
   var body: some WidgetConfiguration {
     ActivityConfiguration(for: FlipActivityAttributes.self) { context in
-      LockScreenView(context: context)
+      LockView(context: context)
     } dynamicIsland: { context in
       DynamicIslandView(context: context)
     }
