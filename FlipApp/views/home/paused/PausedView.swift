@@ -24,7 +24,7 @@ struct PausedView: View {
       }
 
       Button(action: {
-        appManager.startResumeCountdown()
+        appManager.resumeSession()
       }) {
         HStack {
           Image(systemName: "play.circle.fill")

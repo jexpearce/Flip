@@ -5,12 +5,11 @@ import UserNotifications
 
 @available(iOS 16.1, *)
 struct PauseIntent: LiveActivityIntent {
-  static var title: LocalizedStringResource = "Pause Timer"
+  static var title: LocalizedStringResource = "Pause Session"
   func perform() async throws -> some IntentResult {
     await MainActor.run {
-//      FlipActivityController.shared.pauseSession()
       NotificationCenter.default.post(
-        name: Notification.Name("PauseTimerRequest"),
+        name: Notification.Name("pauseSession"),
         object: nil
       )
     }
@@ -20,14 +19,13 @@ struct PauseIntent: LiveActivityIntent {
 
 @available(iOS 16.0, *)
 struct ResumeIntent: LiveActivityIntent {
-  static var title: LocalizedStringResource = "Resume Timer"
+  static var title: LocalizedStringResource = "Resume Session"
   func perform() async throws -> some IntentResult {
     await MainActor.run {
       NotificationCenter.default.post(
-        name: Notification.Name("ResumeTimerRequest"),
+        name: Notification.Name("resumeSession"),
         object: nil
       )
-//      FlipActivityController.shared.startResumeCountdown()
     }
     return .result()
   }

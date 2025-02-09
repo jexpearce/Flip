@@ -133,7 +133,7 @@ class AppManager: NSObject, ObservableObject {
     print("Tracking session started successfully")
   }
 
-  func pauseSession() {
+  @objc func pauseSession() {
     print("Pausing session...")
 
     notificationManager.display(
@@ -186,7 +186,7 @@ class AppManager: NSObject, ObservableObject {
     print("Session paused. Time remaining: \(remainingTimeString)")
   }
 
-  func startResumeCountdown() {
+  @objc func resumeSession() {
     isPaused = false  // Reset pause state
     remainingSeconds = pausedRemainingSeconds
     remainingFlips = pausedRemainingFlips
@@ -637,7 +637,7 @@ class AppManager: NSObject, ObservableObject {
     notificationManager.display(
       title: "Session Failed",
       body: "Your focus session failed because your phone was flipped!",
-      categoryIdentifier: <#String#>
+      categoryIdentifier: "SESSION_END"
     )
   }
 
@@ -666,7 +666,19 @@ class AppManager: NSObject, ObservableObject {
 
   // MARK: - App Lifecycle
   private func addObservers() {
-    // Add existing observers
+    NotificationCenter.default.addObserver(
+      self,
+      selector: #selector(pauseSession),
+      name: Notification.Name("pauseSession"),
+      object: nil
+    )
+    NotificationCenter.default.addObserver(
+      self,
+      selector: #selector(resumeSession),
+      name: Notification.Name("resumeSession"),
+      object: nil
+    )
+
     NotificationCenter.default.addObserver(
       self,
       selector: #selector(appWillResignActive),
@@ -679,29 +691,6 @@ class AppManager: NSObject, ObservableObject {
       name: UIApplication.didBecomeActiveNotification,
       object: nil
     )
-
-    // Add new observers for widget actions
-    NotificationCenter.default.addObserver(
-      self,
-      selector: #selector(handlePauseRequest),
-      name: Notification.Name("PauseTimerRequest"),
-      object: nil
-    )
-    NotificationCenter.default.addObserver(
-      self,
-      selector: #selector(handleResumeRequest),
-      name: Notification.Name("ResumeTimerRequest"),
-      object: nil
-    )
-  }
-
-  @objc private func handlePauseRequest() {
-    print("AppManager: handlePauseRequest received")
-    pauseSession()
-  }
-
-  @objc private func handleResumeRequest() {
-    startResumeCountdown()
   }
 
   @objc private func appWillResignActive() {
