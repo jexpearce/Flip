@@ -590,6 +590,7 @@ class AppManager: NSObject, ObservableObject {
   private func updateLiveActivity() {
     guard let activity = activity else {
       print("No active Live Activity to update")
+      startLiveActivity()
       return
     }
 
