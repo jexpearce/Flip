@@ -68,7 +68,6 @@ class AppManager: NSObject, ObservableObject {
       print("Live Activities enabled: \(enabled)")
     }
 
-    startLiveActivity()
     setupMotionManager()
     setupNotifications()
     restoreSessionState()
@@ -104,6 +103,9 @@ class AppManager: NSObject, ObservableObject {
   // MARK: - Session Management
   func startCountdown() {
     print("Starting countdown")  // Debug
+    
+    startLiveActivity()
+    
     currentState = .countdown
     countdownSeconds = 5
 
