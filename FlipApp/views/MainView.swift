@@ -1,24 +1,37 @@
 import SwiftUI
+import FirebaseAuth
 
 struct MainView: View {
-
-  var body: some View {
-    TabView {
-      Group {
-        HomeView().tabItem {
-          Label("Home", systemImage: "house.fill")
+    @StateObject private var authManager = AuthManager.shared
+    
+    var body: some View {
+        Group {
+            if authManager.isAuthenticated {
+                TabView {
+                    HomeView()
+                        .tabItem {
+                            Label("Home", systemImage: "house.fill")
+                        }
+                    FeedView()
+                        .tabItem {
+                            Label("Feed", systemImage: "list.bullet.rectangle.fill")
+                        }
+                    FriendsView()
+                        .tabItem {
+                            Label("Friends", systemImage: "person.2.fill")
+                        }
+                    ProfileView()
+                        .tabItem {
+                            Label("Profile", systemImage: "person.fill")
+                        }
+                }
+                .background(Theme.mainGradient)
+                .toolbarBackground(Theme.darkGray, for: .tabBar)
+                .toolbarBackground(.visible, for: .tabBar)
+                .accentColor(Theme.neonYellow)
+            } else {
+                AuthView()
+            }
         }
-        FeedView().tabItem {
-          Label("Feed", systemImage: "list.bullet.rectangle.fill")
-        }
-        ProfileView().tabItem {
-          Label("Profile", systemImage: "person.fill")
-        }
-      }.background(Theme.mainGradient)
-        .toolbarBackground(Theme.darkGray, for: .tabBar)
-        .toolbarBackground(.visible, for: .tabBar)
     }
-    .accentColor(Theme.neonYellow)
-
-  }
 }

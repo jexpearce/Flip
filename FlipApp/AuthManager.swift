@@ -4,26 +4,44 @@ import FirebaseFirestore
 class AuthManager: ObservableObject {
     static let shared = AuthManager()
     @Published var isAuthenticated = false
+    @Published var showAlert = false
+    @Published var alertMessage = ""
+    @Published var signUpSuccess = false
     
-    func signUp(email: String, password: String, username: String) {
+    func signUp(email: String, password: String, username: String, completion: @escaping () -> Void) {
         Auth.auth().createUser(withEmail: email, password: password) { [weak self] result, error in
-            if let user = result?.user {
-                // Create user profile in Firestore
-                let userData: [String: Any] = [
-                    "id": user.uid,
-                    "username": username,
-                    "totalFocusTime": 0,
-                    "totalSessions": 0,
-                    "longestSession": 0,
-                    "friends": []
-                ]
+            DispatchQueue.main.async {
+                if let error = error {
+                    self?.showAlert = true
+                    self?.alertMessage = error.localizedDescription
+                    completion()
+                    return
+                }
                 
-                FirebaseManager.shared.db.collection("users").document(user.uid)
-                    .setData(userData) { error in
-                        if error == nil {
-                            self?.isAuthenticated = true
+                if let user = result?.user {
+                    let userData: [String: Any] = [
+                        "id": user.uid,
+                        "username": username,
+                        "totalFocusTime": 0,
+                        "totalSessions": 0,
+                        "longestSession": 0,
+                        "friends": []
+                    ]
+                    
+                    FirebaseManager.shared.db.collection("users").document(user.uid)
+                        .setData(userData) { [weak self] error in
+                            DispatchQueue.main.async {
+                                if let error = error {
+                                    self?.showAlert = true
+                                    self?.alertMessage = error.localizedDescription
+                                } else {
+                                    self?.signUpSuccess = true
+                                    self?.isAuthenticated = true
+                                }
+                                completion()
+                            }
                         }
-                    }
+                }
             }
         }
     }

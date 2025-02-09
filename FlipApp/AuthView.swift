@@ -60,11 +60,17 @@ struct AuthView: View {
                 // Sign In/Up Button
                 Button(action: {
                     isLoading = true
-                    if isSignUp {
-                        authManager.signUp(email: email, password: password, username: username)
+                      if isSignUp {
+                          authManager.signUp(email: email, password: password, username: username) {
+                              isLoading = false
+                          }
                     } else {
-                        authManager.signIn(email: email, password: password)
+                      authManager.signIn(email: email, password: password)
+                      DispatchQueue.main.asyncAfter(deadline: .now() + 10) {
+                        isLoading = false
+                      }
                     }
+                  
                 }) {
                     ZStack {
                         Text(isSignUp ? "Sign Up" : "Sign In")

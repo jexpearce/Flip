@@ -4,6 +4,7 @@ import UserNotifications
 
 @main
 struct FlipApp: App {
+  @UIApplicationDelegateAdaptor(FlipAppDelegate.self) var delegate
 
   init() {
     // Register tasks first, before scheduling anything
