@@ -4,7 +4,7 @@ import SwiftUI
 import UserNotifications
 
 @available(iOS 16.1, *)
-struct PauseIntent: AppIntent {
+struct PauseIntent: LiveActivityIntent {
   static var title: LocalizedStringResource = "Pause Timer"
 
   static var parameterSummary: some ParameterSummary {
@@ -21,7 +21,7 @@ struct PauseIntent: AppIntent {
 }
 
 @available(iOS 16.0, *)
-struct ResumeIntent: AppIntent {
+struct ResumeIntent: LiveActivityIntent {
   static var title: LocalizedStringResource = "Resume Timer"
 
   static var parameterSummary: some ParameterSummary {
