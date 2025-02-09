@@ -28,6 +28,7 @@ class AppManager: NSObject, ObservableObject {
   @Published var pausedRemainingFlips = 0
 
   private var sessionManager = SessionManager.shared
+  private var notificationManager = NotificationManager.shared
 
   // MARK: - Motion Properties
   private let motionManager = CMMotionManager()
@@ -48,9 +49,6 @@ class AppManager: NSObject, ObservableObject {
   @available(iOS 16.1, *)
   private var activity: Activity<FlipActivityAttributes>?
 
-  // MARK: - Notification Center
-  private let notificationCenter = UNUserNotificationCenter.current()
-
   // MARK: - Computed Properties
   var remainingTimeString: String {
     let minutes = remainingSeconds / 60
@@ -69,7 +67,6 @@ class AppManager: NSObject, ObservableObject {
     }
 
     setupMotionManager()
-    setupNotifications()
     restoreSessionState()
     addObservers()
   }
@@ -109,7 +106,7 @@ class AppManager: NSObject, ObservableObject {
   }
 
   private func notifyCountdownFailed() {
-    displayNotification(
+    notificationManager.display(
       title: "Session Not Started",
       body: "Phone must be face down when timer reaches zero")
   }
@@ -139,7 +136,7 @@ class AppManager: NSObject, ObservableObject {
   func pauseSession() {
     print("Pausing session...")
 
-    displayNotification(
+    notificationManager.display(
       title: "Session Paused",
       body: "Open app to resume or use lock screen controls"
     )
@@ -194,7 +191,7 @@ class AppManager: NSObject, ObservableObject {
     remainingSeconds = pausedRemainingSeconds
     remainingFlips = pausedRemainingFlips
 
-    displayNotification(
+    notificationManager.display(
       title: "Resuming Session",
       body: "Flip your phone face down within 5 seconds")
 
@@ -620,7 +617,7 @@ class AppManager: NSObject, ObservableObject {
 
   // MARK: - Notifications
   private func notifyFlipUsed() {
-    displayNotification(
+    notificationManager.display(
       title: "Flip Used",
       body: remainingFlips > 0
         ? "\(remainingFlips) flips remaining, you have \(flipBackTimeRemaining) seconds to pause or flip back over"
@@ -629,7 +626,7 @@ class AppManager: NSObject, ObservableObject {
   }
 
   private func notifyCompletion() {
-    displayNotification(
+    notificationManager.display(
       title: "Session Complete!",
       body: "Great job staying focused!",
       categoryIdentifier: "SESSION_END"
@@ -637,7 +634,7 @@ class AppManager: NSObject, ObservableObject {
   }
 
   private func notifyFailure() {
-    displayNotification(
+    notificationManager.display(
       title: "Session Failed",
       body: "Your focus session failed because your phone was flipped!",
       categoryIdentifier: <#String#>
@@ -665,43 +662,6 @@ class AppManager: NSObject, ObservableObject {
     if currentState == .tracking {
       startTrackingSession()
     }
-  }
-
-  // MARK: - User notifications
-  private func setupNotifications() {
-    notificationCenter.requestAuthorization(options: [.alert, .sound, .badge]) {
-      [weak self] granted, _ in
-      guard granted else { return }
-      self?.setupNotificationCategories()
-    }
-  }
-
-  private func setupNotificationCategories() {
-    notificationCenter.setNotificationCategories(
-      Set([
-        UNNotificationCategory(
-          identifier: "FLIP_ALERT", actions: [], intentIdentifiers: [],
-          options: []),
-        UNNotificationCategory(
-          identifier: "SESSION_END", actions: [], intentIdentifiers: [],
-          options: []),
-      ]))
-  }
-
-  private func displayNotification(
-    title: String, body: String, categoryIdentifier: String = "FLIP_ALERT"
-  ) {
-    let content = UNMutableNotificationContent()
-    content.title = title
-    content.body = body
-    content.sound = .default
-    content.categoryIdentifier = categoryIdentifier
-    notificationCenter.add(
-      UNNotificationRequest(
-        identifier: UUID().uuidString,
-        content: content,
-        trigger: nil
-      ))
   }
 
   // MARK: - App Lifecycle
