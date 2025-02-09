@@ -71,7 +71,6 @@
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
 				ActivityAttributes.swift,
-				ActivityController.swift,
 				Intents.swift,
 				Themes.swift,
 				Types.swift,

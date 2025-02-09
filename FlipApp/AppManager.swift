@@ -164,6 +164,27 @@ class AppManager: NSObject, ObservableObject {
   func pauseSession() {
     print("Pausing session...")
 
+    
+    // Show notification that session is paused
+    let content = UNMutableNotificationContent()
+    content.title = "Session Paused"
+    content.body = "Open app to resume or use lock screen controls"
+    content.sound = .default
+
+    let request = UNNotificationRequest(
+      identifier: UUID().uuidString,
+      content: content,
+      trigger: nil
+    )
+
+    Task {
+      do {
+        try await notificationCenter.add(request)
+      } catch {
+        print("Error showing pause notification: \(error.localizedDescription)")
+      }
+    }
+    
     // Stop timer first
     sessionTimer?.invalidate()
     sessionTimer = nil
@@ -214,6 +235,26 @@ class AppManager: NSObject, ObservableObject {
     remainingSeconds = pausedRemainingSeconds
     remainingFlips = pausedRemainingFlips
 
+    let content = UNMutableNotificationContent()
+    content.title = "Resuming Session"
+    content.body = "Flip your phone face down within 5 seconds"
+    content.sound = .default
+
+    let request = UNNotificationRequest(
+      identifier: UUID().uuidString,
+      content: content,
+      trigger: nil
+    )
+
+    Task {
+      do {
+        try await notificationCenter.add(request)
+      } catch {
+        print(
+          "Error showing resume notification: \(error.localizedDescription)")
+      }
+    }
+    
     if #available(iOS 16.1, *) {
       Task {
         guard let activity = activity else { return }
