@@ -80,32 +80,12 @@ class AppManager: NSObject, ObservableObject {
     motionManager.deviceMotionUpdateInterval = 0.1
   }
 
-  private func setupNotifications() {
-    notificationCenter.requestAuthorization(options: [.alert, .sound, .badge]) {
-      [weak self] granted, _ in
-      guard granted else { return }
-      self?.setupNotificationCategories()
-    }
-  }
-
-  private func setupNotificationCategories() {
-    let categories = [
-      UNNotificationCategory(
-        identifier: "FLIP_ALERT", actions: [], intentIdentifiers: [],
-        options: []),
-      UNNotificationCategory(
-        identifier: "SESSION_END", actions: [], intentIdentifiers: [],
-        options: []),
-    ]
-    notificationCenter.setNotificationCategories(Set(categories))
-  }
-
   // MARK: - Session Management
   func startCountdown() {
     print("Starting countdown")  // Debug
-    
+
     startLiveActivity()
-    
+
     currentState = .countdown
     countdownSeconds = 5
 
@@ -129,17 +109,9 @@ class AppManager: NSObject, ObservableObject {
   }
 
   private func notifyCountdownFailed() {
-    let content = UNMutableNotificationContent()
-    content.title = "Session Not Started"
-    content.body = "Phone must be face down when timer reaches zero"
-    content.sound = .default
-
-    notificationCenter.add(
-      UNNotificationRequest(
-        identifier: UUID().uuidString,
-        content: content,
-        trigger: nil
-      ))
+    displayNotification(
+      title: "Session Not Started",
+      body: "Phone must be face down when timer reaches zero")
   }
 
   private func startTrackingSession() {
@@ -163,30 +135,15 @@ class AppManager: NSObject, ObservableObject {
 
     print("Tracking session started successfully")
   }
+
   func pauseSession() {
     print("Pausing session...")
 
-    
-    // Show notification that session is paused
-    let content = UNMutableNotificationContent()
-    content.title = "Session Paused"
-    content.body = "Open app to resume or use lock screen controls"
-    content.sound = .default
-
-    let request = UNNotificationRequest(
-      identifier: UUID().uuidString,
-      content: content,
-      trigger: nil
+    displayNotification(
+      title: "Session Paused",
+      body: "Open app to resume or use lock screen controls"
     )
 
-    Task {
-      do {
-        try await notificationCenter.add(request)
-      } catch {
-        print("Error showing pause notification: \(error.localizedDescription)")
-      }
-    }
-    
     // Stop timer first
     sessionTimer?.invalidate()
     sessionTimer = nil
@@ -237,26 +194,10 @@ class AppManager: NSObject, ObservableObject {
     remainingSeconds = pausedRemainingSeconds
     remainingFlips = pausedRemainingFlips
 
-    let content = UNMutableNotificationContent()
-    content.title = "Resuming Session"
-    content.body = "Flip your phone face down within 5 seconds"
-    content.sound = .default
+    displayNotification(
+      title: "Resuming Session",
+      body: "Flip your phone face down within 5 seconds")
 
-    let request = UNNotificationRequest(
-      identifier: UUID().uuidString,
-      content: content,
-      trigger: nil
-    )
-
-    Task {
-      do {
-        try await notificationCenter.add(request)
-      } catch {
-        print(
-          "Error showing resume notification: \(error.localizedDescription)")
-      }
-    }
-    
     if #available(iOS 16.1, *) {
       Task {
         guard let activity = activity else { return }
@@ -679,53 +620,28 @@ class AppManager: NSObject, ObservableObject {
 
   // MARK: - Notifications
   private func notifyFlipUsed() {
-    let content = UNMutableNotificationContent()
-    content.title = "Flip Used"
-    content.body =
-      remainingFlips > 0
-      ? "\(remainingFlips) flips remaining, you have \(flipBackTimeRemaining) seconds to pause or flip back over"
-      : "No flips remaining, you have \(flipBackTimeRemaining) seconds to pause or flip back over"
-    content.sound = .default
-    content.categoryIdentifier = "FLIP_ALERT"
-
-    notificationCenter.add(
-      UNNotificationRequest(
-        identifier: UUID().uuidString,
-        content: content,
-        trigger: nil
-      ))
+    displayNotification(
+      title: "Flip Used",
+      body: remainingFlips > 0
+        ? "\(remainingFlips) flips remaining, you have \(flipBackTimeRemaining) seconds to pause or flip back over"
+        : "No flips remaining, you have \(flipBackTimeRemaining) seconds to pause or flip back over"
+    )
   }
 
   private func notifyCompletion() {
-    let content = UNMutableNotificationContent()
-    content.title = "Session Complete!"
-    content.body = "Great job staying focused!"
-    content.sound = .default
-    content.categoryIdentifier = "SESSION_END"
-
-    let request = UNNotificationRequest(
-      identifier: UUID().uuidString,
-      content: content,
-      trigger: UNTimeIntervalNotificationTrigger(
-        timeInterval: 0.1, repeats: false)
+    displayNotification(
+      title: "Session Complete!",
+      body: "Great job staying focused!",
+      categoryIdentifier: "SESSION_END"
     )
-
-    notificationCenter.add(request)
   }
 
   private func notifyFailure() {
-    let content = UNMutableNotificationContent()
-    content.title = "Session Failed"
-    content.body = "Your focus session failed because your phone was flipped!"
-    content.sound = .default
-    content.categoryIdentifier = "SESSION_END"
-
-    notificationCenter.add(
-      UNNotificationRequest(
-        identifier: UUID().uuidString,
-        content: content,
-        trigger: nil
-      ))
+    displayNotification(
+      title: "Session Failed",
+      body: "Your focus session failed because your phone was flipped!",
+      categoryIdentifier: <#String#>
+    )
   }
 
   // MARK: - State Preservation
@@ -749,6 +665,43 @@ class AppManager: NSObject, ObservableObject {
     if currentState == .tracking {
       startTrackingSession()
     }
+  }
+
+  // MARK: - User notifications
+  private func setupNotifications() {
+    notificationCenter.requestAuthorization(options: [.alert, .sound, .badge]) {
+      [weak self] granted, _ in
+      guard granted else { return }
+      self?.setupNotificationCategories()
+    }
+  }
+
+  private func setupNotificationCategories() {
+    notificationCenter.setNotificationCategories(
+      Set([
+        UNNotificationCategory(
+          identifier: "FLIP_ALERT", actions: [], intentIdentifiers: [],
+          options: []),
+        UNNotificationCategory(
+          identifier: "SESSION_END", actions: [], intentIdentifiers: [],
+          options: []),
+      ]))
+  }
+
+  private func displayNotification(
+    title: String, body: String, categoryIdentifier: String = "FLIP_ALERT"
+  ) {
+    let content = UNMutableNotificationContent()
+    content.title = title
+    content.body = body
+    content.sound = .default
+    content.categoryIdentifier = categoryIdentifier
+    notificationCenter.add(
+      UNNotificationRequest(
+        identifier: UUID().uuidString,
+        content: content,
+        trigger: nil
+      ))
   }
 
   // MARK: - App Lifecycle
