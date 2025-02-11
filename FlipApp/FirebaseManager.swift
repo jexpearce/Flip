@@ -18,6 +18,8 @@ class FirebaseManager: ObservableObject {
         var totalSessions: Int
         var longestSession: Int
         var friends: [String] // User IDs
+        var friendRequests: [String] // New: incoming friend requests
+        var sentRequests: [String]   // New: outgoing friend requests
     }
   
   func searchUsers(query: String, completion: @escaping ([FlipUser]) -> Void) {

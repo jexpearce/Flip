@@ -3,6 +3,8 @@ import BackgroundTasks
 import CoreMotion
 import SwiftUI
 import UserNotifications
+import FirebaseAuth
+import FirebaseFirestore
 
 class AppManager: NSObject, ObservableObject {
   static var backgroundRefreshIdentifier = "com.jexpearce.flip.refresh"
@@ -56,6 +58,13 @@ class AppManager: NSObject, ObservableObject {
     return String(format: "%d:%02d", minutes, seconds)
   }
 
+  // MARK: - This is Friend Notification Section
+  private var lastFriendNotificationTime: Date?
+  private var friendNotificationCount = 0
+  private let maxFriendNotifications = 5
+  private let friendNotificationCooldown: TimeInterval = 600 // 10 minutes
+  
+  
   // MARK: - Initialization
   private override init() {
     super.init()
@@ -426,25 +435,26 @@ class AppManager: NSObject, ObservableObject {
   private func completeSession() {
     // 1. Handle Live Activity first
     if #available(iOS 16.1, *) {
-      Task {
-        if let currentActivity = activity {
-          let finalState = FlipActivityAttributes.ContentState(
-            remainingTime: "0:00",
-            remainingFlips: remainingFlips,
-            isPaused: false,
-            isFailed: false,
-            flipBackTimeRemaining: nil,
-            lastUpdate: Date()
-          )
-
-          await currentActivity.end(
-            ActivityContent(state: finalState, staleDate: nil),
-            dismissalPolicy: .immediate
-          )
+            Task {
+                // End all activities to ensure cleanup
+                for activity in Activity<FlipActivityAttributes>.activities {
+                    let finalState = FlipActivityAttributes.ContentState(
+                        remainingTime: "0:00",
+                        remainingFlips: remainingFlips,
+                        isPaused: false,
+                        isFailed: false,
+                        flipBackTimeRemaining: nil,
+                        lastUpdate: Date()
+                    )
+                    
+                    await activity.end(
+                        ActivityContent(state: finalState, staleDate: nil),
+                        dismissalPolicy: .immediate
+                    )
+                }
+                activity = nil
+            }
         }
-        activity = nil
-      }
-    }
 
     // 2. Clean up session
     endSession()
@@ -472,7 +482,7 @@ class AppManager: NSObject, ObservableObject {
     }
   }
 
-  private func failSession() {
+  func failSession() {
     if #available(iOS 16.1, *) {
       let state = FlipActivityAttributes.ContentState(
         remainingTime: remainingTimeString,
@@ -497,6 +507,7 @@ class AppManager: NSObject, ObservableObject {
     endSession()
     saveSessionState()
     notifyFailure()  // Send failure notification
+    notifyFriendsOfFailure() // Add this line to notify friends
 
     sessionManager.addSession(
       duration: selectedMinutes,
@@ -663,6 +674,51 @@ class AppManager: NSObject, ObservableObject {
     if currentState == .tracking {
       startTrackingSession()
     }
+  }
+  private func notifyFriendsOfFailure() {
+      // Check rate limiting
+      let now = Date()
+      if let lastTime = lastFriendNotificationTime {
+          if now.timeIntervalSince(lastTime) < friendNotificationCooldown {
+              // Still in cooldown period
+              if friendNotificationCount >= maxFriendNotifications {
+                  return // Skip if exceeded max notifications
+              }
+          } else {
+              // Reset counter after cooldown
+              friendNotificationCount = 0
+          }
+      }
+      
+      guard let userId = Auth.auth().currentUser?.uid else { return }
+      
+      // Get current user's username and friends
+      FirebaseManager.shared.db.collection("users").document(userId)
+          .getDocument { [weak self] document, error in
+              guard let userData = try? document?.data(as: FirebaseManager.FlipUser.self),
+                    !userData.friends.isEmpty else { return }
+              
+              // Create notification content
+              let notificationData: [String: Any] = [
+                  "type": "session_failure",
+                  "fromUserId": userId,
+                  "fromUsername": userData.username,
+                  "timestamp": Date(),
+                  "silent": true
+              ]
+              
+              // Send to each friend
+              for friendId in userData.friends {
+                  FirebaseManager.shared.db.collection("users")
+                      .document(friendId)
+                      .collection("notifications")
+                      .addDocument(data: notificationData)
+              }
+              
+              // Update rate limiting
+              self?.lastFriendNotificationTime = now
+              self?.friendNotificationCount += 1
+          }
   }
 
   // MARK: - App Lifecycle
