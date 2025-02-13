@@ -22,12 +22,13 @@ class AppManager: NSObject, ObservableObject {
   @Published var countdownSeconds = 5
   @Published var isFaceDown = false
   @Published var remainingSeconds = 0
-  @Published var allowedFlips = 0
-  @Published var remainingFlips = 0
   @Published var allowPause = false
   @Published var isPaused = false
   @Published var pausedRemainingSeconds = 0
   @Published var pausedRemainingFlips = 0
+  @Published var allowPauses = false
+  @Published var maxPauses = 10
+  @Published var remainingPauses = 0
 
   private var sessionManager = SessionManager.shared
   private var notificationManager = NotificationManager.shared
@@ -130,7 +131,6 @@ class AppManager: NSObject, ObservableObject {
 
     currentState = .tracking
     remainingSeconds = selectedMinutes * 60
-    remainingFlips = allowedFlips
 
     saveSessionState()
     print("Basic state set up: \(currentState.rawValue), \(remainingSeconds)s")
@@ -144,6 +144,7 @@ class AppManager: NSObject, ObservableObject {
 
   @objc func pauseSession() {
     print("Pausing session...")
+    guard allowPause && remainingPauses > 0 else { return }
 
     notificationManager.display(
       title: "Session Paused",
@@ -151,13 +152,14 @@ class AppManager: NSObject, ObservableObject {
     )
 
     // Stop timer first
+    flipBackTimer?.invalidate()
     sessionTimer?.invalidate()
     sessionTimer = nil
 
     // Update state
+    remainingPauses -= 1
     isPaused = true
     pausedRemainingSeconds = remainingSeconds
-    pausedRemainingFlips = remainingFlips
     currentState = .paused
 
     // Stop motion updates
@@ -174,7 +176,7 @@ class AppManager: NSObject, ObservableObject {
         print("Updating Live Activity to paused state")
         let state = FlipActivityAttributes.ContentState(
           remainingTime: remainingTimeString,
-          remainingFlips: remainingFlips,
+          remainingPauses: remainingPauses,
           isPaused: true,
           isFailed: false,
           flipBackTimeRemaining: nil,
@@ -196,36 +198,57 @@ class AppManager: NSObject, ObservableObject {
   }
 
   @objc func resumeSession() {
-    isPaused = false  // Reset pause state
-    remainingSeconds = pausedRemainingSeconds
-    remainingFlips = pausedRemainingFlips
+      isPaused = false
+      remainingSeconds = pausedRemainingSeconds
+      
+      // Start 5-second countdown
+      currentState = .countdown
+      countdownSeconds = 5
+      
+      if #available(iOS 16.1, *) {
+          Task {
+              guard let activity = activity else { return }
+              let state = FlipActivityAttributes.ContentState(
+                  remainingTime: remainingTimeString,
+                  remainingPauses: remainingPauses,
+                  isPaused: false,
+                  isFailed: false,
+                  flipBackTimeRemaining: nil,
+                  countdownMessage: "Resumed: \(countdownSeconds) seconds to flip phone",
+                  lastUpdate: Date()
+              )
 
-    notificationManager.display(
-      title: "Resuming Session",
-      body: "Flip your phone face down within 5 seconds")
-
-    if #available(iOS 16.1, *) {
-      Task {
-        guard let activity = activity else { return }
-        let state = FlipActivityAttributes.ContentState(
-          remainingTime: remainingTimeString,
-          remainingFlips: remainingFlips,
-          isPaused: false,
-          isFailed: false,
-          flipBackTimeRemaining: nil,
-          lastUpdate: Date()
-        )
-
-        await activity.update(
-          ActivityContent(
-            state: state,
-            staleDate: Calendar.current.date(
-              byAdding: .minute, value: selectedMinutes + 1, to: Date())
-          ))
+              await activity.update(
+                  ActivityContent(
+                      state: state,
+                      staleDate: Calendar.current.date(
+                          byAdding: .minute, value: selectedMinutes + 1, to: Date())
+                  )
+              )
+          }
       }
-    }
-
-    startCountdown()
+      
+      countdownTimer?.invalidate()
+      countdownTimer = Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { [weak self] timer in
+          guard let self = self else { return }
+          
+          self.countdownSeconds -= 1
+          
+          if self.countdownSeconds <= 0 {
+              timer.invalidate()
+              
+              // Check if phone is face down
+              if let motion = self.motionManager.deviceMotion,
+                 motion.gravity.z > 0.8 {
+                  self.startTrackingSession()
+              } else {
+                  self.failSession()
+              }
+          }
+      }
+    notificationManager.display(
+          title: "Resuming Session",
+          body: "Flip your phone face down within 5 seconds")
   }
 
   private func startSessionTimer() {
@@ -286,48 +309,45 @@ class AppManager: NSObject, ObservableObject {
     saveSessionState()
   }
   private func startFlipBackTimer() {
-    flipBackTimer?.invalidate()
-    flipBackTimeRemaining = 10
+      flipBackTimer?.invalidate()
+      flipBackTimeRemaining = 10
 
-    flipBackTimer = Timer.scheduledTimer(withTimeInterval: 1, repeats: true) {
-      [weak self] timer in
-      guard let self = self else { return }
+      flipBackTimer = Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { [weak self] timer in
+          guard let self = self else { return }
 
-      self.flipBackTimeRemaining -= 1
+          self.flipBackTimeRemaining -= 1
 
-      if #available(iOS 16.1, *) {
-        self.updateLiveActivity()  // Update Live Activity to show countdown
-      }
-
-      if self.flipBackTimeRemaining <= 0 {
-        timer.invalidate()
-        if !self.isFaceDown {
-          if self.remainingFlips > 0 {
-            self.remainingFlips -= 1
-            self.notifyFlipUsed()
-          } else {
-            self.failSession()
+          if #available(iOS 16.1, *) {
+              self.updateLiveActivity()
           }
-        }
+
+          if self.flipBackTimeRemaining <= 0 {
+              timer.invalidate()
+              if !self.isFaceDown && !self.isPaused {
+                  // Only fail if phone isn't face down and not paused
+                  self.failSession()
+              }
+          }
       }
-    }
   }
+ 
 
   private func handlePhoneLifted() {
-    guard currentState == .tracking else { return }
-
-    if remainingFlips > 0 {
-      remainingFlips -= 1
-      notifyFlipUsed()
-      if #available(iOS 16.1, *) {
-        updateLiveActivity()  // Update activity to show remaining flips
+      guard currentState == .tracking else { return }
+      
+      if allowPause && remainingPauses > 0 {
+          // Start 10-second countdown
+          startFlipBackTimer()
+          notifyFlipUsed()
+          if #available(iOS 16.1, *) {
+              updateLiveActivity()
+          }
+      } else {
+          failSession()
       }
-    } else {
-      failSession()
-    }
-
-    isFaceDown = false
-    saveSessionState()
+      
+      isFaceDown = false
+      saveSessionState()
   }
 
   // MARK: - Background Processing
@@ -348,8 +368,9 @@ class AppManager: NSObject, ObservableObject {
     startActivityMonitoring()
 
     // Auto-end after 25 seconds (before 30s limit)
-    DispatchQueue.main.asyncAfter(deadline: .now() + 25) { [weak self] in
+    DispatchQueue.main.asyncAfter(deadline: .now() + 28) { [weak self] in
       self?.endBackgroundTask()
+      self?.beginBackgroundProcessing() //new addition, can remove it if breaks
     }
   }
 
@@ -440,7 +461,7 @@ class AppManager: NSObject, ObservableObject {
                 for activity in Activity<FlipActivityAttributes>.activities {
                     let finalState = FlipActivityAttributes.ContentState(
                         remainingTime: "0:00",
-                        remainingFlips: remainingFlips,
+                        remainingPauses: remainingPauses,
                         isPaused: false,
                         isFailed: false,
                         flipBackTimeRemaining: nil,
@@ -483,41 +504,42 @@ class AppManager: NSObject, ObservableObject {
   }
 
   func failSession() {
-    if #available(iOS 16.1, *) {
-      let state = FlipActivityAttributes.ContentState(
-        remainingTime: remainingTimeString,
-        remainingFlips: 0,
-        isPaused: false,
-        isFailed: true,
-        flipBackTimeRemaining: nil,
-        lastUpdate: Date()
+      if #available(iOS 16.1, *) {
+          Task {
+              let state = FlipActivityAttributes.ContentState(
+                  remainingTime: remainingTimeString,
+                  remainingPauses: remainingPauses,
+                  isPaused: false,
+                  isFailed: true,
+                  flipBackTimeRemaining: nil,
+                  countdownMessage: nil,
+                  lastUpdate: Date()
+              )
+
+              await activity?.update(
+                  ActivityContent(
+                      state: state,
+                      staleDate: Calendar.current.date(
+                          byAdding: .minute, value: 1, to: Date())
+                  )
+              )
+          }
+      }
+
+      endSession()
+      saveSessionState()
+      notifyFailure()
+      notifyFriendsOfFailure()
+
+      sessionManager.addSession(
+          duration: selectedMinutes,
+          wasSuccessful: false,
+          actualDuration: (selectedMinutes * 60 - remainingSeconds) / 60
       )
 
-      Task {
-        await activity?.update(
-          ActivityContent(
-            state: state,
-            staleDate: Calendar.current.date(
-              byAdding: .minute, value: 1, to: Date())
-          )
-        )
+      DispatchQueue.main.async {
+          self.currentState = .failed
       }
-    }
-
-    endSession()
-    saveSessionState()
-    notifyFailure()  // Send failure notification
-    notifyFriendsOfFailure() // Add this line to notify friends
-
-    sessionManager.addSession(
-      duration: selectedMinutes,
-      wasSuccessful: false,
-      actualDuration: (selectedMinutes * 60 - remainingSeconds) / 60
-    )
-
-    DispatchQueue.main.async {
-      self.currentState = .failed
-    }
   }
 
   private func endSession() {
@@ -550,7 +572,7 @@ class AppManager: NSObject, ObservableObject {
 
         let state = FlipActivityAttributes.ContentState(
           remainingTime: remainingTimeString,
-          remainingFlips: remainingFlips,
+          remainingPauses: remainingPauses,
           isPaused: false,
           isFailed: false,
           flipBackTimeRemaining: nil,
@@ -582,7 +604,7 @@ class AppManager: NSObject, ObservableObject {
       guard let currentActivity = activity else { return }
       let finalState = FlipActivityAttributes.ContentState(
         remainingTime: remainingTimeString,
-        remainingFlips: remainingFlips,
+        remainingPauses: remainingPauses,
         isPaused: false,
         isFailed: currentState == .failed,
         flipBackTimeRemaining: nil,
@@ -608,7 +630,7 @@ class AppManager: NSObject, ObservableObject {
     Task {
       let state = FlipActivityAttributes.ContentState(
         remainingTime: remainingTimeString,
-        remainingFlips: remainingFlips,
+        remainingPauses: remainingPauses,
         isPaused: currentState == .paused,
         isFailed: currentState == .failed,
         flipBackTimeRemaining: (currentState == .tracking && !isFaceDown)
@@ -629,12 +651,12 @@ class AppManager: NSObject, ObservableObject {
 
   // MARK: - Notifications
   private func notifyFlipUsed() {
-    notificationManager.display(
-      title: "Flip Used",
-      body: remainingFlips > 0
-        ? "\(remainingFlips) flips remaining, you have \(flipBackTimeRemaining) seconds to pause or flip back over"
-        : "No flips remaining, you have \(flipBackTimeRemaining) seconds to pause or flip back over"
-    )
+      notificationManager.display(
+          title: "Phone Flipped",
+          body: remainingPauses > 0
+              ? "\(remainingPauses) pauses remaining, you have \(flipBackTimeRemaining) seconds to pause or flip back over"
+              : "No pauses remaining, you have \(flipBackTimeRemaining) seconds to flip back over"
+      )
   }
 
   private func notifyCompletion() {
@@ -658,7 +680,7 @@ class AppManager: NSObject, ObservableObject {
     let defaults = UserDefaults.standard
     defaults.set(currentState.rawValue, forKey: "currentState")
     defaults.set(remainingSeconds, forKey: "remainingSeconds")
-    defaults.set(remainingFlips, forKey: "remainingFlips")
+    defaults.set(remainingPauses, forKey: "remainingPauses")
     defaults.set(isFaceDown, forKey: "isFaceDown")
   }
 
@@ -668,7 +690,7 @@ class AppManager: NSObject, ObservableObject {
       FlipState(rawValue: defaults.string(forKey: "currentState") ?? "")
       ?? .initial
     remainingSeconds = defaults.integer(forKey: "remainingSeconds")
-    remainingFlips = defaults.integer(forKey: "remainingFlips")
+    remainingPauses = defaults.integer(forKey: "remainingPauses")
     isFaceDown = defaults.bool(forKey: "isFaceDown")
 
     if currentState == .tracking {

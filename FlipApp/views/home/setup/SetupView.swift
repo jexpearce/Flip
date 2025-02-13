@@ -28,48 +28,43 @@ struct SetupView: View {
 
       // Settings Controls
       HStack(spacing: 20) {
-        // Retries Setting
         ControlButton(
-          title: "RETRIES",
-          content: {
-            Menu {
-              Picker("", selection: $appManager.allowedFlips) {
-                Text("NONE").tag(0)
-                ForEach(1...5, id: \.self) { number in
-                  Text("\(number)").tag(number)
+                title: "PAUSE",
+                content: {
+                    Toggle("", isOn: $appManager.allowPause)
+                        .labelsHidden()
+                        .tint(Theme.neonYellow)
                 }
-              }
-            } label: {
-              HStack {
-                Text(
-                  appManager.allowedFlips == 0
-                    ? "NONE" : "\(appManager.allowedFlips)"
-                )
-                .font(.system(size: 16, weight: .bold, design: .rounded))
-                .foregroundColor(Theme.neonYellow)
-                Image(systemName: "chevron.down")
-                  .font(.system(size: 12, weight: .bold))
-                  .foregroundColor(Theme.neonYellow)
-              }
-            }
-          }
-        )
+            )
 
         // Pause Toggle
         ControlButton(
-          title: "PAUSE",
-          content: {
-            Toggle("", isOn: $appManager.allowPause)
-              .onChange(of: appManager.allowPause) {
-                if appManager.allowPause && appManager.allowedFlips == 0 {
-                  appManager.allowedFlips = 1
+                title: "PAUSES",
+                content: {
+                    Menu {
+                        Picker("", selection: $appManager.maxPauses) {
+                            Text("NONE").tag(0)
+                            ForEach(1...10, id: \.self) { number in
+                                Text("\(number)").tag(number)
+                            }
+                        }
+                    } label: {
+                        HStack {
+                            Text(
+                                appManager.maxPauses == 0 || !appManager.allowPause
+                                    ? "NONE" : "\(appManager.maxPauses)"
+                            )
+                            .font(.system(size: 16, weight: .bold, design: .rounded))
+                            .foregroundColor(appManager.allowPause ? Theme.neonYellow : .gray)
+                            Image(systemName: "chevron.down")
+                                .font(.system(size: 12, weight: .bold))
+                                .foregroundColor(appManager.allowPause ? Theme.neonYellow : .gray)
+                        }
+                    }
+                    .disabled(!appManager.allowPause)
                 }
-              }
-              .labelsHidden()
-              .tint(Theme.neonYellow)
-          }
-        )
-      }
+            )
+        }
       .padding(.horizontal)
       .padding(.top, -10)
 

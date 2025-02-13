@@ -5,10 +5,11 @@ import Foundation
 struct FlipActivityAttributes: ActivityAttributes {
   public struct ContentState: Codable, Hashable {
     var remainingTime: String
-    var remainingFlips: Int
+    var remainingPauses: Int  // Changed from remainingFlips
     var isPaused: Bool
     var isFailed: Bool  // New property
-    var flipBackTimeRemaining: Int?  // New property for 10-second countdown
+    var flipBackTimeRemaining: Int?
+    var countdownMessage: String?
     var lastUpdate: Date
   }
 }
