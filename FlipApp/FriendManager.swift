@@ -9,7 +9,7 @@ import FirebaseAuth
 import FirebaseFirestore
 import Foundation
 
-class FriendsViewModel: ObservableObject {
+class FriendManager: ObservableObject {
   @Published var friends: [FirebaseManager.FlipUser] = []
   @Published var friendRequests: [FirebaseManager.FlipUser] = []
   private let firebaseManager = FirebaseManager.shared

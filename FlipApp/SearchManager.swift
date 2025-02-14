@@ -9,7 +9,7 @@ import Foundation
 //
 import SwiftUI
 
-class SearchViewModel: ObservableObject {
+class SearchManager: ObservableObject {
   @Published var searchResults: [FirebaseManager.FlipUser] = []
   @Published var recommendations: [FirebaseManager.FlipUser] = []
   @Published var isSearching = false

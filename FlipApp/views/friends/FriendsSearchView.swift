@@ -3,9 +3,9 @@ import FirebaseFirestore
 import Foundation
 import SwiftUI
 
-struct SearchFriendsView: View {
+struct FriendsSearchView: View {
   @Environment(\.dismiss) var dismiss
-  @StateObject private var viewModel = SearchViewModel()
+  @StateObject private var viewModel = SearchManager()
   @State private var searchText = ""
 
   var body: some View {
