@@ -157,15 +157,17 @@ class AppManager: NSObject, ObservableObject {
     countdownTimer?.invalidate()
     sessionTimer?.invalidate()
     flipBackTimer?.invalidate()
-    countdownTimer = nil
+    //countdownTimer = nil
     sessionTimer = nil
-    flipBackTimer = nil
+    //flipBackTimer = nil
 
     // Update state
     remainingPauses -= 1
     isPaused = true
     pausedRemainingSeconds = remainingSeconds
     currentState = .paused
+    
+    saveSessionState()
 
     // Stop motion updates
     motionManager.stopDeviceMotionUpdates()
@@ -698,6 +700,7 @@ class AppManager: NSObject, ObservableObject {
     defaults.set(remainingSeconds, forKey: "remainingSeconds")
     defaults.set(remainingPauses, forKey: "remainingPauses")
     defaults.set(isFaceDown, forKey: "isFaceDown")
+    
   }
 
   private func restoreSessionState() {
@@ -806,7 +809,7 @@ class AppManager: NSObject, ObservableObject {
       }
     }
   }
-
+  
   // MARK: - Cleanup
   deinit {
     NotificationCenter.default.removeObserver(self)
