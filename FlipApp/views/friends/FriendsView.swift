@@ -4,7 +4,7 @@ import FirebaseFirestore
 import SwiftUI
 
 struct FriendsView: View {
-  @StateObject private var viewModel = FriendsViewModel()
+  @StateObject private var viewModel = FriendManager()
   @State private var showingSearch = false
 
   var body: some View {
@@ -79,7 +79,7 @@ struct FriendsView: View {
       }
     }
     .sheet(isPresented: $showingSearch) {
-      SearchFriendsView()
+      FriendsSearchView()
     }
     .refreshable {
       viewModel.loadFriends()

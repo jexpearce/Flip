@@ -31,7 +31,7 @@ struct SetupView: View {
           content: {
             Toggle("", isOn: $appManager.allowPauses)
               .onChange(of: appManager.allowPauses) {
-                if $0 {  // $0 is the new value
+                if appManager.allowPauses {
                   appManager.maxPauses = 3
                 } else {
                   appManager.maxPauses = 0

@@ -1,4 +1,3 @@
-// Create a new file: FlipAppDelegate.swift
 import FirebaseCore
 import UIKit
 

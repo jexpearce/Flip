@@ -20,8 +20,8 @@ struct FriendsSearchView: View {
           TextField("Search by username", text: $searchText)
             .textFieldStyle(FlipTextFieldStyle())
             .autocapitalization(.none)
-            .onChange(of: searchText) { query in
-              viewModel.searchUsers(query: query)
+            .onChange(of: searchText) {
+              viewModel.searchUsers(query: searchText)
             }
         }
         .padding()
