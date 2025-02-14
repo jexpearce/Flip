@@ -122,7 +122,7 @@ class AppManager: NSObject, ObservableObject {
       body: "Phone must be face down when timer reaches zero")
   }
 
-  private func startTrackingSession() {
+  private func startTrackingSession(isNewSession: Bool = true) {
     print("Starting tracking session")
 
     // 1. Stop existing timers and updates
@@ -131,8 +131,14 @@ class AppManager: NSObject, ObservableObject {
     motionManager.stopDeviceMotionUpdates()
 
     currentState = .tracking
-    remainingSeconds = selectedMinutes * 60
-    remainingPauses = maxPauses  // Add this line to set initial pauses
+    if isNewSession {
+            // For new sessions, set the full duration
+            remainingSeconds = selectedMinutes * 60
+            remainingPauses = maxPauses  // Reset pauses for new sessions
+        } else {
+            // For resumed sessions, restore the paused time
+            remainingSeconds = pausedRemainingSeconds
+        }
 
     saveSessionState()
     print("Basic state set up: \(currentState.rawValue), \(remainingSeconds)s")
@@ -253,7 +259,7 @@ class AppManager: NSObject, ObservableObject {
               // Check if phone is face down
               if let motion = self.motionManager.deviceMotion,
                  motion.gravity.z > 0.8 {
-                  self.startTrackingSession()
+                  self.startTrackingSession(isNewSession: false)
               } else {
                   self.failSession()
               }
