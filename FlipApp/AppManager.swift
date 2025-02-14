@@ -41,6 +41,7 @@ class AppManager: NSObject, ObservableObject {
   // MARK: - Background Task Properties
   private var backgroundTask: UIBackgroundTaskIdentifier = .invalid
   private var backgroundCheckTimer: Timer?
+  private var isInBackground = false
 
   // MARK: - Timer Properties
   private var countdownTimer: Timer?
@@ -131,6 +132,7 @@ class AppManager: NSObject, ObservableObject {
 
     currentState = .tracking
     remainingSeconds = selectedMinutes * 60
+    remainingPauses = maxPauses  // Add this line to set initial pauses
 
     saveSessionState()
     print("Basic state set up: \(currentState.rawValue), \(remainingSeconds)s")
@@ -144,7 +146,7 @@ class AppManager: NSObject, ObservableObject {
 
   @objc func pauseSession() {
     print("Pausing session...")
-    guard allowPause && remainingPauses > 0 else { return }
+    guard allowPauses && remainingPauses > 0 else { return }
 
     notificationManager.display(
       title: "Session Paused",
@@ -205,27 +207,9 @@ class AppManager: NSObject, ObservableObject {
       currentState = .countdown
       countdownSeconds = 5
       
+      // Start new Live Activity
       if #available(iOS 16.1, *) {
-          Task {
-              guard let activity = activity else { return }
-              let state = FlipActivityAttributes.ContentState(
-                  remainingTime: remainingTimeString,
-                  remainingPauses: remainingPauses,
-                  isPaused: false,
-                  isFailed: false,
-                  flipBackTimeRemaining: nil,
-                  countdownMessage: "Resumed: \(countdownSeconds) seconds to flip phone",
-                  lastUpdate: Date()
-              )
-
-              await activity.update(
-                  ActivityContent(
-                      state: state,
-                      staleDate: Calendar.current.date(
-                          byAdding: .minute, value: selectedMinutes + 1, to: Date())
-                  )
-              )
-          }
+          startLiveActivity()
       }
       
       countdownTimer?.invalidate()
@@ -233,6 +217,29 @@ class AppManager: NSObject, ObservableObject {
           guard let self = self else { return }
           
           self.countdownSeconds -= 1
+          
+          // Update the Live Activity with countdown
+          if #available(iOS 16.1, *) {
+              Task {
+                  let state = FlipActivityAttributes.ContentState(
+                      remainingTime: self.remainingTimeString,
+                      remainingPauses: self.remainingPauses,
+                      isPaused: false,
+                      isFailed: false,
+                      flipBackTimeRemaining: nil,
+                      countdownMessage: "\(self.countdownSeconds) seconds to flip phone",
+                      lastUpdate: Date()
+                  )
+                  
+                  await self.activity?.update(
+                      ActivityContent(
+                          state: state,
+                          staleDate: Calendar.current.date(
+                              byAdding: .minute, value: self.selectedMinutes + 1, to: Date())
+                      )
+                  )
+              }
+          }
           
           if self.countdownSeconds <= 0 {
               timer.invalidate()
@@ -246,7 +253,8 @@ class AppManager: NSObject, ObservableObject {
               }
           }
       }
-    notificationManager.display(
+      
+      notificationManager.display(
           title: "Resuming Session",
           body: "Flip your phone face down within 5 seconds")
   }
@@ -335,19 +343,22 @@ class AppManager: NSObject, ObservableObject {
   private func handlePhoneLifted() {
       guard currentState == .tracking else { return }
       
-      if allowPause && remainingPauses > 0 {
+      if allowPauses && remainingPauses > 0 {
           // Start 10-second countdown
           startFlipBackTimer()
           notifyFlipUsed()
           if #available(iOS 16.1, *) {
               updateLiveActivity()
           }
+        isFaceDown = false
+        saveSessionState()
       } else {
-          failSession()
+        isFaceDown = false
+        saveSessionState()
+        failSession()
       }
       
-      isFaceDown = false
-      saveSessionState()
+      
   }
 
   // MARK: - Background Processing
@@ -506,23 +517,24 @@ class AppManager: NSObject, ObservableObject {
   func failSession() {
       if #available(iOS 16.1, *) {
           Task {
-              let state = FlipActivityAttributes.ContentState(
-                  remainingTime: remainingTimeString,
-                  remainingPauses: remainingPauses,
-                  isPaused: false,
-                  isFailed: true,
-                  flipBackTimeRemaining: nil,
-                  countdownMessage: nil,
-                  lastUpdate: Date()
-              )
-
-              await activity?.update(
-                  ActivityContent(
-                      state: state,
-                      staleDate: Calendar.current.date(
-                          byAdding: .minute, value: 1, to: Date())
+              // End ALL activities
+              for activity in Activity<FlipActivityAttributes>.activities {
+                  let finalState = FlipActivityAttributes.ContentState(
+                      remainingTime: remainingTimeString,
+                      remainingPauses: remainingPauses,
+                      isPaused: false,
+                      isFailed: true,
+                      flipBackTimeRemaining: nil,
+                      countdownMessage: nil,
+                      lastUpdate: Date()
                   )
-              )
+                  
+                  await activity.end(
+                      ActivityContent(state: finalState, staleDate: nil),
+                      dismissalPolicy: .immediate
+                  )
+              }
+              activity = nil  // Important: set to nil after ending
           }
       }
 
@@ -773,10 +785,14 @@ class AppManager: NSObject, ObservableObject {
   }
 
   @objc private func appWillResignActive() {
-    saveSessionState()
+      saveSessionState()
+      if currentState == .tracking {
+          beginBackgroundProcessing()
+      }
   }
 
   @objc private func appDidBecomeActive() {
+    isInBackground = false
     if currentState == .tracking {
       // Just update the LiveActivity instead of restarting session
       if #available(iOS 16.1, *) {

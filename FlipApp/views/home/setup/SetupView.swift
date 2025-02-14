@@ -31,7 +31,14 @@ struct SetupView: View {
         ControlButton(
                 title: "PAUSE",
                 content: {
-                    Toggle("", isOn: $appManager.allowPause)
+                    Toggle("", isOn: $appManager.allowPauses)
+                        .onChange(of: appManager.allowPauses) {
+                            if $0 {  // $0 is the new value
+                                appManager.maxPauses = 3
+                            } else {
+                                appManager.maxPauses = 0
+                            }
+                        }
                         .labelsHidden()
                         .tint(Theme.neonYellow)
                 }
@@ -43,25 +50,21 @@ struct SetupView: View {
                 content: {
                     Menu {
                         Picker("", selection: $appManager.maxPauses) {
-                            Text("NONE").tag(0)
-                            ForEach(1...10, id: \.self) { number in
+                            ForEach(0...10, id: \.self) { number in
                                 Text("\(number)").tag(number)
                             }
                         }
                     } label: {
                         HStack {
-                            Text(
-                                appManager.maxPauses == 0 || !appManager.allowPause
-                                    ? "NONE" : "\(appManager.maxPauses)"
-                            )
-                            .font(.system(size: 16, weight: .bold, design: .rounded))
-                            .foregroundColor(appManager.allowPause ? Theme.neonYellow : .gray)
+                            Text("\(appManager.maxPauses)")
+                                .font(.system(size: 16, weight: .bold))
+                                .foregroundColor(appManager.allowPauses ? Theme.neonYellow : .gray)
                             Image(systemName: "chevron.down")
                                 .font(.system(size: 12, weight: .bold))
-                                .foregroundColor(appManager.allowPause ? Theme.neonYellow : .gray)
+                                .foregroundColor(appManager.allowPauses ? Theme.neonYellow : .gray)
                         }
                     }
-                    .disabled(!appManager.allowPause)
+                    .disabled(!appManager.allowPauses)
                 }
             )
         }
