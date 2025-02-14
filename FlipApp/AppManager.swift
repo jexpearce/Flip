@@ -154,9 +154,12 @@ class AppManager: NSObject, ObservableObject {
     )
 
     // Stop timer first
-    flipBackTimer?.invalidate()
+    countdownTimer?.invalidate()
     sessionTimer?.invalidate()
+    flipBackTimer?.invalidate()
+    countdownTimer = nil
     sessionTimer = nil
+    flipBackTimer = nil
 
     // Update state
     remainingPauses -= 1
@@ -200,6 +203,7 @@ class AppManager: NSObject, ObservableObject {
   }
 
   @objc func resumeSession() {
+      startMotionUpdates()
       isPaused = false
       remainingSeconds = pausedRemainingSeconds
       
