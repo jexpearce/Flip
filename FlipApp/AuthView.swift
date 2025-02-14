@@ -128,6 +128,7 @@ struct AuthTextField: View {
         }
         .padding()
         .background(Theme.darkGray)
+        .foregroundStyle(Theme.neonYellow)
         .cornerRadius(15)
         .overlay(
             RoundedRectangle(cornerRadius: 15)
