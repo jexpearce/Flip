@@ -20,8 +20,6 @@ struct SetupView: View {
 
       // Set Time Title
       Text("SET TIME").title()
-      
-
 
       // Circular Time Picker
       CircularTime(selectedMinutes: $appManager.selectedMinutes)
@@ -29,45 +27,47 @@ struct SetupView: View {
       // Settings Controls
       HStack(spacing: 20) {
         ControlButton(
-                title: "PAUSE",
-                content: {
-                    Toggle("", isOn: $appManager.allowPauses)
-                        .onChange(of: appManager.allowPauses) {
-                            if $0 {  // $0 is the new value
-                                appManager.maxPauses = 3
-                            } else {
-                                appManager.maxPauses = 0
-                            }
-                        }
-                        .labelsHidden()
-                        .tint(Theme.neonYellow)
+          title: "PAUSE",
+          content: {
+            Toggle("", isOn: $appManager.allowPauses)
+              .onChange(of: appManager.allowPauses) {
+                if $0 {  // $0 is the new value
+                  appManager.maxPauses = 3
+                } else {
+                  appManager.maxPauses = 0
                 }
-            )
+              }
+              .labelsHidden()
+              .tint(Theme.neonYellow)
+          }
+        )
 
         // Pause Toggle
         ControlButton(
-                title: "PAUSES",
-                content: {
-                    Menu {
-                        Picker("", selection: $appManager.maxPauses) {
-                            ForEach(0...10, id: \.self) { number in
-                                Text("\(number)").tag(number)
-                            }
-                        }
-                    } label: {
-                        HStack {
-                            Text("\(appManager.maxPauses)")
-                                .font(.system(size: 16, weight: .bold))
-                                .foregroundColor(appManager.allowPauses ? Theme.neonYellow : .gray)
-                            Image(systemName: "chevron.down")
-                                .font(.system(size: 12, weight: .bold))
-                                .foregroundColor(appManager.allowPauses ? Theme.neonYellow : .gray)
-                        }
-                    }
-                    .disabled(!appManager.allowPauses)
+          title: "PAUSES",
+          content: {
+            Menu {
+              Picker("", selection: $appManager.maxPauses) {
+                ForEach(0...10, id: \.self) { number in
+                  Text("\(number)").tag(number)
                 }
-            )
-        }
+              }
+            } label: {
+              HStack {
+                Text("\(appManager.maxPauses)")
+                  .font(.system(size: 16, weight: .bold))
+                  .foregroundColor(
+                    appManager.allowPauses ? Theme.neonYellow : .gray)
+                Image(systemName: "chevron.down")
+                  .font(.system(size: 12, weight: .bold))
+                  .foregroundColor(
+                    appManager.allowPauses ? Theme.neonYellow : .gray)
+              }
+            }
+            .disabled(!appManager.allowPauses)
+          }
+        )
+      }
       .padding(.horizontal)
       .padding(.top, -10)
 
