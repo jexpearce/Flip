@@ -1,73 +1,93 @@
 import SwiftUI
 
 struct PausedView: View {
-  @EnvironmentObject var appManager: AppManager
-  @State private var showingCancelAlert = false
+    @EnvironmentObject var appManager: AppManager
+    @State private var showingCancelAlert = false
 
-  var body: some View {
-    VStack(spacing: 30) {
-      Image(systemName: "pause.circle.fill")
-        .font(.system(size: 60))
-        .foregroundColor(Theme.neonYellow)
+    var body: some View {
+        VStack(spacing: 30) {
+            // Pause Icon
+            Image(systemName: "pause.circle.fill")
+                .font(.system(size: 60))
+                .foregroundColor(.white)
+                .retroGlow()
 
-      VStack(spacing: 15) {
-        Text("Session Paused")
-          .font(.title)
-          .foregroundColor(.white)
+            // Title with Japanese
+            VStack(spacing: 4) {
+                Text("SESSION PAUSED")
+                    .font(.system(size: 28, weight: .black))
+                    .tracking(8)
+                    .foregroundColor(.white)
+                    .retroGlow()
+                
+                Text("一時停止中")
+                    .font(.system(size: 14))
+                    .tracking(4)
+                    .foregroundColor(.gray)
+            }
 
-        Text(formatTime(seconds: appManager.pausedRemainingSeconds))
-          .font(.system(size: 40, design: .monospaced))
-          .foregroundColor(Theme.neonYellow)
+            // Time Display
+            Text(formatTime(seconds: appManager.pausedRemainingSeconds))
+            .font(.system(size: 40, weight: .bold, design: .monospaced))
+                .foregroundColor(.white)
+                .retroGlow()
 
-        Text("\(appManager.pausedRemainingFlips) retries left")
-          .font(.title3)
-          .foregroundColor(.white)
-      }
+            Text("\(appManager.pausedRemainingFlips) retries left")
+                .font(.title3)
+                .foregroundColor(.white)
+                .retroGlow()
 
-      Button(action: {
-        appManager.resumeSession()
-      }) {
-        HStack {
-          Image(systemName: "play.circle.fill")
-          Text("Resume")
+            // Resume Button
+            Button(action: {
+                appManager.resumeSession()
+            }) {
+                HStack {
+                    Image(systemName: "play.circle.fill")
+                    Text("RESUME")
+                }
+                .font(.system(size: 24, weight: .black))
+                .foregroundColor(.black)
+                .frame(width: 200, height: 50)
+                .background(
+                    Color.white
+                        .shadow(color: .white.opacity(0.5), radius: 10)
+                )
+                .cornerRadius(25)
+            }
+
+            // Cancel Button
+            Button(action: {
+                showingCancelAlert = true
+            }) {
+                Text("CANCEL SESSION")
+                    .font(.system(size: 16, weight: .medium))
+                    .tracking(2)
+                    .foregroundColor(.white)
+                    .frame(width: 200, height: 44)
+                    .background(Color.black.opacity(0.3))
+                    .cornerRadius(22)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 22)
+                            .strokeBorder(Color.white.opacity(0.3), lineWidth: 1)
+                    )
+                    .retroGlow()
+            }
         }
-        .font(.system(size: 24, weight: .black))
-        .foregroundColor(.black)
-        .frame(width: 200, height: 50)
-        .background(Theme.neonYellow)
-        .cornerRadius(25)
-      }
-
-      Button(action: {
-        showingCancelAlert = true
-      }) {
-        Text("Cancel Session")
-          .font(.system(size: 16, weight: .medium))
-          .foregroundColor(.red)
-          .frame(width: 200, height: 44)
-          .background(Color(white: 0.2))
-          .cornerRadius(22)
-          .overlay(
-            RoundedRectangle(cornerRadius: 22)
-              .stroke(Color.red, lineWidth: 1)
-          )
-      }
+        .padding()
+        .background(Theme.mainGradient)
+        .alert("Cancel Session?", isPresented: $showingCancelAlert) {
+            Button("Cancel Session", role: .destructive) {
+                appManager.failSession()
+            }
+            Button("Keep Session", role: .cancel) {}
+        } message: {
+            Text("This session will be marked as failed. Are you sure?")
+        }
     }
-    .padding()
-    .background(Theme.mainGradient)
-    .alert("Cancel Session?", isPresented: $showingCancelAlert) {
-      Button("Cancel Session", role: .destructive) {
-        appManager.failSession()
-      }
-      Button("Keep Session", role: .cancel) {}
-    } message: {
-      Text("This session will be marked as failed. Are you sure?")
-    }
-  }
 
-  private func formatTime(seconds: Int) -> String {
-    let minutes = seconds / 60
-    let remainingSeconds = seconds % 60
-    return String(format: "%d:%02d", minutes, remainingSeconds)
-  }
+    private func formatTime(seconds: Int) -> String {
+        let minutes = seconds / 60
+        let remainingSeconds = seconds % 60
+        return String(format: "%d:%02d", minutes, remainingSeconds)
+    }
 }

@@ -7,7 +7,7 @@ struct LockView: View {
 
   var body: some View {
     ZStack {
-      Color.black
+      Color.gray
       VStack(spacing: 12) {
         if context.state.isFailed {
           FailedLockView()
