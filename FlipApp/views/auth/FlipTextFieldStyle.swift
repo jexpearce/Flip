@@ -10,7 +10,7 @@ struct FlipTextFieldStyle: TextFieldStyle {
       .foregroundColor(.white)
       .overlay(
         RoundedRectangle(cornerRadius: 15)
-          .strokeBorder(Theme.neonYellow.opacity(0.3), lineWidth: 1)
+          .strokeBorder(Theme.lightGray.opacity(0.3), lineWidth: 1)
       )
   }
 }

@@ -18,17 +18,39 @@ struct AuthView: View {
     var body: some View {
         GeometryReader { geometry in
             ZStack {
-                // Animated gradient background
                 Theme.mainGradient
                     .ignoresSafeArea()
                 
-                // Content
                 ScrollView {
                     VStack(spacing: 35) {
                         // Logo Section
-                        LogoSection(isSignUp: isSignUp)
-                            .scaleEffect(isKeyboardVisible ? 0.8 : 1.0)
-                            .padding(.top, isKeyboardVisible ? 20 : 60)
+                        VStack(spacing: 4) {
+                            HStack(spacing: 15) {
+                                Text("FLIP")
+                                    .font(.system(size: 60, weight: .black, design: .default))
+                                    .tracking(8)
+                                    .foregroundColor(.white)
+                                    .retroGlow()
+                                
+                                Image(systemName: "arrow.2.squarepath")
+                                    .font(.system(size: 40))
+                                    .foregroundColor(.white)
+                                    .retroGlow()
+                                    .rotationEffect(.degrees(isSignUp ? 180 : 0))
+                            }
+                            
+                            Text(isSignUp ? "アカウントを作成" : "おかえりなさい")
+                                .font(.system(size: 14))
+                                .tracking(4)
+                                .foregroundColor(.gray)
+                            
+                            Text(isSignUp ? "Create Account" : "Welcome Back")
+                                .font(.title2)
+                                .foregroundColor(.gray)
+                                .transition(.opacity)
+                        }
+                        .scaleEffect(isKeyboardVisible ? 0.8 : 1.0)
+                        .padding(.top, isKeyboardVisible ? 20 : 60)
                         
                         // Auth Fields
                         VStack(spacing: 20) {
@@ -68,6 +90,7 @@ struct AuthView: View {
                             ZStack {
                                 Text(isSignUp ? "Create Account" : "Sign In")
                                     .font(.system(size: 24, weight: .black))
+                                    .tracking(4)
                                     .foregroundColor(.black)
                                     .opacity(isLoading ? 0 : 1)
                                 
@@ -79,11 +102,11 @@ struct AuthView: View {
                             .frame(maxWidth: .infinity)
                             .frame(height: 60)
                             .background(
-                                Theme.neonYellow
+                                Color.white
+                                    .shadow(color: .white.opacity(0.5), radius: 10)
                                     .brightness(isLoading ? -0.2 : 0)
                             )
                             .cornerRadius(30)
-                            .shadow(color: Theme.neonYellow.opacity(0.3), radius: 10)
                             .scaleEffect(isLoading ? 0.95 : 1)
                         }
                         .disabled(isLoading)
@@ -98,8 +121,9 @@ struct AuthView: View {
                             }
                         }) {
                             Text(isSignUp ? "Already have an account? Sign In" : "Don't have an account? Sign Up")
-                                .foregroundColor(Theme.neonYellow)
                                 .font(.system(size: 16, weight: .medium))
+                                .foregroundColor(.white)
+                                .retroGlow()
                         }
                     }
                     .padding(.horizontal)
@@ -140,32 +164,6 @@ struct AuthView: View {
     }
 }
 
-struct LogoSection: View {
-    let isSignUp: Bool
-    
-    var body: some View {
-        VStack(spacing: 20) {
-            HStack(spacing: 15) {
-                Image(systemName: "arrow.2.squarepath")
-                    .font(.system(size: 40))
-                    .foregroundColor(Theme.neonYellow)
-                    .shadow(color: Theme.neonYellow.opacity(0.5), radius: 10)
-                    .rotationEffect(.degrees(isSignUp ? 180 : 0))
-                
-                Text("FLIP")
-                    .font(.system(size: 60, weight: .black, design: .monospaced))
-                    .tracking(5)
-                    .foregroundColor(.white)
-            }
-            
-            Text(isSignUp ? "Create Account" : "Welcome Back")
-                .font(.title2)
-                .foregroundColor(.gray)
-                .transition(.opacity)
-        }
-    }
-}
-
 struct ImprovedAuthField: View {
     @Binding var text: String
     let icon: String
@@ -178,9 +176,10 @@ struct ImprovedAuthField: View {
     var body: some View {
         HStack(spacing: 15) {
             Image(systemName: icon)
-                .foregroundColor(isSelected ? Theme.neonYellow : Theme.neonYellow.opacity(0.7))
+                .foregroundColor(isSelected ? .white : .white.opacity(0.7))
                 .frame(width: 20)
                 .scaleEffect(isSelected ? 1.1 : 1.0)
+                .retroGlow()
             
             Group {
                 if isSecure {
@@ -198,13 +197,14 @@ struct ImprovedAuthField: View {
             .foregroundColor(.white)
         }
         .padding()
-        .background(
+        .background(Color.black.opacity(0.3))
+        .background(Theme.darkGray)
+        .cornerRadius(15)
+        .overlay(
             RoundedRectangle(cornerRadius: 15)
-                .fill(Theme.darkGray)
-                .overlay(
-                    RoundedRectangle(cornerRadius: 15)
-                        .stroke(isSelected ? Theme.neonYellow : Theme.neonYellow.opacity(0.3),
-                               lineWidth: isSelected ? 2 : 1)
+                .strokeBorder(
+                    isSelected ? Color.white : Color.white.opacity(0.3),
+                    lineWidth: isSelected ? 2 : 1
                 )
         )
         .onTapGesture {

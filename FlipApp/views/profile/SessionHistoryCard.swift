@@ -1,32 +1,36 @@
 import SwiftUI
 
 struct SessionHistoryCard: View {
-  let session: Session
+    let session: Session
 
-  var body: some View {
-    HStack {
-      VStack(alignment: .leading, spacing: 8) {
-        Text(session.formattedStartTime)
-          .font(.system(size: 14, weight: .medium))
-          .foregroundColor(Theme.lightGray)
+    var body: some View {
+        HStack {
+            VStack(alignment: .leading, spacing: 8) {
+                Text(session.formattedStartTime)
+                    .font(.system(size: 14, weight: .medium))
+                    .foregroundColor(.gray)
 
-        Text("\(session.actualDuration) min")
-          .font(.system(size: 20, weight: .bold))
-          .foregroundColor(.white)
-      }
+                Text("\(session.actualDuration) min")
+                    .font(.system(size: 20, weight: .bold))
+                    .foregroundColor(.white)
+                    .retroGlow()
+            }
 
-      Spacer()
+            Spacer()
 
-      Image(
-        systemName: session.wasSuccessful
-          ? "checkmark.circle.fill" : "xmark.circle.fill"
-      )
-      .foregroundColor(session.wasSuccessful ? Theme.neonYellow : .red)
-      .font(.system(size: 24))
+            Image(systemName: session.wasSuccessful ? "checkmark.circle.fill" : "xmark.circle.fill")
+                .foregroundColor(.white)
+                .font(.system(size: 24))
+                .retroGlow()
+        }
+        .padding()
+        .background(Color.black.opacity(0.3))
+        .background(Theme.darkGray)
+        .cornerRadius(15)
+        .overlay(
+            RoundedRectangle(cornerRadius: 15)
+                .strokeBorder(Color.white.opacity(0.3), lineWidth: 1)
+        )
+        .padding(.horizontal)
     }
-    .padding()
-    .background(Theme.darkGray)
-    .cornerRadius(15)
-    .padding(.horizontal)
-  }
 }

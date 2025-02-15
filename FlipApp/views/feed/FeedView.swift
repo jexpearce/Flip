@@ -2,53 +2,62 @@ import FirebaseAuth
 import SwiftUI
 
 struct FeedView: View {
-  @EnvironmentObject var sessionManager: SessionManager
-  @StateObject private var viewModel = FeedViewModel()
+    @EnvironmentObject var sessionManager: SessionManager
+    @StateObject private var viewModel = FeedViewModel()
 
-  var body: some View {
-    ScrollView {
-      VStack(spacing: 25) {
-        Text("FEED").title()
+    var body: some View {
+        ScrollView {
+            VStack(spacing: 25) {
+                Text("FEED")
+                    .font(.system(size: 28, weight: .black))
+                    .tracking(8)
+                    .foregroundColor(.white)
+                    .retroGlow()
+                    .padding(.top, 20)
 
-        if viewModel.isLoading {
-          ProgressView()
-            .tint(Theme.neonYellow)
-            .scaleEffect(1.5)
-            .padding(.top, 50)
-        } else if viewModel.feedSessions.isEmpty {
-          VStack(spacing: 15) {
-            Image(systemName: "person.2")
-              .font(.system(size: 50))
-              .foregroundColor(Theme.neonYellow)
+                if viewModel.isLoading {
+                    ProgressView()
+                        .tint(.white)
+                        .scaleEffect(1.5)
+                        .padding(.top, 50)
+                } else if viewModel.feedSessions.isEmpty {
+                    VStack(spacing: 15) {
+                        Image(systemName: "person.2")
+                            .font(.system(size: 50))
+                            .foregroundColor(.white)
+                            .retroGlow()
 
-            Text("No Sessions Yet")
-              .font(.title2)
-              .foregroundColor(.white)
+                        Text("No Sessions Yet")
+                            .font(.title2)
+                            .foregroundColor(.white)
+                            .retroGlow()
 
-            Text("Add friends to see their focus sessions")
-              .font(.subheadline)
-              .foregroundColor(.gray)
-              .multilineTextAlignment(.center)
-          }
-          .padding(.top, 50)
-        } else {
-          ForEach(viewModel.feedSessions) { session in
-            FeedSessionCard(session: session)
-          }
+                        Text("Add friends to see their focus sessions")
+                            .font(.subheadline)
+                            .foregroundColor(.gray)
+                            .multilineTextAlignment(.center)
+                    }
+                    .padding(.top, 50)
+                } else {
+                    ForEach(viewModel.feedSessions) { session in
+                        FeedSessionCard(session: session)
+                    }
+                }
+            }
+            .padding(.horizontal)
         }
-      }
-      .padding(.horizontal)
+        .background(Theme.mainGradient)
+        .onAppear {
+            viewModel.loadFeed()
+        }
+        .alert("Error", isPresented: $viewModel.showError) {
+            Button("OK", role: .cancel) {}
+        } message: {
+            Text(viewModel.errorMessage)
+        }
     }
-    .onAppear {
-      viewModel.loadFeed()
-    }
-    .alert("Error", isPresented: $viewModel.showError) {
-      Button("OK", role: .cancel) {}
-    } message: {
-      Text(viewModel.errorMessage)
-    }
-  }
 }
+
 
 class FeedViewModel: ObservableObject {
   @Published var feedSessions: [Session] = []

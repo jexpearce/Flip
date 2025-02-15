@@ -11,12 +11,12 @@ struct TrackingView: View {
           ? "checkmark.circle.fill" : "xmark.circle.fill"
       )
       .font(.system(size: 60))
-      .foregroundColor(appManager.isFaceDown ? Theme.neonYellow : .red)
+      .foregroundColor(appManager.isFaceDown ? Theme.offWhite : .red)
 
       // Status Text
       Text(appManager.isFaceDown ? "STAY FOCUSED!" : "FLIP YOUR PHONE!")
         .title()
-        .foregroundColor(appManager.isFaceDown ? Theme.neonYellow : .red)
+        .foregroundColor(appManager.isFaceDown ? Theme.offWhite : .red)
         .multilineTextAlignment(.center)
 
       VStack(spacing: 15) {
@@ -24,7 +24,7 @@ struct TrackingView: View {
           Text("REMAINING")
             .font(.system(size: 16, weight: .heavy))
             .tracking(4)
-            .foregroundColor(Theme.neonYellow.opacity(0.7))
+            .foregroundColor(Theme.offWhite.opacity(0.7))
         }
         Text(appManager.remainingTimeString)
           .font(.system(size: 50, weight: .heavy))
@@ -36,7 +36,7 @@ struct TrackingView: View {
               .fill(Theme.darkGray)
               .overlay(
                 RoundedRectangle(cornerRadius: 25)
-                  .strokeBorder(Theme.neonYellow.opacity(0.3), lineWidth: 1)
+                  .strokeBorder(Theme.offWhite.opacity(0.3), lineWidth: 1)
               )
           )
       }
