@@ -13,7 +13,7 @@ struct ProfileView: View {
                         .tracking(8)
                         .foregroundColor(.white)
                         .retroGlow()
-                    
+
                     Text("プロフィール")
                         .font(.system(size: 12))
                         .tracking(4)
@@ -29,9 +29,17 @@ struct ProfileView: View {
                         GridItem(.flexible()),
                     ], spacing: 15
                 ) {
-                    StatCard(title: "TOTAL TIME", value: "\(sessionManager.totalFocusTime)", unit: "min")
-                    StatCard(title: "SESSIONS", value: "\(sessionManager.totalSuccessfulSessions)", unit: "total")
-                    StatCard(title: "AVG LENGTH", value: "\(sessionManager.averageSessionLength)", unit: "min")
+                    StatCard(
+                        title: "TOTAL TIME",
+                        value: "\(sessionManager.totalFocusTime)", unit: "min")
+                    StatCard(
+                        title: "SESSIONS",
+                        value: "\(sessionManager.totalSuccessfulSessions)",
+                        unit: "total")
+                    StatCard(
+                        title: "AVG LENGTH",
+                        value: "\(sessionManager.averageSessionLength)",
+                        unit: "min")
                 }
                 .padding(.horizontal)
 
@@ -74,7 +82,7 @@ struct ProfileView: View {
                             .tracking(5)
                             .foregroundColor(.white)
                             .retroGlow()
-                        
+
                         Text("セッション履歴")
                             .font(.system(size: 12))
                             .tracking(2)

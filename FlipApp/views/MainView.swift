@@ -3,7 +3,7 @@ import SwiftUI
 
 struct MainView: View {
     @StateObject private var authManager = AuthManager.shared
-    
+
     var body: some View {
         Group {
             if authManager.isAuthenticated {
@@ -14,7 +14,9 @@ struct MainView: View {
                         }
                     FeedView()
                         .tabItem {
-                            Label("Feed", systemImage: "list.bullet.rectangle.fill")
+                            Label(
+                                "Feed",
+                                systemImage: "list.bullet.rectangle.fill")
                         }
                     FriendsView()
                         .tabItem {

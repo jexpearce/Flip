@@ -19,7 +19,7 @@ struct PausedView: View {
                     .tracking(8)
                     .foregroundColor(.white)
                     .retroGlow()
-                
+
                 Text("一時停止中")
                     .font(.system(size: 14))
                     .tracking(4)
@@ -28,7 +28,7 @@ struct PausedView: View {
 
             // Time Display
             Text(formatTime(seconds: appManager.pausedRemainingSeconds))
-            .font(.system(size: 40, weight: .bold, design: .monospaced))
+                .font(.system(size: 40, weight: .bold, design: .monospaced))
                 .foregroundColor(.white)
                 .retroGlow()
 
@@ -68,7 +68,8 @@ struct PausedView: View {
                     .cornerRadius(22)
                     .overlay(
                         RoundedRectangle(cornerRadius: 22)
-                            .strokeBorder(Color.white.opacity(0.3), lineWidth: 1)
+                            .strokeBorder(
+                                Color.white.opacity(0.3), lineWidth: 1)
                     )
                     .retroGlow()
             }

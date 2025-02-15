@@ -46,7 +46,8 @@ struct FriendsSearchView: View {
                                 ForEach(viewModel.recommendations) { user in
                                     UserSearchCard(
                                         user: user,
-                                        requestStatus: viewModel.requestStatus(for: user.id)
+                                        requestStatus: viewModel.requestStatus(
+                                            for: user.id)
                                     ) {
                                         viewModel.sendFriendRequest(to: user.id)
                                     }
@@ -62,7 +63,8 @@ struct FriendsSearchView: View {
                                 ForEach(viewModel.searchResults) { user in
                                     UserSearchCard(
                                         user: user,
-                                        requestStatus: viewModel.requestStatus(for: user.id)
+                                        requestStatus: viewModel.requestStatus(
+                                            for: user.id)
                                     ) {
                                         viewModel.sendFriendRequest(to: user.id)
                                     }
@@ -102,9 +104,11 @@ struct UserSearchCard: View {
                     .foregroundColor(.white)
                     .retroGlow()
 
-                Text("\(user.totalSessions) sessions • \(user.totalFocusTime) min")
-                    .font(.system(size: 14))
-                    .foregroundColor(.gray)
+                Text(
+                    "\(user.totalSessions) sessions • \(user.totalFocusTime) min"
+                )
+                .font(.system(size: 14))
+                .foregroundColor(.gray)
             }
 
             Spacer()
@@ -152,7 +156,7 @@ struct UserSearchCard: View {
     }
 }
 enum RequestStatus {
-  case none
-  case sent
-  case friends
+    case none
+    case sent
+    case friends
 }

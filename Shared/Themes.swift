@@ -7,7 +7,7 @@ struct Theme {
     static let mediumGray = Color(white: 0.15)
     static let lightGray = Color(white: 0.3)
     static let offWhite = Color(white: 0.7)
-    
+
     // Gradients
     static let mainGradient = LinearGradient(
         colors: [Color.black.opacity(0.8), .black],
@@ -24,21 +24,21 @@ extension Text {
             .tracking(8)
             .foregroundColor(.white)
     }
-    
+
     func subtitle() -> Text {
         self
             .font(.system(size: 12, weight: .medium))
             .tracking(5)
             .foregroundColor(Color.gray.opacity(0.8))
     }
-    
+
     func retro() -> Text {
         self
             .font(.system(size: 60, weight: .black, design: .default))
             .tracking(8)
             .foregroundColor(.white)
     }
-    
+
     func japanese() -> Text {
         self
             .font(.system(size: 14, weight: .regular))
@@ -62,7 +62,7 @@ extension View {
             )
             .cornerRadius(30)
     }
-    
+
     func controlBackground() -> some View {
         self
             .padding(.vertical, 12)
@@ -74,7 +74,7 @@ extension View {
                     .strokeBorder(Color.white.opacity(0.3), lineWidth: 1)
             )
     }
-    
+
     func retroGlow() -> some View {
         self.shadow(color: .white.opacity(0.5), radius: 10)
     }

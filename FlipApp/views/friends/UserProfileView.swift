@@ -17,8 +17,11 @@ struct UserProfileView: View {
                         .retroGlow()
 
                     HStack(spacing: 40) {
-                        StatBox(title: "SESSIONS", value: "\(user.totalSessions)")
-                        StatBox(title: "FOCUS TIME", value: "\(user.totalFocusTime)m")
+                        StatBox(
+                            title: "SESSIONS", value: "\(user.totalSessions)")
+                        StatBox(
+                            title: "FOCUS TIME",
+                            value: "\(user.totalFocusTime)m")
                     }
                 }
                 .padding(.top, 20)
@@ -31,11 +34,17 @@ struct UserProfileView: View {
                         GridItem(.flexible()),
                     ], spacing: 15
                 ) {
-                    StatCard(title: "TOTAL TIME", value: "\(user.totalFocusTime)", unit: "min")
-                    StatCard(title: "SESSIONS", value: "\(user.totalSessions)", unit: "total")
+                    StatCard(
+                        title: "TOTAL TIME", value: "\(user.totalFocusTime)",
+                        unit: "min")
+                    StatCard(
+                        title: "SESSIONS", value: "\(user.totalSessions)",
+                        unit: "total")
                     StatCard(
                         title: "AVG LENGTH",
-                        value: user.totalSessions > 0 ? "\(user.totalFocusTime / user.totalSessions)" : "0",
+                        value: user.totalSessions > 0
+                            ? "\(user.totalFocusTime / user.totalSessions)"
+                            : "0",
                         unit: "min")
                 }
                 .padding(.horizontal)

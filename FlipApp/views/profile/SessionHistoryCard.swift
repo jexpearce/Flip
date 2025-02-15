@@ -18,10 +18,13 @@ struct SessionHistoryCard: View {
 
             Spacer()
 
-            Image(systemName: session.wasSuccessful ? "checkmark.circle.fill" : "xmark.circle.fill")
-                .foregroundColor(.white)
-                .font(.system(size: 24))
-                .retroGlow()
+            Image(
+                systemName: session.wasSuccessful
+                    ? "checkmark.circle.fill" : "xmark.circle.fill"
+            )
+            .foregroundColor(.white)
+            .font(.system(size: 24))
+            .retroGlow()
         }
         .padding()
         .background(Color.black.opacity(0.3))

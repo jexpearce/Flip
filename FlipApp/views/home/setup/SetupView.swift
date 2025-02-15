@@ -2,37 +2,37 @@ import SwiftUI
 
 struct SetupView: View {
     @EnvironmentObject var appManager: AppManager
-    
+
     var body: some View {
         VStack(spacing: 25) {
             // Title with icon
             VStack(spacing: 4) {
                 HStack(spacing: 15) {
-                  Text("FLIP")
-                    .retro()
-                    .retroGlow()
-                    
+                    Text("FLIP")
+                        .retro()
+                        .retroGlow()
+
                     Image(systemName: "arrow.2.squarepath")
                         .font(.system(size: 40))
                         .foregroundColor(.white)
                         .retroGlow()
                 }
-                
+
                 Text("TRUE PRODUCTIVITY").subtitle()
             }
             .padding(.top, 20)
-            
+
             // Set Time Title
             VStack(spacing: 4) {
                 Text("SET TIME").title()
-                .retroGlow()  // Added here
+                    .retroGlow()  // Added here
                 Text("タイマーの設定").japanese()
             }
-            
+
             // Circular Time Picker
             CircularTime(selectedMinutes: $appManager.selectedMinutes)
                 .padding(.top, -10)
-            
+
             // Settings Controls
             HStack(spacing: 20) {
                 // Pause Toggle
@@ -51,7 +51,7 @@ struct SetupView: View {
                             .tint(Color.white)
                     }
                 )
-                
+
                 // Number of Pauses
                 ControlButton(
                     title: "PAUSES",
@@ -79,7 +79,7 @@ struct SetupView: View {
                 )
             }
             .padding(.horizontal)
-            
+
             // Begin Button
             Button(action: {
                 appManager.startCountdown()
@@ -88,7 +88,7 @@ struct SetupView: View {
             }
             .padding(.horizontal, 40)
             .padding(.top, 10)
-            
+
             Spacer()
         }
         .background(Theme.mainGradient)

@@ -30,7 +30,8 @@ struct FriendsView: View {
                                 if accepted {
                                     viewModel.acceptFriendRequest(from: user.id)
                                 } else {
-                                    viewModel.declineFriendRequest(from: user.id)
+                                    viewModel.declineFriendRequest(
+                                        from: user.id)
                                 }
                             }
                         }
@@ -54,7 +55,8 @@ struct FriendsView: View {
                     .cornerRadius(15)
                     .overlay(
                         RoundedRectangle(cornerRadius: 15)
-                            .strokeBorder(Color.white.opacity(0.3), lineWidth: 1)
+                            .strokeBorder(
+                                Color.white.opacity(0.3), lineWidth: 1)
                     )
                     .retroGlow()
                 }
@@ -81,7 +83,9 @@ struct FriendsView: View {
                 } else {
                     LazyVStack(spacing: 15) {
                         ForEach(viewModel.friends) { friend in
-                            NavigationLink(destination: UserProfileView(user: friend)) {
+                            NavigationLink(
+                                destination: UserProfileView(user: friend)
+                            ) {
                                 FriendCard(friend: friend)
                             }
                         }

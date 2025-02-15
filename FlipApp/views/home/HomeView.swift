@@ -3,7 +3,7 @@ import SwiftUI
 
 struct HomeView: View {
     @EnvironmentObject var appManager: AppManager
-    
+
     var body: some View {
         VStack(spacing: 30) {
             switch appManager.currentState {

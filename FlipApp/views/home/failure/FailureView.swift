@@ -18,7 +18,7 @@ struct FailureView: View {
                     .tracking(8)
                     .foregroundColor(.white)
                     .retroGlow()
-                
+
                 Text("セッション失敗")
                     .font(.system(size: 14))
                     .tracking(4)
@@ -64,7 +64,8 @@ struct FailureView: View {
                         .cornerRadius(22)
                         .overlay(
                             RoundedRectangle(cornerRadius: 22)
-                                .strokeBorder(Color.white.opacity(0.3), lineWidth: 1)
+                                .strokeBorder(
+                                    Color.white.opacity(0.3), lineWidth: 1)
                         )
                         .retroGlow()
                 }

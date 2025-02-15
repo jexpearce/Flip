@@ -1,6 +1,6 @@
+import FirebaseAuth
 // AuthTextField.swift
 import SwiftUI
-import FirebaseAuth
 
 struct AuthTextField: View {
     @Binding var text: String

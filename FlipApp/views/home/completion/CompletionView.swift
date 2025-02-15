@@ -10,7 +10,7 @@ struct CompletionView: View {
                 .font(.system(size: 60))
                 .foregroundColor(.white)
                 .retroGlow()
-            
+
             // Title
             VStack(spacing: 4) {
                 Text("SESSION COMPLETE")
@@ -18,7 +18,7 @@ struct CompletionView: View {
                     .tracking(8)
                     .foregroundColor(.white)
                     .retroGlow()
-                
+
                 Text("おめでとう")
                     .font(.system(size: 14))
                     .tracking(4)
@@ -35,7 +35,7 @@ struct CompletionView: View {
                     .font(.system(size: 60, weight: .black))
                     .foregroundColor(.white)
                     .retroGlow()
-                
+
                 Text("minutes")
                     .font(.system(size: 20))
                     .tracking(4)
