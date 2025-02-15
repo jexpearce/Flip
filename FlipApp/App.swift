@@ -13,7 +13,7 @@ struct FlipApp: App {
       forTaskWithIdentifier: AppManager.backgroundRefreshIdentifier,
       using: nil
     ) { task in
-      // Handle the task here
+      // Handle the task here.
       AppManager.shared.handleBackgroundRefresh(task: task as! BGAppRefreshTask)
     }
 
