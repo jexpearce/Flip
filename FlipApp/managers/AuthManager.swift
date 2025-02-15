@@ -51,12 +51,17 @@ class AuthManager: ObservableObject {
   }
 
   func signIn(email: String, password: String) {
-    Auth.auth().signIn(withEmail: email, password: password) {
-      [weak self] result, error in
-      if result != nil {
-        self?.isAuthenticated = true
+      Auth.auth().signIn(withEmail: email, password: password) { [weak self] result, error in
+          if result != nil {
+              // Clear any existing session state
+              UserDefaults.standard.removeObject(forKey: "currentState")
+              UserDefaults.standard.removeObject(forKey: "remainingSeconds")
+              UserDefaults.standard.removeObject(forKey: "remainingPauses")
+              UserDefaults.standard.removeObject(forKey: "isFaceDown")
+              
+              self?.isAuthenticated = true
+          }
       }
-    }
   }
 
   func signOut() {
