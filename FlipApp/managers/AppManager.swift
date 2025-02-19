@@ -1,5 +1,4 @@
 import ActivityKit
-import BackgroundTasks
 import CoreMotion
 import FirebaseAuth
 import FirebaseFirestore
@@ -7,7 +6,6 @@ import SwiftUI
 import UserNotifications
 
 class AppManager: NSObject, ObservableObject {
-    static var backgroundRefreshIdentifier = "com.jexpearce.flip.refresh"
     static let shared = AppManager()
 
     // MARK: - Published Properties
@@ -37,11 +35,6 @@ class AppManager: NSObject, ObservableObject {
     private let motionManager = CMMotionManager()
     private let activityManager = CMMotionActivityManager()
     private var lastOrientationCheck = Date()
-
-    // MARK: - Background Task Properties
-    private var backgroundTask: UIBackgroundTaskIdentifier = .invalid
-    private var backgroundCheckTimer: Timer?
-    private var isInBackground = false
 
     // MARK: - Timer Properties
     private var countdownTimer: Timer?
@@ -147,8 +140,6 @@ class AppManager: NSObject, ObservableObject {
         )
         startMotionUpdates()
         startSessionTimer()
-        beginBackgroundProcessing()
-        scheduleBackgroundRefresh()
 
         print("Tracking session started successfully")
     }
@@ -384,39 +375,6 @@ class AppManager: NSObject, ObservableObject {
 
     }
 
-    // MARK: - Background Processing
-    private func beginBackgroundProcessing() {
-        // Clean up any existing task first
-        if backgroundTask != .invalid {
-            endBackgroundTask()
-        }
-
-        backgroundTask = UIApplication.shared.beginBackgroundTask {
-            [weak self] in
-            print("Background task expired")
-            self?.endBackgroundTask()
-            self?.scheduleBackgroundRefresh()
-        }
-
-        // Start monitoring
-        startBackgroundCheckTimer()
-        startActivityMonitoring()
-
-        // Auto-end after 25 seconds (before 30s limit)
-        DispatchQueue.main.asyncAfter(deadline: .now() + 28) { [weak self] in
-            self?.endBackgroundTask()
-            self?.beginBackgroundProcessing()  //new addition, can remove it if breaks
-        }
-    }
-
-    private func endBackgroundTask() {
-        guard backgroundTask != .invalid else { return }
-
-        UIApplication.shared.endBackgroundTask(backgroundTask)
-        backgroundTask = .invalid
-        print("Background task ended successfully")
-    }
-
     private func startActivityMonitoring() {
         guard CMMotionActivityManager.isActivityAvailable() else { return }
 
@@ -430,18 +388,9 @@ class AppManager: NSObject, ObservableObject {
 
             self.checkCurrentOrientation()
         }
-        
+
         Task { @MainActor in
             LocationHandler.shared.startLocationUpdates()
-        }
-    }
-
-    private func startBackgroundCheckTimer() {
-        backgroundCheckTimer?.invalidate()
-        backgroundCheckTimer = Timer.scheduledTimer(
-            withTimeInterval: 10, repeats: true
-        ) { [weak self] _ in
-            self?.checkCurrentOrientation()
         }
     }
 
@@ -450,46 +399,6 @@ class AppManager: NSObject, ObservableObject {
         let currentFaceDown = motion.gravity.z > 0.8
         if currentFaceDown != self.isFaceDown {
             handleOrientationChange(isFaceDown: currentFaceDown)
-        }
-    }
-
-    // MARK: - Background Task Registration
-    func registerBackgroundTasks() {
-        BGTaskScheduler.shared.register(
-            forTaskWithIdentifier: AppManager.backgroundRefreshIdentifier,
-            using: .main
-        ) { [weak self] task in
-            self?.handleBackgroundRefresh(task: task as! BGAppRefreshTask)
-        }
-    }
-
-    func scheduleBackgroundRefresh() {
-        let request = BGAppRefreshTaskRequest(
-            identifier: AppManager.backgroundRefreshIdentifier)
-        request.earliestBeginDate = Date(timeIntervalSinceNow: 60)
-
-        do {
-            BGTaskScheduler.shared.cancel(
-                taskRequestWithIdentifier: AppManager
-                    .backgroundRefreshIdentifier)
-            try BGTaskScheduler.shared.submit(request)
-        } catch {
-            print("Error scheduling background task: \(error)")
-        }
-    }
-
-    func handleBackgroundRefresh(task: BGAppRefreshTask) {
-        task.expirationHandler = { [weak self] in
-            self?.saveSessionState()
-            task.setTaskCompleted(success: false)
-        }
-
-        checkCurrentOrientation()
-        saveSessionState()
-        scheduleBackgroundRefresh()
-
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
-            task.setTaskCompleted(success: true)
         }
     }
 
@@ -589,9 +498,7 @@ class AppManager: NSObject, ObservableObject {
         activityManager.stopActivityUpdates()
         sessionTimer?.invalidate()
         countdownTimer?.invalidate()
-        backgroundCheckTimer?.invalidate()
-        endBackgroundTask()
-        
+
         Task { @MainActor in
             LocationHandler.shared.stopLocationUpdates()
         }
@@ -827,13 +734,9 @@ class AppManager: NSObject, ObservableObject {
 
     @objc private func appWillResignActive() {
         saveSessionState()
-        if currentState == .tracking {
-            beginBackgroundProcessing()
-        }
     }
 
     @objc private func appDidBecomeActive() {
-        isInBackground = false
         if currentState == .tracking {
             // Just update the LiveActivity instead of restarting session
             if #available(iOS 16.1, *) {

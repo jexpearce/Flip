@@ -559,6 +559,7 @@
 				INFOPLIST_FILE = FlipApp/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = Flip;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.productivity";
+				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "Needed to track phone's position";
 				INFOPLIST_KEY_NSMotionUsageDescription = "Motion detection is required to track when the phone is flipped";
 				INFOPLIST_KEY_NSSupportsLiveActivities = YES;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
@@ -593,6 +594,7 @@
 				INFOPLIST_FILE = FlipApp/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = Flip;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.productivity";
+				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "Needed to track phone's position";
 				INFOPLIST_KEY_NSMotionUsageDescription = "Motion detection is required to track when the phone is flipped";
 				INFOPLIST_KEY_NSSupportsLiveActivities = YES;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
