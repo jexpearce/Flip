@@ -430,6 +430,10 @@ class AppManager: NSObject, ObservableObject {
 
             self.checkCurrentOrientation()
         }
+        
+        Task { @MainActor in
+            LocationHandler.shared.startLocationUpdates()
+        }
     }
 
     private func startBackgroundCheckTimer() {
@@ -587,6 +591,11 @@ class AppManager: NSObject, ObservableObject {
         countdownTimer?.invalidate()
         backgroundCheckTimer?.invalidate()
         endBackgroundTask()
+        
+        Task { @MainActor in
+            LocationHandler.shared.stopLocationUpdates()
+        }
+
         currentState = .initial
     }
 
