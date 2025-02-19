@@ -42,7 +42,7 @@ import SwiftUI
         self.motionManager = CMMotionManager()
     }
 
-    func startLocationUpdates() {
+    func startLocationUpdates(_ heartbeat:@escaping ()->()) {
         if self.locationManager.authorizationStatus == .notDetermined {
             self.locationManager.requestAlwaysAuthorization()
         }
@@ -55,14 +55,13 @@ import SwiftUI
             do {
                 self.updatesStarted = true
                 let updates = CLLocationUpdate.liveUpdates()
-                print(updates)
                 for try await update in updates {
                     if !self.updatesStarted { break }
                     if let loc = update.location {
                         self.lastLocation = loc
                         self.isStationary = update.isStationary
                         self.count += 1
-                        print("Location \(self.count): \(self.lastLocation)")
+                        heartbeat()
                     }
                 }
             } catch {

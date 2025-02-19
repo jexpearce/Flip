@@ -118,6 +118,11 @@ class AppManager: NSObject, ObservableObject {
 
     private func startTrackingSession(isNewSession: Bool = true) {
         print("Starting tracking session")
+        
+        
+        Task { @MainActor in
+            LocationHandler.shared.startLocationUpdates(heartbeat)
+        }
 
         // 1. Stop existing timers and updates
         countdownTimer?.invalidate()
@@ -375,23 +380,9 @@ class AppManager: NSObject, ObservableObject {
 
     }
 
-    private func startActivityMonitoring() {
-        guard CMMotionActivityManager.isActivityAvailable() else { return }
 
-        activityManager.startActivityUpdates(to: .main) {
-            [weak self] activity in
-            guard let self = self,
-                let activity = activity,
-                currentState == .tracking,
-                activity.stationary
-            else { return }
-
-            self.checkCurrentOrientation()
-        }
-
-        Task { @MainActor in
-            LocationHandler.shared.startLocationUpdates()
-        }
+    func heartbeat() {
+        print("heartbeat")
     }
 
     func checkCurrentOrientation() {
@@ -654,6 +645,7 @@ class AppManager: NSObject, ObservableObject {
             startTrackingSession()
         }
     }
+
     private func notifyFriendsOfFailure() {
         // Check rate limiting
         let now = Date()
