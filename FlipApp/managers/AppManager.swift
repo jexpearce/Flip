@@ -69,6 +69,7 @@ class AppManager: NSObject, ObservableObject {
     // MARK: - Initialization
     private override init() {
         super.init()
+        cleanupStaleActivities()
 
         if #available(iOS 16.1, *) {
             // We only need to check if activities are enabled
@@ -495,6 +496,7 @@ class AppManager: NSObject, ObservableObject {
 
     // MARK: - Session Completion
     private func completeSession() {
+        clearSessionState()
         // 1. Handle Live Activity first
         if #available(iOS 16.1, *) {
             Task {
@@ -517,9 +519,10 @@ class AppManager: NSObject, ObservableObject {
                 activity = nil
             }
         }
-
+        
         // 2. Clean up session
         endSession()
+
 
         // 3. Save final state
         saveSessionState()
@@ -567,7 +570,7 @@ class AppManager: NSObject, ObservableObject {
                 activity = nil  // Important: set to nil after ending
             }
         }
-
+        clearSessionState()
         endSession()
         saveSessionState()
         notifyFailure()
@@ -596,7 +599,7 @@ class AppManager: NSObject, ObservableObject {
             LocationHandler.shared.stopLocationUpdates()
         }
 
-        currentState = .initial
+
     }
 
     @available(iOS 16.1, *)
@@ -607,6 +610,10 @@ class AppManager: NSObject, ObservableObject {
             print("Live Activities not enabled")
             return
         }
+        guard currentState != .completed && currentState != .failed else {
+                print("Not starting Live Activity - session already ended")
+                return
+            }
 
         Task { @MainActor in  // Ensure we're on main thread
             do {
@@ -669,11 +676,17 @@ class AppManager: NSObject, ObservableObject {
 
     @available(iOS 16.1, *)
     private func updateLiveActivity() {
+        guard currentState != .completed && currentState != .failed else {
+                return
+            }
         guard let activity = activity else {
-            print("No active Live Activity to update")
-            startLiveActivity()
-            return
-        }
+                print("No active Live Activity to update")
+                // Only start new activity if in a valid state
+                if currentState != .completed && currentState != .failed {
+                    startLiveActivity()
+                }
+                return
+            }
 
         Task {
             let state = FlipActivityAttributes.ContentState(
@@ -723,6 +736,18 @@ class AppManager: NSObject, ObservableObject {
             categoryIdentifier: "SESSION_END"
         )
     }
+    private func cleanupStaleActivities() {
+        if #available(iOS 16.1, *) {
+            Task {
+                for activity in Activity<FlipActivityAttributes>.activities {
+                    await activity.end(
+                        activity.content,
+                        dismissalPolicy: .immediate
+                    )
+                }
+            }
+        }
+    }
 
     // MARK: - State Preservation
     private func saveSessionState() {
@@ -739,12 +764,41 @@ class AppManager: NSObject, ObservableObject {
         currentState =
             FlipState(rawValue: defaults.string(forKey: "currentState") ?? "")
             ?? .initial
+        if currentState == .completed || currentState == .failed {
+                clearSessionState()
+                currentState = .initial
+                return
+            }
         remainingSeconds = defaults.integer(forKey: "remainingSeconds")
         remainingPauses = defaults.integer(forKey: "remainingPauses")
         isFaceDown = defaults.bool(forKey: "isFaceDown")
 
         if currentState == .tracking {
             startTrackingSession()
+        }
+    }
+    private func clearSessionState() {
+        let defaults = UserDefaults.standard
+        defaults.removeObject(forKey: "currentState")
+        defaults.removeObject(forKey: "remainingSeconds")
+        defaults.removeObject(forKey: "remainingPauses")
+        defaults.removeObject(forKey: "isFaceDown")
+        
+        // Add aggressive Live Activity cleanup
+        if #available(iOS 16.1, *) {
+            Task {
+                // Then manually clean any stragglers
+                for activity in Activity<FlipActivityAttributes>.activities {
+                    await activity.end(
+                        activity.content,
+                        dismissalPolicy: .immediate
+                    )
+                }
+            }
+        }
+        
+        DispatchQueue.main.async {
+            self.currentState = .initial
         }
     }
     private func notifyFriendsOfFailure() {
