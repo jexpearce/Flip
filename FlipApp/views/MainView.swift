@@ -14,9 +14,7 @@ struct MainView: View {
                         }
                     FeedView()
                         .tabItem {
-                            Label(
-                                "Feed",
-                                systemImage: "list.bullet.rectangle.fill")
+                            Label("Feed", systemImage: "list.bullet.rectangle.fill")
                         }
                     FriendsView()
                         .tabItem {
@@ -28,10 +26,13 @@ struct MainView: View {
                         }
                 }
                 .background(Theme.mainGradient)
-                .toolbarBackground(Theme.darkGray, for: .tabBar)
+                .toolbarBackground(
+                    Color(red: 26/255, green: 14/255, blue: 47/255).opacity(0.98),
+                    for: .tabBar
+                )
                 .toolbarBackground(.visible, for: .tabBar)
-                .accentColor(.white)
-                .tint(.white)
+                .accentColor(.white)  // Selected tab color
+                .tint(Color.white.opacity(0.4))  // Unselected tab color
             } else {
                 AuthView()
             }

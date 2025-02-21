@@ -10,7 +10,7 @@ struct StatCard: View {
             Text(value)
                 .font(.system(size: 28, weight: .black))
                 .foregroundColor(.white)
-                .retroGlow()
+                .shadow(color: Color(red: 56/255, green: 189/255, blue: 248/255).opacity(0.5), radius: 8)
 
             Text(title)
                 .font(.system(size: 10, weight: .heavy))
@@ -19,16 +19,42 @@ struct StatCard: View {
 
             Text(unit)
                 .font(.system(size: 12, weight: .medium))
-                .foregroundColor(Theme.lightGray)
+                .foregroundColor(.white.opacity(0.5))
         }
         .frame(maxWidth: .infinity)
         .padding(.vertical, 15)
-        .background(Color.black.opacity(0.3))
-        .background(Theme.darkGray)
-        .cornerRadius(15)
-        .overlay(
-            RoundedRectangle(cornerRadius: 15)
-                .strokeBorder(Color.white.opacity(0.3), lineWidth: 1)
+        .background(
+            ZStack {
+                // Base glass effect
+                RoundedRectangle(cornerRadius: 15)
+                    .fill(Theme.buttonGradient)
+                    .opacity(0.1)
+                
+                // Frosted overlay
+                RoundedRectangle(cornerRadius: 15)
+                    .fill(Color.white.opacity(0.05))
+                
+                // Top edge highlight
+                RoundedRectangle(cornerRadius: 15)
+                    .stroke(
+                        LinearGradient(
+                            colors: [
+                                Color.white.opacity(0.5),
+                                Color.white.opacity(0.1)
+                            ],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        ),
+                        lineWidth: 1
+                    )
+                
+                // Inner glow
+                RoundedRectangle(cornerRadius: 15)
+                    .stroke(Color(red: 56/255, green: 189/255, blue: 248/255).opacity(0.3), lineWidth: 1)
+                    .blur(radius: 2)
+                    .offset(y: 1)
+            }
         )
+        .shadow(color: Color.black.opacity(0.2), radius: 4, x: 0, y: 2)
     }
 }

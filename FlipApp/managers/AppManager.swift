@@ -496,7 +496,7 @@ class AppManager: NSObject, ObservableObject {
 
     // MARK: - Session Completion
     private func completeSession() {
-        clearSessionState()
+        
         // 1. Handle Live Activity first
         if #available(iOS 16.1, *) {
             Task {
@@ -523,7 +523,8 @@ class AppManager: NSObject, ObservableObject {
         // 2. Clean up session
         endSession()
 
-
+        clearSessionState()
+        
         // 3. Save final state
         saveSessionState()
 
@@ -598,6 +599,7 @@ class AppManager: NSObject, ObservableObject {
         Task { @MainActor in
             LocationHandler.shared.stopLocationUpdates()
         }
+        
 
 
     }
