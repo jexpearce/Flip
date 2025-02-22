@@ -31,8 +31,8 @@ struct MainView: View {
                     for: .tabBar
                 )
                 .toolbarBackground(.visible, for: .tabBar)
-                .accentColor(.white)  // Selected tab color
-                .tint(Color.white.opacity(0.4))  // Unselected tab color
+                .accentColor(Theme.orange)  // Selected tab color
+                                .tint(Color.white.opacity(0.4))  // Unselected tab color
             } else {
                 AuthView()
             }

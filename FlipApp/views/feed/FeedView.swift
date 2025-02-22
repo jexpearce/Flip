@@ -1,10 +1,11 @@
 import FirebaseAuth
 import SwiftUI
 
+
 struct FeedView: View {
     @EnvironmentObject var sessionManager: SessionManager
     @StateObject private var viewModel = FeedViewModel()
-
+    
     var body: some View {
         ScrollView {
             VStack(spacing: 25) {
@@ -12,7 +13,7 @@ struct FeedView: View {
                     .font(.system(size: 28, weight: .black))
                     .tracking(8)
                     .foregroundColor(.white)
-                    .retroGlow()
+                    .shadow(color: Color(red: 56/255, green: 189/255, blue: 248/255).opacity(0.5), radius: 8)
                     .padding(.top, 20)
 
                 if viewModel.isLoading {
@@ -22,19 +23,26 @@ struct FeedView: View {
                         .padding(.top, 50)
                 } else if viewModel.feedSessions.isEmpty {
                     VStack(spacing: 15) {
-                        Image(systemName: "person.2")
-                            .font(.system(size: 50))
-                            .foregroundColor(.white)
-                            .retroGlow()
+                        ZStack {
+                            Circle()
+                                .fill(Theme.buttonGradient)
+                                .frame(width: 80, height: 80)
+                                .opacity(0.2)
+                            
+                            Image(systemName: "person.2")
+                                .font(.system(size: 50))
+                                .foregroundColor(.white)
+                                .shadow(color: Color(red: 56/255, green: 189/255, blue: 248/255).opacity(0.5), radius: 8)
+                        }
 
                         Text("No Sessions Yet")
-                            .font(.title2)
+                            .font(.system(size: 24, weight: .bold))
                             .foregroundColor(.white)
-                            .retroGlow()
+                            .shadow(color: Color(red: 56/255, green: 189/255, blue: 248/255).opacity(0.4), radius: 6)
 
                         Text("Add friends to see their focus sessions")
-                            .font(.subheadline)
-                            .foregroundColor(.gray)
+                            .font(.system(size: 16))
+                            .foregroundColor(.white.opacity(0.7))
                             .multilineTextAlignment(.center)
                     }
                     .padding(.top, 50)
@@ -44,7 +52,6 @@ struct FeedView: View {
                     }
                 }
             }
-            .padding(.horizontal)
         }
         .background(Theme.mainGradient)
         .onAppear {

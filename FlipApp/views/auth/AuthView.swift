@@ -156,7 +156,7 @@ struct AuthView: View {
                             )
                             .font(.system(size: 16, weight: .medium))
                             .foregroundColor(.white.opacity(0.8))
-                            .shadow(color: Theme.blue.opacity(0.3), radius: 4)
+                            .shadow(color: Color(red: 56/255, green: 189/255, blue: 248/255).opacity(0.3), radius: 4)
                         }
                     }
                     .padding(.horizontal)

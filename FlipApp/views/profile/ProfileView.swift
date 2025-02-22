@@ -131,7 +131,7 @@ struct ProfileView: View {
                         Text("\(sessionManager.longestSession) min")
                             .font(.system(size: 24, weight: .black))
                             .foregroundColor(.white)
-                            .shadow(color: Theme.blue.opacity(0.5), radius: 8)
+                            .shadow(color: Color(red: 56/255, green: 189/255, blue: 248/255).opacity(0.5), radius: 8)
                     }
                     Spacer()
                 }
@@ -169,7 +169,7 @@ struct ProfileView: View {
                             .font(.system(size: 16, weight: .black))
                             .tracking(5)
                             .foregroundColor(.white)
-                            .shadow(color: Theme.blue.opacity(0.5), radius: 8)
+                            .shadow(color: Color(red: 56/255, green: 189/255, blue: 248/255).opacity(0.5), radius: 8)
 
                         Text("セッション履歴")
                             .font(.system(size: 12))
