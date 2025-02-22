@@ -16,20 +16,6 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
-		42CADC972D52A72B00D41EB9 /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = 42CADC7E2D52A72500D41EB9 /* Project object */;
-			proxyType = 1;
-			remoteGlobalIDString = 42CADC852D52A72500D41EB9;
-			remoteInfo = test;
-		};
-		42CADCA12D52A72B00D41EB9 /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = 42CADC7E2D52A72500D41EB9 /* Project object */;
-			proxyType = 1;
-			remoteGlobalIDString = 42CADC852D52A72500D41EB9;
-			remoteInfo = test;
-		};
 		42CADCC92D52A7A400D41EB9 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = 42CADC7E2D52A72500D41EB9 /* Project object */;
@@ -55,8 +41,6 @@
 
 /* Begin PBXFileReference section */
 		42CADC862D52A72500D41EB9 /* FlipApp.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = FlipApp.app; sourceTree = BUILT_PRODUCTS_DIR; };
-		42CADC962D52A72B00D41EB9 /* FlipTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = FlipTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
-		42CADCA02D52A72B00D41EB9 /* FlipUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = FlipUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		42CADCB72D52A75900D41EB9 /* FlipWidget.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = FlipWidget.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		42CADCB92D52A75900D41EB9 /* WidgetKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = WidgetKit.framework; path = System/Library/Frameworks/WidgetKit.framework; sourceTree = SDKROOT; };
 		42CADCBB2D52A75A00D41EB9 /* SwiftUI.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SwiftUI.framework; path = System/Library/Frameworks/SwiftUI.framework; sourceTree = SDKROOT; };
@@ -98,16 +82,6 @@
 			path = FlipApp;
 			sourceTree = "<group>";
 		};
-		42CADC992D52A72B00D41EB9 /* FlipTests */ = {
-			isa = PBXFileSystemSynchronizedRootGroup;
-			path = FlipTests;
-			sourceTree = "<group>";
-		};
-		42CADCA32D52A72B00D41EB9 /* FlipUITests */ = {
-			isa = PBXFileSystemSynchronizedRootGroup;
-			path = FlipUITests;
-			sourceTree = "<group>";
-		};
 		42CADCBD2D52A75A00D41EB9 /* FlipWidget */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			exceptions = (
@@ -137,20 +111,6 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		42CADC932D52A72B00D41EB9 /* Frameworks */ = {
-			isa = PBXFrameworksBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		42CADC9D2D52A72B00D41EB9 /* Frameworks */ = {
-			isa = PBXFrameworksBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
 		42CADCB42D52A75900D41EB9 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
@@ -168,8 +128,6 @@
 			children = (
 				42CADCD12D52A8BF00D41EB9 /* Shared */,
 				42CADC882D52A72500D41EB9 /* FlipApp */,
-				42CADC992D52A72B00D41EB9 /* FlipTests */,
-				42CADCA32D52A72B00D41EB9 /* FlipUITests */,
 				42CADCBD2D52A75A00D41EB9 /* FlipWidget */,
 				42CADCB82D52A75900D41EB9 /* Frameworks */,
 				42CADC872D52A72500D41EB9 /* Products */,
@@ -180,8 +138,6 @@
 			isa = PBXGroup;
 			children = (
 				42CADC862D52A72500D41EB9 /* FlipApp.app */,
-				42CADC962D52A72B00D41EB9 /* FlipTests.xctest */,
-				42CADCA02D52A72B00D41EB9 /* FlipUITests.xctest */,
 				42CADCB72D52A75900D41EB9 /* FlipWidget.appex */,
 			);
 			name = Products;
@@ -227,52 +183,6 @@
 			productReference = 42CADC862D52A72500D41EB9 /* FlipApp.app */;
 			productType = "com.apple.product-type.application";
 		};
-		42CADC952D52A72B00D41EB9 /* FlipTests */ = {
-			isa = PBXNativeTarget;
-			buildConfigurationList = 42CADCAD2D52A72B00D41EB9 /* Build configuration list for PBXNativeTarget "FlipTests" */;
-			buildPhases = (
-				42CADC922D52A72B00D41EB9 /* Sources */,
-				42CADC932D52A72B00D41EB9 /* Frameworks */,
-				42CADC942D52A72B00D41EB9 /* Resources */,
-			);
-			buildRules = (
-			);
-			dependencies = (
-				42CADC982D52A72B00D41EB9 /* PBXTargetDependency */,
-			);
-			fileSystemSynchronizedGroups = (
-				42CADC992D52A72B00D41EB9 /* FlipTests */,
-			);
-			name = FlipTests;
-			packageProductDependencies = (
-			);
-			productName = testTests;
-			productReference = 42CADC962D52A72B00D41EB9 /* FlipTests.xctest */;
-			productType = "com.apple.product-type.bundle.unit-test";
-		};
-		42CADC9F2D52A72B00D41EB9 /* FlipUITests */ = {
-			isa = PBXNativeTarget;
-			buildConfigurationList = 42CADCB02D52A72B00D41EB9 /* Build configuration list for PBXNativeTarget "FlipUITests" */;
-			buildPhases = (
-				42CADC9C2D52A72B00D41EB9 /* Sources */,
-				42CADC9D2D52A72B00D41EB9 /* Frameworks */,
-				42CADC9E2D52A72B00D41EB9 /* Resources */,
-			);
-			buildRules = (
-			);
-			dependencies = (
-				42CADCA22D52A72B00D41EB9 /* PBXTargetDependency */,
-			);
-			fileSystemSynchronizedGroups = (
-				42CADCA32D52A72B00D41EB9 /* FlipUITests */,
-			);
-			name = FlipUITests;
-			packageProductDependencies = (
-			);
-			productName = testUITests;
-			productReference = 42CADCA02D52A72B00D41EB9 /* FlipUITests.xctest */;
-			productType = "com.apple.product-type.bundle.ui-testing";
-		};
 		42CADCB62D52A75900D41EB9 /* FlipWidget */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = 42CADCCD2D52A7A500D41EB9 /* Build configuration list for PBXNativeTarget "FlipWidget" */;
@@ -308,14 +218,6 @@
 					42CADC852D52A72500D41EB9 = {
 						CreatedOnToolsVersion = 16.2;
 					};
-					42CADC952D52A72B00D41EB9 = {
-						CreatedOnToolsVersion = 16.2;
-						TestTargetID = 42CADC852D52A72500D41EB9;
-					};
-					42CADC9F2D52A72B00D41EB9 = {
-						CreatedOnToolsVersion = 16.2;
-						TestTargetID = 42CADC852D52A72500D41EB9;
-					};
 					42CADCB62D52A75900D41EB9 = {
 						CreatedOnToolsVersion = 16.2;
 					};
@@ -339,8 +241,6 @@
 			projectRoot = "";
 			targets = (
 				42CADC852D52A72500D41EB9 /* FlipApp */,
-				42CADC952D52A72B00D41EB9 /* FlipTests */,
-				42CADC9F2D52A72B00D41EB9 /* FlipUITests */,
 				42CADCB62D52A75900D41EB9 /* FlipWidget */,
 			);
 		};
@@ -348,20 +248,6 @@
 
 /* Begin PBXResourcesBuildPhase section */
 		42CADC842D52A72500D41EB9 /* Resources */ = {
-			isa = PBXResourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		42CADC942D52A72B00D41EB9 /* Resources */ = {
-			isa = PBXResourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		42CADC9E2D52A72B00D41EB9 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -385,20 +271,6 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		42CADC922D52A72B00D41EB9 /* Sources */ = {
-			isa = PBXSourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		42CADC9C2D52A72B00D41EB9 /* Sources */ = {
-			isa = PBXSourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
 		42CADCB32D52A75900D41EB9 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -409,16 +281,6 @@
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
-		42CADC982D52A72B00D41EB9 /* PBXTargetDependency */ = {
-			isa = PBXTargetDependency;
-			target = 42CADC852D52A72500D41EB9 /* FlipApp */;
-			targetProxy = 42CADC972D52A72B00D41EB9 /* PBXContainerItemProxy */;
-		};
-		42CADCA22D52A72B00D41EB9 /* PBXTargetDependency */ = {
-			isa = PBXTargetDependency;
-			target = 42CADC852D52A72500D41EB9 /* FlipApp */;
-			targetProxy = 42CADCA12D52A72B00D41EB9 /* PBXContainerItemProxy */;
-		};
 		42CADCCA2D52A7A400D41EB9 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
 			target = 42CADCB62D52A75900D41EB9 /* FlipWidget */;
@@ -616,80 +478,6 @@
 			};
 			name = Release;
 		};
-		42CADCAE2D52A72B00D41EB9 /* Debug */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				BUNDLE_LOADER = "$(TEST_HOST)";
-				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = 2HAG477YT9;
-				GENERATE_INFOPLIST_FILE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
-				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.jexpearce.flip.tests;
-				PRODUCT_NAME = "$(TARGET_NAME)";
-				SWIFT_EMIT_LOC_STRINGS = NO;
-				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = "1,2";
-				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Flip.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/Flip";
-			};
-			name = Debug;
-		};
-		42CADCAF2D52A72B00D41EB9 /* Release */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				BUNDLE_LOADER = "$(TEST_HOST)";
-				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = 2HAG477YT9;
-				GENERATE_INFOPLIST_FILE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
-				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.jexpearce.flip.tests;
-				PRODUCT_NAME = "$(TARGET_NAME)";
-				SWIFT_EMIT_LOC_STRINGS = NO;
-				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = "1,2";
-				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Flip.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/Flip";
-			};
-			name = Release;
-		};
-		42CADCB12D52A72B00D41EB9 /* Debug */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = 2HAG477YT9;
-				GENERATE_INFOPLIST_FILE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
-				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.jexpearce.flip.uitests;
-				PRODUCT_NAME = "$(TARGET_NAME)";
-				SWIFT_EMIT_LOC_STRINGS = NO;
-				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = "1,2";
-				TEST_TARGET_NAME = test;
-			};
-			name = Debug;
-		};
-		42CADCB22D52A72B00D41EB9 /* Release */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = 2HAG477YT9;
-				GENERATE_INFOPLIST_FILE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
-				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.jexpearce.flip.uitests;
-				PRODUCT_NAME = "$(TARGET_NAME)";
-				SWIFT_EMIT_LOC_STRINGS = NO;
-				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = "1,2";
-				TEST_TARGET_NAME = test;
-			};
-			name = Release;
-		};
 		42CADCCE2D52A7A500D41EB9 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -765,24 +553,6 @@
 			buildConfigurations = (
 				42CADCAB2D52A72B00D41EB9 /* Debug */,
 				42CADCAC2D52A72B00D41EB9 /* Release */,
-			);
-			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Release;
-		};
-		42CADCAD2D52A72B00D41EB9 /* Build configuration list for PBXNativeTarget "FlipTests" */ = {
-			isa = XCConfigurationList;
-			buildConfigurations = (
-				42CADCAE2D52A72B00D41EB9 /* Debug */,
-				42CADCAF2D52A72B00D41EB9 /* Release */,
-			);
-			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Release;
-		};
-		42CADCB02D52A72B00D41EB9 /* Build configuration list for PBXNativeTarget "FlipUITests" */ = {
-			isa = XCConfigurationList;
-			buildConfigurations = (
-				42CADCB12D52A72B00D41EB9 /* Debug */,
-				42CADCB22D52A72B00D41EB9 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
