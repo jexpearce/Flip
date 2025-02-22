@@ -62,7 +62,7 @@ import SwiftUI
                         self.lastLocation = loc
                         self.isStationary = update.isStationary
                         self.count += 1
-                        print("Location \(self.count): \(self.lastLocation)")
+//                        print("Location \(self.count): \(self.lastLocation)")
                     }
                 }
             } catch {
