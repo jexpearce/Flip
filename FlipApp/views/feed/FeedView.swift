@@ -53,7 +53,6 @@ struct FeedView: View {
                 }
             }
         }
-        .background(Theme.mainGradient)
         .onAppear {
             viewModel.loadFeed()
         }

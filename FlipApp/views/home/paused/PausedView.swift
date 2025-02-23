@@ -141,7 +141,6 @@ struct PausedView: View {
             }
         }
         .padding()
-        .background(Theme.mainGradient)
         .alert("Cancel Session?", isPresented: $showingCancelAlert) {
             Button("Cancel Session", role: .destructive) {
                 appManager.failSession()

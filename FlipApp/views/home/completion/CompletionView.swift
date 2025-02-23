@@ -132,7 +132,6 @@ struct CompletionView: View {
             .animation(.spring(response: 0.6, dampingFraction: 0.8).delay(0.9), value: showButton)
             .padding(.top, 30)
         }
-        .background(Theme.mainGradient)
         .padding(.horizontal, 30)
         .onAppear {
             showIcon = true

@@ -75,7 +75,6 @@ struct FriendsSearchView: View {
                     .padding(.vertical)
                 }
             }
-            .background(Theme.mainGradient)
             .navigationTitle("FIND FRIENDS")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {

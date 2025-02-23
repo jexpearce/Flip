@@ -21,6 +21,5 @@ struct HomeView: View {
                 CompletionView()
             }
         }
-        .background(Theme.mainGradient)
     }
 }

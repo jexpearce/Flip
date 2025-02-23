@@ -58,9 +58,7 @@ struct CountdownView: View {
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(
-            ZStack {
-                Theme.mainGradient
-                
+            ZStack {                
                 // Subtle animated circles in background
                 ForEach(0..<3) { i in
                     Circle()

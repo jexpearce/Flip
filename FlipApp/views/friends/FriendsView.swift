@@ -124,7 +124,6 @@ struct FriendsView: View {
                 }
             }
         }
-        .background(Theme.mainGradient)
         .sheet(isPresented: $showingSearch) {
             FriendsSearchView()
         }

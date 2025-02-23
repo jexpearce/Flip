@@ -144,6 +144,5 @@ struct FailureView: View {
             .padding(.horizontal, 40)
         }
         .padding(.horizontal, 30)
-        .background(Theme.mainGradient)
     }
 }

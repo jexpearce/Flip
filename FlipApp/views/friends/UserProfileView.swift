@@ -139,7 +139,6 @@ struct UserProfileView: View {
                 }
             }
         }
-        .background(Theme.mainGradient)
         .navigationBarTitleDisplayMode(.inline)
         .onAppear {
             withAnimation(.spring().delay(0.3)) {
