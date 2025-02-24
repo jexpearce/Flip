@@ -1,7 +1,6 @@
 import FirebaseAuth
 import SwiftUI
 
-
 struct FeedView: View {
     @EnvironmentObject var sessionManager: SessionManager
     @StateObject private var viewModel = FeedViewModel()
@@ -48,10 +47,14 @@ struct FeedView: View {
                     .padding(.top, 50)
                 } else {
                     ForEach(viewModel.feedSessions) { session in
-                        FeedSessionCard(session: session)
+                        NavigationLink(destination: UserProfileView(user: viewModel.getUser(for: session.userId))) {
+                            FeedSessionCard(session: session)
+                        }
+                        .buttonStyle(PlainButtonStyle())
                     }
                 }
             }
+            .padding(.horizontal)
         }
         .onAppear {
             viewModel.loadFeed()
@@ -66,6 +69,7 @@ struct FeedView: View {
 
 class FeedViewModel: ObservableObject {
     @Published var feedSessions: [Session] = []
+    @Published var users: [String: FirebaseManager.FlipUser] = [:]
     @Published var isLoading = false
     @Published var showError = false
     @Published var errorMessage = ""
@@ -103,8 +107,38 @@ class FeedViewModel: ObservableObject {
                     return
                 }
 
+                // Load user data for all friends
+                for friendId in userData.friends {
+                    self?.loadUserData(userId: friendId)
+                }
+                
                 self?.loadFriendSessions(friendIds: userData.friends)
             }
+    }
+    
+    private func loadUserData(userId: String) {
+        firebaseManager.db.collection("users").document(userId)
+            .getDocument { [weak self] document, error in
+                if let userData = try? document?.data(as: FirebaseManager.FlipUser.self) {
+                    DispatchQueue.main.async {
+                        self?.users[userId] = userData
+                    }
+                }
+            }
+    }
+    
+    func getUser(for userId: String) -> FirebaseManager.FlipUser {
+        // Return the user if we have it, otherwise return a default user
+        return users[userId] ?? FirebaseManager.FlipUser(
+            id: userId,
+            username: "User",
+            totalFocusTime: 0,
+            totalSessions: 0,
+            longestSession: 0,
+            friends: [],
+            friendRequests: [],
+            sentRequests: []
+        )
     }
 
     private func loadFriendSessions(friendIds: [String]) {

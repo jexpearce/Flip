@@ -6,10 +6,15 @@ import SwiftUI
 struct UserProfileView: View {
     let user: FirebaseManager.FlipUser
     @State private var showStats = false
+    @StateObject private var weeklyViewModel = WeeklySessionListViewModel()
+    
+    private var weeksLongestSession: Int? {
+        return weeklyViewModel.weeksLongestSession > 0 ? weeklyViewModel.weeksLongestSession : nil
+    }
     
     var body: some View {
         ScrollView {
-            VStack(spacing: 25) {
+            VStack(spacing: 20) {
                 // Profile Header with enhanced styling
                 VStack(spacing: 15) {
                     Text(user.username)
@@ -32,7 +37,7 @@ struct UserProfileView: View {
                 }
                 .padding(.top, 20)
 
-                // Stats Cards with animation
+                // Stats Cards with animation - condensed height
                 LazyVGrid(
                     columns: [
                         GridItem(.flexible()),
@@ -40,7 +45,7 @@ struct UserProfileView: View {
                         GridItem(.flexible()),
                     ], spacing: 15
                 ) {
-                    StatCard(
+                    CondensedStatCard(
                         title: "TOTAL TIME",
                         value: "\(user.totalFocusTime)",
                         unit: "min"
@@ -48,7 +53,7 @@ struct UserProfileView: View {
                     .offset(y: showStats ? 0 : 50)
                     .opacity(showStats ? 1 : 0)
                     
-                    StatCard(
+                    CondensedStatCard(
                         title: "SESSIONS",
                         value: "\(user.totalSessions)",
                         unit: "total"
@@ -57,7 +62,7 @@ struct UserProfileView: View {
                     .opacity(showStats ? 1 : 0)
                     .animation(.spring().delay(0.1), value: showStats)
                     
-                    StatCard(
+                    CondensedStatCard(
                         title: "AVG LENGTH",
                         value: user.totalSessions > 0 ? "\(user.totalFocusTime / user.totalSessions)" : "0",
                         unit: "min"
@@ -68,17 +73,17 @@ struct UserProfileView: View {
                 }
                 .padding(.horizontal)
 
-                // Enhanced Longest Session Card
+                // Enhanced Longest Session Card - Weekly Stats
                 HStack {
-                    VStack(alignment: .leading, spacing: 8) {
-                        HStack {
-                            Text("LONGEST FLIP")
-                                .font(.system(size: 14, weight: .black))
-                                .tracking(5)
+                    VStack(alignment: .leading, spacing: 6) {
+                        HStack(spacing: 8) {
+                            Text("\(user.username)'s LONGEST FLIP OF THE WEEK")
+                                .font(.system(size: 12, weight: .black))
+                                .tracking(3)
                                 .foregroundColor(.white)
                             
                             Image(systemName: "crown.fill")
-                                .font(.system(size: 16))
+                                .font(.system(size: 12))
                                 .foregroundStyle(
                                     LinearGradient(
                                         colors: [
@@ -92,14 +97,14 @@ struct UserProfileView: View {
                                 .shadow(color: Color(red: 234/255, green: 179/255, blue: 8/255).opacity(0.5), radius: 4)
                         }
 
-                        Text("\(user.longestSession) min")
-                            .font(.system(size: 24, weight: .black))
+                        Text(weeksLongestSession != nil ? "\(weeksLongestSession!) min" : "No sessions yet this week")
+                            .font(.system(size: 22, weight: .black))
                             .foregroundColor(.white)
                             .shadow(color: Color(red: 56/255, green: 189/255, blue: 248/255).opacity(0.5), radius: 8)
                     }
                     Spacer()
                 }
-                .padding(20)
+                .padding(16)
                 .background(
                     ZStack {
                         RoundedRectangle(cornerRadius: 15)
@@ -135,7 +140,8 @@ struct UserProfileView: View {
                         .shadow(color: Color(red: 56/255, green: 189/255, blue: 248/255).opacity(0.4), radius: 6)
                         .padding(.horizontal)
 
-                    SessionList(userId: user.id)
+                    // Using the WeeklySessionList component
+                    WeeklySessionList(userId: user.id, viewModel: weeklyViewModel)
                 }
             }
         }
@@ -144,51 +150,27 @@ struct UserProfileView: View {
             withAnimation(.spring().delay(0.3)) {
                 showStats = true
             }
+            // Load sessions data
+            weeklyViewModel.loadSessions(for: user.id)
         }
     }
 }
 
-struct StatBox: View {
-    let title: String
-    let value: String
-    let icon: String
-    
-    var body: some View {
-        VStack(spacing: 5) {
-            ZStack {
-                Circle()
-                    .fill(Theme.buttonGradient)
-                    .frame(width: 44, height: 44)
-                    .opacity(0.2)
-                
-                Image(systemName: icon)
-                    .font(.system(size: 20))
-                    .foregroundColor(.white)
-                    .shadow(color: Color(red: 56/255, green: 189/255, blue: 248/255).opacity(0.5), radius: 4)
-            }
-            
-            Text(value)
-                .font(.system(size: 24, weight: .black))
-                .foregroundColor(.white)
-                .shadow(color: Color(red: 56/255, green: 189/255, blue: 248/255).opacity(0.5), radius: 6)
-
-            Text(title)
-                .font(.system(size: 12, weight: .bold))
-                .foregroundColor(.white.opacity(0.7))
-        }
-    }
-}
-
-struct SessionList: View {
-    @StateObject private var viewModel = SessionListViewModel()
+struct WeeklySessionList: View {
+    @ObservedObject var viewModel: WeeklySessionListViewModel
     @State private var showingAllSessions = false
     let userId: String
+    
+    init(userId: String, viewModel: WeeklySessionListViewModel = WeeklySessionListViewModel()) {
+        self.userId = userId
+        self.viewModel = viewModel
+    }
     
     private var displayedSessions: [Session] {
         if showingAllSessions {
             return viewModel.sessions
         } else {
-            return Array(viewModel.sessions.prefix(10))
+            return Array(viewModel.sessions.prefix(5))
         }
     }
 
@@ -198,7 +180,7 @@ struct SessionList: View {
                 SessionHistoryCard(session: session)
             }
             
-            if viewModel.sessions.count > 10 {
+            if viewModel.sessions.count > 5 {
                 Button(action: {
                     withAnimation(.spring()) {
                         showingAllSessions.toggle()
@@ -238,11 +220,75 @@ struct SessionList: View {
                     )
                     .shadow(color: Color(red: 56/255, green: 189/255, blue: 248/255).opacity(0.3), radius: 6)
                 }
-                .padding(.top, 10)
+                .padding(.horizontal)
+                .padding(.top, 5)
             }
         }
         .onAppear {
             viewModel.loadSessions(for: userId)
+        }
+    }
+}
+
+class WeeklySessionListViewModel: ObservableObject {
+    @Published var sessions: [Session] = []
+    @Published var weeksLongestSession: Int = 0
+    private let firebaseManager = FirebaseManager.shared
+
+    func loadSessions(for userId: String) {
+        firebaseManager.db.collection("sessions")
+            .whereField("userId", isEqualTo: userId)
+            .order(by: "startTime", descending: true)
+            .addSnapshotListener { [weak self] snapshot, error in
+                guard let documents = snapshot?.documents else { return }
+
+                DispatchQueue.main.async {
+                    self?.sessions = documents.compactMap { document in
+                        try? document.data(as: Session.self)
+                    }
+                    
+                    // Calculate this week's longest session
+                    let calendar = Calendar.current
+                    let currentDate = Date()
+                    let weekStart = calendar.date(from: calendar.dateComponents([.yearForWeekOfYear, .weekOfYear], from: currentDate))!
+                    
+                    let thisWeeksSessions = self?.sessions.filter { session in
+                        calendar.isDate(session.startTime, inSameWeekAs: weekStart)
+                    } ?? []
+                    
+                    self?.weeksLongestSession = thisWeeksSessions.max(by: { $0.actualDuration < $1.actualDuration })?.actualDuration ?? 0
+                }
+            }
+    }
+}
+
+struct StatBox: View {
+    let title: String
+    let value: String
+    let icon: String
+    
+    var body: some View {
+        VStack(spacing: 5) {
+            ZStack {
+                Circle()
+                    .fill(Theme.buttonGradient)
+                    .frame(width: 44, height: 44)
+                    .opacity(0.2)
+                
+                Image(systemName: icon)
+                    .font(.system(size: 20))
+                    .foregroundColor(.white)
+                    .shadow(color: Color(red: 56/255, green: 189/255, blue: 248/255).opacity(0.5), radius: 4)
+            }
+            
+            Text(value)
+                .font(.system(size: 24, weight: .black))
+                .foregroundColor(.white)
+                .shadow(color: Color(red: 56/255, green: 189/255, blue: 248/255).opacity(0.5), radius: 6)
+
+            Text(title)
+                .font(.system(size: 12, weight: .bold))
+                .foregroundColor(.white.opacity(0.7))
         }
     }
 }

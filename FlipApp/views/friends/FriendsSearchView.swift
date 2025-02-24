@@ -90,70 +90,157 @@ struct FriendsSearchView: View {
     }
 }
 
+
 struct UserSearchCard: View {
     let user: FirebaseManager.FlipUser
     let requestStatus: RequestStatus
     let onSendRequest: () -> Void
-
+    @State private var isAddPressed = false
+    
     var body: some View {
         HStack {
             VStack(alignment: .leading, spacing: 5) {
                 Text(user.username)
                     .font(.system(size: 18, weight: .bold))
                     .foregroundColor(.white)
-                    .retroGlow()
+                    .shadow(color: Color(red: 56/255, green: 189/255, blue: 248/255).opacity(0.5), radius: 8)
 
                 Text(
                     "\(user.totalSessions) sessions • \(user.totalFocusTime) min"
                 )
                 .font(.system(size: 14))
-                .foregroundColor(.gray)
+                .foregroundColor(.white.opacity(0.7))
             }
 
             Spacer()
 
             switch requestStatus {
             case .none:
-                Button(action: onSendRequest) {
-                    Text("Add Friend")
-                        .font(.system(size: 14, weight: .medium))
-                        .foregroundColor(.white)
-                        .padding(.horizontal, 15)
-                        .padding(.vertical, 8)
-                        .background(
+                Button(action: {
+                    withAnimation(.spring()) {
+                        isAddPressed = true
+                    }
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                        onSendRequest()
+                        isAddPressed = false
+                    }
+                }) {
+                    HStack(spacing: 8) {
+                        Image(systemName: "person.badge.plus")
+                            .font(.system(size: 14))
+                        Text("Add Friend")
+                            .font(.system(size: 14, weight: .bold))
+                    }
+                    .foregroundColor(.white)
+                    .padding(.horizontal, 15)
+                    .padding(.vertical, 8)
+                    .background(
+                        ZStack {
                             RoundedRectangle(cornerRadius: 20)
-                                .stroke(Color.white.opacity(0.5), lineWidth: 1)
-                        )
-                        .retroGlow()
+                                .fill(Theme.buttonGradient)
+                                .opacity(0.8)
+                            
+                            RoundedRectangle(cornerRadius: 20)
+                                .fill(Color.white.opacity(0.1))
+                            
+                            RoundedRectangle(cornerRadius: 20)
+                                .stroke(
+                                    LinearGradient(
+                                        colors: [
+                                            Color.white.opacity(0.5),
+                                            Color.white.opacity(0.2)
+                                        ],
+                                        startPoint: .topLeading,
+                                        endPoint: .bottomTrailing
+                                    ),
+                                    lineWidth: 1
+                                )
+                        }
+                    )
+                    .shadow(color: Color(red: 56/255, green: 189/255, blue: 248/255).opacity(0.3), radius: 8)
+                    .scaleEffect(isAddPressed ? 0.95 : 1.0)
                 }
             case .sent:
                 Text("Request Sent")
                     .font(.system(size: 14, weight: .medium))
-                    .foregroundColor(.gray)
+                    .foregroundColor(.white.opacity(0.6))
                     .padding(.horizontal, 15)
                     .padding(.vertical, 8)
                     .background(
-                        RoundedRectangle(cornerRadius: 20)
-                            .stroke(Color.gray, lineWidth: 1)
+                        ZStack {
+                            RoundedRectangle(cornerRadius: 20)
+                                .fill(Color.gray.opacity(0.3))
+                            
+                            RoundedRectangle(cornerRadius: 20)
+                                .stroke(Color.white.opacity(0.2), lineWidth: 1)
+                        }
                     )
             case .friends:
-                Image(systemName: "checkmark.circle.fill")
-                    .foregroundColor(.white)
-                    .font(.system(size: 20))
-                    .retroGlow()
+                HStack(spacing: 5) {
+                    Image(systemName: "checkmark.circle.fill")
+                        .foregroundColor(.white)
+                        .font(.system(size: 16))
+                    
+                    Text("Friends")
+                        .font(.system(size: 14, weight: .medium))
+                        .foregroundColor(.white)
+                }
+                .padding(.horizontal, 15)
+                .padding(.vertical, 8)
+                .background(
+                    ZStack {
+                        RoundedRectangle(cornerRadius: 20)
+                            .fill(
+                                LinearGradient(
+                                    colors: [
+                                        Color(red: 34/255, green: 197/255, blue: 94/255),
+                                        Color(red: 22/255, green: 163/255, blue: 74/255)
+                                    ],
+                                    startPoint: .top,
+                                    endPoint: .bottom
+                                )
+                            )
+                            .opacity(0.5)
+                        
+                        RoundedRectangle(cornerRadius: 20)
+                            .fill(Color.white.opacity(0.1))
+                        
+                        RoundedRectangle(cornerRadius: 20)
+                            .stroke(Color.white.opacity(0.3), lineWidth: 1)
+                    }
+                )
+                .shadow(color: Color.green.opacity(0.3), radius: 6)
             }
         }
         .padding()
-        .background(Color.black.opacity(0.3))
-        .background(Theme.darkGray)
-        .cornerRadius(15)
-        .overlay(
-            RoundedRectangle(cornerRadius: 15)
-                .strokeBorder(Color.white.opacity(0.3), lineWidth: 1)
+        .background(
+            ZStack {
+                RoundedRectangle(cornerRadius: 15)
+                    .fill(Theme.buttonGradient)
+                    .opacity(0.1)
+                
+                RoundedRectangle(cornerRadius: 15)
+                    .fill(Color.white.opacity(0.05))
+                
+                RoundedRectangle(cornerRadius: 15)
+                    .stroke(
+                        LinearGradient(
+                            colors: [
+                                Color.white.opacity(0.5),
+                                Color.white.opacity(0.1)
+                            ],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        ),
+                        lineWidth: 1
+                    )
+            }
         )
+        .shadow(color: Color.black.opacity(0.2), radius: 4, x: 0, y: 2)
         .padding(.horizontal)
     }
 }
+
 enum RequestStatus {
     case none
     case sent

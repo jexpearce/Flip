@@ -1,16 +1,42 @@
 import SwiftUI
+import FirebaseAuth
 
 struct ProfileView: View {
     @EnvironmentObject var sessionManager: SessionManager
     @StateObject private var authManager = AuthManager.shared
+    @StateObject private var scoreManager = ScoreManager.shared
     @State private var isSigningOut = false
+    @State private var showAllSessions = false
+    @State private var username = FirebaseManager.shared.currentUser?.username ?? "User"
+    
+    private var displayedSessions: [Session] {
+        if showAllSessions {
+            return sessionManager.sessions
+        } else {
+            return Array(sessionManager.sessions.prefix(5))
+        }
+    }
+    
+    private var weeksLongestSession: Int? {
+        let calendar = Calendar.current
+        let currentDate = Date()
+        let weekStart = calendar.date(from: calendar.dateComponents([.yearForWeekOfYear, .weekOfYear], from: currentDate))!
+        
+        return sessionManager.sessions
+            .filter { session in
+                calendar.isDate(session.startTime, inSameWeekAs: weekStart)
+            }
+            .max(by: { $0.actualDuration < $1.actualDuration })?.actualDuration
+    }
     
     var body: some View {
         ScrollView {
-            VStack(spacing: 25) {
+            VStack(spacing: 20) {
                 // Header with Title and Sign Out
                 HStack {
-                    Spacer()
+                    // Add rank circle
+                    RankCircle(score: scoreManager.currentScore)
+                        .frame(width: 50, height: 50)
                     
                     VStack(spacing: 4) {
                         Text("PROFILE")
@@ -80,8 +106,12 @@ struct ProfileView: View {
                 }
                 .padding(.top, 20)
                 .padding(.horizontal)
+                
+                // Add discipline rank card
+                DisciplineRankCard(scoreManager: scoreManager)
+                    .padding(.horizontal)
 
-                // Stats Cards with enhanced styling
+                // Stats Cards with condensed styling
                 LazyVGrid(
                     columns: [
                         GridItem(.flexible()),
@@ -89,32 +119,32 @@ struct ProfileView: View {
                         GridItem(.flexible()),
                     ], spacing: 15
                 ) {
-                    StatCard(
+                    CondensedStatCard(
                         title: "TOTAL TIME",
                         value: "\(sessionManager.totalFocusTime)",
                         unit: "min")
-                    StatCard(
+                    CondensedStatCard(
                         title: "SESSIONS",
                         value: "\(sessionManager.totalSuccessfulSessions)",
                         unit: "total")
-                    StatCard(
+                    CondensedStatCard(
                         title: "AVG LENGTH",
                         value: "\(sessionManager.averageSessionLength)",
                         unit: "min")
                 }
                 .padding(.horizontal)
 
-                // Enhanced Longest Session Card
+                // Enhanced Longest Session Card - Weekly Stats
                 HStack {
-                    VStack(alignment: .leading, spacing: 8) {
-                        HStack(spacing: 12) {
-                            Text("LONGEST FLIP")
-                                .font(.system(size: 14, weight: .black))
-                                .tracking(5)
+                    VStack(alignment: .leading, spacing: 6) {
+                        HStack(spacing: 8) {
+                            Text("\(username)'s LONGEST FLIP OF THE WEEK")
+                                .font(.system(size: 12, weight: .black))
+                                .tracking(3)
                                 .foregroundColor(.white)
                             
                             Image(systemName: "crown.fill")
-                                .font(.system(size: 16))
+                                .font(.system(size: 12))
                                 .foregroundStyle(
                                     LinearGradient(
                                         colors: [
@@ -128,14 +158,14 @@ struct ProfileView: View {
                                 .shadow(color: Color(red: 234/255, green: 179/255, blue: 8/255).opacity(0.5), radius: 4)
                         }
 
-                        Text("\(sessionManager.longestSession) min")
-                            .font(.system(size: 24, weight: .black))
+                        Text(weeksLongestSession != nil ? "\(weeksLongestSession!) min" : "No sessions yet this week")
+                            .font(.system(size: 22, weight: .black))
                             .foregroundColor(.white)
                             .shadow(color: Color(red: 56/255, green: 189/255, blue: 248/255).opacity(0.5), radius: 8)
                     }
                     Spacer()
                 }
-                .padding(20)
+                .padding(16)
                 .background(
                     ZStack {
                         RoundedRectangle(cornerRadius: 15)
@@ -162,7 +192,7 @@ struct ProfileView: View {
                 .shadow(color: Color.black.opacity(0.2), radius: 4, x: 0, y: 2)
                 .padding(.horizontal)
 
-                // History Section with enhanced styling
+                // History Section with Show More functionality
                 VStack(alignment: .leading, spacing: 15) {
                     VStack(spacing: 4) {
                         Text("HISTORY")
@@ -178,11 +208,119 @@ struct ProfileView: View {
                     }
                     .padding(.horizontal)
 
-                    ForEach(sessionManager.sessions) { session in
+                    ForEach(displayedSessions) { session in
                         SessionHistoryCard(session: session)
+                    }
+                    
+                    if sessionManager.sessions.count > 5 {
+                        Button(action: {
+                            withAnimation(.spring()) {
+                                showAllSessions.toggle()
+                            }
+                        }) {
+                            HStack {
+                                Text(showAllSessions ? "Show Less" : "Show More")
+                                    .font(.system(size: 16, weight: .bold))
+                                Image(systemName: showAllSessions ? "chevron.up" : "chevron.down")
+                                    .font(.system(size: 14, weight: .bold))
+                            }
+                            .foregroundColor(.white)
+                            .padding(.vertical, 10)
+                            .padding(.horizontal, 20)
+                            .background(
+                                ZStack {
+                                    RoundedRectangle(cornerRadius: 12)
+                                        .fill(Theme.buttonGradient)
+                                        .opacity(0.1)
+                                    
+                                    RoundedRectangle(cornerRadius: 12)
+                                        .fill(Color.white.opacity(0.05))
+                                    
+                                    RoundedRectangle(cornerRadius: 12)
+                                        .stroke(
+                                            LinearGradient(
+                                                colors: [
+                                                    Color.white.opacity(0.5),
+                                                    Color.white.opacity(0.1)
+                                                ],
+                                                startPoint: .topLeading,
+                                                endPoint: .bottomTrailing
+                                            ),
+                                            lineWidth: 1
+                                        )
+                                }
+                            )
+                            .shadow(color: Color(red: 56/255, green: 189/255, blue: 248/255).opacity(0.3), radius: 6)
+                        }
+                        .padding(.horizontal)
+                        .padding(.top, 5)
                     }
                 }
             }
+            .onAppear {
+                if let currentUser = FirebaseManager.shared.currentUser {
+                    self.username = currentUser.username
+                }
+            }
         }
+    }
+}
+
+struct CondensedStatCard: View {
+    let title: String
+    let value: String
+    let unit: String
+
+    var body: some View {
+        VStack(spacing: 4) {
+            Text(value)
+                .font(.system(size: 26, weight: .black))
+                .foregroundColor(.white)
+                .shadow(color: Color(red: 56/255, green: 189/255, blue: 248/255).opacity(0.5), radius: 8)
+
+            Text(title)
+                .font(.system(size: 9, weight: .heavy))
+                .tracking(2)
+                .foregroundColor(.white.opacity(0.7))
+
+            Text(unit)
+                .font(.system(size: 11, weight: .medium))
+                .foregroundColor(.white.opacity(0.5))
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, 12) // Reduced from 15
+        .background(
+            ZStack {
+                // Base glass effect
+                RoundedRectangle(cornerRadius: 15)
+                    .fill(Theme.buttonGradient)
+                    .opacity(0.1)
+                
+                // Frosted overlay
+                RoundedRectangle(cornerRadius: 15)
+                    .fill(Color.white.opacity(0.05))
+                
+                // Top edge highlight
+                RoundedRectangle(cornerRadius: 15)
+                    .stroke(
+                        LinearGradient(
+                            colors: [
+                                Color.white.opacity(0.5),
+                                Color.white.opacity(0.1)
+                            ],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        ),
+                        lineWidth: 1
+                    )
+                
+                // Inner glow
+                RoundedRectangle(cornerRadius: 15)
+                    .stroke(Color(red: 56/255, green: 189/255, blue: 248/255).opacity(0.3), lineWidth: 1)
+                    .blur(radius: 2)
+                    .offset(y: 1)
+            }
+        )
+        .shadow(color: Color.black.opacity(0.2), radius: 4, x: 0, y: 2)
     }
 }
