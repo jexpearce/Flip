@@ -158,10 +158,6 @@ class AppManager: NSObject, ObservableObject {
         print("Pausing session...")
         guard allowPauses && remainingPauses > 0 else { return }
 
-        notificationManager.display(
-            title: "Session Paused",
-            body: "Open app to resume or use lock screen controls"
-        )
 
         // Stop timer first
         countdownTimer?.invalidate()
@@ -276,10 +272,6 @@ class AppManager: NSObject, ObservableObject {
                 }
             }
         }
-
-        notificationManager.display(
-            title: "Resuming Session",
-            body: "Flip your phone face down within 5 seconds")
     }
 
     private func startSessionTimer() {
@@ -298,6 +290,8 @@ class AppManager: NSObject, ObservableObject {
                     self.updateLiveActivity()
                 }
             } else {
+                self.flipBackTimer?.invalidate()
+                self.flipBackTimer = nil
                 self.completeSession()
             }
         }
@@ -549,6 +543,9 @@ class AppManager: NSObject, ObservableObject {
     }
 
     func failSession() {
+        if currentState == .completed {
+                return  // Don't fail a completed session
+            }
         if #available(iOS 16.1, *) {
             Task {
                 // End ALL activities
