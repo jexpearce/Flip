@@ -7,6 +7,8 @@ struct UserProfileView: View {
     let user: FirebaseManager.FlipUser
     @State private var showStats = false
     @StateObject private var weeklyViewModel = WeeklySessionListViewModel()
+    @StateObject private var scoreManager = ScoreManager.shared
+    @State private var userScore: Double = 3.0 // Default starting score
     
     private var weeksLongestSession: Int? {
         return weeklyViewModel.weeksLongestSession > 0 ? weeklyViewModel.weeksLongestSession : nil
@@ -15,27 +17,44 @@ struct UserProfileView: View {
     var body: some View {
         ScrollView {
             VStack(spacing: 20) {
-                // Profile Header with enhanced styling
-                VStack(spacing: 15) {
-                    Text(user.username)
-                        .font(.system(size: 28, weight: .black))
-                        .foregroundColor(.white)
-                        .shadow(color: Color(red: 56/255, green: 189/255, blue: 248/255).opacity(0.5), radius: 8)
-
-                    HStack(spacing: 40) {
-                        StatBox(
-                            title: "SESSIONS",
-                            value: "\(user.totalSessions)",
-                            icon: "timer"
-                        )
-                        StatBox(
-                            title: "FOCUS TIME",
-                            value: "\(user.totalFocusTime)m",
-                            icon: "clock.fill"
-                        )
+                // Profile Header with enhanced styling and rank wheel
+                HStack(alignment: .top, spacing: 15) {
+                    // Rank Circle
+                    RankCircle(score: userScore)
+                        .frame(width: 60, height: 60)
+                    
+                    VStack(alignment: .leading, spacing: 15) {
+                        Text(user.username)
+                            .font(.system(size: 28, weight: .black))
+                            .foregroundColor(.white)
+                            .shadow(color: Color(red: 56/255, green: 189/255, blue: 248/255).opacity(0.5), radius: 8)
+                        
+                        // Display rank name
+                        let rank = getRank(for: userScore)
+                        Text(rank.name)
+                            .font(.system(size: 18, weight: .bold))
+                            .foregroundColor(rank.color)
+                            .shadow(color: rank.color.opacity(0.5), radius: 4)
                     }
+                    
+                    Spacer()
                 }
+                .padding(.horizontal)
                 .padding(.top, 20)
+                
+                // Session stats
+                HStack(spacing: 40) {
+                    StatBox(
+                        title: "SESSIONS",
+                        value: "\(user.totalSessions)",
+                        icon: "timer"
+                    )
+                    StatBox(
+                        title: "FOCUS TIME",
+                        value: "\(user.totalFocusTime)m",
+                        icon: "clock.fill"
+                    )
+                }
 
                 // Stats Cards with animation - condensed height
                 LazyVGrid(
@@ -152,6 +171,48 @@ struct UserProfileView: View {
             }
             // Load sessions data
             weeklyViewModel.loadSessions(for: user.id)
+            
+            // Load user's score
+            loadUserScore()
+        }
+    }
+    
+    // Function to load user's score from Firebase
+    private func loadUserScore() {
+        FirebaseManager.shared.db.collection("users").document(user.id).getDocument { snapshot, error in
+            if let data = snapshot?.data(), let score = data["score"] as? Double {
+                DispatchQueue.main.async {
+                    self.userScore = score
+                }
+            }
+        }
+    }
+    
+    // Helper function to get rank
+    private func getRank(for score: Double) -> (name: String, color: Color) {
+        switch score {
+            case 0.0..<30.0:
+                return ("Novice", Color(red: 156/255, green: 163/255, blue: 175/255))
+            case 30.0..<60.0:
+                return ("Apprentice", Color(red: 96/255, green: 165/255, blue: 250/255))
+            case 60.0..<90.0:
+                return ("Beginner", Color(red: 59/255, green: 130/255, blue: 246/255))
+            case 90.0..<120.0:
+                return ("Steady", Color(red: 16/255, green: 185/255, blue: 129/255))
+            case 120.0..<150.0:
+                return ("Focused", Color(red: 245/255, green: 158/255, blue: 11/255))
+            case 150.0..<180.0:
+                return ("Disciplined", Color(red: 249/255, green: 115/255, blue: 22/255))
+            case 180.0..<210.0:
+                return ("Resolute", Color(red: 239/255, green: 68/255, blue: 68/255))
+            case 210.0..<240.0:
+                return ("Master", Color(red: 236/255, green: 72/255, blue: 153/255))
+            case 240.0..<270.0:
+                return ("Guru", Color(red: 139/255, green: 92/255, blue: 246/255))
+            case 270.0...300.0:
+                return ("Enlightened", Color(red: 217/255, green: 70/255, blue: 239/255))
+            default:
+                return ("Unranked", Color.gray)
         }
     }
 }
