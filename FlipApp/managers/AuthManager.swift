@@ -89,7 +89,6 @@ class AuthManager: ObservableObject {
                     completion(false)
                     return
                 }
-                
                 // Clear any existing session state
                 UserDefaults.standard.removeObject(forKey: "currentState")
                 UserDefaults.standard.removeObject(forKey: "remainingSeconds")

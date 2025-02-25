@@ -1,8 +1,6 @@
 import SwiftUI
-
 struct FeedSessionCard: View {
     let session: Session
-    @State private var isPressed = false
     
     private var statusColor: LinearGradient {
         session.wasSuccessful ?
@@ -123,15 +121,5 @@ struct FeedSessionCard: View {
             }
         )
         .shadow(color: Color.black.opacity(0.2), radius: 4, x: 0, y: 2)
-        .scaleEffect(isPressed ? 0.98 : 1.0)
-        .animation(.spring(response: 0.3, dampingFraction: 0.6), value: isPressed)
-        .onTapGesture {
-            withAnimation {
-                isPressed = true
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-                    isPressed = false
-                }
-            }
-        }
     }
 }

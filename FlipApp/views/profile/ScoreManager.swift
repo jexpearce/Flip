@@ -4,13 +4,13 @@
 //
 //  Created by Jex Pearce on 2/24/25.
 //
-
 import Foundation
 import FirebaseAuth
 import FirebaseFirestore
 import SwiftUI
 
 class ScoreManager: ObservableObject {
+    // Use a static property with a delayed initialization
     static let shared = ScoreManager()
     
     // Score constants
@@ -36,10 +36,18 @@ class ScoreManager: ObservableObject {
     @Published private(set) var currentScore: Double = 3.0
     @Published private(set) var scoreHistory: [ScoreChange] = []
     
-    private let db = Firestore.firestore()
+    // Use a computed property for db to ensure it's only created when needed
+    private var db: Firestore {
+        return Firestore.firestore()
+    }
     
-    // Initialize and load score from Firebase
-    init() {
+    // Initialize without immediately accessing Firebase
+    private init() {
+        // We'll load score explicitly when needed
+    }
+    
+    // New method to explicitly load score
+    func initialize() {
         loadScore()
     }
     

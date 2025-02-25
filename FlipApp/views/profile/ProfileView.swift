@@ -26,7 +26,8 @@ struct ProfileView: View {
         
         return sessionManager.sessions
             .filter { session in
-                calendar.isDate(session.startTime, inSameWeekAs: weekStart)
+                // Only include successful sessions from this week
+                session.wasSuccessful && calendar.isDate(session.startTime, inSameWeekAs: weekStart)
             }
             .max(by: { $0.actualDuration < $1.actualDuration })?.actualDuration
     }

@@ -251,7 +251,6 @@ struct UserProfileView: View {
         }
     }
 }
-
 // Detailed stats view popup
 struct FriendStatsView: View {
     @Environment(\.presentationMode) var presentationMode
@@ -633,7 +632,8 @@ class WeeklySessionListViewModel: ObservableObject {
                     let weekStart = calendar.date(from: calendar.dateComponents([.yearForWeekOfYear, .weekOfYear], from: currentDate))!
                     
                     let thisWeeksSessions = self?.sessions.filter { session in
-                        calendar.isDate(session.startTime, inSameWeekAs: weekStart)
+                        // Only include successful sessions from this week
+                        session.wasSuccessful && calendar.isDate(session.startTime, inSameWeekAs: weekStart)
                     } ?? []
                     
                     self?.weeksLongestSession = thisWeeksSessions.max(by: { $0.actualDuration < $1.actualDuration })?.actualDuration ?? 0

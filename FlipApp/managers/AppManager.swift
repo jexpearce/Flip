@@ -535,6 +535,7 @@ class AppManager: NSObject, ObservableObject {
             wasSuccessful: true,
             actualDuration: selectedMinutes
         )
+        updateUserStats(successful: true)
 
         // 7. Update UI state
         DispatchQueue.main.async {
@@ -579,6 +580,7 @@ class AppManager: NSObject, ObservableObject {
             wasSuccessful: false,
             actualDuration: (selectedMinutes * 60 - remainingSeconds) / 60
         )
+        updateUserStats(successful: false)
 
         DispatchQueue.main.async {
             self.currentState = .failed
@@ -707,6 +709,44 @@ class AppManager: NSObject, ObservableObject {
 
             await activity.update(content)
             print("Live Activity updated successfully")
+        }
+    }
+    
+    // New helper method to update user statistics in Firebase
+    private func updateUserStats(successful: Bool) {
+        guard let userId = Auth.auth().currentUser?.uid else { return }
+        
+        // Update relevant user statistics
+        let db = FirebaseManager.shared.db
+        let userRef = db.collection("users").document(userId)
+        
+        userRef.getDocument { document, error in
+            guard let document = document, document.exists else { return }
+            
+            if let userData = try? document.data(as: FirebaseManager.FlipUser.self) {
+                var totalFocusTime = userData.totalFocusTime
+                var totalSessions = userData.totalSessions
+                var longestSession = userData.longestSession
+                
+                // Update values based on current session
+                let actualSessionDuration = (self.selectedMinutes * 60 - self.remainingSeconds) / 60
+                totalFocusTime += actualSessionDuration
+                
+                if successful {
+                    totalSessions += 1
+                }
+                
+                if actualSessionDuration > longestSession {
+                    longestSession = actualSessionDuration
+                }
+                
+                // Write updates back to Firestore
+                userRef.updateData([
+                    "totalFocusTime": totalFocusTime,
+                    "totalSessions": totalSessions,
+                    "longestSession": longestSession
+                ])
+            }
         }
     }
 

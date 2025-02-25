@@ -35,6 +35,10 @@ struct MainView: View {
                 .toolbarBackground(.visible, for: .tabBar)
                 .toolbarColorScheme(.dark, for: .tabBar)
             }
+            .onAppear {
+                // Initialize the ScoreManager after Firebase is configured
+                ScoreManager.shared.initialize()
+            }
 
         } else {
             AuthView().frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -43,5 +47,4 @@ struct MainView: View {
                 )
         }
     }
-
 }

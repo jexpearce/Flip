@@ -8,7 +8,7 @@ class SessionManager: ObservableObject {
 
     private let userDefaults = UserDefaults.standard
     private let sessionsKey = "flipSessions"
-
+    private let scoreManager = ScoreManager.shared
     init() {
         loadSessions()
     }
@@ -31,6 +31,15 @@ class SessionManager: ObservableObject {
 
         // Upload to Firebase
         uploadSession(newSession)
+        let pausesEnabled = AppManager.shared.allowPauses
+                
+                // Process the session in ScoreManager to update the score
+                scoreManager.processSession(
+                    duration: duration,
+                    wasSuccessful: wasSuccessful,
+                    actualDuration: actualDuration,
+                    pausesEnabled: pausesEnabled
+                )
     }
 
     private func uploadSession(_ session: Session) {
