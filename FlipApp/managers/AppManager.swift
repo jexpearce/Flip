@@ -888,6 +888,31 @@ class AppManager: NSObject, ObservableObject {
                 self?.friendNotificationCount += 1
             }
     }
+    
+    @MainActor
+    func updateLocationDuringSession() {
+        // This gets called periodically from your tracking methods
+        //guard let location = LocationHandler.shared.lastLocation else { return }
+        guard LocationHandler.shared.lastLocation.horizontalAccuracy >= 0 else { return }
+        let location = LocationHandler.shared.lastLocation
+        
+        let locationData: [String: Any] = [
+            "userId": Auth.auth().currentUser?.uid ?? "",
+            "username": FirebaseManager.shared.currentUser?.username ?? "User",
+            "currentLocation": GeoPoint(
+                latitude: location.coordinate.latitude,
+                longitude: location.coordinate.longitude
+            ),
+            "isCurrentlyFlipped": currentState == .tracking && isFaceDown,
+            "lastFlipTime": Timestamp(date: Date()),
+            "lastFlipWasSuccessful": currentState != .failed,
+            "sessionDuration": selectedMinutes,
+            "sessionStartTime": Timestamp(date: Date().addingTimeInterval(-Double(remainingSeconds))),
+            "locationUpdatedAt": Timestamp(date: Date())
+        ]
+        
+        FirebaseManager.shared.db.collection("locations").document(Auth.auth().currentUser?.uid ?? "").setData(locationData, merge: true)
+    }
 
     // MARK: - App Lifecycle
     private func addObservers() {
