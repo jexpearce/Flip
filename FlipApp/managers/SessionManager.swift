@@ -1,11 +1,14 @@
 import FirebaseAuth
 import FirebaseFirestore
 import Foundation
+import SwiftUI
 
 class SessionManager: ObservableObject {
     static let shared = SessionManager()
     @Published private(set) var sessions: [Session] = []
-
+    @Published var showPromotionAlert = false
+    @Published var promotionRankName = ""
+    @Published var promotionRankColor = Color.blue
     private let userDefaults = UserDefaults.standard
     private let sessionsKey = "flipSessions"
     private let scoreManager = ScoreManager.shared
@@ -32,15 +35,21 @@ class SessionManager: ObservableObject {
         // Upload to Firebase
         uploadSession(newSession)
         let pausesEnabled = AppManager.shared.allowPauses
-                
-                // Process the session in ScoreManager to update the score
-                scoreManager.processSession(
+        if let promotionResult = scoreManager.processSessionWithPromotionCheck(
                     duration: duration,
                     wasSuccessful: wasSuccessful,
                     actualDuration: actualDuration,
                     pausesEnabled: pausesEnabled
-                )
-    }
+                ), promotionResult.0 {
+                    // User was promoted! Show the promotion alert
+                    DispatchQueue.main.async {
+                        self.promotionRankName = promotionResult.1.0
+                        self.promotionRankColor = promotionResult.1.1
+                        self.showPromotionAlert = true
+                    }
+                }
+            }
+    
 
     private func uploadSession(_ session: Session) {
         try? FirebaseManager.shared.db.collection("sessions")

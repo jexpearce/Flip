@@ -3,6 +3,7 @@ import SwiftUI
 
 struct AuthView: View {
     @StateObject private var authManager = AuthManager.shared
+    @StateObject private var locationPermissionManager = LocationPermissionManager.shared
     @State private var email = ""
     @State private var password = ""
     @State private var username = ""
@@ -318,6 +319,8 @@ struct AuthView: View {
                                 withAnimation(.spring()) {
                                     showSuccessOverlay = false
                                     authManager.signUpSuccess = false
+                                    // Show location permission alert after success
+                                    locationPermissionManager.requestPermissionWithCustomAlert()
                                     // Auto-switch to sign in
                                     isSignUp = false
                                 }
@@ -380,6 +383,17 @@ struct AuthView: View {
                         .transition(.scale(scale: 0.85).combined(with: .opacity))
                     )
                     .transition(.opacity)
+            }
+            
+            // Custom Location Permission Alert
+            if locationPermissionManager.showCustomAlert {
+                LocationPermissionAlert(
+                    isPresented: $locationPermissionManager.showCustomAlert,
+                    onContinue: {
+                        // Request the system location permission after user acknowledges
+                        locationPermissionManager.requestSystemPermission()
+                    }
+                )
             }
         }
         .onReceive(authManager.$signUpSuccess) { success in

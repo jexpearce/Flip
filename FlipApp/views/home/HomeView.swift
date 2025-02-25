@@ -1,8 +1,8 @@
-// ContentView.swift
 import SwiftUI
 
 struct HomeView: View {
     @EnvironmentObject var appManager: AppManager
+    @EnvironmentObject var sessionManager: SessionManager
     @State private var showRules = false
     
     var body: some View {
@@ -41,6 +41,16 @@ struct HomeView: View {
             // Rules overlay
             if showRules {
                 RulesView(showRules: $showRules)
+            }
+            
+            // Rank Promotion Alert
+            if sessionManager.showPromotionAlert {
+                RankPromotionAlert(
+                    isPresented: $sessionManager.showPromotionAlert,
+                    rankName: sessionManager.promotionRankName,
+                    rankColor: sessionManager.promotionRankColor
+                )
+                .zIndex(100) // Ensure it appears above other content
             }
         }
     }
