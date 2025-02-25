@@ -7,6 +7,8 @@ struct ProfileView: View {
     @StateObject private var scoreManager = ScoreManager.shared
     @State private var isSigningOut = false
     @State private var showAllSessions = false
+    @State private var showStatsDetail = false
+    @State private var showDetailedStats = false
     @State private var username = FirebaseManager.shared.currentUser?.username ?? "User"
     
     private var displayedSessions: [Session] {
@@ -107,70 +109,86 @@ struct ProfileView: View {
                 .padding(.top, 20)
                 .padding(.horizontal)
                 
-                // Add discipline rank card
-                DisciplineRankCard(scoreManager: scoreManager)
-                    .padding(.horizontal)
-
-                // Stats Cards with condensed styling
-                LazyVGrid(
-                    columns: [
-                        GridItem(.flexible()),
-                        GridItem(.flexible()),
-                        GridItem(.flexible()),
-                    ], spacing: 15
-                ) {
-                    CondensedStatCard(
-                        title: "TOTAL TIME",
-                        value: "\(sessionManager.totalFocusTime)",
-                        unit: "min")
-                    CondensedStatCard(
-                        title: "SESSIONS",
-                        value: "\(sessionManager.totalSuccessfulSessions)",
-                        unit: "total")
-                    CondensedStatCard(
-                        title: "AVG LENGTH",
-                        value: "\(sessionManager.averageSessionLength)",
-                        unit: "min")
-                }
-                .padding(.horizontal)
-
-                // Enhanced Longest Session Card - Weekly Stats
-                HStack {
-                    VStack(alignment: .leading, spacing: 6) {
-                        HStack(spacing: 8) {
-                            Text("\(username)'s LONGEST FLIP OF THE WEEK")
-                                .font(.system(size: 12, weight: .black))
+                // Streamlined Discipline rank card
+                VStack(spacing: 15) {
+                    HStack {
+                        // Rank Display
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text("DISCIPLINE RANK")
+                                .font(.system(size: 12, weight: .bold))
                                 .tracking(3)
-                                .foregroundColor(.white)
+                                .foregroundColor(.white.opacity(0.7))
                             
-                            Image(systemName: "crown.fill")
-                                .font(.system(size: 12))
-                                .foregroundStyle(
-                                    LinearGradient(
-                                        colors: [
-                                            Color(red: 234/255, green: 179/255, blue: 8/255),
-                                            Color(red: 253/255, green: 224/255, blue: 71/255)
-                                        ],
-                                        startPoint: .top,
-                                        endPoint: .bottom
-                                    )
-                                )
-                                .shadow(color: Color(red: 234/255, green: 179/255, blue: 8/255).opacity(0.5), radius: 4)
+                            let rank = scoreManager.getCurrentRank()
+                            HStack(alignment: .firstTextBaseline, spacing: 8) {
+                                Text(rank.name)
+                                    .font(.system(size: 26, weight: .black))
+                                    .foregroundColor(rank.color)
+                                    .shadow(color: rank.color.opacity(0.5), radius: 6)
+                                
+                                Text("\(String(format: "%.1f", scoreManager.currentScore))")
+                                    .font(.system(size: 16, weight: .bold))
+                                    .foregroundColor(.white.opacity(0.6))
+                            }
                         }
-
-                        Text(weeksLongestSession != nil ? "\(weeksLongestSession!) min" : "No sessions yet this week")
-                            .font(.system(size: 22, weight: .black))
-                            .foregroundColor(.white)
-                            .shadow(color: Color(red: 56/255, green: 189/255, blue: 248/255).opacity(0.5), radius: 8)
+                        
+                        Spacer()
+                        
+                        // Progress to next rank
+                        if let pointsToNext = scoreManager.pointsToNextRank() {
+                            VStack(alignment: .trailing, spacing: 2) {
+                                Text("NEXT RANK")
+                                    .font(.system(size: 10, weight: .bold))
+                                    .tracking(2)
+                                    .foregroundColor(.white.opacity(0.5))
+                                
+                                Text("\(String(format: "%.1f", pointsToNext))")
+                                    .font(.system(size: 22, weight: .black))
+                                    .foregroundColor(.white)
+                                    .shadow(color: Color(red: 56/255, green: 189/255, blue: 248/255).opacity(0.5), radius: 6)
+                                
+                                Text("points needed")
+                                    .font(.system(size: 10, weight: .medium))
+                                    .foregroundColor(.white.opacity(0.5))
+                            }
+                        }
                     }
-                    Spacer()
+                    
+                    // Centered Score Details & History Button
+                    Button(action: {
+                        showStatsDetail = true
+                    }) {
+                        Text("SCORE DETAILS & HISTORY")
+                            .font(.system(size: 15, weight: .bold))
+                            .tracking(1)
+                            .foregroundColor(.white.opacity(0.9))
+                            .padding(.vertical, 8)
+                            .frame(maxWidth: .infinity)
+                            .background(
+                                ZStack {
+                                    RoundedRectangle(cornerRadius: 10)
+                                        .fill(Color.white.opacity(0.1))
+                                    
+                                    RoundedRectangle(cornerRadius: 10)
+                                        .stroke(Color.white.opacity(0.2), lineWidth: 1)
+                                }
+                            )
+                    }
                 }
-                .padding(16)
+                .padding()
                 .background(
                     ZStack {
                         RoundedRectangle(cornerRadius: 15)
-                            .fill(Theme.buttonGradient)
-                            .opacity(0.15)
+                            .fill(
+                                LinearGradient(
+                                    colors: [
+                                        Color(red: 79/255, green: 70/255, blue: 229/255).opacity(0.6),
+                                        Color(red: 79/255, green: 70/255, blue: 229/255).opacity(0.3)
+                                    ],
+                                    startPoint: .topLeading,
+                                    endPoint: .bottomTrailing
+                                )
+                            )
                         
                         RoundedRectangle(cornerRadius: 15)
                             .fill(Color.white.opacity(0.05))
@@ -191,6 +209,103 @@ struct ProfileView: View {
                 )
                 .shadow(color: Color.black.opacity(0.2), radius: 4, x: 0, y: 2)
                 .padding(.horizontal)
+                .sheet(isPresented: $showStatsDetail) {
+                    ScoreHistoryView()
+                }
+
+                // Enhanced Longest Session Card - Weekly Stats with View More button
+                VStack(spacing: 8) {
+                    // Week's longest flip
+                    HStack {
+                        VStack(alignment: .leading, spacing: 6) {
+                            // Title with improved crown layout
+                            HStack(alignment: .center, spacing: 8) {
+                                Text("\(username)'s LONGEST FLIP OF THE WEEK")
+                                    .font(.system(size: 12, weight: .black))
+                                    .tracking(3)
+                                    .foregroundColor(.white)
+                                
+                                Image(systemName: "crown.fill")
+                                    .font(.system(size: 12))
+                                    .foregroundStyle(
+                                        LinearGradient(
+                                            colors: [
+                                                Color(red: 234/255, green: 179/255, blue: 8/255),
+                                                Color(red: 253/255, green: 224/255, blue: 71/255)
+                                            ],
+                                            startPoint: .top,
+                                            endPoint: .bottom
+                                        )
+                                    )
+                                    .shadow(color: Color(red: 234/255, green: 179/255, blue: 8/255).opacity(0.5), radius: 4)
+                            }
+
+                            Text(weeksLongestSession != nil ? "\(weeksLongestSession!) min" : "No sessions yet this week")
+                                .font(.system(size: 22, weight: .black))
+                                .foregroundColor(.white)
+                                .shadow(color: Color(red: 56/255, green: 189/255, blue: 248/255).opacity(0.5), radius: 8)
+                        }
+                        Spacer()
+                    }
+                    
+                    // View more stats button
+                    Button(action: {
+                        // Show detailed stats popup
+                        showDetailedStats = true
+                    }) {
+                        Text("VIEW DETAILED STATS")
+                            .font(.system(size: 14, weight: .bold))
+                            .foregroundColor(.white.opacity(0.9))
+                            .padding(.vertical, 8)
+                            .frame(maxWidth: .infinity)
+                            .background(
+                                ZStack {
+                                    RoundedRectangle(cornerRadius: 10)
+                                        .fill(Color.white.opacity(0.1))
+                                    
+                                    RoundedRectangle(cornerRadius: 10)
+                                        .stroke(Color.white.opacity(0.2), lineWidth: 1)
+                                }
+                            )
+                    }
+                }
+                .padding(16)
+                .background(
+                    ZStack {
+                        RoundedRectangle(cornerRadius: 15)
+                            .fill(
+                                LinearGradient(
+                                    colors: [
+                                        Color(red: 239/255, green: 68/255, blue: 68/255).opacity(0.4),
+                                        Color(red: 236/255, green: 72/255, blue: 153/255).opacity(0.3)
+                                    ],
+                                    startPoint: .topLeading,
+                                    endPoint: .bottomTrailing
+                                )
+                            )
+                        
+                        RoundedRectangle(cornerRadius: 15)
+                            .fill(Color.white.opacity(0.05))
+                        
+                        RoundedRectangle(cornerRadius: 15)
+                            .stroke(
+                                LinearGradient(
+                                    colors: [
+                                        Color.white.opacity(0.5),
+                                        Color.white.opacity(0.1)
+                                    ],
+                                    startPoint: .topLeading,
+                                    endPoint: .bottomTrailing
+                                ),
+                                lineWidth: 1
+                            )
+                    }
+                )
+                .shadow(color: Color.black.opacity(0.2), radius: 4, x: 0, y: 2)
+                .padding(.horizontal)
+                .sheet(isPresented: $showDetailedStats) {
+                    DetailedStatsView(sessionManager: sessionManager)
+                }
 
                 // History Section with Show More functionality
                 VStack(alignment: .leading, spacing: 15) {
@@ -212,6 +327,14 @@ struct ProfileView: View {
                         SessionHistoryCard(session: session)
                     }
                     
+                    if sessionManager.sessions.isEmpty {
+                        Text("No sessions recorded yet")
+                            .font(.system(size: 16))
+                            .foregroundColor(.white.opacity(0.7))
+                            .frame(maxWidth: .infinity, alignment: .center)
+                            .padding(.vertical, 20)
+                    }
+                    
                     if sessionManager.sessions.count > 5 {
                         Button(action: {
                             withAnimation(.spring()) {
@@ -230,8 +353,16 @@ struct ProfileView: View {
                             .background(
                                 ZStack {
                                     RoundedRectangle(cornerRadius: 12)
-                                        .fill(Theme.buttonGradient)
-                                        .opacity(0.1)
+                                        .fill(
+                                            LinearGradient(
+                                                colors: [
+                                                    Color(red: 16/255, green: 185/255, blue: 129/255).opacity(0.5),
+                                                    Color(red: 16/255, green: 185/255, blue: 129/255).opacity(0.3)
+                                                ],
+                                                startPoint: .top,
+                                                endPoint: .bottom
+                                            )
+                                        )
                                     
                                     RoundedRectangle(cornerRadius: 12)
                                         .fill(Color.white.opacity(0.05))
@@ -266,61 +397,233 @@ struct ProfileView: View {
     }
 }
 
-struct CondensedStatCard: View {
+// New detailed stats view
+struct DetailedStatsView: View {
+    @Environment(\.presentationMode) var presentationMode
+    @ObservedObject var sessionManager: SessionManager
+    @State private var animateStats = false
+    
+    var body: some View {
+        ZStack {
+            // Background gradient
+            LinearGradient(
+                gradient: Gradient(colors: [
+                    Color(red: 26/255, green: 14/255, blue: 47/255),
+                    Color(red: 16/255, green: 24/255, blue: 57/255)
+                ]),
+                startPoint: .top,
+                endPoint: .bottom
+            )
+            .edgesIgnoringSafeArea(.all)
+            
+            VStack(spacing: 25) {
+                // Header
+                HStack {
+                    Spacer()
+                    
+                    VStack(spacing: 4) {
+                        Text("YOUR STATS")
+                            .font(.system(size: 24, weight: .black))
+                            .tracking(8)
+                            .foregroundColor(.white)
+                            .shadow(color: Color(red: 56/255, green: 189/255, blue: 248/255).opacity(0.5), radius: 8)
+                        
+                        Text("スタッツ")
+                            .font(.system(size: 12))
+                            .tracking(4)
+                            .foregroundColor(.white.opacity(0.7))
+                    }
+                    
+                    Spacer()
+                    
+                    // Close button
+                    Button(action: {
+                        presentationMode.wrappedValue.dismiss()
+                    }) {
+                        Image(systemName: "xmark.circle.fill")
+                            .font(.system(size: 28))
+                            .foregroundColor(.white.opacity(0.7))
+                    }
+                    .padding(.trailing, 20)
+                }
+                .padding(.top, 40)
+                
+                // Main stats display
+                VStack(spacing: 30) {
+                    // Total Focus Time
+                    DetailedStatCard(
+                        title: "TOTAL FOCUS TIME",
+                        value: "\(sessionManager.totalFocusTime)",
+                        unit: "minutes",
+                        icon: "clock.fill",
+                        color: Color(red: 59/255, green: 130/255, blue: 246/255),
+                        delay: 0
+                    )
+                    .scaleEffect(animateStats ? 1 : 0.8)
+                    .opacity(animateStats ? 1 : 0)
+                    
+                    // Total Sessions
+                    DetailedStatCard(
+                        title: "TOTAL SESSIONS",
+                        value: "\(sessionManager.totalSuccessfulSessions)",
+                        unit: "completed",
+                        icon: "checkmark.circle.fill",
+                        color: Color(red: 16/255, green: 185/255, blue: 129/255),
+                        delay: 0.1
+                    )
+                    .scaleEffect(animateStats ? 1 : 0.8)
+                    .opacity(animateStats ? 1 : 0)
+                    
+                    // Average Session Length
+                    DetailedStatCard(
+                        title: "AVERAGE SESSION LENGTH",
+                        value: "\(sessionManager.averageSessionLength)",
+                        unit: "minutes",
+                        icon: "chart.bar.fill",
+                        color: Color(red: 245/255, green: 158/255, blue: 11/255),
+                        delay: 0.2
+                    )
+                    .scaleEffect(animateStats ? 1 : 0.8)
+                    .opacity(animateStats ? 1 : 0)
+                    
+                    // Longest Session
+                    DetailedStatCard(
+                        title: "LONGEST SESSION",
+                        value: "\(sessionManager.longestSession)",
+                        unit: "minutes",
+                        icon: "crown.fill",
+                        color: Color(red: 236/255, green: 72/255, blue: 153/255),
+                        delay: 0.3
+                    )
+                    .scaleEffect(animateStats ? 1 : 0.8)
+                    .opacity(animateStats ? 1 : 0)
+                }
+                .padding(.horizontal, 20)
+                
+                Spacer()
+                
+                // Back to profile button
+                Button(action: {
+                    presentationMode.wrappedValue.dismiss()
+                }) {
+                    Text("BACK TO PROFILE")
+                        .font(.system(size: 18, weight: .bold))
+                        .foregroundColor(.white)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 15)
+                        .background(
+                            ZStack {
+                                RoundedRectangle(cornerRadius: 15)
+                                    .fill(Theme.buttonGradient)
+                                
+                                RoundedRectangle(cornerRadius: 15)
+                                    .fill(Color.white.opacity(0.1))
+                                
+                                RoundedRectangle(cornerRadius: 15)
+                                    .stroke(
+                                        LinearGradient(
+                                            colors: [
+                                                Color.white.opacity(0.6),
+                                                Color.white.opacity(0.2)
+                                            ],
+                                            startPoint: .topLeading,
+                                            endPoint: .bottomTrailing
+                                        ),
+                                        lineWidth: 1
+                                    )
+                            }
+                        )
+                        .shadow(color: Color(red: 56/255, green: 189/255, blue: 248/255).opacity(0.5), radius: 8)
+                }
+                .padding(.horizontal, 30)
+                .padding(.bottom, 40)
+                .opacity(animateStats ? 1 : 0)
+                .animation(.easeIn.delay(0.5), value: animateStats)
+            }
+        }
+        .onAppear {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                withAnimation(.spring(response: 0.6, dampingFraction: 0.8)) {
+                    animateStats = true
+                }
+            }
+        }
+    }
+}
+
+struct DetailedStatCard: View {
     let title: String
     let value: String
     let unit: String
-
+    let icon: String
+    let color: Color
+    let delay: Double
+    
+    @State private var animate = false
+    
     var body: some View {
-        VStack(spacing: 4) {
-            Text(value)
-                .font(.system(size: 26, weight: .black))
-                .foregroundColor(.white)
-                .shadow(color: Color(red: 56/255, green: 189/255, blue: 248/255).opacity(0.5), radius: 8)
-
-            Text(title)
-                .font(.system(size: 9, weight: .heavy))
-                .tracking(2)
-                .foregroundColor(.white.opacity(0.7))
-
-            Text(unit)
-                .font(.system(size: 11, weight: .medium))
-                .foregroundColor(.white.opacity(0.5))
+        HStack(spacing: 20) {
+            // Icon
+            ZStack {
+                Circle()
+                    .fill(color.opacity(0.2))
+                    .frame(width: 60, height: 60)
+                
+                Image(systemName: icon)
+                    .font(.system(size: 30))
+                    .foregroundColor(color)
+                    .shadow(color: color.opacity(0.5), radius: 5)
+            }
+            .scaleEffect(animate ? 1 : 0.5)
+            
+            VStack(alignment: .leading, spacing: 4) {
+                Text(title)
+                    .font(.system(size: 14, weight: .bold))
+                    .tracking(1)
+                    .foregroundColor(.white.opacity(0.7))
+                
+                HStack(alignment: .firstTextBaseline, spacing: 6) {
+                    Text(value)
+                        .font(.system(size: 30, weight: .black))
+                        .foregroundColor(.white)
+                        .shadow(color: color.opacity(0.5), radius: 6)
+                    
+                    Text(unit)
+                        .font(.system(size: 14))
+                        .foregroundColor(.white.opacity(0.6))
+                }
+                .opacity(animate ? 1 : 0)
+                .offset(x: animate ? 0 : -20)
+            }
+            
+            Spacer()
         }
-        .frame(maxWidth: .infinity)
-        .padding(.vertical, 12) // Reduced from 15
+        .padding()
         .background(
             ZStack {
-                // Base glass effect
-                RoundedRectangle(cornerRadius: 15)
-                    .fill(Theme.buttonGradient)
-                    .opacity(0.1)
-                
-                // Frosted overlay
-                RoundedRectangle(cornerRadius: 15)
+                RoundedRectangle(cornerRadius: 16)
                     .fill(Color.white.opacity(0.05))
                 
-                // Top edge highlight
-                RoundedRectangle(cornerRadius: 15)
+                RoundedRectangle(cornerRadius: 16)
                     .stroke(
                         LinearGradient(
                             colors: [
-                                Color.white.opacity(0.5),
-                                Color.white.opacity(0.1)
+                                color.opacity(0.6),
+                                color.opacity(0.2)
                             ],
                             startPoint: .topLeading,
                             endPoint: .bottomTrailing
                         ),
                         lineWidth: 1
                     )
-                
-                // Inner glow
-                RoundedRectangle(cornerRadius: 15)
-                    .stroke(Color(red: 56/255, green: 189/255, blue: 248/255).opacity(0.3), lineWidth: 1)
-                    .blur(radius: 2)
-                    .offset(y: 1)
             }
         )
-        .shadow(color: Color.black.opacity(0.2), radius: 4, x: 0, y: 2)
+        .onAppear {
+            DispatchQueue.main.asyncAfter(deadline: .now() + delay) {
+                withAnimation(.spring(response: 0.5, dampingFraction: 0.7)) {
+                    animate = true
+                }
+            }
+        }
     }
 }
