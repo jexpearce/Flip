@@ -4,6 +4,11 @@
 //
 //  Created by Jex Pearce on 2/9/25.
 //
+//  FriendViewModel.swift
+//  FlipApp
+//
+//  Created by Jex Pearce on 2/9/25.
+//
 
 import FirebaseAuth
 import FirebaseFirestore
@@ -132,6 +137,27 @@ class FriendManager: ObservableObject {
         // Remove from local friend requests
         DispatchQueue.main.async {
             self.friendRequests.removeAll { $0.id == userId }
+        }
+    }
+    
+    func removeFriend(friendId: String) {
+        guard let currentUserId = Auth.auth().currentUser?.uid else { return }
+        
+        // Remove from current user's friends list
+        firebaseManager.db.collection("users").document(currentUserId)
+            .updateData([
+                "friends": FieldValue.arrayRemove([friendId])
+            ])
+        
+        // Remove current user from friend's friends list
+        firebaseManager.db.collection("users").document(friendId)
+            .updateData([
+                "friends": FieldValue.arrayRemove([currentUserId])
+            ])
+        
+        // Update local state
+        DispatchQueue.main.async {
+            self.friends.removeAll { $0.id == friendId }
         }
     }
 }

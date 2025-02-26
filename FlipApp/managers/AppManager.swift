@@ -89,13 +89,16 @@ class AppManager: NSObject, ObservableObject {
     }
 
     // MARK: - Session Management
-    func startCountdown() {
-        print("Starting countdown")  // Debug
+    func startCountdown(fromRestoration: Bool = false) {
+        print("Starting countdown" + (fromRestoration ? " (from restoration)" : ""))
 
         startLiveActivity()
 
-        currentState = .countdown
-        countdownSeconds = 5
+        // Only set the state and reset the countdown if not restoring
+        if !fromRestoration {
+            currentState = .countdown
+            countdownSeconds = 5
+        }
 
         countdownTimer?.invalidate()
         countdownTimer = Timer.scheduledTimer(
@@ -105,10 +108,13 @@ class AppManager: NSObject, ObservableObject {
             guard let self = self else { return }
 
             self.countdownSeconds -= 1
+            
+            // Save state on each tick to ensure accurate restoration
+            self.saveSessionState()
 
             if self.countdownSeconds <= 0 {
                 timer.invalidate()
-                print("Countdown finished, starting session")  // Debug
+                print("Countdown finished, starting session")
 
                 // Important: Dispatch to main thread
                 DispatchQueue.main.async {
@@ -806,7 +812,16 @@ class AppManager: NSObject, ObservableObject {
         defaults.set(remainingSeconds, forKey: "remainingSeconds")
         defaults.set(remainingPauses, forKey: "remainingPauses")
         defaults.set(isFaceDown, forKey: "isFaceDown")
-
+        
+        // Save countdown seconds if we're in countdown state
+        if currentState == .countdown {
+            defaults.set(countdownSeconds, forKey: "countdownSeconds")
+        }
+        
+        // If we're in paused state, save paused remaining seconds
+        if currentState == .paused {
+            defaults.set(pausedRemainingSeconds, forKey: "pausedRemainingSeconds")
+        }
     }
 
     private func restoreSessionState() {
@@ -814,17 +829,47 @@ class AppManager: NSObject, ObservableObject {
         currentState =
             FlipState(rawValue: defaults.string(forKey: "currentState") ?? "")
             ?? .initial
+        
+        // If the session was completed or failed, clear state and return
         if currentState == .completed || currentState == .failed {
-                clearSessionState()
-                currentState = .initial
-                return
-            }
+            clearSessionState()
+            currentState = .initial
+            return
+        }
+        
+        // Restore other state variables
         remainingSeconds = defaults.integer(forKey: "remainingSeconds")
         remainingPauses = defaults.integer(forKey: "remainingPauses")
         isFaceDown = defaults.bool(forKey: "isFaceDown")
-
-        if currentState == .tracking {
+        
+        // Handle different states appropriately
+        switch currentState {
+        case .tracking:
+            // Continue tracking session from where it left off
             startTrackingSession()
+        case .countdown:
+            // If we were in countdown state, restart the countdown
+            let savedCountdown = defaults.integer(forKey: "countdownSeconds")
+            // If we have a saved countdown value and it's valid, use it
+            if savedCountdown > 0 && savedCountdown <= 5 {
+                countdownSeconds = savedCountdown
+                print("Restoring from countdown state - continuing from \(countdownSeconds) seconds")
+            } else {
+                // Otherwise, restart with the default countdown time
+                countdownSeconds = 5
+                print("Restoring from countdown state - restarting countdown")
+            }
+            
+            // Restart the countdown timer
+            startCountdown(fromRestoration: true)
+        case .paused:
+            // If the app was closed while paused, maintain paused state
+            // The user will need to manually resume
+            pausedRemainingSeconds = defaults.integer(forKey: "pausedRemainingSeconds")
+            isPaused = true
+        default:
+            // For any other state (.initial, etc), do nothing special
+            break
         }
     }
     private func clearSessionState() {

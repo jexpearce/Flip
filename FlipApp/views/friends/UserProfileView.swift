@@ -7,9 +7,24 @@ struct UserProfileView: View {
     let user: FirebaseManager.FlipUser
     @State private var showStats = false
     @State private var showDetailedStats = false
+    @State private var showRemoveFriendAlert = false
     @StateObject private var weeklyViewModel = WeeklySessionListViewModel()
     @StateObject private var scoreManager = ScoreManager.shared
+    @StateObject private var friendManager = FriendManager()
+    @Environment(\.presentationMode) var presentationMode
     @State private var userScore: Double = 3.0 // Default starting score
+    
+    // Check if this is the current user's profile
+    private var isCurrentUser: Bool {
+        guard let currentUserId = Auth.auth().currentUser?.uid else { return false }
+        return user.id == currentUserId
+    }
+    
+    // Check if this user is a friend
+    private var isFriend: Bool {
+        guard let currentUserId = Auth.auth().currentUser?.uid else { return false }
+        return user.friends.contains(currentUserId)
+    }
     
     private var weeksLongestSession: Int? {
         return weeklyViewModel.weeksLongestSession > 0 ? weeklyViewModel.weeksLongestSession : nil
@@ -39,6 +54,27 @@ struct UserProfileView: View {
                     }
                     
                     Spacer()
+                    
+                    // Only show remove friend button if this is not the current user's profile
+                    // and if they are a friend
+                    if !isCurrentUser && isFriend {
+                        Button(action: {
+                            showRemoveFriendAlert = true
+                        }) {
+                            Image(systemName: "person.fill.badge.minus")
+                                .font(.system(size: 22))
+                                .foregroundColor(.white.opacity(0.7))
+                                .padding(8)
+                                .background(
+                                    Circle()
+                                        .fill(Color.red.opacity(0.2))
+                                )
+                                .overlay(
+                                    Circle()
+                                        .stroke(Color.white.opacity(0.3), lineWidth: 1)
+                                )
+                        }
+                    }
                 }
                 .padding(.horizontal)
                 .padding(.top, 20)
@@ -210,6 +246,23 @@ struct UserProfileView: View {
             // Load user's score
             loadUserScore()
         }
+        .overlay(
+            Group {
+                if showRemoveFriendAlert {
+                    RemoveFriendAlert(
+                        isPresented: $showRemoveFriendAlert,
+                        username: user.username
+                    ) {
+                        // Handle friend removal
+                        friendManager.removeFriend(friendId: user.id)
+                        // Navigate back after removing
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                            presentationMode.wrappedValue.dismiss()
+                        }
+                    }
+                }
+            }
+        )
     }
     
     // Function to load user's score from Firebase

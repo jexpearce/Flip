@@ -72,7 +72,6 @@ struct FeedView: View {
         .navigationViewStyle(StackNavigationViewStyle()) // Use stack navigation for better compatibility
     }
 }
-
 class FeedViewModel: ObservableObject {
     @Published var feedSessions: [Session] = []
     @Published var users: [String: FirebaseManager.FlipUser] = [:]
@@ -106,14 +105,14 @@ class FeedViewModel: ObservableObject {
                     return
                 }
 
-                // Load your own user data
+                // Load your own user data - make sure we have the most current data
                 self?.users[userId] = userData
                 
                 // Create an array that includes both your ID and your friends' IDs
                 var allUserIds = userData.friends
                 allUserIds.append(userId) // Add your own userId to the query
                 
-                // Load user data for all friends
+                // Load latest user data for all friends - this ensures we have up-to-date stats
                 for friendId in userData.friends {
                     self?.loadUserData(userId: friendId)
                 }
@@ -141,7 +140,16 @@ class FeedViewModel: ObservableObject {
     
     func getUser(for userId: String) -> FirebaseManager.FlipUser {
         // Return the user if we have it, otherwise return a default user
-        return users[userId] ?? FirebaseManager.FlipUser(
+        // We attempt to get the cached data first
+        if let cachedUser = users[userId] {
+            return cachedUser
+        }
+        
+        // If we don't have it cached, make sure we load it for next time
+        loadUserData(userId: userId)
+        
+        // Return a placeholder user until the data loads
+        return FirebaseManager.FlipUser(
             id: userId,
             username: "User",
             totalFocusTime: 0,

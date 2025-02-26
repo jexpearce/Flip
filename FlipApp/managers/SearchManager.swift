@@ -1,12 +1,6 @@
 import FirebaseAuth
 import FirebaseFirestore
 import Foundation
-//
-//  SearchViewModel.swift
-//  FlipApp
-//
-//  Created by Jex Pearce on 2/11/25.
-//
 import SwiftUI
 
 class SearchManager: ObservableObject {
@@ -15,12 +9,15 @@ class SearchManager: ObservableObject {
     @Published var isSearching = false
     @Published var showError = false
     @Published var errorMessage = ""
+    @Published var showCancelRequestAlert = false
+    @Published var userToCancelRequest: FirebaseManager.FlipUser?
+    
     private let firebaseManager = FirebaseManager.shared
     private var currentUserData: FirebaseManager.FlipUser?
 
     init() {
         loadCurrentUser()
-        loadRecommendations()
+        loadAllUsers() // Changed this to load all users instead of recommendations
     }
 
     private func loadCurrentUser() {
@@ -63,21 +60,25 @@ class SearchManager: ObservableObject {
             }
     }
 
-    private func loadRecommendations() {
+    // Simplified method to just load all users as recommendations
+    private func loadAllUsers() {
         guard let userId = Auth.auth().currentUser?.uid else { return }
 
-        // Get 10 most active users
+        // Get all users except the current user
         firebaseManager.db.collection("users")
-            .order(by: "totalSessions", descending: true)
-            .limit(to: 10)
             .getDocuments { [weak self] snapshot, error in
+                guard let self = self else { return }
+                
                 if let documents = snapshot?.documents {
+                    // Filter out only the current user
                     let users = documents.compactMap { document in
                         try? document.data(as: FirebaseManager.FlipUser.self)
-                    }.filter { $0.id != userId }
-
+                    }.filter { user in
+                        return user.id != userId // Only filter out self
+                    }
+                    
                     DispatchQueue.main.async {
-                        self?.recommendations = users
+                        self.recommendations = users
                     }
                 }
             }
@@ -115,6 +116,36 @@ class SearchManager: ObservableObject {
 
         // Send notification
         sendFriendRequestNotification(to: userId)
+    }
+    
+    func cancelFriendRequest(to userId: String) {
+        guard let currentUserId = Auth.auth().currentUser?.uid else { return }
+        
+        // Remove from recipient's friend requests
+        firebaseManager.db.collection("users").document(userId)
+            .updateData([
+                "friendRequests": FieldValue.arrayRemove([currentUserId])
+            ])
+        
+        // Remove from sender's sent requests
+        firebaseManager.db.collection("users").document(currentUserId)
+            .updateData([
+                "sentRequests": FieldValue.arrayRemove([userId])
+            ])
+        
+        // Update local state
+        if var updatedUser = currentUserData {
+            updatedUser.sentRequests.removeAll { $0 == userId }
+            currentUserData = updatedUser
+        }
+        
+        // Refresh UI after cancellation
+        loadCurrentUser()
+    }
+    
+    func promptCancelRequest(for user: FirebaseManager.FlipUser) {
+        userToCancelRequest = user
+        showCancelRequestAlert = true
     }
 
     private func sendFriendRequestNotification(to userId: String) {

@@ -1,4 +1,3 @@
-// Create a new file: FirebaseManager.swift
 import FirebaseAuth
 import FirebaseFirestore
 import FirebaseStorage
@@ -20,6 +19,9 @@ class FirebaseManager: ObservableObject {
         var friends: [String]  // User IDs
         var friendRequests: [String]  // New: incoming friend requests
         var sentRequests: [String]  // New: outgoing friend requests
+        
+        // New field for mutual friends count (not stored in Firestore)
+        var mutualFriendsCount: Int = 0
     }
 
     func searchUsers(query: String, completion: @escaping ([FlipUser]) -> Void)

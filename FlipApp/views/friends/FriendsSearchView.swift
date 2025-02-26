@@ -50,6 +50,8 @@ struct FriendsSearchView: View {
                                             for: user.id)
                                     ) {
                                         viewModel.sendFriendRequest(to: user.id)
+                                    } onCancelRequest: {
+                                        viewModel.promptCancelRequest(for: user)
                                     }
                                 }
                             }
@@ -67,6 +69,8 @@ struct FriendsSearchView: View {
                                             for: user.id)
                                     ) {
                                         viewModel.sendFriendRequest(to: user.id)
+                                    } onCancelRequest: {
+                                        viewModel.promptCancelRequest(for: user)
                                     }
                                 }
                             }
@@ -86,7 +90,20 @@ struct FriendsSearchView: View {
                     .retroGlow()
                 }
             }
+            .overlay(
+                Group {
+                    if viewModel.showCancelRequestAlert, let user = viewModel.userToCancelRequest {
+                        CancelFriendRequestAlert(
+                            isPresented: $viewModel.showCancelRequestAlert,
+                            username: user.username
+                        ) {
+                            viewModel.cancelFriendRequest(to: user.id)
+                        }
+                    }
+                }
+            )
         }
+        .background(Theme.mainGradient.edgesIgnoringSafeArea(.all))
     }
 }
 
@@ -95,7 +112,9 @@ struct UserSearchCard: View {
     let user: FirebaseManager.FlipUser
     let requestStatus: RequestStatus
     let onSendRequest: () -> Void
+    let onCancelRequest: () -> Void
     @State private var isAddPressed = false
+    @State private var isCancelPressed = false
     
     var body: some View {
         HStack {
@@ -105,6 +124,13 @@ struct UserSearchCard: View {
                     .foregroundColor(.white)
                     .shadow(color: Color(red: 56/255, green: 189/255, blue: 248/255).opacity(0.5), radius: 8)
 
+                if user.mutualFriendsCount > 0 {
+                    Text("\(user.mutualFriendsCount) mutual \(user.mutualFriendsCount == 1 ? "friend" : "friends")")
+                        .font(.system(size: 14))
+                        .foregroundColor(Color.green.opacity(0.8))
+                        .padding(.top, 2)
+                }
+                
                 Text(
                     "\(user.totalSessions) sessions • \(user.totalFocusTime) min"
                 )
@@ -161,20 +187,31 @@ struct UserSearchCard: View {
                     .scaleEffect(isAddPressed ? 0.95 : 1.0)
                 }
             case .sent:
-                Text("Request Sent")
-                    .font(.system(size: 14, weight: .medium))
-                    .foregroundColor(.white.opacity(0.6))
-                    .padding(.horizontal, 15)
-                    .padding(.vertical, 8)
-                    .background(
-                        ZStack {
-                            RoundedRectangle(cornerRadius: 20)
-                                .fill(Color.gray.opacity(0.3))
-                            
-                            RoundedRectangle(cornerRadius: 20)
-                                .stroke(Color.white.opacity(0.2), lineWidth: 1)
-                        }
-                    )
+                Button(action: {
+                    withAnimation(.spring()) {
+                        isCancelPressed = true
+                    }
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                        onCancelRequest()
+                        isCancelPressed = false
+                    }
+                }) {
+                    Text("Request Sent")
+                        .font(.system(size: 14, weight: .medium))
+                        .foregroundColor(.white.opacity(0.6))
+                        .padding(.horizontal, 15)
+                        .padding(.vertical, 8)
+                        .background(
+                            ZStack {
+                                RoundedRectangle(cornerRadius: 20)
+                                    .fill(Color.gray.opacity(0.3))
+                                
+                                RoundedRectangle(cornerRadius: 20)
+                                    .stroke(Color.white.opacity(0.2), lineWidth: 1)
+                            }
+                        )
+                        .scaleEffect(isCancelPressed ? 0.95 : 1.0)
+                }
             case .friends:
                 HStack(spacing: 5) {
                     Image(systemName: "checkmark.circle.fill")
@@ -240,7 +277,6 @@ struct UserSearchCard: View {
         .padding(.horizontal)
     }
 }
-
 enum RequestStatus {
     case none
     case sent
