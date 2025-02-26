@@ -1,24 +1,35 @@
 import FirebaseAuth
 import SwiftUI
 
+class ViewRouter: ObservableObject {
+    @Published var selectedTab: Int = 2 // Home tab as default (center)
+    @Published var friendToShow: FirebaseManager.FlipUser? = nil
+    
+    func showFriendProfile(friend: FirebaseManager.FlipUser) {
+        self.friendToShow = friend
+    }
+}
+
 struct MainView: View {
     @StateObject private var authManager = AuthManager.shared
+    @StateObject private var viewRouter = ViewRouter()
 
     var body: some View {
         if authManager.isAuthenticated {
-            TabView {
+            TabView(selection: $viewRouter.selectedTab) {
                 // First tab (left-most)
                 FeedView()
                     .tabItem {
                         Label("Feed", systemImage: "list.bullet.rectangle.fill")
                     }
+                    .tag(0)
                 
                 // Second tab (left of center)
                 MapView()
-                
                     .tabItem {
                         Label("Map", systemImage: "map.fill")
                     }
+                    .tag(1)
                 
                 // Center tab (Home)
                 HomeView()
@@ -30,12 +41,14 @@ struct MainView: View {
                             Text("Home")
                         }
                     }
+                    .tag(2)
                 
                 // Fourth tab (right of center)
                 FriendsView()
                     .tabItem {
                         Label("Friends", systemImage: "person.2.fill")
                     }
+                    .tag(3)
                 
                 // Fifth tab (right-most)
                 ProfileView()
@@ -43,6 +56,7 @@ struct MainView: View {
                     .tabItem {
                         Label("Profile", systemImage: "person.fill")
                     }
+                    .tag(4)
             }
             .accentColor(Color(red: 56/255, green: 189/255, blue: 248/255)) // Set accent color for selected tab
             .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -69,10 +83,10 @@ struct MainView: View {
                     UITabBar.appearance().scrollEdgeAppearance = appearance
                 }
             }
+            .environmentObject(viewRouter)
         } else {
             AuthView().frame(maxWidth: .infinity, maxHeight: .infinity)
                 .background(Theme.mainGradient)
         }
     }
 }
-

@@ -261,6 +261,15 @@ class MapViewModel: NSObject, ObservableObject, CLLocationManagerDelegate {
         
         // Get current app state from AppManager
         let appManager = AppManager.shared
+        let isInRelevantState = appManager.currentState == .tracking ||
+                                   appManager.currentState == .completed ||
+                                   appManager.currentState == .failed
+            
+            // Skip if not in a relevant state
+            if !isInRelevantState {
+                return
+            }
+        
         let isCurrentlyFlipped = appManager.currentState == .tracking && appManager.isFaceDown
         
         // Get session info

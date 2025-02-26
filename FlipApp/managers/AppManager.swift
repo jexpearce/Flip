@@ -285,6 +285,11 @@ class AppManager: NSObject, ObservableObject {
             if self.remainingSeconds > 0 {
                 self.remainingSeconds -= 1
                 self.saveSessionState()
+                if self.remainingSeconds % 120 == 0 {
+                    Task { @MainActor in
+                        self.updateLocationDuringSession()
+                    }
+                }
 
                 if #available(iOS 16.1, *) {
                     self.updateLiveActivity()
@@ -528,7 +533,9 @@ class AppManager: NSObject, ObservableObject {
 
         // 5. Send completion notification
         notifyCompletion()
-
+        Task { @MainActor in
+            self.updateLocationDuringSession()
+        }
         // 6. Record session
         sessionManager.addSession(
             duration: selectedMinutes,
@@ -572,8 +579,12 @@ class AppManager: NSObject, ObservableObject {
         clearSessionState()
         endSession()
         saveSessionState()
+        Task { @MainActor in
+            self.updateLocationDuringSession()
+        }
         notifyFailure()
         notifyFriendsOfFailure()
+        
 
         sessionManager.addSession(
             duration: selectedMinutes,

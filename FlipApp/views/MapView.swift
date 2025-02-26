@@ -15,6 +15,39 @@ enum MapStyleType {
     case standard
     case hybrid
 }
+// Add this ViewModel to load user data for the card
+class ScoreViewModel: ObservableObject {
+    @Published var userScore: Double = 3.0
+    @Published var userObject: FirebaseManager.FlipUser = FirebaseManager.FlipUser(
+        id: "",
+        username: "User",
+        totalFocusTime: 0,
+        totalSessions: 0,
+        longestSession: 0,
+        friends: [],
+        friendRequests: [],
+        sentRequests: []
+    )
+    
+    private let db = Firestore.firestore()
+    
+    func loadUserData(userId: String) {
+        db.collection("users").document(userId).getDocument { [weak self] document, error in
+            if let userData = try? document?.data(as: FirebaseManager.FlipUser.self) {
+                DispatchQueue.main.async {
+                    self?.userObject = userData
+                }
+            }
+            
+            // Load score
+            if let data = document?.data(), let score = data["score"] as? Double {
+                DispatchQueue.main.async {
+                    self?.userScore = score
+                }
+            }
+        }
+    }
+}
 
 
 struct MapView: View {
@@ -87,7 +120,7 @@ struct MapView: View {
                                 endPoint: .bottom
                             )
                         )
-                        .frame(height: 100)
+                        .frame(height: 120)
                         .edgesIgnoringSafeArea(.top)
                 )
                 
@@ -267,135 +300,123 @@ struct FriendPreviewCard: View {
     let onDismiss: () -> Void
     let onViewProfile: () -> Void
     @State private var cardScale = 0.95
+    @StateObject private var scoreViewModel = ScoreViewModel()
+    @EnvironmentObject var viewRouter: ViewRouter // Add this for navigation
     
     var body: some View {
         VStack(spacing: 0) {
-            // Header with name and rank
-            HStack {
-                // User info
-                VStack(alignment: .leading, spacing: 2) {
+            // Compact Header with username and time
+            VStack(spacing: 8) {
+                // Username and rank
+                HStack(alignment: .center, spacing: 10) {
                     Text(friend.username)
                         .font(.system(size: 18, weight: .bold))
                         .foregroundColor(.white)
+                        .lineLimit(1)
                     
-                    // Time info - either current session or last session time
-                    HStack(spacing: 4) {
-                        Image(systemName: "clock.fill")
-                            .font(.system(size: 12))
-                            .foregroundColor(.white.opacity(0.7))
-                        
-                        if friend.isCurrentlyFlipped {
-                            Text("Flipped for \(friend.sessionDurationString)")
-                                .font(.system(size: 14))
-                                .foregroundColor(.white.opacity(0.7))
-                        } else {
-                            Text("\(timeAgoString(from: friend.lastFlipTime))")
-                                .font(.system(size: 14))
-                                .foregroundColor(.white.opacity(0.7))
-                        }
-                    }
+                    Spacer()
+                    
+                    // Rank
+                    RankCircle(score: scoreViewModel.userScore)
+                        .frame(width: 30, height: 30)
                 }
                 
-                Spacer()
-                
-                // Rank circle - placeholder using random rank
-                RankCircle(score: Double.random(in: 1...280))
-                    .frame(width: 36, height: 36)
-            }
-            .padding(.horizontal, 15)
-            .padding(.top, 15)
-            .padding(.bottom, 8)
-            
-            // Status card
-            statusCard
-                .padding(.horizontal, 15)
-                .padding(.bottom, 8)
-            
-            // Action buttons
-            HStack(spacing: 12) {
-                // View profile button
-                Button(action: onViewProfile) {
-                    HStack(spacing: 6) {
-                        Image(systemName: "person.fill")
-                            .font(.system(size: 14))
-                        
-                        Text("View Profile")
-                            .font(.system(size: 14, weight: .medium))
-                    }
-                    .foregroundColor(.white)
-                    .padding(.vertical, 8)
-                    .padding(.horizontal, 12)
-                    .background(
-                        ZStack {
-                            RoundedRectangle(cornerRadius: 12)
-                                .fill(Theme.buttonGradient)
-                                .opacity(0.8)
-                            
-                            RoundedRectangle(cornerRadius: 12)
-                                .fill(Color.white.opacity(0.1))
-                            
-                            RoundedRectangle(cornerRadius: 12)
-                                .stroke(Color.white.opacity(0.3), lineWidth: 1)
-                        }
-                    )
-                }
-                
-                Spacer()
-                
-                // Dismiss button
-                Button(action: onDismiss) {
-                    Image(systemName: "xmark")
-                        .font(.system(size: 14, weight: .bold))
+                // Status card - more compact
+                HStack(spacing: 10) {
+                    // Status icon
+                    Image(systemName: statusIcon)
+                        .font(.system(size: 16, weight: .bold))
+                        .foregroundColor(statusColor)
+                    
+                    // Status text
+                    Text(statusText)
+                        .font(.system(size: 14, weight: .medium))
                         .foregroundColor(.white)
-                        .padding(8)
-                        .background(
-                            ZStack {
-                                Circle()
-                                    .fill(Color.white.opacity(0.1))
-                                
-                                Circle()
-                                    .stroke(Color.white.opacity(0.3), lineWidth: 1)
-                            }
-                        )
+                    
+                    Spacer()
+                    
+                    // Duration
+                    if friend.isCurrentlyFlipped {
+                        Text("\(friend.sessionMinutesElapsed) min")
+                            .font(.system(size: 14, weight: .bold))
+                            .foregroundColor(statusColor)
+                    } else if !friend.lastFlipWasSuccessful {
+                        Text("\(friend.sessionMinutesElapsed)/\(friend.sessionDuration)m")
+                            .font(.system(size: 14, weight: .bold))
+                            .foregroundColor(statusColor)
+                    } else {
+                        Text("\(friend.sessionDuration) min")
+                            .font(.system(size: 14, weight: .bold))
+                            .foregroundColor(statusColor)
+                    }
                 }
+                .padding(.vertical, 6)
+                .padding(.horizontal, 10)
+                .background(
+                    RoundedRectangle(cornerRadius: 8)
+                        .fill(statusColor.opacity(0.12))
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 8)
+                                .stroke(statusColor.opacity(0.3), lineWidth: 1)
+                        )
+                )
             }
             .padding(.horizontal, 15)
-            .padding(.bottom, 15)
+            .padding(.top, 12)
+            .padding(.bottom, 10)
+            
+            Divider()
+                .background(Color.white.opacity(0.2))
+                .padding(.horizontal, 15)
+            
+            // Action button
+            Button(action: {
+                // Navigate to profile
+                onDismiss()
+                viewRouter.showFriendProfile(friend: scoreViewModel.userObject)
+            }) {
+                HStack {
+                    Image(systemName: "person.fill")
+                        .font(.system(size: 14))
+                    
+                    Text("View Profile")
+                        .font(.system(size: 15, weight: .medium))
+                }
+                .foregroundColor(.white)
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 10)
+            }
         }
+        .frame(width: 280, height: 145) // Fixed compact size
         .background(
             ZStack {
-                RoundedRectangle(cornerRadius: 16)
-                    .fill(
-                        LinearGradient(
-                            colors: [
-                                Color(red: 26/255, green: 14/255, blue: 47/255).opacity(0.95),
-                                Color(red: 16/255, green: 24/255, blue: 57/255).opacity(0.95)
-                            ],
-                            startPoint: .top,
-                            endPoint: .bottom
-                        )
-                    )
+                RoundedRectangle(cornerRadius: 14)
+                    .fill(Color(red: 28/255, green: 28/255, blue: 45/255).opacity(0.95))
                 
-                RoundedRectangle(cornerRadius: 16)
+                RoundedRectangle(cornerRadius: 14)
                     .fill(Color.white.opacity(0.05))
                 
-                RoundedRectangle(cornerRadius: 16)
-                    .stroke(
-                        LinearGradient(
-                            colors: [
-                                Color.white.opacity(0.5),
-                                Color.white.opacity(0.1)
-                            ],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        ),
-                        lineWidth: 1
-                    )
+                RoundedRectangle(cornerRadius: 14)
+                    .stroke(Color.white.opacity(0.25), lineWidth: 1)
             }
         )
-        .shadow(color: Color.black.opacity(0.25), radius: 16)
+        .shadow(color: Color.black.opacity(0.25), radius: 14)
+        .overlay(
+            Button(action: onDismiss) {
+                Image(systemName: "xmark")
+                    .font(.system(size: 12, weight: .bold))
+                    .foregroundColor(.white)
+                    .padding(6)
+                    .background(Circle().fill(Color.black.opacity(0.4)))
+            }
+            .padding(8),
+            alignment: .topTrailing
+        )
         .scaleEffect(cardScale)
         .onAppear {
+            // Load user's score when card appears
+            scoreViewModel.loadUserData(userId: friend.id)
+            
             withAnimation(.spring(response: 0.4, dampingFraction: 0.7)) {
                 cardScale = 1.0
             }
@@ -481,7 +502,6 @@ struct FriendPreviewCard: View {
         return formatter.localizedString(for: date, relativeTo: Date())
     }
 }
-
 struct MapPrivacySettingsView: View {
     @Environment(\.presentationMode) var presentationMode
     @StateObject private var viewModel = MapPrivacyViewModel()
