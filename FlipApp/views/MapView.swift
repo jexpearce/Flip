@@ -1,10 +1,6 @@
 //
 //  MapView.swift
 //  FlipApp
-//
-//  Created by Jex Pearce on 2/25/25.
-//
-
 import Foundation
 import SwiftUI
 import MapKit
@@ -15,6 +11,7 @@ enum MapStyleType {
     case standard
     case hybrid
 }
+
 // Add this ViewModel to load user data for the card
 class ScoreViewModel: ObservableObject {
     @Published var userScore: Double = 3.0
@@ -32,7 +29,10 @@ class ScoreViewModel: ObservableObject {
     private let db = Firestore.firestore()
     
     func loadUserData(userId: String) {
-        db.collection("users").document(userId).getDocument { [weak self] document, error in
+        // Extract clean userId from potential composite IDs (like userId_hist_1)
+        let cleanUserId = userId.split(separator: "_").first.map(String.init) ?? userId
+        
+        db.collection("users").document(cleanUserId).getDocument { [weak self] document, error in
             if let userData = try? document?.data(as: FirebaseManager.FlipUser.self) {
                 DispatchQueue.main.async {
                     self?.userObject = userData
@@ -49,17 +49,21 @@ class ScoreViewModel: ObservableObject {
     }
 }
 
-
 struct MapView: View {
     @StateObject private var viewModel = MapViewModel()
     @State private var showPrivacySettings = false
     @State private var selectedFriend: FriendLocation? = nil
     @State private var mapStyle: MapStyleType = .standard
+    @EnvironmentObject var viewRouter: ViewRouter
+    @StateObject private var locationPermissionManager = LocationPermissionManager.shared
     
     var body: some View {
         ZStack {
             // Custom styled map
-            Map(coordinateRegion: $viewModel.region, interactionModes: .all, showsUserLocation: true, annotationItems: viewModel.friendLocations) { friend in
+            Map(coordinateRegion: $viewModel.region,
+                interactionModes: .all,
+                showsUserLocation: true,
+                annotationItems: viewModel.friendLocations) { friend in
                 MapAnnotation(coordinate: friend.coordinate) {
                     FriendMapMarker(friend: friend)
                         .onTapGesture {
@@ -69,7 +73,6 @@ struct MapView: View {
                         }
                 }
             }
-            // Replace .mapStyle(mapStyle) with:
             .mapStyle(mapStyle == .standard ? .standard : .hybrid)
             .preferredColorScheme(.dark) // Force dark mode for map
             .edgesIgnoringSafeArea(.all)
@@ -212,12 +215,28 @@ struct MapView: View {
                     FriendPreviewCard(friend: friend, onDismiss: {
                         selectedFriend = nil
                     }, onViewProfile: {
-                        // Navigate to profile (handled by your navigation)
-                        selectedFriend = nil
+                        // Extract clean userId (remove historical session suffix if present)
+                        let userId = String(friend.id.split(separator: "_").first ?? "")
+                        
+                        // Load user profile and navigate
+                        viewModel.loadUserForProfile(userId: userId) { user in
+                            if let user = user {
+                                // Navigate to friend profile
+                                viewRouter.showFriendProfile(friend: user)
+                                selectedFriend = nil
+                            }
+                        }
                     })
                     .transition(.move(edge: .bottom).combined(with: .opacity))
                     .padding(.bottom, 100) // Above tab bar
                     .padding(.horizontal)
+                }
+            }
+            
+            // Location permission alert overlay
+            if locationPermissionManager.showCustomAlert {
+                LocationPermissionAlert(isPresented: $locationPermissionManager.showCustomAlert) {
+                    locationPermissionManager.requestSystemPermission()
                 }
             }
         }
@@ -225,10 +244,18 @@ struct MapView: View {
             MapPrivacySettingsView()
         }
         .onAppear {
+            checkLocationPermission()
             viewModel.startLocationTracking()
         }
         .onDisappear {
             viewModel.stopLocationTracking()
+        }
+    }
+    
+    private func checkLocationPermission() {
+        let status = CLLocationManager().authorizationStatus
+        if status == .denied || status == .restricted || status == .notDetermined {
+            locationPermissionManager.requestPermissionWithCustomAlert()
         }
     }
 }
@@ -242,19 +269,19 @@ struct FriendMapMarker: View {
             // Base circle with status color
             Circle()
                 .fill(statusColor)
-                .frame(width: 36, height: 36)
+                .frame(width: friend.isHistorical ? 30 : 36, height: friend.isHistorical ? 30 : 36)
                 .overlay(
                     Circle()
-                        .stroke(Color.white, lineWidth: 2)
+                        .stroke(Color.white, lineWidth: friend.isHistorical ? 1 : 2)
                 )
             
             // Profile image placeholder
             Image(systemName: "person.fill")
-                .font(.system(size: 16))
+                .font(.system(size: friend.isHistorical ? 14 : 16))
                 .foregroundColor(.white)
             
             // Pulsing animation for active sessions
-            if friend.isCurrentlyFlipped {
+            if friend.isCurrentlyFlipped && !friend.isHistorical {
                 Circle()
                     .stroke(statusColor, lineWidth: 2)
                     .frame(width: animate ? 60 : 40, height: animate ? 60 : 40)
@@ -262,7 +289,7 @@ struct FriendMapMarker: View {
             }
             
             // Session indicator icon
-            if friend.isCurrentlyFlipped {
+            if friend.isCurrentlyFlipped && !friend.isHistorical {
                 Image(systemName: "iphone")
                     .font(.system(size: 12))
                     .foregroundColor(.white)
@@ -273,10 +300,28 @@ struct FriendMapMarker: View {
                     )
                     .offset(x: 14, y: -14)
             }
+            
+            // Historical session index badge
+            if friend.isHistorical {
+                Text("\(friend.sessionIndex)")
+                    .font(.system(size: 10, weight: .bold))
+                    .foregroundColor(.white)
+                    .frame(width: 16, height: 16)
+                    .background(
+                        Circle()
+                            .fill(Color.black.opacity(0.5))
+                    )
+                    .overlay(
+                        Circle()
+                            .stroke(Color.white, lineWidth: 1)
+                    )
+                    .offset(x: 12, y: -12)
+            }
         }
-        .shadow(color: statusColor.opacity(0.5), radius: 4)
+        .shadow(color: statusColor.opacity(friend.isHistorical ? 0.3 : 0.5), radius: friend.isHistorical ? 2 : 4)
+        .opacity(friend.isHistorical ? 0.7 : 1.0)
         .onAppear {
-            if friend.isCurrentlyFlipped {
+            if friend.isCurrentlyFlipped && !friend.isHistorical {
                 withAnimation(Animation.easeInOut(duration: 1.5).repeatForever(autoreverses: false)) {
                     animate = true
                 }
@@ -285,7 +330,16 @@ struct FriendMapMarker: View {
     }
     
     private var statusColor: Color {
-        if friend.isCurrentlyFlipped {
+        if friend.isHistorical {
+            // For historical sessions, use a gray-tinted version of the normal status color
+            if friend.lastFlipWasSuccessful {
+                // Gray-green for successful historical sessions
+                return Color.gray.opacity(0.8)
+            } else {
+                // Gray-red for failed historical sessions
+                return Color.gray.opacity(0.6)
+            }
+        } else if friend.isCurrentlyFlipped {
             return Color(red: 56/255, green: 189/255, blue: 248/255) // Blue for active
         } else if friend.lastFlipWasSuccessful {
             return Color(red: 34/255, green: 197/255, blue: 94/255) // Green for success
@@ -294,14 +348,14 @@ struct FriendMapMarker: View {
         }
     }
 }
-
 struct FriendPreviewCard: View {
     let friend: FriendLocation
     let onDismiss: () -> Void
     let onViewProfile: () -> Void
     @State private var cardScale = 0.95
     @StateObject private var scoreViewModel = ScoreViewModel()
-    @EnvironmentObject var viewRouter: ViewRouter // Add this for navigation
+    @State private var currentTime = Date()
+    let timer = Timer.publish(every: 1, on: .main, in: .common).autoconnect()
     
     var body: some View {
         VStack(spacing: 0) {
@@ -313,6 +367,29 @@ struct FriendPreviewCard: View {
                         .font(.system(size: 18, weight: .bold))
                         .foregroundColor(.white)
                         .lineLimit(1)
+                    
+                    if friend.isCurrentlyFlipped && !friend.isHistorical {
+                        // LIVE indicator
+                        HStack(spacing: 4) {
+                            Circle()
+                                .fill(Color.red)
+                                .frame(width: 8, height: 8)
+                            
+                            Text("LIVE")
+                                .font(.system(size: 12, weight: .black))
+                                .foregroundColor(.red)
+                        }
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 4)
+                        .background(
+                            RoundedRectangle(cornerRadius: 12)
+                                .fill(Color.black.opacity(0.3))
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 12)
+                                        .stroke(Color.red.opacity(0.5), lineWidth: 1)
+                                )
+                        )
+                    }
                     
                     Spacer()
                     
@@ -328,15 +405,35 @@ struct FriendPreviewCard: View {
                         .font(.system(size: 16, weight: .bold))
                         .foregroundColor(statusColor)
                     
-                    // Status text
-                    Text(statusText)
-                        .font(.system(size: 14, weight: .medium))
-                        .foregroundColor(.white)
+                    // Status text with live timer for active sessions
+                    if friend.isCurrentlyFlipped && !friend.isHistorical {
+                        let elapsedSeconds = Int(currentTime.timeIntervalSince(friend.sessionStartTime))
+                        let minutes = elapsedSeconds / 60
+                        let seconds = elapsedSeconds % 60
+                        
+                        Text("LIVE · \(String(format: "%d:%02d", minutes, seconds))")
+                            .font(.system(size: 14, weight: .medium))
+                            .foregroundColor(.white)
+                    } else if friend.isHistorical {
+                        // For historical sessions, show when it happened
+                        Text("Session \(friend.sessionTimeAgo)")
+                            .font(.system(size: 14, weight: .medium))
+                            .foregroundColor(.white)
+                    } else {
+                        Text(statusText)
+                            .font(.system(size: 14, weight: .medium))
+                            .foregroundColor(.white)
+                    }
                     
                     Spacer()
                     
-                    // Duration
-                    if friend.isCurrentlyFlipped {
+                    // Duration/Time info
+                    if friend.isHistorical {
+                        // Show time ago for historical sessions
+                        Text("\(friend.sessionMinutesElapsed) min")
+                            .font(.system(size: 14, weight: .bold))
+                            .foregroundColor(statusColor)
+                    } else if friend.isCurrentlyFlipped {
                         Text("\(friend.sessionMinutesElapsed) min")
                             .font(.system(size: 14, weight: .bold))
                             .foregroundColor(statusColor)
@@ -370,11 +467,7 @@ struct FriendPreviewCard: View {
                 .padding(.horizontal, 15)
             
             // Action button
-            Button(action: {
-                // Navigate to profile
-                onDismiss()
-                viewRouter.showFriendProfile(friend: scoreViewModel.userObject)
-            }) {
+            Button(action: onViewProfile) {
                 HStack {
                     Image(systemName: "person.fill")
                         .font(.system(size: 14))
@@ -387,7 +480,7 @@ struct FriendPreviewCard: View {
                 .padding(.vertical, 10)
             }
         }
-        .frame(width: 280, height: 145) // Fixed compact size
+        .frame(width: 280, height: 145) // Fixed height
         .background(
             ZStack {
                 RoundedRectangle(cornerRadius: 14)
@@ -413,9 +506,16 @@ struct FriendPreviewCard: View {
             alignment: .topTrailing
         )
         .scaleEffect(cardScale)
+        .onReceive(timer) { time in
+            // Update current time for live timer
+            currentTime = time
+        }
         .onAppear {
-            // Load user's score when card appears
-            scoreViewModel.loadUserData(userId: friend.id)
+            // Get real user ID from the friend ID (may include "_hist_1" suffix)
+            let userId = String(friend.id.split(separator: "_").first ?? "")
+            
+            // Load user's score and data when card appears
+            scoreViewModel.loadUserData(userId: userId)
             
             withAnimation(.spring(response: 0.4, dampingFraction: 0.7)) {
                 cardScale = 1.0
@@ -423,51 +523,12 @@ struct FriendPreviewCard: View {
         }
     }
     
-    private var statusCard: some View {
-        ZStack {
-            // Background with status color
-            RoundedRectangle(cornerRadius: 12)
-                .fill(statusColor.opacity(0.2))
-                .overlay(
-                    RoundedRectangle(cornerRadius: 12)
-                        .stroke(statusColor.opacity(0.5), lineWidth: 1)
-                )
-            
-            HStack {
-                // Status icon
-                Image(systemName: statusIcon)
-                    .font(.system(size: 18, weight: .bold))
-                    .foregroundColor(statusColor)
-                
-                // Status text
-                Text(statusText)
-                    .font(.system(size: 14, weight: .medium))
-                    .foregroundColor(.white)
-                
-                Spacer()
-                
-                // Extra info
-                if friend.isCurrentlyFlipped {
-                    Text("\(friend.sessionMinutesElapsed) min")
-                        .font(.system(size: 14, weight: .bold))
-                        .foregroundColor(statusColor)
-                } else if !friend.lastFlipWasSuccessful {
-                    Text("\(friend.sessionMinutesElapsed) of \(friend.sessionDuration) min")
-                        .font(.system(size: 14, weight: .bold))
-                        .foregroundColor(statusColor)
-                } else {
-                    Text("\(friend.sessionDuration) min")
-                        .font(.system(size: 14, weight: .bold))
-                        .foregroundColor(statusColor)
-                }
-            }
-            .padding(.horizontal, 12)
-            .padding(.vertical, 8)
-        }
-    }
-    
     private var statusColor: Color {
-        if friend.isCurrentlyFlipped {
+        if friend.isHistorical {
+            return friend.lastFlipWasSuccessful ?
+                Color(red: 116/255, green: 116/255, blue: 116/255) : // Gray-green for historical success
+                Color(red: 116/255, green: 116/255, blue: 116/255)   // Gray-red for historical failure
+        } else if friend.isCurrentlyFlipped {
             return Color(red: 56/255, green: 189/255, blue: 248/255) // Blue for active
         } else if friend.lastFlipWasSuccessful {
             return Color(red: 34/255, green: 197/255, blue: 94/255) // Green for success
@@ -477,7 +538,9 @@ struct FriendPreviewCard: View {
     }
     
     private var statusIcon: String {
-        if friend.isCurrentlyFlipped {
+        if friend.isHistorical {
+            return friend.lastFlipWasSuccessful ? "clock.arrow.circlepath" : "clock.arrow.circlepath"
+        } else if friend.isCurrentlyFlipped {
             return "iphone.gen3"
         } else if friend.lastFlipWasSuccessful {
             return "checkmark.circle.fill"
@@ -487,7 +550,11 @@ struct FriendPreviewCard: View {
     }
     
     private var statusText: String {
-        if friend.isCurrentlyFlipped {
+        if friend.isHistorical {
+            return friend.lastFlipWasSuccessful ?
+                "Past Successful Session" :
+                "Past Failed Session"
+        } else if friend.isCurrentlyFlipped {
             return "Currently Flipped"
         } else if friend.lastFlipWasSuccessful {
             return "Completed Session"
@@ -495,13 +562,8 @@ struct FriendPreviewCard: View {
             return "Failed Session"
         }
     }
-    
-    private func timeAgoString(from date: Date) -> String {
-        let formatter = RelativeDateTimeFormatter()
-        formatter.unitsStyle = .abbreviated
-        return formatter.localizedString(for: date, relativeTo: Date())
-    }
 }
+
 struct MapPrivacySettingsView: View {
     @Environment(\.presentationMode) var presentationMode
     @StateObject private var viewModel = MapPrivacyViewModel()

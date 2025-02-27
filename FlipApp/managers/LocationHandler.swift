@@ -44,29 +44,49 @@ import SwiftUI
 
     func startLocationUpdates() {
         if self.locationManager.authorizationStatus == .notDetermined {
-            self.locationManager.requestAlwaysAuthorization()
+            self.locationManager.requestWhenInUseAuthorization() // Change to "when in use" instead of "always"
         }
-
+        let appManager = AppManager.shared
+        let isInSession = appManager.currentState == .tracking || appManager.currentState == .countdown
+        
+        // Configure background mode only for active sessions
+        self.locationManager.allowsBackgroundLocationUpdates = isInSession
+        self.locationManager.showsBackgroundLocationIndicator = isInSession
+        if isInSession {
+                // Much lower accuracy during sessions since phone won't be moving
+                self.locationManager.desiredAccuracy = kCLLocationAccuracyKilometer
+                self.locationManager.allowsBackgroundLocationUpdates = true
+                self.locationManager.showsBackgroundLocationIndicator = true
+                // Very large distance filter since phone won't move during sessions
+                self.locationManager.distanceFilter = 1000 // Only update for major movement
+                // Let system pause updates automatically to save battery
+                self.locationManager.pausesLocationUpdatesAutomatically = true
+            } else {
+                // Higher accuracy when browsing map
+                self.locationManager.desiredAccuracy = kCLLocationAccuracyNearestTenMeters
+                self.locationManager.allowsBackgroundLocationUpdates = false
+                self.locationManager.showsBackgroundLocationIndicator = false
+                self.locationManager.distanceFilter = 10
+                self.locationManager.pausesLocationUpdatesAutomatically = false
+            }
         self.motionManager.deviceMotionUpdateInterval = 1
         self.motionManager.startDeviceMotionUpdates()
 
-        print("Starting location updates")
+        print("Starting location updates - background mode: \(isInSession)")
         Task {
             do {
                 self.updatesStarted = true
                 let updates = CLLocationUpdate.liveUpdates()
-                print(updates)
                 for try await update in updates {
                     if !self.updatesStarted { break }
                     if let loc = update.location {
                         self.lastLocation = loc
                         self.isStationary = update.isStationary
                         self.count += 1
-//                        print("Location \(self.count): \(self.lastLocation)")
                     }
                 }
             } catch {
-                print("Could not start location updates")
+                print("Could not start location updates: \(error)")
             }
             return
         }

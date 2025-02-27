@@ -3,7 +3,6 @@
 //  FlipApp
 //
 //  Created by Jex Pearce on 2/25/25.
-//
 
 import Foundation
 import SwiftUI
@@ -12,7 +11,7 @@ import FirebaseAuth
 import FirebaseFirestore
 import CoreLocation
 
-// Model for user location data
+// Model for user location data - Enhanced with better timestamp handling
 struct FriendLocation: Identifiable {
     let id: String
     let username: String
@@ -22,11 +21,33 @@ struct FriendLocation: Identifiable {
     let lastFlipWasSuccessful: Bool
     let sessionDuration: Int  // in minutes
     let sessionStartTime: Date
+    let isHistorical: Bool  // Flag to indicate if this is a past session
+    let sessionIndex: Int   // Index to track which historical session (0 = current, 1 = most recent past, etc.)
     
     // Computed properties for UI
     var sessionMinutesElapsed: Int {
-        let seconds = Date().timeIntervalSince(sessionStartTime)
-        return Int(seconds / 60)
+        if isHistorical {
+            // For historical sessions, return the actual duration that was completed
+            let seconds = lastFlipTime.timeIntervalSince(sessionStartTime)
+            return Int(seconds / 60)
+        } else {
+            // For current sessions, calculate from current time
+            let seconds = Date().timeIntervalSince(sessionStartTime)
+            return Int(seconds / 60)
+        }
+    }
+    
+    var sessionTimeAgo: String {
+        let formatter = RelativeDateTimeFormatter()
+        formatter.unitsStyle = .short
+        return formatter.localizedString(for: sessionStartTime, relativeTo: Date())
+    }
+    
+    var formattedStartTime: String {
+        let formatter = DateFormatter()
+        formatter.dateStyle = .short
+        formatter.timeStyle = .short
+        return formatter.string(from: sessionStartTime)
     }
     
     var sessionDurationString: String {
@@ -113,7 +134,8 @@ class MapPrivacyViewModel: ObservableObject {
             }
     }
 }
-// Main ViewModel for the Map View
+
+// Main ViewModel for the Map View - Enhanced with improved location tracking
 class MapViewModel: NSObject, ObservableObject, CLLocationManagerDelegate {
     @Published var region = MKCoordinateRegion(
         center: CLLocationCoordinate2D(latitude: 37.7749, longitude: -122.4194),
@@ -121,23 +143,37 @@ class MapViewModel: NSObject, ObservableObject, CLLocationManagerDelegate {
     )
     @Published var friendLocations: [FriendLocation] = []
     @Published var userLocation: CLLocationCoordinate2D?
+    @Published var isFirstLoad: Bool = true
     
     private let db = Firestore.firestore()
     private let locationManager = CLLocationManager()
     private var locationListener: ListenerRegistration?
+    private var locationUpdateTimer: Timer?
     
     override init() {
         super.init()
         locationManager.delegate = self
         locationManager.desiredAccuracy = kCLLocationAccuracyBest
+        locationManager.allowsBackgroundLocationUpdates = true
+        locationManager.pausesLocationUpdatesAutomatically = false
+        locationManager.showsBackgroundLocationIndicator = true
         
-        // Request when-in-use authorization initially
-        locationManager.requestWhenInUseAuthorization()
+        // Request authorization on init
+        requestLocationAuthorization()
+    }
+    
+    private func requestLocationAuthorization() {
+        locationManager.requestAlwaysAuthorization()
     }
     
     func startLocationTracking() {
-        // Start location updates
+        // Start continuous location updates
         locationManager.startUpdatingLocation()
+        
+        // Setup a timer to refresh locations periodically
+        locationUpdateTimer = Timer.scheduledTimer(withTimeInterval: 30, repeats: true) { [weak self] _ in
+            self?.refreshLocations()
+        }
         
         // Start listening for friend locations
         startListeningForLocationUpdates()
@@ -146,12 +182,13 @@ class MapViewModel: NSObject, ObservableObject, CLLocationManagerDelegate {
     func stopLocationTracking() {
         locationManager.stopUpdatingLocation()
         locationListener?.remove()
+        locationUpdateTimer?.invalidate()
+        locationUpdateTimer = nil
     }
     
     func refreshLocations() {
-        // Force a refresh of friend locations
-        stopLocationTracking()
-        startLocationTracking()
+        // Fetch fresh data without stopping tracking
+        startListeningForLocationUpdates()
     }
     
     func centerOnUser() {
@@ -164,6 +201,8 @@ class MapViewModel: NSObject, ObservableObject, CLLocationManagerDelegate {
             )
         }
     }
+    
+    // MARK: - Friend Locations & Session History
     
     private func startListeningForLocationUpdates() {
         guard let currentUserId = Auth.auth().currentUser?.uid else { return }
@@ -187,46 +226,186 @@ class MapViewModel: NSObject, ObservableObject, CLLocationManagerDelegate {
         // Stop any existing listener
         locationListener?.remove()
         
+        // Create array to hold all locations (current and historical)
+        var allLocations: [FriendLocation] = []
+        
+        // Listen for real-time updates of active sessions
         locationListener = db.collection("locations")
             .whereField("userId", in: userIds)
             .addSnapshotListener { [weak self] snapshot, error in
-                guard let documents = snapshot?.documents else {
-                    print("Error fetching locations: \(error?.localizedDescription ?? "Unknown error")")
+                guard let self = self else { return }
+                
+                if let error = error {
+                    print("Error in location listener: \(error.localizedDescription)")
                     return
                 }
                 
-                let locations = documents.compactMap { document -> FriendLocation? in
-                    let data = document.data()
+                // Process current locations
+                var currentLocations: [FriendLocation] = []
+                if let documents = snapshot?.documents {
+                    currentLocations = self.processLocationDocuments(documents, isHistorical: false, sessionIndex: 0)
                     
-                    guard let userId = data["userId"] as? String,
-                          let username = data["username"] as? String,
-                          let geoPoint = data["currentLocation"] as? GeoPoint,
-                          let isFlipped = data["isCurrentlyFlipped"] as? Bool,
-                          let timestamp = (data["lastFlipTime"] as? Timestamp)?.dateValue(),
-                          let wasSuccessful = data["lastFlipWasSuccessful"] as? Bool
-                    else { return nil }
-                    
-                    let sessionDuration = data["sessionDuration"] as? Int ?? 25 // Default to 25 min
-                    let sessionStartTime = (data["sessionStartTime"] as? Timestamp)?.dateValue() ?? timestamp
-                    
-                    return FriendLocation(
-                        id: userId,
-                        username: username,
-                        coordinate: CLLocationCoordinate2D(
-                            latitude: geoPoint.latitude,
-                            longitude: geoPoint.longitude
-                        ),
-                        isCurrentlyFlipped: isFlipped,
-                        lastFlipTime: timestamp,
-                        lastFlipWasSuccessful: wasSuccessful,
-                        sessionDuration: sessionDuration,
-                        sessionStartTime: sessionStartTime
-                    )
+                    // Debug log to track what we're getting
+                    print("Received \(currentLocations.count) current locations")
                 }
                 
-                DispatchQueue.main.async {
-                    self?.friendLocations = locations
+                // Now fetch historical sessions for each user (if enabled)
+                let dispatchGroup = DispatchGroup()
+                var historicalLocations: [FriendLocation] = []
+                
+                for userId in userIds {
+                    dispatchGroup.enter()
+                    self.fetchHistoricalSessions(userId: userId, limit: 3) { locations in
+                        historicalLocations.append(contentsOf: locations)
+                        dispatchGroup.leave()
+                    }
                 }
+                
+                dispatchGroup.notify(queue: .main) {
+                    // Update UI with all locations
+                    self.friendLocations = currentLocations + historicalLocations
+                    
+                    // Debug log for total
+                    print("Total locations displayed: \(self.friendLocations.count) (Current: \(currentLocations.count), Historical: \(historicalLocations.count))")
+                    
+                    // Center on user location if this is first load
+                    if self.isFirstLoad, let userLocation = self.userLocation {
+                        self.isFirstLoad = false
+                        self.region = MKCoordinateRegion(
+                            center: userLocation,
+                            span: MKCoordinateSpan(latitudeDelta: 0.01, longitudeDelta: 0.01)
+                        )
+                    }
+                }
+            }
+    }
+    
+    // Enhanced to fetch multiple historical sessions
+    private func fetchHistoricalSessions(userId: String, limit: Int, completion: @escaping ([FriendLocation]) -> Void) {
+        // Check if session history should be shown in privacy settings
+        let showSessionHistory = true // Default to true, ideally get from settings
+        
+        if !showSessionHistory {
+            completion([])
+            return
+        }
+        
+        // Fetch historical sessions from session_locations collection
+        db.collection("session_locations")
+            .whereField("userId", isEqualTo: userId)
+            .order(by: "sessionEndTime", descending: true)
+            .limit(to: limit)
+            .getDocuments { [weak self] snapshot, error in
+                guard let self = self else {
+                    completion([])
+                    return
+                }
+                
+                if let error = error {
+                    print("Error fetching session_locations: \(error.localizedDescription)")
+                    completion([])
+                    return
+                }
+                
+                var historicalLocations: [FriendLocation] = []
+                
+                // Process each document into a historical location
+                if let documents = snapshot?.documents {
+                    for (index, document) in documents.enumerated() {
+                        let data = document.data()
+                        
+                        guard let username = data["username"] as? String,
+                              let geoPoint = data["location"] as? GeoPoint,
+                              let wasSuccessful = data["lastFlipWasSuccessful"] as? Bool,
+                              let sessionStartTime = (data["sessionStartTime"] as? Timestamp)?.dateValue(),
+                              let sessionEndTime = (data["sessionEndTime"] as? Timestamp)?.dateValue()
+                        else { continue }
+                        
+                        let sessionDuration = data["sessionDuration"] as? Int ?? 25
+                        
+                        let location = FriendLocation(
+                            id: "\(userId)_hist_\(index + 1)",
+                            username: username,
+                            coordinate: CLLocationCoordinate2D(
+                                latitude: geoPoint.latitude,
+                                longitude: geoPoint.longitude
+                            ),
+                            isCurrentlyFlipped: false,
+                            lastFlipTime: sessionEndTime,
+                            lastFlipWasSuccessful: wasSuccessful,
+                            sessionDuration: sessionDuration,
+                            sessionStartTime: sessionStartTime,
+                            isHistorical: true,
+                            sessionIndex: index + 1
+                        )
+                        
+                        historicalLocations.append(location)
+                    }
+                }
+                
+                completion(historicalLocations)
+            }
+    }
+    
+    private func processLocationDocuments(_ documents: [QueryDocumentSnapshot], isHistorical: Bool, sessionIndex: Int) -> [FriendLocation] {
+        return documents.compactMap { document -> FriendLocation? in
+            let data = document.data()
+            
+            guard let userId = data["userId"] as? String,
+                  let username = data["username"] as? String,
+                  let geoPoint = data["currentLocation"] as? GeoPoint,
+                  let isFlipped = data["isCurrentlyFlipped"] as? Bool,
+                  let timestamp = (data["lastFlipTime"] as? Timestamp)?.dateValue(),
+                  let wasSuccessful = data["lastFlipWasSuccessful"] as? Bool
+            else {
+                print("Skipping document - missing required fields")
+                return nil
+            }
+            
+            let sessionDuration = data["sessionDuration"] as? Int ?? 25 // Default to 25 min
+            let sessionStartTime = (data["sessionStartTime"] as? Timestamp)?.dateValue() ?? timestamp
+            
+            return FriendLocation(
+                id: userId,
+                username: username,
+                coordinate: CLLocationCoordinate2D(
+                    latitude: geoPoint.latitude,
+                    longitude: geoPoint.longitude
+                ),
+                isCurrentlyFlipped: isFlipped,
+                lastFlipTime: timestamp,
+                lastFlipWasSuccessful: wasSuccessful,
+                sessionDuration: sessionDuration,
+                sessionStartTime: sessionStartTime,
+                isHistorical: isHistorical,
+                sessionIndex: sessionIndex
+            )
+        }
+    }
+    
+    // MARK: - Profile Navigation
+    
+    func loadUserForProfile(userId: String, completion: @escaping (FirebaseManager.FlipUser?) -> Void) {
+        // Extract clean userId from potential composite IDs (like userId_hist_1)
+        let cleanUserId = userId.split(separator: "_").first.map(String.init) ?? userId
+        
+        // Fetch the user data from Firestore
+        db.collection("users").document(cleanUserId)
+            .getDocument { document, error in
+                if let error = error {
+                    print("Error loading user for profile: \(error.localizedDescription)")
+                    completion(nil)
+                    return
+                }
+                
+                guard let userData = try? document?.data(as: FirebaseManager.FlipUser.self) else {
+                    print("Could not decode user data for profile")
+                    completion(nil)
+                    return
+                }
+                
+                // Return the user data
+                completion(userData)
             }
     }
     
@@ -235,14 +414,16 @@ class MapViewModel: NSObject, ObservableObject, CLLocationManagerDelegate {
     func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
         guard let location = locations.last else { return }
         
+        // Update local userLocation property
         userLocation = location.coordinate
         
         // Center map on first location update
-        if region.center.latitude == 37.7749 {
+        if isFirstLoad {
             centerOnUser()
+            isFirstLoad = false
         }
         
-        // Update user's location in Firebase
+        // Update user's location in Firebase - regardless of session state for continuous tracking
         updateUserLocationInFirebase(location: location)
     }
     
@@ -251,47 +432,60 @@ class MapViewModel: NSObject, ObservableObject, CLLocationManagerDelegate {
         case .authorizedWhenInUse, .authorizedAlways:
             manager.startUpdatingLocation()
         default:
-            break
+            print("Location authorization status changed: \(status.rawValue)")
         }
     }
     
-    // Update user location in Firebase during an active session
+    func locationManager(_ manager: CLLocationManager, didFailWithError error: Error) {
+        print("Location manager failed with error: \(error.localizedDescription)")
+    }
+    
+    // MARK: - Firebase Location Updates
+    
+    // Update user location in Firebase - enhanced to work continuously
     private func updateUserLocationInFirebase(location: CLLocation) {
         guard let userId = Auth.auth().currentUser?.uid else { return }
         
         // Get current app state from AppManager
         let appManager = AppManager.shared
         let isInRelevantState = appManager.currentState == .tracking ||
-                                   appManager.currentState == .completed ||
-                                   appManager.currentState == .failed
-            
-            // Skip if not in a relevant state
-            if !isInRelevantState {
-                return
-            }
+                               appManager.currentState == .completed ||
+                               appManager.currentState == .failed
         
-        let isCurrentlyFlipped = appManager.currentState == .tracking && appManager.isFaceDown
+        // Get username from FirebaseManager
+        let username = FirebaseManager.shared.currentUser?.username ?? "User"
         
-        // Get session info
-        let sessionDuration = appManager.selectedMinutes
-        let sessionStartTime = Date().addingTimeInterval(-Double(appManager.remainingSeconds))
-        let isSuccessful = appManager.currentState != .failed
-        
-        let locationData: [String: Any] = [
+        // Create base location data
+        var locationData: [String: Any] = [
             "userId": userId,
-            "username": FirebaseManager.shared.currentUser?.username ?? "User",
+            "username": username,
             "currentLocation": GeoPoint(
                 latitude: location.coordinate.latitude,
                 longitude: location.coordinate.longitude
             ),
-            "isCurrentlyFlipped": isCurrentlyFlipped,
-            "lastFlipTime": Timestamp(date: Date()),
-            "lastFlipWasSuccessful": isSuccessful,
-            "sessionDuration": sessionDuration,
-            "sessionStartTime": Timestamp(date: sessionStartTime),
             "locationUpdatedAt": Timestamp(date: Date())
         ]
         
+        // Add session-specific data if in a relevant state
+        if isInRelevantState {
+            let isCurrentlyFlipped = appManager.currentState == .tracking && appManager.isFaceDown
+            let sessionDuration = appManager.selectedMinutes
+            let sessionStartTime = Date().addingTimeInterval(-Double(appManager.remainingSeconds))
+            let isSuccessful = appManager.currentState != .failed
+            
+            // Add session-specific fields
+            locationData["isCurrentlyFlipped"] = isCurrentlyFlipped
+            locationData["lastFlipTime"] = Timestamp(date: Date())
+            locationData["lastFlipWasSuccessful"] = isSuccessful
+            locationData["sessionDuration"] = sessionDuration
+            locationData["sessionStartTime"] = Timestamp(date: sessionStartTime)
+        } else {
+            // For non-session state, set defaults for session fields
+            locationData["isCurrentlyFlipped"] = false
+            locationData["lastFlipWasSuccessful"] = true
+        }
+        
+        // Update location in Firestore
         db.collection("locations").document(userId).setData(locationData, merge: true) { error in
             if let error = error {
                 print("Error updating location: \(error.localizedDescription)")

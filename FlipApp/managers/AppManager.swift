@@ -118,17 +118,7 @@ class AppManager: NSObject, ObservableObject {
 
                 // Important: Dispatch to main thread
                 DispatchQueue.main.async {
-                    // Check if phone is face down
-                    if let motion = self.motionManager.deviceMotion,
-                        motion.gravity.z > 0.8
-                    {
-                        self.startTrackingSession()
-                    } else {
-                        // Phone isn't face down when countdown completes
-                        self.notifyCountdownFailed()
-                        self.clearSessionState()
-                        self.currentState = .initial
-                    }
+                    self.startTrackingSession()
                 }
             }
         }
@@ -151,7 +141,10 @@ class AppManager: NSObject, ObservableObject {
         // 1. Stop existing timers and updates
         invalidateAllTimers()
         motionManager.stopDeviceMotionUpdates()
-
+        Task { @MainActor in
+                LocationHandler.shared.stopLocationUpdates()
+                LocationHandler.shared.startLocationUpdates() // Will restart with proper settings
+            }
         currentState = .tracking
         if isNewSession {
             // For new sessions, set the full duration
@@ -318,7 +311,7 @@ class AppManager: NSObject, ObservableObject {
             if self.remainingSeconds > 0 {
                 self.remainingSeconds -= 1
                 self.saveSessionState()
-                if self.remainingSeconds % 120 == 0 {
+                if self.remainingSeconds % 30 == 0 {
                     Task { @MainActor in
                         self.updateLocationDuringSession()
                     }
@@ -338,6 +331,9 @@ class AppManager: NSObject, ObservableObject {
         if let timer = sessionTimer {
             RunLoop.current.add(timer, forMode: .common)
         }
+        Task { @MainActor in
+                self.updateLocationDuringSession()
+            }
     }
 
     // MARK: - Timer Management
@@ -773,7 +769,7 @@ class AppManager: NSObject, ObservableObject {
 
         // 5. Send completion notification
         notifyCompletion()
-        Task { @MainActor in
+        Task {@MainActor in
             self.updateLocationDuringSession()
         }
         // 6. Record session
@@ -858,8 +854,14 @@ class AppManager: NSObject, ObservableObject {
         
         endBackgroundTask()
         
+        // Disable background location
         Task { @MainActor in
             LocationHandler.shared.stopLocationUpdates()
+            
+            // Restart with non-background settings for when app is open
+            if UIApplication.shared.applicationState != .background {
+                LocationHandler.shared.startLocationUpdates()
+            }
         }
     }
 
@@ -870,6 +872,10 @@ class AppManager: NSObject, ObservableObject {
             print("Live Activities not enabled")
             return
         }
+        guard currentState == .countdown || currentState == .tracking else {
+                print("Not starting Live Activity - no active session")
+                return
+            }
         
         guard currentState != .completed && currentState != .failed else {
             print("Not starting Live Activity - session already ended")
@@ -884,6 +890,10 @@ class AppManager: NSObject, ObservableObject {
                         currentActivity.content, dismissalPolicy: .immediate)
                     activity = nil
                 }
+                for existingActivity in Activity<FlipActivityAttributes>.activities {
+                                await existingActivity.end(
+                                    existingActivity.content, dismissalPolicy: .immediate)
+                            }
 
                 let state = FlipActivityAttributes.ContentState(
                     remainingTime: remainingTimeString,
@@ -917,21 +927,70 @@ class AppManager: NSObject, ObservableObject {
     @available(iOS 16.1, *)
     private func endLiveActivity() {
         Task {
-            guard let currentActivity = activity else { return }
-            let finalState = FlipActivityAttributes.ContentState(
-                remainingTime: remainingTimeString,
-                remainingPauses: remainingPauses,
-                isPaused: false,
-                isFailed: currentState == .failed,
-                flipBackTimeRemaining: nil,
-                lastUpdate: Date()
-            )
-            await currentActivity.end(
-                ActivityContent(state: finalState, staleDate: nil),
-                dismissalPolicy: .immediate
-            )
-            activity = nil
-            print("Live Activity ended")
+            // 1. End the specific activity we're tracking if it exists
+            if let currentActivity = activity {
+                let finalState = FlipActivityAttributes.ContentState(
+                    remainingTime: remainingTimeString,
+                    remainingPauses: remainingPauses,
+                    isPaused: false,
+                    isFailed: currentState == .failed,
+                    flipBackTimeRemaining: nil,
+                    countdownMessage: nil,
+                    lastUpdate: Date()
+                )
+                
+                do {
+                    await currentActivity.end(
+                        ActivityContent(state: finalState, staleDate: nil),
+                        dismissalPolicy: .immediate
+                    )
+                    print("Successfully ended current Live Activity")
+                } catch {
+                    print("Error ending Live Activity: \(error)")
+                }
+                
+                // Reset our activity reference
+                activity = nil
+            }
+            
+            // 2. Forcefully end ALL activities to ensure cleanup
+            for activity in Activity<FlipActivityAttributes>.activities {
+                do {
+                    await activity.end(
+                        activity.content,
+                        dismissalPolicy: .immediate
+                    )
+                    print("Successfully ended stale Live Activity")
+                } catch {
+                    print("Error ending stale Live Activity: \(error)")
+                }
+            }
+            
+            // 3. Double-check after a short delay to make sure nothing persisted
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                Task {
+                    if Activity<FlipActivityAttributes>.activities.count > 0 {
+                        print("Still found \(Activity<FlipActivityAttributes>.activities.count) activities - forcing termination")
+                        for activity in Activity<FlipActivityAttributes>.activities {
+                            await activity.end(
+                                ActivityContent(
+                                    state: FlipActivityAttributes.ContentState(
+                                        remainingTime: "0:00",
+                                        remainingPauses: 0,
+                                        isPaused: false,
+                                        isFailed: false,
+                                        flipBackTimeRemaining: nil,
+                                        countdownMessage: nil,
+                                        lastUpdate: Date()
+                                    ),
+                                    staleDate: nil
+                                ),
+                                dismissalPolicy: .immediate
+                            )
+                        }
+                    }
+                }
+            }
         }
     }
 
@@ -1232,30 +1291,76 @@ class AppManager: NSObject, ObservableObject {
                     self?.friendNotificationCount += 1
                 }
         }
+    @MainActor
+    func updateLocationDuringSession() {
+        // This gets called periodically from your tracking methods
+        guard LocationHandler.shared.lastLocation.horizontalAccuracy >= 0 else { return }
+        let location = LocationHandler.shared.lastLocation
         
-        @MainActor
-        func updateLocationDuringSession() {
-            // This gets called periodically from your tracking methods
-            guard LocationHandler.shared.lastLocation.horizontalAccuracy >= 0 else { return }
-            let location = LocationHandler.shared.lastLocation
+        // Get current user ID and username
+        let userId = Auth.auth().currentUser?.uid ?? ""
+        let username = FirebaseManager.shared.currentUser?.username ?? "User"
+        
+        // Create location data for current session
+        let locationData: [String: Any] = [
+            "userId": userId,
+            "username": username,
+            "currentLocation": GeoPoint(
+                latitude: location.coordinate.latitude,
+                longitude: location.coordinate.longitude
+            ),
+            "isCurrentlyFlipped": currentState == .tracking && isFaceDown,
+            "lastFlipTime": Timestamp(date: Date()),
+            "lastFlipWasSuccessful": currentState != .failed,
+            "sessionDuration": selectedMinutes,
+            "sessionStartTime": Timestamp(date: Date().addingTimeInterval(-Double(remainingSeconds))),
+            "locationUpdatedAt": Timestamp(date: Date())
+        ]
+        
+        // Update location data for current session
+        FirebaseManager.shared.db.collection("locations").document(userId).setData(locationData, merge: true)
+        
+        // If session completed or failed, also store as a session location for historical tracking
+        if currentState == .completed || currentState == .failed {
+            // Calculate actual duration for the session
+            let actualDuration = (selectedMinutes * 60 - remainingSeconds) / 60
             
-            let locationData: [String: Any] = [
-                "userId": Auth.auth().currentUser?.uid ?? "",
-                "username": FirebaseManager.shared.currentUser?.username ?? "User",
-                "currentLocation": GeoPoint(
+            // Create a document ID using timestamp to ensure uniqueness
+            let sessionId = "\(userId)_\(Int(Date().timeIntervalSince1970))"
+            
+            // Store historical session data
+            let sessionData: [String: Any] = [
+                "userId": userId,
+                "username": username,
+                "location": GeoPoint(
                     latitude: location.coordinate.latitude,
                     longitude: location.coordinate.longitude
                 ),
-                "isCurrentlyFlipped": currentState == .tracking && isFaceDown,
+                "isCurrentlyFlipped": false,
                 "lastFlipTime": Timestamp(date: Date()),
-                "lastFlipWasSuccessful": currentState != .failed,
+                "lastFlipWasSuccessful": currentState == .completed,
                 "sessionDuration": selectedMinutes,
-                "sessionStartTime": Timestamp(date: Date().addingTimeInterval(-Double(remainingSeconds))),
-                "locationUpdatedAt": Timestamp(date: Date())
+                "actualDuration": actualDuration,
+                "sessionStartTime": Timestamp(date: Date().addingTimeInterval(-Double(selectedMinutes * 60 - remainingSeconds))),
+                "sessionEndTime": Timestamp(date: Date()),
+                "createdAt": FieldValue.serverTimestamp()
             ]
             
-            FirebaseManager.shared.db.collection("locations").document(Auth.auth().currentUser?.uid ?? "").setData(locationData, merge: true)
+            // We set this in both collections to ensure availability
+            FirebaseManager.shared.db.collection("session_locations").document(sessionId).setData(sessionData)
+            
+            // This is an important change - also update the locations collection with the final state
+            // This ensures historical data is available even if session_locations isn't checked
+            FirebaseManager.shared.db.collection("locations").document(userId).setData([
+                "isCurrentlyFlipped": false,
+                "lastFlipWasSuccessful": currentState == .completed,
+                "lastFlipTime": Timestamp(date: Date()),
+                "sessionEndTime": Timestamp(date: Date())
+            ], merge: true)
         }
+    }
+        
+    
 
         // MARK: - App Lifecycle
         private func addObservers() {
@@ -1286,38 +1391,49 @@ class AppManager: NSObject, ObservableObject {
             )
         }
 
-        @objc private func appWillResignActive() {
-            print("App will resign active - saving state")
-            saveSessionState()
-            
-            // Only begin background processing if in an active session
-            if currentState == .tracking {
-                beginBackgroundProcessing()
+    @objc private func appWillResignActive() {
+        print("App will resign active - saving state")
+        saveSessionState()
+        
+        // Only allow background processing and location if in an active session
+        if currentState == .tracking {
+            beginBackgroundProcessing()
+        } else {
+            // Stop location updates when not in a session and app is backgrounded
+            Task { @MainActor in
+                LocationHandler.shared.stopLocationUpdates()
             }
         }
+    }
 
-        @objc private func appDidBecomeActive() {
-            print("App did become active - refreshing state")
-            isInBackground = false
-            
-            // Check for extended background time
-            handleExtendedBackgroundTime()
-            
-            // Validate state for consistency
-            validateCurrentState()
-            
-            // Check orientation regardless of state to ensure accuracy
-            checkCurrentOrientation()
-            
-            // Update UI appropriately
-            if currentState == .tracking {
-                if #available(iOS 16.1, *) {
-                    Task {
-                        updateLiveActivity()
-                    }
+    @objc private func appDidBecomeActive() {
+        print("App did become active - refreshing state")
+        isInBackground = false
+        
+        // Check for extended background time
+        handleExtendedBackgroundTime()
+        
+        // Validate state for consistency
+        validateCurrentState()
+        
+        // Check orientation regardless of state to ensure accuracy
+        checkCurrentOrientation()
+        
+        // Restart location with appropriate settings based on session state
+        Task { @MainActor in
+            LocationHandler.shared.stopLocationUpdates()
+            LocationHandler.shared.startLocationUpdates()
+        }
+        
+        // Update UI appropriately
+        if currentState == .tracking {
+            if #available(iOS 16.1, *) {
+                Task {
+                    updateLiveActivity()
                 }
             }
         }
+    }
 
         // MARK: - Cleanup
         deinit {

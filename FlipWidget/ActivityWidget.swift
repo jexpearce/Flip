@@ -10,5 +10,9 @@ struct ActivityWidget: Widget {
     } dynamicIsland: { context in
       DynamicIslandView(context: context)
     }
+    .configurationDisplayName("FLIP Session")
+    .description("Track your focus sessions in real-time")
+    // Add a stale date so the activity naturally expires
+    .contentMarginsDisabled()
   }
 }

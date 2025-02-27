@@ -10,6 +10,34 @@ struct ProfileView: View {
     @State private var showStatsDetail = false
     @State private var showDetailedStats = false
     @State private var username = FirebaseManager.shared.currentUser?.username ?? "User"
+    private func loadProfileDataFromFirestore() {
+        guard let userId = Auth.auth().currentUser?.uid else { return }
+        
+        // Load current user data from Firestore
+        FirebaseManager.shared.db.collection("users").document(userId)
+            .getDocument { document, error in
+                if let error = error {
+                    print("Error loading profile data: \(error.localizedDescription)")
+                    return
+                }
+                
+                guard let userData = try? document?.data(as: FirebaseManager.FlipUser.self) else {
+                    print("Failed to decode user data")
+                    return
+                }
+                
+                // Update the UI with Firestore data
+                DispatchQueue.main.async {
+                    self.username = userData.username
+                    
+                    // Update session statistics from Firestore instead of local data
+                    // For example, in the Stats cards, replace SessionManager values with userData values
+                    // Example: totalSuccessfulSessions with userData.totalSessions
+                }
+            }
+    }
+
+    // Then, add this function call to .onAppear
     
     private var displayedSessions: [Session] {
         if showAllSessions {
@@ -393,16 +421,18 @@ struct ProfileView: View {
                 if let currentUser = FirebaseManager.shared.currentUser {
                     self.username = currentUser.username
                 }
+                loadProfileDataFromFirestore()
             }
         }
     }
 }
 
-// New detailed stats view
+// Add this to DetailedStatsView to use Firestore data consistently
 struct DetailedStatsView: View {
     @Environment(\.presentationMode) var presentationMode
     @ObservedObject var sessionManager: SessionManager
     @State private var animateStats = false
+    @State private var userData: FirebaseManager.FlipUser?
     
     var body: some View {
         ZStack {
@@ -449,12 +479,12 @@ struct DetailedStatsView: View {
                 }
                 .padding(.top, 40)
                 
-                // Main stats display
+                // Main stats display - using Firestore data when available
                 VStack(spacing: 30) {
                     // Total Focus Time
                     DetailedStatCard(
                         title: "TOTAL FOCUS TIME",
-                        value: "\(sessionManager.totalFocusTime)",
+                        value: "\(userData?.totalFocusTime ?? sessionManager.totalFocusTime)",
                         unit: "minutes",
                         icon: "clock.fill",
                         color: Color(red: 59/255, green: 130/255, blue: 246/255),
@@ -466,7 +496,7 @@ struct DetailedStatsView: View {
                     // Total Sessions
                     DetailedStatCard(
                         title: "TOTAL SESSIONS",
-                        value: "\(sessionManager.totalSuccessfulSessions)",
+                        value: "\(userData?.totalSessions ?? sessionManager.totalSuccessfulSessions)",
                         unit: "completed",
                         icon: "checkmark.circle.fill",
                         color: Color(red: 16/255, green: 185/255, blue: 129/255),
@@ -475,10 +505,14 @@ struct DetailedStatsView: View {
                     .scaleEffect(animateStats ? 1 : 0.8)
                     .opacity(animateStats ? 1 : 0)
                     
-                    // Average Session Length
+                    // Average Session Length - calculate if we have data
+                    let avgSession = userData != nil && userData!.totalSessions > 0
+                        ? userData!.totalFocusTime / userData!.totalSessions
+                        : sessionManager.averageSessionLength
+                    
                     DetailedStatCard(
                         title: "AVERAGE SESSION LENGTH",
-                        value: "\(sessionManager.averageSessionLength)",
+                        value: "\(avgSession)",
                         unit: "minutes",
                         icon: "chart.bar.fill",
                         color: Color(red: 245/255, green: 158/255, blue: 11/255),
@@ -490,7 +524,7 @@ struct DetailedStatsView: View {
                     // Longest Session
                     DetailedStatCard(
                         title: "LONGEST SESSION",
-                        value: "\(sessionManager.longestSession)",
+                        value: "\(userData?.longestSession ?? sessionManager.longestSession)",
                         unit: "minutes",
                         icon: "crown.fill",
                         color: Color(red: 236/255, green: 72/255, blue: 153/255),
@@ -543,12 +577,30 @@ struct DetailedStatsView: View {
             }
         }
         .onAppear {
+            // Load Firestore data
+            loadUserData()
+            
+            // Animation timing
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
                 withAnimation(.spring(response: 0.6, dampingFraction: 0.8)) {
                     animateStats = true
                 }
             }
         }
+    }
+    
+    // Function to load data from Firestore
+    private func loadUserData() {
+        guard let userId = Auth.auth().currentUser?.uid else { return }
+        
+        FirebaseManager.shared.db.collection("users").document(userId)
+            .getDocument { document, error in
+                if let user = try? document?.data(as: FirebaseManager.FlipUser.self) {
+                    DispatchQueue.main.async {
+                        self.userData = user
+                    }
+                }
+            }
     }
 }
 
