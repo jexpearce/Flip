@@ -16,7 +16,8 @@ class SessionManager: ObservableObject {
         loadSessions()
     }
 
-    func addSession(duration: Int, wasSuccessful: Bool, actualDuration: Int) {
+    // Update to account for new parameters with default values
+    func addSession(duration: Int, wasSuccessful: Bool, actualDuration: Int, sessionTitle: String? = nil, sessionNotes: String? = nil) {
         guard let userId = Auth.auth().currentUser?.uid else { return }
 
         let newSession = Session(
@@ -26,7 +27,9 @@ class SessionManager: ObservableObject {
             startTime: Date(),
             duration: duration,
             wasSuccessful: wasSuccessful,
-            actualDuration: actualDuration
+            actualDuration: actualDuration,
+            sessionTitle: sessionTitle,
+            sessionNotes: sessionNotes
         )
 
         sessions.insert(newSession, at: 0)  // Add to beginning of array
@@ -50,6 +53,23 @@ class SessionManager: ObservableObject {
                 }
             }
     
+    // This method is now redundant with the updated addSession
+    // But we'll keep it for backward compatibility if needed
+    func addSessionWithNotes(
+        duration: Int,
+        wasSuccessful: Bool,
+        actualDuration: Int,
+        sessionTitle: String?,
+        sessionNotes: String?
+    ) {
+        addSession(
+            duration: duration,
+            wasSuccessful: wasSuccessful,
+            actualDuration: actualDuration,
+            sessionTitle: sessionTitle,
+            sessionNotes: sessionNotes
+        )
+    }
 
     private func uploadSession(_ session: Session) {
         try? FirebaseManager.shared.db.collection("sessions")

@@ -21,6 +21,10 @@ struct FeedSessionCard: View {
                 endPoint: .bottom
             )
     }
+    
+    private var hasContent: Bool {
+        return session.sessionTitle != nil || session.sessionNotes != nil
+    }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 15) {
@@ -51,21 +55,21 @@ struct FeedSessionCard: View {
 
                 Spacer()
 
-                // Status Icon with enhanced styling
+                // Status Icon with enhanced styling - made larger
                 ZStack {
                     Circle()
                         .fill(statusColor)
-                        .frame(width: 32, height: 32)
+                        .frame(width: 44, height: 44)
                         .opacity(0.8)
                     
                     Image(systemName: session.wasSuccessful ? "checkmark.circle.fill" : "xmark.circle.fill")
-                        .font(.system(size: 24))
+                        .font(.system(size: 28))
                         .foregroundColor(.white)
                         .shadow(color: session.wasSuccessful ? Color.green.opacity(0.5) : Color.red.opacity(0.5), radius: 4)
                 }
             }
 
-            // Session Info
+            // Session duration info
             HStack {
                 VStack(alignment: .leading, spacing: 4) {
                     Text("\(session.duration) min session")
@@ -85,15 +89,34 @@ struct FeedSessionCard: View {
                 }
 
                 Spacer()
+            }
+            
+            // Session title and notes if available
+            if hasContent {
+                Divider()
+                    .background(Color.white.opacity(0.2))
+                    .padding(.vertical, 5)
                 
-                // Tap to view profile hint
-                HStack(spacing: 5) {
-                    Text("View Profile")
-                        .font(.system(size: 14, weight: .medium))
-                    Image(systemName: "chevron.right")
-                        .font(.system(size: 12))
+                VStack(alignment: .leading, spacing: 10) {
+                    // Session Title if available
+                    if let title = session.sessionTitle, !title.isEmpty {
+                        Text(title)
+                            .font(.system(size: 18, weight: .bold))
+                            .foregroundColor(.white)
+                            .shadow(color: Color(red: 56/255, green: 189/255, blue: 248/255).opacity(0.4), radius: 4)
+                            .lineLimit(2)
+                    }
+                    
+                    // Session Notes if available
+                    if let notes = session.sessionNotes, !notes.isEmpty {
+                        Text(notes)
+                            .font(.system(size: 14))
+                            .foregroundColor(.white.opacity(0.9))
+                            .multilineTextAlignment(.leading)
+                            .lineLimit(4)
+                    }
                 }
-                .foregroundColor(.white.opacity(0.6))
+                .padding(.horizontal, 5)
             }
         }
         .padding()
