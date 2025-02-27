@@ -124,12 +124,6 @@ struct UserSearchCard: View {
                     .foregroundColor(.white)
                     .shadow(color: Color(red: 56/255, green: 189/255, blue: 248/255).opacity(0.5), radius: 8)
 
-                if user.mutualFriendsCount > 0 {
-                    Text("\(user.mutualFriendsCount) mutual \(user.mutualFriendsCount == 1 ? "friend" : "friends")")
-                        .font(.system(size: 14))
-                        .foregroundColor(Color.green.opacity(0.8))
-                        .padding(.top, 2)
-                }
                 
                 Text(
                     "\(user.totalSessions) sessions • \(user.totalFocusTime) min"

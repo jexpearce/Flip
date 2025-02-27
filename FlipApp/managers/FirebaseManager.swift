@@ -20,8 +20,6 @@ class FirebaseManager: ObservableObject {
         var friendRequests: [String]  // New: incoming friend requests
         var sentRequests: [String]  // New: outgoing friend requests
         
-        // New field for mutual friends count (not stored in Firestore)
-        var mutualFriendsCount: Int = 0
     }
 
     func searchUsers(query: String, completion: @escaping ([FlipUser]) -> Void)
@@ -46,5 +44,4 @@ class FirebaseManager: ObservableObject {
                 completion(users)
             }
     }
-
 }

@@ -118,9 +118,24 @@ class AppManager: NSObject, ObservableObject {
 
                 // Important: Dispatch to main thread
                 DispatchQueue.main.async {
-                    self.startTrackingSession()
+                    // Check if phone is face down
+                    if let motion = self.motionManager.deviceMotion,
+                        motion.gravity.z > 0.8
+                    {
+                        self.startTrackingSession()
+                    } else {
+                        // Phone isn't face down when countdown completes
+                        self.notifyCountdownFailed()
+                        self.clearSessionState()
+                        self.currentState = .initial
+                    }
                 }
             }
+        }
+        
+        // Ensure timer runs even during scrolling
+        if let timer = countdownTimer {
+            RunLoop.current.add(timer, forMode: .common)
         }
     }
 
@@ -134,8 +149,7 @@ class AppManager: NSObject, ObservableObject {
         print("Starting tracking session")
 
         // 1. Stop existing timers and updates
-        countdownTimer?.invalidate()
-        sessionTimer?.invalidate()
+        invalidateAllTimers()
         motionManager.stopDeviceMotionUpdates()
 
         currentState = .tracking
@@ -164,14 +178,8 @@ class AppManager: NSObject, ObservableObject {
         print("Pausing session...")
         guard allowPauses && remainingPauses > 0 else { return }
 
-
-        // Stop timer first
-        countdownTimer?.invalidate()
-        sessionTimer?.invalidate()
-        flipBackTimer?.invalidate()
-        //countdownTimer = nil
-        sessionTimer = nil
-        //flipBackTimer = nil
+        // Stop all timers first
+        invalidateAllTimers()
 
         // Update state
         remainingPauses -= 1
@@ -218,74 +226,93 @@ class AppManager: NSObject, ObservableObject {
     }
 
     @objc func resumeSession() {
+        // Start motion updates first to get accurate device orientation
         startMotionUpdates()
-        isPaused = false
-        remainingSeconds = pausedRemainingSeconds
-
-        // Start 5-second countdown
-        currentState = .countdown
-        countdownSeconds = 5
-
-        // Start new Live Activity
-        if #available(iOS 16.1, *) {
-            startLiveActivity()
-        }
-
-        countdownTimer?.invalidate()
-        countdownTimer = Timer.scheduledTimer(
-            withTimeInterval: 1, repeats: true
-        ) {
-            [weak self] timer in
+        
+        // Short delay to ensure we have valid motion data
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) { [weak self] in
             guard let self = self else { return }
+            
+            self.isPaused = false
+            self.remainingSeconds = self.pausedRemainingSeconds
 
-            self.countdownSeconds -= 1
+            // Start 5-second countdown
+            self.currentState = .countdown
+            self.countdownSeconds = 5
 
-            // Update the Live Activity with countdown
+            // Start new Live Activity
             if #available(iOS 16.1, *) {
-                Task {
-                    let state = FlipActivityAttributes.ContentState(
-                        remainingTime: self.remainingTimeString,
-                        remainingPauses: self.remainingPauses,
-                        isPaused: false,
-                        isFailed: false,
-                        flipBackTimeRemaining: nil,
-                        countdownMessage:
-                            "\(self.countdownSeconds) seconds to flip phone",
-                        lastUpdate: Date()
-                    )
-
-                    await self.activity?.update(
-                        ActivityContent(
-                            state: state,
-                            staleDate: Calendar.current.date(
-                                byAdding: .minute,
-                                value: self.selectedMinutes + 1, to: Date())
-                        )
-                    )
-                }
+                self.startLiveActivity()
             }
 
-            if self.countdownSeconds <= 0 {
-                timer.invalidate()
+            self.countdownTimer?.invalidate()
+            self.countdownTimer = Timer.scheduledTimer(
+                withTimeInterval: 1, repeats: true
+            ) { [weak self] timer in
+                guard let self = self else { return }
 
-                // Check if phone is face down
-                if let motion = self.motionManager.deviceMotion,
-                    motion.gravity.z > 0.8
-                {
-                    self.startTrackingSession(isNewSession: false)
-                } else {
-                    self.failSession()
+                self.countdownSeconds -= 1
+                
+                // Save state on each tick
+                self.saveSessionState()
+
+                // Update the Live Activity with countdown
+                if #available(iOS 16.1, *) {
+                    Task {
+                        let state = FlipActivityAttributes.ContentState(
+                            remainingTime: self.remainingTimeString,
+                            remainingPauses: self.remainingPauses,
+                            isPaused: false,
+                            isFailed: false,
+                            flipBackTimeRemaining: nil,
+                            countdownMessage:
+                                "\(self.countdownSeconds) seconds to flip phone",
+                            lastUpdate: Date()
+                        )
+
+                        await self.activity?.update(
+                            ActivityContent(
+                                state: state,
+                                staleDate: Calendar.current.date(
+                                    byAdding: .minute,
+                                    value: self.selectedMinutes + 1, to: Date())
+                            )
+                        )
+                    }
                 }
+
+                if self.countdownSeconds <= 0 {
+                    timer.invalidate()
+
+                    // Get fresh orientation reading to ensure accurate state
+                    self.checkCurrentOrientation()
+                    
+                    // Check if phone is face down
+                    if let motion = self.motionManager.deviceMotion,
+                        motion.gravity.z > 0.8
+                    {
+                        self.startTrackingSession(isNewSession: false)
+                    } else {
+                        self.failSession()
+                    }
+                }
+            }
+            
+            // Ensure timer runs even during scrolling
+            if let timer = self.countdownTimer {
+                RunLoop.current.add(timer, forMode: .common)
             }
         }
     }
 
     private func startSessionTimer() {
         sessionTimer?.invalidate()
+        sessionTimer = nil
+        
         guard !isPaused else { return }
+        
         sessionTimer = Timer.scheduledTimer(withTimeInterval: 1, repeats: true)
-        {
-            [weak self] _ in
+        { [weak self] _ in
             guard let self = self else { return }
 
             if self.remainingSeconds > 0 {
@@ -308,7 +335,26 @@ class AppManager: NSObject, ObservableObject {
         }
 
         // Ensure timer stays active
-        RunLoop.current.add(sessionTimer!, forMode: .common)
+        if let timer = sessionTimer {
+            RunLoop.current.add(timer, forMode: .common)
+        }
+    }
+
+    // MARK: - Timer Management
+    private func invalidateAllTimers() {
+        // Invalidate all timers
+        countdownTimer?.invalidate()
+        sessionTimer?.invalidate()
+        flipBackTimer?.invalidate()
+        backgroundCheckTimer?.invalidate()
+        
+        // Set all timers to nil to prevent memory leaks
+        countdownTimer = nil
+        sessionTimer = nil
+        flipBackTimer = nil
+        backgroundCheckTimer = nil
+        
+        print("All timers invalidated and set to nil")
     }
 
     // MARK: - Motion Handling
@@ -345,49 +391,72 @@ class AppManager: NSObject, ObservableObject {
         isFaceDown = true
         saveSessionState()
     }
+    
     private func startFlipBackTimer() {
+        // First clean up any existing timer
         flipBackTimer?.invalidate()
+        flipBackTimer = nil
+        
+        // Initialize the timer with default value
         flipBackTimeRemaining = 10
 
-        flipBackTimer = Timer.scheduledTimer(withTimeInterval: 1, repeats: true)
-        {
-            [weak self] timer in
-            guard let self = self else { return }
+        flipBackTimer = Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { [weak self] timer in
+            guard let self = self else {
+                timer.invalidate()
+                return
+            }
 
             self.flipBackTimeRemaining -= 1
+            self.saveSessionState()
 
             if #available(iOS 16.1, *) {
                 self.updateLiveActivity()
             }
 
+            // When timer runs out
             if self.flipBackTimeRemaining <= 0 {
                 timer.invalidate()
-                if !self.isFaceDown && !self.isPaused {
-                    // Only fail if phone isn't face down and not paused
+                self.flipBackTimer = nil
+                
+                // Check current state to make proper decision
+                if self.currentState == .tracking && !self.isFaceDown && !self.isPaused {
+                    // Only fail if:
+                    // 1. We're still in tracking mode
+                    // 2. Phone isn't face down
+                    // 3. Session isn't paused
                     self.failSession()
+                } else {
+                    print("Flip back timer ended, but session is not failed: state=\(self.currentState.rawValue), isFaceDown=\(self.isFaceDown), isPaused=\(self.isPaused)")
                 }
             }
+        }
+        
+        // Ensure the timer stays active even when scrolling
+        if let timer = flipBackTimer {
+            RunLoop.current.add(timer, forMode: .common)
         }
     }
 
     private func handlePhoneLifted() {
         guard currentState == .tracking else { return }
 
+        // Set isFaceDown state immediately for accurate state tracking
+        isFaceDown = false
+        
         if allowPauses && remainingPauses > 0 {
-            // Start 10-second countdown
+            // Start 10-second countdown only if pauses are available
             startFlipBackTimer()
             notifyFlipUsed()
             if #available(iOS 16.1, *) {
                 updateLiveActivity()
             }
-            isFaceDown = false
             saveSessionState()
         } else {
-            isFaceDown = false
+            // Immediately fail the session if no pauses available
+            print("No pauses available, failing session immediately")
             saveSessionState()
             failSession()
         }
-
     }
 
     // MARK: - Background Processing
@@ -397,8 +466,8 @@ class AppManager: NSObject, ObservableObject {
             endBackgroundTask()
         }
 
-        backgroundTask = UIApplication.shared.beginBackgroundTask {
-            [weak self] in
+        print("Beginning background task")
+        backgroundTask = UIApplication.shared.beginBackgroundTask { [weak self] in
             print("Background task expired")
             self?.endBackgroundTask()
             self?.scheduleBackgroundRefresh()
@@ -409,9 +478,17 @@ class AppManager: NSObject, ObservableObject {
         startActivityMonitoring()
 
         // Auto-end after 25 seconds (before 30s limit)
-        DispatchQueue.main.asyncAfter(deadline: .now() + 28) { [weak self] in
-            self?.endBackgroundTask()
-            self?.beginBackgroundProcessing()  //new addition, can remove it if breaks
+        DispatchQueue.main.asyncAfter(deadline: .now() + 25) { [weak self] in
+            guard let self = self, self.backgroundTask != .invalid else { return }
+            
+            print("Auto-ending background task after 25 seconds")
+            self.endBackgroundTask()
+            
+            // Chain a new background task if still in tracking state
+            if self.currentState == .tracking {
+                print("Still tracking, beginning a new background task")
+                self.beginBackgroundProcessing()
+            }
         }
     }
 
@@ -445,18 +522,35 @@ class AppManager: NSObject, ObservableObject {
     private func startBackgroundCheckTimer() {
         backgroundCheckTimer?.invalidate()
         backgroundCheckTimer = Timer.scheduledTimer(
-            withTimeInterval: 10, repeats: true
+            withTimeInterval: 5, repeats: true  // Changed from 10 to 5 seconds for more frequent checks
         ) { [weak self] _ in
-            self?.checkCurrentOrientation()
+            guard let self = self, self.currentState == .tracking else { return }
+            print("Background check timer firing")
+            self.checkCurrentOrientation()
+        }
+        
+        // Make sure the timer fires even during scrolling
+        if let timer = backgroundCheckTimer {
+            RunLoop.current.add(timer, forMode: .common)
         }
     }
 
     func checkCurrentOrientation() {
-        guard let motion = motionManager.deviceMotion else { return }
+        guard currentState == .tracking else { return }
+        
+        guard let motion = motionManager.deviceMotion else {
+            print("No motion data available for orientation check")
+            return
+        }
+        
         let currentFaceDown = motion.gravity.z > 0.8
         if currentFaceDown != self.isFaceDown {
+            print("Orientation changed: was \(self.isFaceDown ? "face down" : "face up"), now \(currentFaceDown ? "face down" : "face up")")
             handleOrientationChange(isFaceDown: currentFaceDown)
         }
+        
+        // Update the last check time
+        lastOrientationCheck = Date()
     }
 
     // MARK: - Background Task Registration
@@ -490,12 +584,152 @@ class AppManager: NSObject, ObservableObject {
             task.setTaskCompleted(success: false)
         }
 
+        // Check for extended background time
+        handleExtendedBackgroundTime()
+        
+        // Normal orientation check
         checkCurrentOrientation()
         saveSessionState()
         scheduleBackgroundRefresh()
 
         DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
             task.setTaskCompleted(success: true)
+        }
+    }
+    
+    // MARK: - State Recovery
+    // Add a method to handle app being in background for extended periods
+    private func handleExtendedBackgroundTime() {
+        guard currentState == .tracking else { return }
+        
+        // Calculate how long we've been in background
+        let now = Date()
+        let lastOrientationCheckInterval = now.timeIntervalSince(lastOrientationCheck)
+        
+        print("Extended background check - time since last check: \(Int(lastOrientationCheckInterval)) seconds")
+        
+        // If it's been more than 5 minutes since the last check, consider potential state inconsistency
+        if lastOrientationCheckInterval > 300 {
+            print("Background time exceeded 5 minutes - checking device state")
+            
+            // First, try to get a fresh device motion reading
+            if let motion = motionManager.deviceMotion {
+                let currentFaceDown = motion.gravity.z > 0.8
+                
+                // If the phone is face up after a long background time, fail the session
+                if !currentFaceDown && !isPaused {
+                    print("Phone detected face up after extended background time")
+                    failSession()
+                } else {
+                    // Phone is still face down, continue the session
+                    print("Phone still face down after extended background time")
+                    if !motionManager.isDeviceMotionActive {
+                        startMotionUpdates()
+                    }
+                    if sessionTimer == nil {
+                        startSessionTimer()
+                    }
+                }
+            } else {
+                // Can't get device motion, restart motion updates
+                print("Cannot get device motion after extended background time")
+                startMotionUpdates()
+                
+                // Give it a moment to initialize
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { [weak self] in
+                    self?.checkCurrentOrientation()
+                }
+            }
+        }
+    }
+
+    // MARK: - State Safeguards
+    // Add this to reset the app to a clean state if it gets stuck
+    func resetAppState() {
+        print("Emergency reset of app state")
+        
+        // Stop all timers and monitoring
+        invalidateAllTimers()
+        motionManager.stopDeviceMotionUpdates()
+        activityManager.stopActivityUpdates()
+        
+        // End background task if active
+        if backgroundTask != .invalid {
+            endBackgroundTask()
+        }
+        
+        // Reset all state variables
+        currentState = .initial
+        countdownSeconds = 5
+        isFaceDown = false
+        remainingSeconds = 0
+        isPaused = false
+        pausedRemainingSeconds = 0
+        flipBackTimeRemaining = 10
+        
+        // Clear persisted state
+        clearSessionState()
+        
+        // Clean up Live Activities
+        if #available(iOS 16.1, *) {
+            Task {
+                cleanupStaleActivities()
+            }
+        }
+        
+        print("App state has been reset")
+    }
+
+    // Add a check to detect and recover from inconsistent states
+    private func validateCurrentState() {
+        // This is a sanity check function to ensure state is consistent
+        switch currentState {
+        case .countdown:
+            if countdownSeconds <= 0 || countdownSeconds > 10 {
+                print("Invalid countdown seconds: \(countdownSeconds), resetting to 5")
+                countdownSeconds = 5
+            }
+            
+            // Ensure countdown timer is actually running
+            if countdownTimer == nil {
+                print("Countdown state with no timer, restarting timer")
+                startCountdown(fromRestoration: true)
+            }
+            
+        case .tracking:
+            // Ensure session timer is running
+            if sessionTimer == nil && !isPaused {
+                print("Tracking state with no session timer, restarting timer")
+                startSessionTimer()
+            }
+            
+            // Ensure motion updates are active
+            if !motionManager.isDeviceMotionActive {
+                print("Tracking state with no motion updates, restarting updates")
+                startMotionUpdates()
+            }
+            
+        case .paused:
+            // Ensure we actually have the paused time saved
+            if pausedRemainingSeconds <= 0 {
+                print("Paused state with invalid remaining time: \(pausedRemainingSeconds)")
+                // Restore a reasonable default if needed
+                pausedRemainingSeconds = max(1, remainingSeconds)
+            }
+            
+        case .failed, .completed:
+            // These are terminal states, ensure we've cleaned up
+            if sessionTimer != nil || countdownTimer != nil || flipBackTimer != nil {
+                print("Terminal state with active timers, cleaning up")
+                invalidateAllTimers()
+            }
+            
+        case .initial:
+            // Initial state should be clean
+            if sessionTimer != nil || countdownTimer != nil || flipBackTimer != nil {
+                print("Initial state with active timers, cleaning up")
+                invalidateAllTimers()
+            }
         }
     }
 
@@ -557,9 +791,14 @@ class AppManager: NSObject, ObservableObject {
     }
 
     func failSession() {
-        if currentState == .completed {
-                return  // Don't fail a completed session
-            }
+        // Don't fail a session that's already in a terminal state
+        if currentState == .completed || currentState == .failed {
+            print("Attempted to fail a session already in terminal state: \(currentState.rawValue)")
+            return
+        }
+        
+        print("Failing session - previous state: \(currentState.rawValue)")
+        
         if #available(iOS 16.1, *) {
             Task {
                 // End ALL activities
@@ -582,21 +821,27 @@ class AppManager: NSObject, ObservableObject {
                 activity = nil  // Important: set to nil after ending
             }
         }
+        
         clearSessionState()
         endSession()
         saveSessionState()
+        
         Task { @MainActor in
             self.updateLocationDuringSession()
         }
+        
         notifyFailure()
         notifyFriendsOfFailure()
         
+        // Calculate actual duration in minutes
+        let actualDuration = (selectedMinutes * 60 - remainingSeconds) / 60
 
         sessionManager.addSession(
             duration: selectedMinutes,
             wasSuccessful: false,
-            actualDuration: (selectedMinutes * 60 - remainingSeconds) / 60
+            actualDuration: actualDuration
         )
+        
         updateUserStats(successful: false)
 
         DispatchQueue.main.async {
@@ -607,31 +852,29 @@ class AppManager: NSObject, ObservableObject {
     private func endSession() {
         motionManager.stopDeviceMotionUpdates()
         activityManager.stopActivityUpdates()
-        sessionTimer?.invalidate()
-        countdownTimer?.invalidate()
-        backgroundCheckTimer?.invalidate()
+        
+        // Invalidate all timers
+        invalidateAllTimers()
+        
         endBackgroundTask()
         
         Task { @MainActor in
             LocationHandler.shared.stopLocationUpdates()
         }
-        
-
-
     }
 
     @available(iOS 16.1, *)
     private func startLiveActivity() {
-
         // Check if Live Activities are enabled
         guard ActivityAuthorizationInfo().areActivitiesEnabled else {
             print("Live Activities not enabled")
             return
         }
+        
         guard currentState != .completed && currentState != .failed else {
-                print("Not starting Live Activity - session already ended")
-                return
-            }
+            print("Not starting Live Activity - session already ended")
+            return
+        }
 
         Task { @MainActor in  // Ensure we're on main thread
             do {
@@ -695,16 +938,17 @@ class AppManager: NSObject, ObservableObject {
     @available(iOS 16.1, *)
     private func updateLiveActivity() {
         guard currentState != .completed && currentState != .failed else {
-                return
-            }
+            return
+        }
+        
         guard let activity = activity else {
-                print("No active Live Activity to update")
-                // Only start new activity if in a valid state
-                if currentState != .completed && currentState != .failed {
-                    startLiveActivity()
-                }
-                return
+            print("No active Live Activity to update")
+            // Only start new activity if in a valid state
+            if currentState != .completed && currentState != .failed {
+                startLiveActivity()
             }
+            return
+        }
 
         Task {
             let state = FlipActivityAttributes.ContentState(
@@ -728,299 +972,356 @@ class AppManager: NSObject, ObservableObject {
             print("Live Activity updated successfully")
         }
     }
-    
-    // New helper method to update user statistics in Firebase
     private func updateUserStats(successful: Bool) {
-        guard let userId = Auth.auth().currentUser?.uid else { return }
-        
-        // Update relevant user statistics
-        let db = FirebaseManager.shared.db
-        let userRef = db.collection("users").document(userId)
-        
-        userRef.getDocument { document, error in
-            guard let document = document, document.exists else { return }
+            guard let userId = Auth.auth().currentUser?.uid else { return }
             
-            if let userData = try? document.data(as: FirebaseManager.FlipUser.self) {
-                var totalFocusTime = userData.totalFocusTime
-                var totalSessions = userData.totalSessions
-                var longestSession = userData.longestSession
-                
-                // Update values based on current session
-                let actualSessionDuration = (self.selectedMinutes * 60 - self.remainingSeconds) / 60
-                totalFocusTime += actualSessionDuration
-                
-                if successful {
-                    totalSessions += 1
-                }
-                
-                if actualSessionDuration > longestSession {
-                    longestSession = actualSessionDuration
-                }
-                
-                // Write updates back to Firestore
-                userRef.updateData([
-                    "totalFocusTime": totalFocusTime,
-                    "totalSessions": totalSessions,
-                    "longestSession": longestSession
-                ])
-            }
-        }
-    }
-
-    // MARK: - Notifications
-    private func notifyFlipUsed() {
-        notificationManager.display(
-            title: "Phone Flipped",
-            body: remainingPauses > 0
-                ? "\(remainingPauses) pauses remaining, you have \(flipBackTimeRemaining) seconds to pause or flip back over"
-                : "No pauses remaining, you have \(flipBackTimeRemaining) seconds to flip back over"
-        )
-    }
-
-    private func notifyCompletion() {
-        notificationManager.display(
-            title: "Session Complete!",
-            body: "Great job staying focused!",
-            categoryIdentifier: "SESSION_END"
-        )
-    }
-
-    private func notifyFailure() {
-        notificationManager.display(
-            title: "Session Failed",
-            body: "Your focus session failed because your phone was flipped!",
-            categoryIdentifier: "SESSION_END"
-        )
-    }
-    private func cleanupStaleActivities() {
-        if #available(iOS 16.1, *) {
-            Task {
-                for activity in Activity<FlipActivityAttributes>.activities {
-                    await activity.end(
-                        activity.content,
-                        dismissalPolicy: .immediate
-                    )
-                }
-            }
-        }
-    }
-
-    // MARK: - State Preservation
-    private func saveSessionState() {
-        let defaults = UserDefaults.standard
-        defaults.set(currentState.rawValue, forKey: "currentState")
-        defaults.set(remainingSeconds, forKey: "remainingSeconds")
-        defaults.set(remainingPauses, forKey: "remainingPauses")
-        defaults.set(isFaceDown, forKey: "isFaceDown")
-        
-        // Save countdown seconds if we're in countdown state
-        if currentState == .countdown {
-            defaults.set(countdownSeconds, forKey: "countdownSeconds")
-        }
-        
-        // If we're in paused state, save paused remaining seconds
-        if currentState == .paused {
-            defaults.set(pausedRemainingSeconds, forKey: "pausedRemainingSeconds")
-        }
-    }
-
-    private func restoreSessionState() {
-        let defaults = UserDefaults.standard
-        currentState =
-            FlipState(rawValue: defaults.string(forKey: "currentState") ?? "")
-            ?? .initial
-        
-        // If the session was completed or failed, clear state and return
-        if currentState == .completed || currentState == .failed {
-            clearSessionState()
-            currentState = .initial
-            return
-        }
-        
-        // Restore other state variables
-        remainingSeconds = defaults.integer(forKey: "remainingSeconds")
-        remainingPauses = defaults.integer(forKey: "remainingPauses")
-        isFaceDown = defaults.bool(forKey: "isFaceDown")
-        
-        // Handle different states appropriately
-        switch currentState {
-        case .tracking:
-            // Continue tracking session from where it left off
-            startTrackingSession()
-        case .countdown:
-            // If we were in countdown state, restart the countdown
-            let savedCountdown = defaults.integer(forKey: "countdownSeconds")
-            // If we have a saved countdown value and it's valid, use it
-            if savedCountdown > 0 && savedCountdown <= 5 {
-                countdownSeconds = savedCountdown
-                print("Restoring from countdown state - continuing from \(countdownSeconds) seconds")
-            } else {
-                // Otherwise, restart with the default countdown time
-                countdownSeconds = 5
-                print("Restoring from countdown state - restarting countdown")
-            }
+            // Update relevant user statistics
+            let db = FirebaseManager.shared.db
+            let userRef = db.collection("users").document(userId)
             
-            // Restart the countdown timer
-            startCountdown(fromRestoration: true)
-        case .paused:
-            // If the app was closed while paused, maintain paused state
-            // The user will need to manually resume
-            pausedRemainingSeconds = defaults.integer(forKey: "pausedRemainingSeconds")
-            isPaused = true
-        default:
-            // For any other state (.initial, etc), do nothing special
-            break
-        }
-    }
-    private func clearSessionState() {
-        let defaults = UserDefaults.standard
-        defaults.removeObject(forKey: "currentState")
-        defaults.removeObject(forKey: "remainingSeconds")
-        defaults.removeObject(forKey: "remainingPauses")
-        defaults.removeObject(forKey: "isFaceDown")
-        
-        // Add aggressive Live Activity cleanup
-        if #available(iOS 16.1, *) {
-            Task {
-                // Then manually clean any stragglers
-                for activity in Activity<FlipActivityAttributes>.activities {
-                    await activity.end(
-                        activity.content,
-                        dismissalPolicy: .immediate
-                    )
+            userRef.getDocument { document, error in
+                guard let document = document, document.exists else { return }
+                
+                if let userData = try? document.data(as: FirebaseManager.FlipUser.self) {
+                    var totalFocusTime = userData.totalFocusTime
+                    var totalSessions = userData.totalSessions
+                    var longestSession = userData.longestSession
+                    
+                    // Update values based on current session
+                    let actualSessionDuration = (self.selectedMinutes * 60 - self.remainingSeconds) / 60
+                    totalFocusTime += actualSessionDuration
+                    
+                    if successful {
+                        totalSessions += 1
+                    }
+                    
+                    if actualSessionDuration > longestSession {
+                        longestSession = actualSessionDuration
+                    }
+                    
+                    // Write updates back to Firestore
+                    userRef.updateData([
+                        "totalFocusTime": totalFocusTime,
+                        "totalSessions": totalSessions,
+                        "longestSession": longestSession
+                    ])
                 }
             }
         }
-        
-        DispatchQueue.main.async {
-            self.currentState = .initial
-        }
-    }
-    private func notifyFriendsOfFailure() {
-        // Check rate limiting
-        let now = Date()
-        if let lastTime = lastFriendNotificationTime {
-            if now.timeIntervalSince(lastTime) < friendNotificationCooldown {
-                // Still in cooldown period
-                if friendNotificationCount >= maxFriendNotifications {
-                    return  // Skip if exceeded max notifications
-                }
-            } else {
-                // Reset counter after cooldown
-                friendNotificationCount = 0
-            }
+
+        // MARK: - Notifications
+        private func notifyFlipUsed() {
+            notificationManager.display(
+                title: "Phone Flipped",
+                body: remainingPauses > 0
+                    ? "\(remainingPauses) pauses remaining, you have \(flipBackTimeRemaining) seconds to pause or flip back over"
+                    : "No pauses remaining, you have \(flipBackTimeRemaining) seconds to flip back over"
+            )
         }
 
-        guard let userId = Auth.auth().currentUser?.uid else { return }
-
-        // Get current user's username and friends
-        FirebaseManager.shared.db.collection("users").document(userId)
-            .getDocument { [weak self] document, error in
-                guard
-                    let userData = try? document?.data(
-                        as: FirebaseManager.FlipUser.self),
-                    !userData.friends.isEmpty
-                else { return }
-
-                // Create notification content
-                let notificationData: [String: Any] = [
-                    "type": "session_failure",
-                    "fromUserId": userId,
-                    "fromUsername": userData.username,
-                    "timestamp": Date(),
-                    "silent": true,
-                ]
-
-                // Send to each friend
-                for friendId in userData.friends {
-                    FirebaseManager.shared.db.collection("users")
-                        .document(friendId)
-                        .collection("notifications")
-                        .addDocument(data: notificationData)
-                }
-
-                // Update rate limiting
-                self?.lastFriendNotificationTime = now
-                self?.friendNotificationCount += 1
-            }
-    }
-    
-    @MainActor
-    func updateLocationDuringSession() {
-        // This gets called periodically from your tracking methods
-        //guard let location = LocationHandler.shared.lastLocation else { return }
-        guard LocationHandler.shared.lastLocation.horizontalAccuracy >= 0 else { return }
-        let location = LocationHandler.shared.lastLocation
-        
-        let locationData: [String: Any] = [
-            "userId": Auth.auth().currentUser?.uid ?? "",
-            "username": FirebaseManager.shared.currentUser?.username ?? "User",
-            "currentLocation": GeoPoint(
-                latitude: location.coordinate.latitude,
-                longitude: location.coordinate.longitude
-            ),
-            "isCurrentlyFlipped": currentState == .tracking && isFaceDown,
-            "lastFlipTime": Timestamp(date: Date()),
-            "lastFlipWasSuccessful": currentState != .failed,
-            "sessionDuration": selectedMinutes,
-            "sessionStartTime": Timestamp(date: Date().addingTimeInterval(-Double(remainingSeconds))),
-            "locationUpdatedAt": Timestamp(date: Date())
-        ]
-        
-        FirebaseManager.shared.db.collection("locations").document(Auth.auth().currentUser?.uid ?? "").setData(locationData, merge: true)
-    }
-
-    // MARK: - App Lifecycle
-    private func addObservers() {
-        NotificationCenter.default.addObserver(
-            self,
-            selector: #selector(pauseSession),
-            name: Notification.Name("pauseSession"),
-            object: nil
-        )
-        NotificationCenter.default.addObserver(
-            self,
-            selector: #selector(resumeSession),
-            name: Notification.Name("resumeSession"),
-            object: nil
-        )
-
-        NotificationCenter.default.addObserver(
-            self,
-            selector: #selector(appWillResignActive),
-            name: UIApplication.willResignActiveNotification,
-            object: nil
-        )
-        NotificationCenter.default.addObserver(
-            self,
-            selector: #selector(appDidBecomeActive),
-            name: UIApplication.didBecomeActiveNotification,
-            object: nil
-        )
-    }
-
-    @objc private func appWillResignActive() {
-        saveSessionState()
-        if currentState == .tracking {
-            beginBackgroundProcessing()
+        private func notifyCompletion() {
+            notificationManager.display(
+                title: "Session Complete!",
+                body: "Great job staying focused!",
+                categoryIdentifier: "SESSION_END"
+            )
         }
-    }
 
-    @objc private func appDidBecomeActive() {
-        isInBackground = false
-        if currentState == .tracking {
-            // Just update the LiveActivity instead of restarting session
+        private func notifyFailure() {
+            notificationManager.display(
+                title: "Session Failed",
+                body: "Your focus session failed because your phone was flipped!",
+                categoryIdentifier: "SESSION_END"
+            )
+        }
+        
+        private func cleanupStaleActivities() {
             if #available(iOS 16.1, *) {
                 Task {
-                    updateLiveActivity()
+                    // Clean up any potentially stale activities from previous runs
+                    for activity in Activity<FlipActivityAttributes>.activities {
+                        print("Cleaning up stale Live Activity")
+                        await activity.end(
+                            activity.content,
+                            dismissalPolicy: .immediate
+                        )
+                    }
                 }
             }
         }
-    }
 
-    // MARK: - Cleanup
-    deinit {
-        NotificationCenter.default.removeObserver(self)
-        endSession()
+        // MARK: - State Preservation
+        private func saveSessionState() {
+            let defaults = UserDefaults.standard
+            defaults.set(currentState.rawValue, forKey: "currentState")
+            defaults.set(remainingSeconds, forKey: "remainingSeconds")
+            defaults.set(remainingPauses, forKey: "remainingPauses")
+            defaults.set(isFaceDown, forKey: "isFaceDown")
+            
+            // Save countdown seconds if we're in countdown state
+            if currentState == .countdown {
+                defaults.set(countdownSeconds, forKey: "countdownSeconds")
+            }
+            
+            // If we're in paused state, save paused remaining seconds
+            if currentState == .paused {
+                defaults.set(pausedRemainingSeconds, forKey: "pausedRemainingSeconds")
+            }
+            
+            // Save flip back timer state if active
+            if flipBackTimer != nil && currentState == .tracking && !isFaceDown {
+                defaults.set(flipBackTimeRemaining, forKey: "flipBackTimeRemaining")
+            }
+        }
+
+        private func restoreSessionState() {
+            let defaults = UserDefaults.standard
+            currentState =
+                FlipState(rawValue: defaults.string(forKey: "currentState") ?? "")
+                ?? .initial
+            
+            // If the session was completed or failed, clear state and return
+            if currentState == .completed || currentState == .failed {
+                clearSessionState()
+                currentState = .initial
+                return
+            }
+            
+            // Restore other state variables
+            remainingSeconds = defaults.integer(forKey: "remainingSeconds")
+            remainingPauses = defaults.integer(forKey: "remainingPauses")
+            isFaceDown = defaults.bool(forKey: "isFaceDown")
+            
+            // Handle different states appropriately
+            switch currentState {
+            case .tracking:
+                // Check if we were in the middle of a flip back timer
+                let savedFlipBackTime = defaults.integer(forKey: "flipBackTimeRemaining")
+                if !isFaceDown && savedFlipBackTime > 0 {
+                    // Restore flip back time state
+                    flipBackTimeRemaining = savedFlipBackTime
+                    // Start the timer with the saved time
+                    startFlipBackTimer()
+                }
+                
+                // Continue tracking session from where it left off
+                startTrackingSession()
+                
+            case .countdown:
+                // If we were in countdown state, restart the countdown
+                let savedCountdown = defaults.integer(forKey: "countdownSeconds")
+                // If we have a saved countdown value and it's valid, use it
+                if savedCountdown > 0 && savedCountdown <= 5 {
+                    countdownSeconds = savedCountdown
+                    print("Restoring from countdown state - continuing from \(countdownSeconds) seconds")
+                } else {
+                    // Otherwise, restart with the default countdown time
+                    countdownSeconds = 5
+                    print("Restoring from countdown state - restarting countdown")
+                }
+                
+                // Restart the countdown timer
+                startCountdown(fromRestoration: true)
+                
+            case .paused:
+                // If the app was closed while paused, maintain paused state
+                // The user will need to manually resume
+                pausedRemainingSeconds = defaults.integer(forKey: "pausedRemainingSeconds")
+                isPaused = true
+                
+            default:
+                // For any other state (.initial, etc), do nothing special
+                break
+            }
+        }
+        
+        private func clearSessionState() {
+            let defaults = UserDefaults.standard
+            defaults.removeObject(forKey: "currentState")
+            defaults.removeObject(forKey: "remainingSeconds")
+            defaults.removeObject(forKey: "remainingPauses")
+            defaults.removeObject(forKey: "isFaceDown")
+            defaults.removeObject(forKey: "countdownSeconds")
+            defaults.removeObject(forKey: "pausedRemainingSeconds")
+            defaults.removeObject(forKey: "flipBackTimeRemaining")
+            
+            // Add aggressive Live Activity cleanup to ensure widgets don't remain on lock screen
+            if #available(iOS 16.1, *) {
+                Task {
+                    // End activity if it exists
+                    if let currentActivity = activity {
+                        print("Ending current Live Activity during clearSessionState")
+                        await currentActivity.end(
+                            ActivityContent(
+                                state: FlipActivityAttributes.ContentState(
+                                    remainingTime: "0:00",
+                                    remainingPauses: 0,
+                                    isPaused: false,
+                                    isFailed: currentState == .failed,
+                                    flipBackTimeRemaining: nil,
+                                    lastUpdate: Date()
+                                ),
+                                staleDate: nil
+                            ),
+                            dismissalPolicy: .immediate
+                        )
+                        activity = nil
+                    }
+                    
+                    // Then manually clean any stragglers
+                    for activity in Activity<FlipActivityAttributes>.activities {
+                        print("Cleaning up straggler Live Activity during clearSessionState")
+                        await activity.end(
+                            activity.content,
+                            dismissalPolicy: .immediate
+                        )
+                    }
+                }
+            }
+            
+            DispatchQueue.main.async {
+                self.currentState = .initial
+            }
+        }
+        
+        private func notifyFriendsOfFailure() {
+            // Check rate limiting
+            let now = Date()
+            if let lastTime = lastFriendNotificationTime {
+                if now.timeIntervalSince(lastTime) < friendNotificationCooldown {
+                    // Still in cooldown period
+                    if friendNotificationCount >= maxFriendNotifications {
+                        return  // Skip if exceeded max notifications
+                    }
+                } else {
+                    // Reset counter after cooldown
+                    friendNotificationCount = 0
+                }
+            }
+
+            guard let userId = Auth.auth().currentUser?.uid else { return }
+
+            // Get current user's username and friends
+            FirebaseManager.shared.db.collection("users").document(userId)
+                .getDocument { [weak self] document, error in
+                    guard
+                        let userData = try? document?.data(
+                            as: FirebaseManager.FlipUser.self),
+                        !userData.friends.isEmpty
+                    else { return }
+
+                    // Create notification content
+                    let notificationData: [String: Any] = [
+                        "type": "session_failure",
+                        "fromUserId": userId,
+                        "fromUsername": userData.username,
+                        "timestamp": Date(),
+                        "silent": true,
+                    ]
+
+                    // Send to each friend
+                    for friendId in userData.friends {
+                        FirebaseManager.shared.db.collection("users")
+                            .document(friendId)
+                            .collection("notifications")
+                            .addDocument(data: notificationData)
+                    }
+
+                    // Update rate limiting
+                    self?.lastFriendNotificationTime = now
+                    self?.friendNotificationCount += 1
+                }
+        }
+        
+        @MainActor
+        func updateLocationDuringSession() {
+            // This gets called periodically from your tracking methods
+            guard LocationHandler.shared.lastLocation.horizontalAccuracy >= 0 else { return }
+            let location = LocationHandler.shared.lastLocation
+            
+            let locationData: [String: Any] = [
+                "userId": Auth.auth().currentUser?.uid ?? "",
+                "username": FirebaseManager.shared.currentUser?.username ?? "User",
+                "currentLocation": GeoPoint(
+                    latitude: location.coordinate.latitude,
+                    longitude: location.coordinate.longitude
+                ),
+                "isCurrentlyFlipped": currentState == .tracking && isFaceDown,
+                "lastFlipTime": Timestamp(date: Date()),
+                "lastFlipWasSuccessful": currentState != .failed,
+                "sessionDuration": selectedMinutes,
+                "sessionStartTime": Timestamp(date: Date().addingTimeInterval(-Double(remainingSeconds))),
+                "locationUpdatedAt": Timestamp(date: Date())
+            ]
+            
+            FirebaseManager.shared.db.collection("locations").document(Auth.auth().currentUser?.uid ?? "").setData(locationData, merge: true)
+        }
+
+        // MARK: - App Lifecycle
+        private func addObservers() {
+            NotificationCenter.default.addObserver(
+                self,
+                selector: #selector(pauseSession),
+                name: Notification.Name("pauseSession"),
+                object: nil
+            )
+            NotificationCenter.default.addObserver(
+                self,
+                selector: #selector(resumeSession),
+                name: Notification.Name("resumeSession"),
+                object: nil
+            )
+
+            NotificationCenter.default.addObserver(
+                self,
+                selector: #selector(appWillResignActive),
+                name: UIApplication.willResignActiveNotification,
+                object: nil
+            )
+            NotificationCenter.default.addObserver(
+                self,
+                selector: #selector(appDidBecomeActive),
+                name: UIApplication.didBecomeActiveNotification,
+                object: nil
+            )
+        }
+
+        @objc private func appWillResignActive() {
+            print("App will resign active - saving state")
+            saveSessionState()
+            
+            // Only begin background processing if in an active session
+            if currentState == .tracking {
+                beginBackgroundProcessing()
+            }
+        }
+
+        @objc private func appDidBecomeActive() {
+            print("App did become active - refreshing state")
+            isInBackground = false
+            
+            // Check for extended background time
+            handleExtendedBackgroundTime()
+            
+            // Validate state for consistency
+            validateCurrentState()
+            
+            // Check orientation regardless of state to ensure accuracy
+            checkCurrentOrientation()
+            
+            // Update UI appropriately
+            if currentState == .tracking {
+                if #available(iOS 16.1, *) {
+                    Task {
+                        updateLiveActivity()
+                    }
+                }
+            }
+        }
+
+        // MARK: - Cleanup
+        deinit {
+            NotificationCenter.default.removeObserver(self)
+            endSession()
+        }
     }
-}
