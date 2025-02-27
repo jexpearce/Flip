@@ -14,7 +14,7 @@ struct FailureView: View {
     
     var body: some View {
         ScrollView {
-            VStack(spacing: 25) {
+            VStack(spacing: 20) {
                 // Failure Icon with enhanced styling
                 ZStack {
                     Circle()
@@ -61,7 +61,7 @@ struct FailureView: View {
                 }
                 
                 Text("Your phone was moved during the session")
-                    .font(.system(size: 20, weight: .medium))
+                    .font(.system(size: 15, weight: .medium))
                     .foregroundColor(.white.opacity(0.9))
                     .multilineTextAlignment(.center)
                     .shadow(color: Color(red: 56/255, green: 189/255, blue: 248/255).opacity(0.4), radius: 6)
@@ -76,7 +76,7 @@ struct FailureView: View {
                     .padding(.vertical, 10)
                 }
                 
-                VStack(spacing: 20) {
+                VStack(spacing: 15) {
                     // Try Again Button with enhanced styling and notes saving
                     Button(action: {
                         withAnimation(.spring()) {

@@ -34,7 +34,7 @@ struct SessionNotesView: View {
     }
     
     var body: some View {
-        VStack(spacing: 20) {
+        VStack(spacing: 10) {
             // Section header
             Text("SESSION NOTES")
                 .font(.system(size: 18, weight: .black))
@@ -120,15 +120,18 @@ struct SessionNotesView: View {
                         Text("Share your thoughts about this session (optional)")
                             .foregroundColor(.white.opacity(0.4))
                             .padding(.horizontal, 16)
-                            .padding(.vertical, 16)
+                            .padding(.vertical, 12)
                     }
                     
                     TextEditor(text: $sessionNotes)
                         .font(.system(size: 16))
                         .foregroundColor(.white)
-                        .frame(height: 100)
+                        .frame(height: 70)
                         .padding(2) // Smaller padding for text editor
-                        .background(Color.clear)
+                        .background(
+                            RoundedRectangle(cornerRadius: 12)
+                                .fill(Color.white.opacity(0.1)) // Match title cell background
+                        )
                         .onChange(of: sessionNotes) { newValue in
                             // Limit to notesLimit words
                             let words = newValue.split(separator: " ")
@@ -168,7 +171,7 @@ struct SessionNotesView: View {
             }
         }
         .padding(.horizontal, 5)
-        .padding(.vertical, 10)
+        .padding(.vertical, 5)
         .background(
             ZStack {
                 RoundedRectangle(cornerRadius: 16)

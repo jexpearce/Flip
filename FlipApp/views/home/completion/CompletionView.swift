@@ -71,7 +71,7 @@ struct CompletionView: View {
                     .opacity(showTitle ? 1 : 0)
                     
                     // Stats with animation
-                    VStack(spacing: 15) {
+                    VStack(spacing: 10) {
                         Text("Well done.")
                             .font(.system(size: 20))
                             .foregroundColor(.white.opacity(0.7))
@@ -94,7 +94,7 @@ struct CompletionView: View {
                     .offset(y: showStats ? 0 : 50)
                     .opacity(showStats ? 1 : 0)
                 }
-                .padding(.bottom, 10)
+                .padding(.bottom, 5)
                 
                 // Session Notes section
                 if showNotes {
