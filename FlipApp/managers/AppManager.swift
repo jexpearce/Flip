@@ -854,14 +854,9 @@ class AppManager: NSObject, ObservableObject {
         
         endBackgroundTask()
         
-        // Disable background location
+        // Since the session is over, we should use regular location settings
         Task { @MainActor in
-            LocationHandler.shared.stopLocationUpdates()
-            
-            // Restart with non-background settings for when app is open
-            if UIApplication.shared.applicationState != .background {
-                LocationHandler.shared.startLocationUpdates()
-            }
+            LocationHandler.shared.startLocationUpdates() // This will use non-session settings
         }
     }
 
@@ -1395,13 +1390,14 @@ class AppManager: NSObject, ObservableObject {
         print("App will resign active - saving state")
         saveSessionState()
         
-        // Only allow background processing and location if in an active session
-        if currentState == .tracking {
+        // Only begin background processing if in an active session
+        if currentState == .tracking || currentState == .countdown {
             beginBackgroundProcessing()
         } else {
-            // Stop location updates when not in a session and app is backgrounded
+            // If not in a session, completely stop location tracking
+            // This is crucial to prevent the blue indicator from showing
             Task { @MainActor in
-                LocationHandler.shared.stopLocationUpdates()
+                LocationHandler.shared.completelyStopLocationUpdates()
             }
         }
     }
@@ -1419,10 +1415,15 @@ class AppManager: NSObject, ObservableObject {
         // Check orientation regardless of state to ensure accuracy
         checkCurrentOrientation()
         
-        // Restart location with appropriate settings based on session state
+        // Start or restart location updates with appropriate settings
         Task { @MainActor in
-            LocationHandler.shared.stopLocationUpdates()
-            LocationHandler.shared.startLocationUpdates()
+            if currentState == .tracking || currentState == .countdown {
+                // We're in a session, start with session settings
+                LocationHandler.shared.startLocationUpdates()
+            } else {
+                // We're just browsing the app, start with regular settings
+                LocationHandler.shared.startLocationUpdates()
+            }
         }
         
         // Update UI appropriately

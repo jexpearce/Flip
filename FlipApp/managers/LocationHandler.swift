@@ -44,32 +44,31 @@ import SwiftUI
 
     func startLocationUpdates() {
         if self.locationManager.authorizationStatus == .notDetermined {
-            self.locationManager.requestWhenInUseAuthorization() // Change to "when in use" instead of "always"
+            self.locationManager.requestWhenInUseAuthorization()
         }
+        
         let appManager = AppManager.shared
         let isInSession = appManager.currentState == .tracking || appManager.currentState == .countdown
         
         // Configure background mode only for active sessions
         self.locationManager.allowsBackgroundLocationUpdates = isInSession
         self.locationManager.showsBackgroundLocationIndicator = isInSession
+        
         if isInSession {
-                // Much lower accuracy during sessions since phone won't be moving
-                self.locationManager.desiredAccuracy = kCLLocationAccuracyKilometer
-                self.locationManager.allowsBackgroundLocationUpdates = true
-                self.locationManager.showsBackgroundLocationIndicator = true
-                // Very large distance filter since phone won't move during sessions
-                self.locationManager.distanceFilter = 1000 // Only update for major movement
-                // Let system pause updates automatically to save battery
-                self.locationManager.pausesLocationUpdatesAutomatically = true
-            } else {
-                // Higher accuracy when browsing map
-                self.locationManager.desiredAccuracy = kCLLocationAccuracyNearestTenMeters
-                self.locationManager.allowsBackgroundLocationUpdates = false
-                self.locationManager.showsBackgroundLocationIndicator = false
-                self.locationManager.distanceFilter = 10
-                self.locationManager.pausesLocationUpdatesAutomatically = false
-            }
-        self.motionManager.deviceMotionUpdateInterval = 1
+            // Much lower accuracy during sessions since phone won't be moving
+            self.locationManager.desiredAccuracy = kCLLocationAccuracyKilometer
+            // Very large distance filter since phone won't move during sessions
+            self.locationManager.distanceFilter = 1000 // Only update for major movement
+            // Let system pause updates automatically to save battery
+            self.locationManager.pausesLocationUpdatesAutomatically = true
+        } else {
+            // Higher accuracy when browsing map
+            self.locationManager.desiredAccuracy = kCLLocationAccuracyNearestTenMeters
+            self.locationManager.distanceFilter = 10
+            self.locationManager.pausesLocationUpdatesAutomatically = false
+        }
+        
+        self.motionManager.deviceMotionUpdateInterval = isInSession ? 1.0 : 3.0
         self.motionManager.startDeviceMotionUpdates()
 
         print("Starting location updates - background mode: \(isInSession)")
@@ -96,5 +95,25 @@ import SwiftUI
         print("Stopping location updates")
         self.updatesStarted = false
         self.motionManager.stopDeviceMotionUpdates()
+    }
+    
+    // New method to completely stop all tracking
+    func completelyStopLocationUpdates() {
+        print("Completely stopping location updates")
+        self.updatesStarted = false
+        
+        // Force cancel the location updates
+        self.locationManager.stopUpdatingLocation()
+        self.motionManager.stopDeviceMotionUpdates()
+        
+        // Explicitly disable background mode to stop the indicator
+        self.locationManager.allowsBackgroundLocationUpdates = false
+        self.locationManager.showsBackgroundLocationIndicator = false
+        
+        // Also stop any active background activity session
+        if backgroundActivity {
+            self.background?.invalidate()
+            self.backgroundActivity = false
+        }
     }
 }

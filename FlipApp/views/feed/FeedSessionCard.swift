@@ -27,7 +27,7 @@ struct FeedSessionCard: View {
     }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 15) {
+        VStack(alignment: .leading, spacing: 12) {
             // User Info
             HStack(spacing: 12) {
                 ZStack {
@@ -70,38 +70,34 @@ struct FeedSessionCard: View {
             }
 
             // Session duration info
-            HStack {
-                VStack(alignment: .leading, spacing: 4) {
-                    Text("\(session.duration) min session")
-                        .font(.system(size: 20, weight: .bold))
-                        .foregroundColor(.white)
-                        .shadow(color: Color(red: 56/255, green: 189/255, blue: 248/255).opacity(0.5), radius: 6)
+            VStack(alignment: .leading, spacing: 2) {
+                Text("\(session.duration) min session")
+                    .font(.system(size: 20, weight: .bold))
+                    .foregroundColor(.white)
+                    .shadow(color: Color(red: 56/255, green: 189/255, blue: 248/255).opacity(0.5), radius: 6)
 
-                    if !session.wasSuccessful {
-                        HStack(spacing: 6) {
-                            Image(systemName: "timer")
-                                .font(.system(size: 12))
-                            Text("Lasted \(session.actualDuration) min")
-                                .font(.system(size: 14))
-                        }
-                        .foregroundColor(.white.opacity(0.7))
+                if !session.wasSuccessful {
+                    HStack(spacing: 6) {
+                        Image(systemName: "timer")
+                            .font(.system(size: 12))
+                        Text("Lasted \(session.actualDuration) min")
+                            .font(.system(size: 14))
                     }
+                    .foregroundColor(.white.opacity(0.7))
                 }
-
-                Spacer()
             }
             
-            // Session title and notes if available
+            // Session title and notes if available - REDUCED PADDING
             if hasContent {
                 Divider()
                     .background(Color.white.opacity(0.2))
-                    .padding(.vertical, 5)
+                    .padding(.vertical, 2) // Reduced vertical padding
                 
-                VStack(alignment: .leading, spacing: 10) {
+                VStack(alignment: .leading, spacing: 6) { // Reduced spacing
                     // Session Title if available
                     if let title = session.sessionTitle, !title.isEmpty {
                         Text(title)
-                            .font(.system(size: 18, weight: .bold))
+                            .font(.system(size: 16, weight: .bold)) // Slightly smaller text
                             .foregroundColor(.white)
                             .shadow(color: Color(red: 56/255, green: 189/255, blue: 248/255).opacity(0.4), radius: 4)
                             .lineLimit(2)
@@ -113,13 +109,14 @@ struct FeedSessionCard: View {
                             .font(.system(size: 14))
                             .foregroundColor(.white.opacity(0.9))
                             .multilineTextAlignment(.leading)
-                            .lineLimit(4)
+                            .lineLimit(3) // One fewer line to save space
                     }
                 }
-                .padding(.horizontal, 5)
+                .padding(.horizontal, 3) // Minimal horizontal padding
             }
         }
-        .padding()
+        .padding(.vertical, 16) // Consistent vertical padding
+        .padding(.horizontal, 16)
         .background(
             ZStack {
                 RoundedRectangle(cornerRadius: 15)

@@ -1,11 +1,3 @@
-//
-//  SessionNotesView.swift
-//  FlipApp
-//
-//  Created by Jex Pearce on 2/27/25.
-//
-
-import Foundation
 import SwiftUI
 
 struct SessionNotesView: View {
@@ -34,25 +26,26 @@ struct SessionNotesView: View {
     }
     
     var body: some View {
-        VStack(spacing: 10) {
+        VStack(spacing: 5) {
             // Section header
             Text("SESSION NOTES")
-                .font(.system(size: 18, weight: .black))
-                .tracking(5)
+                .font(.system(size: 16, weight: .bold))
+                .tracking(3)
                 .foregroundColor(.white)
                 .shadow(color: Color(red: 56/255, green: 189/255, blue: 248/255).opacity(0.5), radius: 6)
+                .padding(.bottom, 0)
             
             // Title input
-            VStack(alignment: .leading, spacing: 8) {
+            VStack(alignment: .leading, spacing: 4) {
                 HStack {
                     Text("Title")
-                        .font(.system(size: 16, weight: .bold))
+                        .font(.system(size: 14, weight: .semibold))
                         .foregroundColor(.white.opacity(0.8))
                     
                     Spacer()
                     
                     Text("\(titleRemainingWords) words left")
-                        .font(.system(size: 12))
+                        .font(.system(size: 10))
                         .foregroundColor(titleRemainingWords > 0 ? .white.opacity(0.5) : .red.opacity(0.8))
                 }
                 
@@ -61,16 +54,16 @@ struct SessionNotesView: View {
                         Text("Add a title (optional)")
                             .foregroundColor(.white.opacity(0.4))
                     }
-                    .font(.system(size: 16, weight: .medium))
+                    .font(.system(size: 14, weight: .medium))
                     .foregroundColor(.white)
-                    .padding()
+                    .padding(10)
                     .background(
                         ZStack {
-                            RoundedRectangle(cornerRadius: 12)
+                            RoundedRectangle(cornerRadius: 10)
                                 .fill(Color.white.opacity(0.1))
                             
                             if isTitleFocused {
-                                RoundedRectangle(cornerRadius: 12)
+                                RoundedRectangle(cornerRadius: 10)
                                     .stroke(
                                         LinearGradient(
                                             colors: [
@@ -80,10 +73,10 @@ struct SessionNotesView: View {
                                             startPoint: .topLeading,
                                             endPoint: .bottomTrailing
                                         ),
-                                        lineWidth: 2
+                                        lineWidth: 1.5
                                     )
                             } else {
-                                RoundedRectangle(cornerRadius: 12)
+                                RoundedRectangle(cornerRadius: 10)
                                     .stroke(Color.white.opacity(0.2), lineWidth: 1)
                             }
                         }
@@ -95,43 +88,39 @@ struct SessionNotesView: View {
                             sessionTitle = words.prefix(titleLimit).joined(separator: " ")
                         }
                     }
-                    .onTapGesture {
-                        isTitleFocused = true
-                        isNotesFocused = false
-                    }
+                    // Use standard onFocus and blur behavior
             }
             
             // Notes input
-            VStack(alignment: .leading, spacing: 8) {
+            VStack(alignment: .leading, spacing: 4) {
                 HStack {
                     Text("Notes")
-                        .font(.system(size: 16, weight: .bold))
+                        .font(.system(size: 14, weight: .semibold))
                         .foregroundColor(.white.opacity(0.8))
                     
                     Spacer()
                     
                     Text("\(notesRemainingWords) words left")
-                        .font(.system(size: 12))
+                        .font(.system(size: 10))
                         .foregroundColor(notesRemainingWords > 0 ? .white.opacity(0.5) : .red.opacity(0.8))
                 }
                 
                 ZStack(alignment: .topLeading) {
                     if sessionNotes.isEmpty {
                         Text("Share your thoughts about this session (optional)")
+                            .font(.system(size: 14))
                             .foregroundColor(.white.opacity(0.4))
-                            .padding(.horizontal, 16)
-                            .padding(.vertical, 12)
+                            .padding(.horizontal, 12)
+                            .padding(.vertical, 10)
                     }
                     
+                    // Use a standard TextField for better keyboard handling
                     TextEditor(text: $sessionNotes)
-                        .font(.system(size: 16))
+                        .font(.system(size: 14))
                         .foregroundColor(.white)
-                        .frame(height: 70)
-                        .padding(2) // Smaller padding for text editor
-                        .background(
-                            RoundedRectangle(cornerRadius: 12)
-                                .fill(Color.white.opacity(0.1)) // Match title cell background
-                        )
+                        .frame(height: 60)
+                        .scrollContentBackground(.hidden) // iOS 16+ hide default background
+                        .background(Color.clear) // Use clear background
                         .onChange(of: sessionNotes) { newValue in
                             // Limit to notesLimit words
                             let words = newValue.split(separator: " ")
@@ -139,18 +128,14 @@ struct SessionNotesView: View {
                                 sessionNotes = words.prefix(notesLimit).joined(separator: " ")
                             }
                         }
-                        .onTapGesture {
-                            isNotesFocused = true
-                            isTitleFocused = false
-                        }
                 }
                 .background(
                     ZStack {
-                        RoundedRectangle(cornerRadius: 12)
+                        RoundedRectangle(cornerRadius: 10)
                             .fill(Color.white.opacity(0.1))
                         
                         if isNotesFocused {
-                            RoundedRectangle(cornerRadius: 12)
+                            RoundedRectangle(cornerRadius: 10)
                                 .stroke(
                                     LinearGradient(
                                         colors: [
@@ -160,40 +145,39 @@ struct SessionNotesView: View {
                                         startPoint: .topLeading,
                                         endPoint: .bottomTrailing
                                     ),
-                                    lineWidth: 2
+                                    lineWidth: 1.5
                                 )
                         } else {
-                            RoundedRectangle(cornerRadius: 12)
+                            RoundedRectangle(cornerRadius: 10)
                                 .stroke(Color.white.opacity(0.2), lineWidth: 1)
                         }
                     }
                 )
             }
         }
-        .padding(.horizontal, 5)
-        .padding(.vertical, 5)
+        .padding(10)
         .background(
             ZStack {
-                RoundedRectangle(cornerRadius: 16)
+                RoundedRectangle(cornerRadius: 14)
                     .fill(
                         LinearGradient(
                             colors: [
-                                Color(red: 26/255, green: 14/255, blue: 47/255).opacity(0.7),
-                                Color(red: 16/255, green: 24/255, blue: 57/255).opacity(0.7)
+                                Color(red: 26/255, green: 14/255, blue: 47/255).opacity(0.6),
+                                Color(red: 16/255, green: 24/255, blue: 57/255).opacity(0.6)
                             ],
                             startPoint: .topLeading,
                             endPoint: .bottomTrailing
                         )
                     )
                 
-                RoundedRectangle(cornerRadius: 16)
+                RoundedRectangle(cornerRadius: 14)
                     .fill(Color.white.opacity(0.05))
                 
-                RoundedRectangle(cornerRadius: 16)
+                RoundedRectangle(cornerRadius: 14)
                     .stroke(
                         LinearGradient(
                             colors: [
-                                Color.white.opacity(0.4),
+                                Color.white.opacity(0.3),
                                 Color.white.opacity(0.1)
                             ],
                             startPoint: .topLeading,
@@ -203,12 +187,29 @@ struct SessionNotesView: View {
                     )
             }
         )
+        // Better keyboard dismissal
         .onTapGesture {
-            // Clear focus if tapping outside fields
-            isTitleFocused = false
-            isNotesFocused = false
-            UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
+            hideKeyboard()
         }
+        // Use focus state for better iOS focus handling
+        .onAppear {
+            // Set focus state handlers
+            NotificationCenter.default.addObserver(forName: UITextField.textDidBeginEditingNotification, object: nil, queue: .main) { _ in
+                isTitleFocused = true
+                isNotesFocused = false
+            }
+            NotificationCenter.default.addObserver(forName: UITextView.textDidBeginEditingNotification, object: nil, queue: .main) { _ in
+                isTitleFocused = false
+                isNotesFocused = true
+            }
+        }
+    }
+    
+    // Helper to dismiss keyboard
+    private func hideKeyboard() {
+        UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
+        isTitleFocused = false
+        isNotesFocused = false
     }
 }
 

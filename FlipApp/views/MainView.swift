@@ -24,10 +24,10 @@ struct MainView: View {
                     }
                     .tag(0)
                 
-                // Second tab (left of center)
-                MapView()
+                // Second tab (left of center) - UPDATED: Now RegionalView instead of MapView
+                RegionalView()
                     .tabItem {
-                        Label("Map", systemImage: "map.fill")
+                        Label("Regional", systemImage: "location.fill")
                     }
                     .tag(1)
                 
