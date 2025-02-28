@@ -28,7 +28,34 @@ class NotificationManager {
                     identifier: "SESSION_END", actions: [],
                     intentIdentifiers: [],
                     options: []),
+                UNNotificationCategory(
+                    identifier: "LIVE_SESSION", actions: [],
+                    intentIdentifiers: [],
+                    options: []),
             ]))
+    }
+    func notifySessionJoined(username: String) {
+        display(
+            title: "Session Joined",
+            body: "\(username) joined your focus session",
+            categoryIdentifier: "LIVE_SESSION"
+        )
+    }
+
+    func notifyParticipantCompleted(username: String) {
+        display(
+            title: "Session Update",
+            body: "\(username) successfully completed the session",
+            categoryIdentifier: "LIVE_SESSION"
+        )
+    }
+
+    func notifyParticipantFailed(username: String) {
+        display(
+            title: "Session Update",
+            body: "\(username) failed to complete the session",
+            categoryIdentifier: "LIVE_SESSION"
+        )
     }
 
     func display(

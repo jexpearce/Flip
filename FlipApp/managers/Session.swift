@@ -13,12 +13,26 @@ struct Session: Codable, Identifiable {
     // New fields for custom session notes
     let sessionTitle: String?  // Optional to handle older sessions
     let sessionNotes: String?  // Optional to handle older sessions
-
+    
+    // New fields for multi-user sessions
+    let participants: [Participant]?  // List of session participants
+    let originalStarterId: String?    // Who started the session
+    let wasJoinedSession: Bool?       // Whether this was a joined session
+    
     var formattedStartTime: String {
         let formatter = DateFormatter()
         formatter.dateStyle = .short
         formatter.timeStyle = .short
         return formatter.string(from: startTime)
+    }
+    
+    // Helper struct for participant data
+    struct Participant: Codable, Identifiable {
+        let id: String
+        let username: String
+        let joinTime: Date
+        let wasSuccessful: Bool
+        let actualDuration: Int
     }
     
     // Helper initializer for creating a session with notes
@@ -31,7 +45,10 @@ struct Session: Codable, Identifiable {
         wasSuccessful: Bool,
         actualDuration: Int,
         sessionTitle: String?,
-        sessionNotes: String?
+        sessionNotes: String?,
+        participants: [Participant]? = nil,
+        originalStarterId: String? = nil,
+        wasJoinedSession: Bool? = nil
     ) -> Session {
         return Session(
             id: id,
@@ -42,7 +59,10 @@ struct Session: Codable, Identifiable {
             wasSuccessful: wasSuccessful,
             actualDuration: actualDuration,
             sessionTitle: sessionTitle,
-            sessionNotes: sessionNotes
+            sessionNotes: sessionNotes,
+            participants: participants,
+            originalStarterId: originalStarterId,
+            wasJoinedSession: wasJoinedSession
         )
     }
 }

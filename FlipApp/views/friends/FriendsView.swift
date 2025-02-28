@@ -5,8 +5,13 @@ import SwiftUI
 struct FriendsView: View {
     @StateObject private var viewModel = FriendManager()
     @StateObject private var leaderboardViewModel = LeaderboardViewModel()
+    @StateObject private var liveSessionManager = LiveSessionManager.shared
     @State private var showingSearch = false
     @State private var isButtonPressed = false
+    @State private var alertMessage = ""
+    @State private var showAlert = false
+    @State private var isJoiningSession = false
+    @EnvironmentObject var appManager: AppManager
     
     var body: some View {
         NavigationView {
@@ -130,72 +135,17 @@ struct FriendsView: View {
                         .padding(.top, 20)
                     } else {
                         LazyVStack(spacing: 15) {
-                            ForEach(viewModel.friends) { friend in
-                                NavigationLink(destination: UserProfileView(user: friend)) {
-                                    HStack {
-                                        VStack(alignment: .leading, spacing: 5) {
-                                            Text(friend.username)
-                                                .font(.system(size: 18, weight: .bold))
-                                                .foregroundColor(.white)
-                                                .shadow(color: Color(red: 56/255, green: 189/255, blue: 248/255).opacity(0.5), radius: 6)
-
-                                            HStack(spacing: 6) {
-                                                Image(systemName: "timer")
-                                                    .font(.system(size: 12))
-                                                    .foregroundColor(.white.opacity(0.7))
-                                                
-                                                Text("\(friend.totalSessions) sessions")
-                                                    .font(.system(size: 14))
-                                                    .foregroundColor(.white.opacity(0.7))
-                                            }
-                                        }
-
-                                        Spacer()
-
-                                        VStack(alignment: .trailing, spacing: 5) {
-                                            Text("\(friend.totalFocusTime) min")
-                                                .font(.system(size: 16, weight: .bold))
-                                                .foregroundColor(.white)
-                                                .shadow(color: Color(red: 56/255, green: 189/255, blue: 248/255).opacity(0.5), radius: 6)
-
-                                            HStack(spacing: 6) {
-                                                Text("total focus time")
-                                                    .font(.system(size: 12))
-                                                    .foregroundColor(.white.opacity(0.7))
-                                                
-                                                Image(systemName: "clock.fill")
-                                                    .font(.system(size: 12))
-                                                    .foregroundColor(.white.opacity(0.7))
-                                            }
-                                        }
+                            // Sort friends - live sessions first, then normal friends
+                            ForEach(sortedFriends) { friend in
+                                if isNavigationBlocked {
+                                    // When joining session, disable navigation
+                                    FriendCardWithLiveSession(friend: friend)
+                                } else {
+                                    NavigationLink(destination: UserProfileView(user: friend.user)) {
+                                        FriendCardWithLiveSession(friend: friend)
                                     }
-                                    .padding()
-                                    .background(
-                                        ZStack {
-                                            RoundedRectangle(cornerRadius: 15)
-                                                .fill(Theme.buttonGradient)
-                                                .opacity(0.1)
-                                            
-                                            RoundedRectangle(cornerRadius: 15)
-                                                .fill(Color.white.opacity(0.05))
-                                            
-                                            RoundedRectangle(cornerRadius: 15)
-                                                .stroke(
-                                                    LinearGradient(
-                                                        colors: [
-                                                            Color.white.opacity(0.5),
-                                                            Color.white.opacity(0.1)
-                                                        ],
-                                                        startPoint: .topLeading,
-                                                        endPoint: .bottomTrailing
-                                                    ),
-                                                    lineWidth: 1
-                                                )
-                                        }
-                                    )
-                                    .shadow(color: Color.black.opacity(0.2), radius: 4, x: 0, y: 2)
+                                    .buttonStyle(PlainButtonStyle())
                                 }
-                                .buttonStyle(PlainButtonStyle())
                             }
                         }
                         .padding(.horizontal)
@@ -209,9 +159,123 @@ struct FriendsView: View {
             .refreshable {
                 viewModel.loadFriends()
                 leaderboardViewModel.loadLeaderboard()
+                liveSessionManager.listenForFriendSessions()
+            }
+            .alert(isPresented: $showAlert) {
+                Alert(
+                    title: Text("Join Session"),
+                    message: Text(alertMessage),
+                    dismissButton: .default(Text("OK"))
+                )
+            }
+            .onAppear {
+                liveSessionManager.listenForFriendSessions()
+            }
+            .onChange(of: liveSessionManager.activeFriendSessions) { _ in
+                // Force view refresh when live sessions change
+                viewModel.objectWillChange.send()
             }
         }
         .background(Theme.mainGradient.edgesIgnoringSafeArea(.all))
         .navigationViewStyle(StackNavigationViewStyle())
+    }
+    
+    // Block navigation when joining session
+    private var isNavigationBlocked: Bool {
+        return isJoiningSession || liveSessionManager.isJoiningSession
+    }
+    
+    // Computed property to sort friends with live sessions first
+    private var sortedFriends: [FriendWithSession] {
+        var result: [FriendWithSession] = []
+        
+        // First add friends with live sessions
+        for friend in viewModel.friends {
+            // Check if this friend has an active session
+            let session = liveSessionManager.activeFriendSessions.first { sessionId, sessionData in
+                return sessionData.participants.contains(friend.id)
+            }
+            
+            if let (sessionId, sessionData) = session {
+                result.append(FriendWithSession(
+                    user: friend,
+                    sessionId: sessionId,
+                    sessionData: sessionData
+                ))
+            } else {
+                result.append(FriendWithSession(
+                    user: friend,
+                    sessionId: nil,
+                    sessionData: nil
+                ))
+            }
+        }
+        
+        // Sort with live sessions first
+        return result.sorted { a, b in
+            if a.sessionData != nil && b.sessionData == nil {
+                return true
+            } else if a.sessionData == nil && b.sessionData != nil {
+                return false
+            } else {
+                return a.user.username < b.user.username
+            }
+        }
+    }
+    
+    // Helper struct to combine friend with session data
+    struct FriendWithSession: Identifiable {
+        let user: FirebaseManager.FlipUser
+        let sessionId: String?
+        let sessionData: LiveSessionManager.LiveSessionData?
+        
+        var id: String {
+            return user.id
+        }
+    }
+    
+    // FriendCard with Live Session support
+    private func FriendCardWithLiveSession(friend: FriendWithSession) -> some View {
+        FriendCard(
+            friend: friend.user,
+            liveSession: friend.sessionData,
+            onJoinSession: {
+                handleJoinSession(sessionId: friend.sessionId)
+            }
+        )
+    }
+    
+    // Handle join session logic
+    private func handleJoinSession(sessionId: String?) {
+        guard let sessionId = sessionId else { return }
+        
+        // Block if user is already in a session
+        if appManager.currentState != .initial {
+            alertMessage = "You're already in a session. Please complete or cancel it before joining another."
+            showAlert = true
+            return
+        }
+        
+        isJoiningSession = true
+        
+        // Try to join the session
+        LiveSessionManager.shared.joinSession(sessionId: sessionId) { success, remainingSeconds, totalDuration in
+            DispatchQueue.main.async {
+                isJoiningSession = false
+                
+                if success {
+                    // Start the joined session
+                    appManager.joinLiveSession(
+                        sessionId: sessionId,
+                        remainingSeconds: remainingSeconds,
+                        totalDuration: totalDuration
+                    )
+                } else {
+                    // Show error
+                    alertMessage = "Unable to join the session. It may be full or no longer available."
+                    showAlert = true
+                }
+            }
+        }
     }
 }

@@ -1,10 +1,29 @@
 import SwiftUI
-
+class SessionJoinCoordinator {
+    static let shared = SessionJoinCoordinator()
+    
+    private var sessionData: (id: String, name: String)? = nil
+    
+    func setJoinSession(id: String, name: String) {
+        sessionData = (id, name)
+    }
+    
+    func getJoinSession() -> (id: String, name: String)? {
+        let data = sessionData
+        sessionData = nil
+        return data
+    }
+}
 struct SetupView: View {
     @EnvironmentObject var appManager: AppManager
     @State private var isButtonPressed = false
     @State private var showPauseDisabledWarning = false
     @AppStorage("hasShownPauseWarning") private var hasShownPauseWarning = false
+    @ObservedObject private var liveSessionManager = LiveSessionManager.shared
+    
+    // Check if we're navigating back from a joined session view
+    @State private var joinLiveSessionMode = false
+    @State private var sessionToJoin: (id: String, name: String)? = nil
 
     var body: some View {
         ZStack {
@@ -34,20 +53,36 @@ struct SetupView: View {
 
                 // Set Time Title
                 VStack(spacing: 4) {
-                    Text("SET TIME")
-                        .font(.system(size: 24, weight: .black))
-                        .tracking(8)
-                        .foregroundColor(.white)
-                        .retroGlow()
-                    Text("タイマーの設定")
-                        .font(.system(size: 12, weight: .medium))
-                        .tracking(3)
-                        .foregroundColor(.white.opacity(0.7))
+                    if joinLiveSessionMode, let sessionInfo = sessionToJoin {
+                        Text("JOIN \(sessionInfo.name.uppercased())'S SESSION")
+                            .font(.system(size: 20, weight: .black))
+                            .tracking(6)
+                            .foregroundColor(.white)
+                            .retroGlow()
+                            .multilineTextAlignment(.center)
+                        
+                        Text("友達と一緒に")
+                            .font(.system(size: 12, weight: .medium))
+                            .tracking(3)
+                            .foregroundColor(.white.opacity(0.7))
+                    } else {
+                        Text("SET TIME")
+                            .font(.system(size: 24, weight: .black))
+                            .tracking(8)
+                            .foregroundColor(.white)
+                            .retroGlow()
+                        Text("タイマーの設定")
+                            .font(.system(size: 12, weight: .medium))
+                            .tracking(3)
+                            .foregroundColor(.white.opacity(0.7))
+                    }
                 }
 
                 // Circular Time Picker
                 CircularTime(selectedMinutes: $appManager.selectedMinutes)
                     .padding(.top, -10)
+                    .disabled(joinLiveSessionMode) // Disable time selection for joined sessions
+                    .opacity(joinLiveSessionMode ? 0.7 : 1)
 
                 // Controls
                 HStack(spacing: 20) {
@@ -55,6 +90,7 @@ struct SetupView: View {
                         Spacer()
                         Toggle("", isOn: $appManager.allowPauses)
                             .toggleStyle(ModernToggleStyle())
+                            .disabled(joinLiveSessionMode) // Disable in join mode
                             .onChange(of: appManager.allowPauses) { newValue in
                                 if !newValue {
                                     // Only show the warning if it hasn't been shown before
@@ -75,13 +111,13 @@ struct SetupView: View {
                             Text("\(appManager.maxPauses)")
                                 .font(.system(size: 24, weight: .black))
                                 .foregroundColor(
-                                    appManager.allowPauses
+                                    (appManager.allowPauses && !joinLiveSessionMode)
                                         ? .white : .white.opacity(0.3))
 
                             Image(systemName: "chevron.down")
                                 .font(.system(size: 12, weight: .bold))
                                 .foregroundColor(
-                                    appManager.allowPauses
+                                    (appManager.allowPauses && !joinLiveSessionMode)
                                         ? .white : .white.opacity(0.3)
                                 )
                                 .offset(y: 2)
@@ -97,7 +133,7 @@ struct SetupView: View {
                         } label: {
                             Color.clear
                         }
-                        .disabled(!appManager.allowPauses)
+                        .disabled(!appManager.allowPauses || joinLiveSessionMode)
                     )
                 }
                 .padding(.horizontal)
@@ -105,11 +141,68 @@ struct SetupView: View {
                 // Begin Button
                 BeginButton {
                     withAnimation(.spring()) {
-                        appManager.startCountdown()
+                        if joinLiveSessionMode, let sessionInfo = sessionToJoin {
+                            // Join the live session
+                            LiveSessionManager.shared.joinSession(sessionId: sessionInfo.id) { success, remainingSeconds, totalDuration in
+                                if success {
+                                    appManager.joinLiveSession(
+                                        sessionId: sessionInfo.id,
+                                        remainingSeconds: remainingSeconds,
+                                        totalDuration: totalDuration
+                                    )
+                                }
+                            }
+                        } else {
+                            // Start a regular session
+                            appManager.startCountdown()
+                        }
                     }
                 }
+                .overlay(
+                    Group {
+                        if joinLiveSessionMode {
+                            Text("JOIN")
+                                .font(.system(size: 36, weight: .black))
+                                .tracking(8)
+                                .foregroundColor(.white)
+                                .shadow(color: Color.green.opacity(0.6), radius: 8)
+                        }
+                    }
+                )
 
                 Spacer()
+            }
+            
+            // Join Session Mode Control - shown only during join mode
+            if joinLiveSessionMode {
+                VStack {
+                    Spacer()
+                    Button(action: {
+                        // Exit join mode
+                        joinLiveSessionMode = false
+                        sessionToJoin = nil
+                    }) {
+                        Text("CANCEL")
+                            .font(.system(size: 16, weight: .bold))
+                            .tracking(2)
+                            .foregroundColor(.white)
+                            .frame(width: 120, height: 40)
+                            .background(
+                                ZStack {
+                                    RoundedRectangle(cornerRadius: 20)
+                                        .fill(Color.red.opacity(0.7))
+                                    
+                                    RoundedRectangle(cornerRadius: 20)
+                                        .fill(Color.white.opacity(0.1))
+                                    
+                                    RoundedRectangle(cornerRadius: 20)
+                                        .stroke(Color.white.opacity(0.3), lineWidth: 1)
+                                }
+                            )
+                            .shadow(color: Color.red.opacity(0.3), radius: 4)
+                    }
+                    .padding(.bottom, 50)
+                }
             }
             
             // Custom Alert Overlay
@@ -220,6 +313,20 @@ struct SetupView: View {
                         .transition(.scale(scale: 0.85).combined(with: .opacity))
                     )
                     .transition(.opacity)
+            }
+        }
+        .onAppear {
+            // Check if we're being called to join a session
+            if let sessionData = SessionJoinCoordinator.shared.getJoinSession() {
+                joinLiveSessionMode = true
+                sessionToJoin = sessionData
+                
+                // Get the session details to show the remaining time
+                LiveSessionManager.shared.getSessionDetails(sessionId: sessionData.id) { session in
+                    if let session = session {
+                        appManager.selectedMinutes = session.targetDuration
+                    }
+                }
             }
         }
     }

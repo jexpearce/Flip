@@ -5,9 +5,16 @@ struct TrackingView: View {
     @State private var isPausePressed = false
     @State private var isCancelPressed = false
     @State private var showingCancelAlert = false
+    @ObservedObject private var liveSessionManager = LiveSessionManager.shared
     
     var body: some View {
         VStack(spacing: 30) {
+            // Live Session Indicator - NEW
+            if appManager.isJoinedSession {
+                JoinedSessionIndicator()
+                    .padding(.bottom, 10)
+            }
+            
             // Status Icon
             Image(
                 systemName: appManager.isFaceDown
@@ -173,3 +180,16 @@ struct TrackingView: View {
         }
     }
 }
+
+
+    
+    private func getCircleColor(index: Int) -> Color {
+        let colors: [Color] = [
+            .green,
+            .blue,
+            .purple,
+            .orange
+        ]
+        
+        return colors[index % colors.count]
+    }

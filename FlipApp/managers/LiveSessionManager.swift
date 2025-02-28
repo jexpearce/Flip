@@ -1,0 +1,474 @@
+import FirebaseAuth
+import FirebaseFirestore
+import Foundation
+import SwiftUI
+
+class LiveSessionManager: ObservableObject {
+    static let shared = LiveSessionManager()
+    
+    let db = Firestore.firestore()
+    private var sessionListeners: [String: ListenerRegistration] = [:]
+    
+    // Published properties for UI updates
+    @Published var activeFriendSessions: [String: LiveSessionData] = [:]
+    @Published var currentJoinedSession: LiveSessionData?
+    @Published var isJoiningSession = false
+    
+    // Constants
+    private let maxParticipants = 4
+    private let minRemainingTimeToJoin = 3 * 60  // 3 minutes in seconds
+    
+    // MARK: - Model Structs
+    
+    struct LiveSessionData: Identifiable, Equatable {
+        let id: String
+        let starterId: String
+        let starterUsername: String
+        var participants: [String]
+        let startTime: Date
+        let targetDuration: Int
+        var remainingSeconds: Int
+        var isPaused: Bool
+        var allowPauses: Bool
+        var maxPauses: Int
+        var joinTimes: [String: Date]
+        var participantStatus: [String: ParticipantStatus]
+        var lastUpdateTime: Date
+        
+        // Add constant inside the struct
+        private let minRemainingTimeToJoin = 3 * 60  // 3 minutes in seconds
+        
+        var elapsedSeconds: Int {
+            let totalSeconds = targetDuration * 60
+            return totalSeconds - remainingSeconds
+        }
+        
+        var elapsedTimeString: String {
+            let minutes = elapsedSeconds / 60
+            let seconds = elapsedSeconds % 60
+            return String(format: "%d:%02d", minutes, seconds)
+        }
+        
+        var isFull: Bool {
+            return participants.count >= 4
+        }
+        
+        var canJoin: Bool {
+            return !isFull && remainingSeconds > minRemainingTimeToJoin
+        }
+        static func == (lhs: LiveSessionData, rhs: LiveSessionData) -> Bool {
+                return lhs.id == rhs.id &&
+                       lhs.starterId == rhs.starterId &&
+                       lhs.starterUsername == rhs.starterUsername &&
+                       lhs.participants == rhs.participants &&
+                       lhs.targetDuration == rhs.targetDuration &&
+                       lhs.remainingSeconds == rhs.remainingSeconds &&
+                       lhs.isPaused == rhs.isPaused &&
+                       lhs.lastUpdateTime == rhs.lastUpdateTime
+            }
+    }
+    
+    enum ParticipantStatus: String, Codable, Equatable {
+        case active
+        case paused
+        case completed
+        case failed
+    }
+    
+    // MARK: - Initialization
+    
+    init() {
+        // Add observer for refresh requests
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(handleRefreshNotification),
+            name: Notification.Name("RefreshLiveSessions"),
+            object: nil
+        )
+    }
+    
+    // MARK: - Session Management
+    
+    func broadcastSessionState(sessionId: String, appManager: AppManager) {
+        guard let userId = Auth.auth().currentUser?.uid,
+              let username = FirebaseManager.shared.currentUser?.username else { return }
+        
+        // Get current state from AppManager
+        let remainingSeconds = appManager.remainingSeconds
+        let isPaused = appManager.isPaused
+        let allowPauses = appManager.allowPauses
+        let maxPauses = appManager.maxPauses
+        let targetDuration = appManager.selectedMinutes
+        
+        // Check if this is a new session or update
+        db.collection("live_sessions").document(sessionId).getDocument { [weak self] snapshot, error in
+            if let document = snapshot, document.exists {
+                // Update existing session
+                self?.updateExistingSession(
+                    sessionId: sessionId,
+                    remainingSeconds: remainingSeconds,
+                    isPaused: isPaused,
+                    userId: userId)
+            } else {
+                // Create new session
+                self?.createNewSession(
+                    sessionId: sessionId,
+                    starterId: userId,
+                    starterUsername: username,
+                    targetDuration: targetDuration,
+                    remainingSeconds: remainingSeconds,
+                    isPaused: isPaused,
+                    allowPauses: allowPauses,
+                    maxPauses: maxPauses)
+            }
+        }
+    }
+    
+    private func createNewSession(
+        sessionId: String,
+        starterId: String,
+        starterUsername: String,
+        targetDuration: Int,
+        remainingSeconds: Int,
+        isPaused: Bool,
+        allowPauses: Bool,
+        maxPauses: Int
+    ) {
+        let now = Date()
+        
+        let sessionData: [String: Any] = [
+            "starterId": starterId,
+            "starterUsername": starterUsername,
+            "participants": [starterId],
+            "startTime": Timestamp(date: now),
+            "targetDuration": targetDuration,
+            "remainingSeconds": remainingSeconds,
+            "isPaused": isPaused,
+            "allowPauses": allowPauses,
+            "maxPauses": maxPauses,
+            "joinTimes": [starterId: Timestamp(date: now)],
+            "participantStatus": [starterId: ParticipantStatus.active.rawValue],
+            "lastUpdateTime": Timestamp(date: now)
+        ]
+        
+        db.collection("live_sessions").document(sessionId).setData(sessionData) { error in
+            if let error = error {
+                print("Error creating live session: \(error.localizedDescription)")
+            } else {
+                print("Live session created successfully")
+            }
+        }
+    }
+    
+    private func updateExistingSession(
+        sessionId: String,
+        remainingSeconds: Int,
+        isPaused: Bool,
+        userId: String
+    ) {
+        let updateData: [String: Any] = [
+            "remainingSeconds": remainingSeconds,
+            "isPaused": isPaused,
+            "participantStatus.\(userId)": isPaused ? ParticipantStatus.paused.rawValue : ParticipantStatus.active.rawValue,
+            "lastUpdateTime": Timestamp(date: Date())
+        ]
+        
+        db.collection("live_sessions").document(sessionId).updateData(updateData) { error in
+            if let error = error {
+                print("Error updating live session: \(error.localizedDescription)")
+            }
+        }
+    }
+    
+    func listenForFriendSessions() {
+        guard let userId = Auth.auth().currentUser?.uid else { return }
+        
+        // First get user's friends
+        FirebaseManager.shared.db.collection("users").document(userId)
+            .getDocument { [weak self] document, error in
+                guard let userData = try? document?.data(as: FirebaseManager.FlipUser.self),
+                      let self = self else { return }
+                
+                // Get all friend IDs
+                let friendIds = userData.friends
+                
+                // Skip if no friends
+                if friendIds.isEmpty {
+                    return
+                }
+                
+                // Listen for active sessions where friends are participants
+                self.db.collection("live_sessions")
+                    .whereField("participants", arrayContainsAny: friendIds)
+                    .addSnapshotListener { querySnapshot, error in
+                        guard let documents = querySnapshot?.documents else {
+                            print("Error fetching live sessions: \(error?.localizedDescription ?? "Unknown error")")
+                            return
+                        }
+                        
+                        // Process session documents
+                        DispatchQueue.main.async {
+                            var newActiveSessions: [String: LiveSessionData] = [:]
+                            
+                            for document in documents {
+                                if let sessionData = self.parseLiveSessionDocument(document) {
+                                    // Only include sessions that haven't ended
+                                    if sessionData.remainingSeconds > 0 {
+                                        newActiveSessions[document.documentID] = sessionData
+                                    }
+                                }
+                            }
+                            
+                            self.activeFriendSessions = newActiveSessions
+                        }
+                    }
+            }
+    }
+    
+    private func parseLiveSessionDocument(_ document: DocumentSnapshot) -> LiveSessionData? {
+        guard document.exists else { return nil }
+        
+        let data = document.data() ?? [:]
+        
+        guard let starterId = data["starterId"] as? String,
+              let starterUsername = data["starterUsername"] as? String,
+              let participants = data["participants"] as? [String],
+              let startTimestamp = data["startTime"] as? Timestamp,
+              let targetDuration = data["targetDuration"] as? Int,
+              let remainingSeconds = data["remainingSeconds"] as? Int,
+              let isPaused = data["isPaused"] as? Bool,
+              let allowPauses = data["allowPauses"] as? Bool,
+              let maxPauses = data["maxPauses"] as? Int,
+              let joinTimesData = data["joinTimes"] as? [String: Timestamp],
+              let participantStatusData = data["participantStatus"] as? [String: String],
+              let lastUpdateTimestamp = data["lastUpdateTime"] as? Timestamp else {
+            return nil
+        }
+        
+        // Convert join times
+        var joinTimes: [String: Date] = [:]
+        for (userId, timestamp) in joinTimesData {
+            joinTimes[userId] = timestamp.dateValue()
+        }
+        
+        // Convert participant status
+        var participantStatus: [String: ParticipantStatus] = [:]
+        for (userId, status) in participantStatusData {
+            if let statusEnum = ParticipantStatus(rawValue: status) {
+                participantStatus[userId] = statusEnum
+            }
+        }
+        
+        return LiveSessionData(
+            id: document.documentID,
+            starterId: starterId,
+            starterUsername: starterUsername,
+            participants: participants,
+            startTime: startTimestamp.dateValue(),
+            targetDuration: targetDuration,
+            remainingSeconds: remainingSeconds,
+            isPaused: isPaused,
+            allowPauses: allowPauses,
+            maxPauses: maxPauses,
+            joinTimes: joinTimes,
+            participantStatus: participantStatus,
+            lastUpdateTime: lastUpdateTimestamp.dateValue()
+        )
+    }
+    
+    func joinSession(sessionId: String, completion: @escaping (Bool, Int, Int) -> Void) {
+        guard let userId = Auth.auth().currentUser?.uid,
+              let username = FirebaseManager.shared.currentUser?.username else {
+            completion(false, 0, 0)
+            return
+        }
+        
+        isJoiningSession = true
+        
+        // Get the session first
+        db.collection("live_sessions").document(sessionId).getDocument { [weak self] document, error in
+            guard let self = self,
+                  let document = document,
+                  document.exists,
+                  let sessionData = self.parseLiveSessionDocument(document) else {
+                self?.isJoiningSession = false
+                completion(false, 0, 0)
+                return
+            }
+            
+            // Check if session can be joined
+            if !sessionData.canJoin {
+                self.isJoiningSession = false
+                completion(false, 0, 0)
+                return
+            }
+            
+            // Update session with new participant
+            var updatedParticipants = sessionData.participants
+            if !updatedParticipants.contains(userId) {
+                updatedParticipants.append(userId)
+            }
+            
+            let now = Date()
+            
+            let updateData: [String: Any] = [
+                "participants": updatedParticipants,
+                "joinTimes.\(userId)": Timestamp(date: now),
+                "participantStatus.\(userId)": ParticipantStatus.active.rawValue,
+                "lastUpdateTime": Timestamp(date: now)
+            ]
+            
+            self.db.collection("live_sessions").document(sessionId).updateData(updateData) { error in
+                if let error = error {
+                    print("Error joining session: \(error.localizedDescription)")
+                    self.isJoiningSession = false
+                    completion(false, 0, 0)
+                } else {
+                    print("Successfully joined session")
+                    
+                    // Listen for updates to this session
+                    self.listenToJoinedSession(sessionId: sessionId)
+                    
+                    self.isJoiningSession = false
+                    
+                    // Return success with the remaining time and total duration
+                    completion(true, sessionData.remainingSeconds, sessionData.targetDuration)
+                }
+            }
+        }
+    }
+    
+    private func listenToJoinedSession(sessionId: String) {
+        // Remove any existing listener
+        if let existingListener = sessionListeners[sessionId] {
+            existingListener.remove()
+            sessionListeners.removeValue(forKey: sessionId)
+        }
+        
+        // Create new listener
+        let listener = db.collection("live_sessions").document(sessionId)
+            .addSnapshotListener { [weak self] document, error in
+                guard let document = document, document.exists,
+                      let sessionData = self?.parseLiveSessionDocument(document) else {
+                    self?.currentJoinedSession = nil
+                    return
+                }
+                
+                DispatchQueue.main.async {
+                    self?.currentJoinedSession = sessionData
+                }
+            }
+        
+        // Store the listener
+        sessionListeners[sessionId] = listener
+    }
+    
+    func updateParticipantStatus(sessionId: String, userId: String, status: ParticipantStatus) {
+        let updateData: [String: Any] = [
+            "participantStatus.\(userId)": status.rawValue,
+            "lastUpdateTime": Timestamp(date: Date())
+        ]
+        
+        db.collection("live_sessions").document(sessionId).updateData(updateData)
+    }
+    
+    func endSession(sessionId: String, userId: String, wasSuccessful: Bool) {
+        // Update participant status first
+        let status: ParticipantStatus = wasSuccessful ? .completed : .failed
+        updateParticipantStatus(sessionId: sessionId, userId: userId, status: status)
+        
+        // Check if all participants have completed/failed
+        db.collection("live_sessions").document(sessionId).getDocument { [weak self] document, error in
+            guard let document = document, document.exists,
+                  let sessionData = self?.parseLiveSessionDocument(document) else { return }
+            
+            // Check if all participants have a terminal status
+            let allCompleted = sessionData.participants.allSatisfy { participantId in
+                if let status = sessionData.participantStatus[participantId] {
+                    return status == .completed || status == .failed
+                }
+                return false
+            }
+            
+            // If everyone is done, clean up the session
+            if allCompleted {
+                // Session is complete, can be removed after a delay to allow UI views to finish
+                DispatchQueue.main.asyncAfter(deadline: .now() + 10) {
+                    self?.db.collection("live_sessions").document(sessionId).delete()
+                }
+            }
+        }
+    }
+    func getSessionDetails(sessionId: String, completion: @escaping (LiveSessionData?) -> Void) {
+        db.collection("live_sessions").document(sessionId).getDocument { document, error in
+            if let document = document, document.exists {
+                if let sessionData = self.parseLiveSessionDocument(document) {
+                    DispatchQueue.main.async {
+                        completion(sessionData)
+                    }
+                } else {
+                    completion(nil)
+                }
+            } else {
+                completion(nil)
+            }
+        }
+    }
+    // Add this to LiveSessionManager to handle paused sessions during joined sessions
+
+    func handlePausedSessionParticipant(sessionId: String, userId: String, isPaused: Bool) {
+        // Update participant status
+        let status: ParticipantStatus = isPaused ? .paused : .active
+        updateParticipantStatus(sessionId: sessionId, userId: userId, status: status)
+        
+        // If this is the current user's joined session, update the UI
+        if currentJoinedSession?.id == sessionId {
+            // Refresh the session data to reflect the pause state
+            listenToJoinedSession(sessionId: sessionId)
+        }
+    }
+
+    // Method to get active participants count (excluding paused)
+    func getActiveParticipantsCount(sessionId: String, completion: @escaping (Int) -> Void) {
+        db.collection("live_sessions").document(sessionId).getDocument { document, error in
+            if let document = document, document.exists,
+               let data = document.data(),
+               let participantStatus = data["participantStatus"] as? [String: String] {
+                
+                // Count active participants (not paused, failed, or completed)
+                let activeCount = participantStatus.values.filter {
+                    $0 == ParticipantStatus.active.rawValue
+                }.count
+                
+                completion(activeCount)
+            } else {
+                completion(0)
+            }
+        }
+    }
+    func refreshLiveSessions() {
+        // Re-fetch active sessions
+        listenForFriendSessions()
+        
+        // If we're in a session, ensure it's still updated
+        if let sessionId = currentJoinedSession?.id {
+            listenToJoinedSession(sessionId: sessionId)
+        }
+    }
+    @objc private func handleRefreshNotification() {
+        refreshLiveSessions()
+    }
+
+    // Make sure to update deinit
+    deinit {
+        cleanupListeners()
+        NotificationCenter.default.removeObserver(self)
+    }
+    
+    func cleanupListeners() {
+        for (_, listener) in sessionListeners {
+            listener.remove()
+        }
+        sessionListeners.removeAll()
+    }
+}

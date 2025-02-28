@@ -4,10 +4,27 @@ import SwiftUI
 class ViewRouter: ObservableObject {
     @Published var selectedTab: Int = 2 // Home tab as default (center)
     @Published var friendToShow: FirebaseManager.FlipUser? = nil
-    
+    init() {
+            // Set up notification to handle tab switching from other parts of the app
+            NotificationCenter.default.addObserver(
+                self,
+                selector: #selector(handleTabSwitch),
+                name: Notification.Name("SwitchToHomeTab"),
+                object: nil
+            )
+        }
+        
+        // ADD THIS METHOD
+        @objc func handleTabSwitch() {
+            // Switch to home tab (index 2)
+            selectedTab = 2
+        }
     func showFriendProfile(friend: FirebaseManager.FlipUser) {
         self.friendToShow = friend
     }
+    deinit {
+            NotificationCenter.default.removeObserver(self)
+        }
 }
 
 struct MainView: View {

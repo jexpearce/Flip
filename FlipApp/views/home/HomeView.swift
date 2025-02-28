@@ -22,6 +22,10 @@ struct HomeView: View {
                     FailureView()
                 case .completed:
                     CompletionView()
+                case .joinedCompleted:
+                    JoinedCompletionView()
+                case .mixedOutcome:
+                    MixedOutcomeView()
                 }
             }
             

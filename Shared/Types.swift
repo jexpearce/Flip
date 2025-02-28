@@ -7,4 +7,6 @@ enum FlipState: String, CaseIterable {
     case failed
     case completed
     case paused
+    case joinedCompleted = "joinedCompleted"  // New state for successful group sessions
+    case mixedOutcome = "mixedOutcome"
 }
