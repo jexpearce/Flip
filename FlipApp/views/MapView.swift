@@ -49,6 +49,8 @@ class ScoreViewModel: ObservableObject {
     }
 }
 
+
+// Add this modification to your existing MapView
 struct MapView: View {
     @StateObject private var viewModel = MapViewModel()
     @State private var showPrivacySettings = false
@@ -56,6 +58,7 @@ struct MapView: View {
     @State private var mapStyle: MapStyleType = .standard
     @EnvironmentObject var viewRouter: ViewRouter
     @StateObject private var locationPermissionManager = LocationPermissionManager.shared
+    @Environment(\.presentationMode) var presentationMode
     
     var body: some View {
         ZStack {
@@ -77,18 +80,36 @@ struct MapView: View {
             .preferredColorScheme(.dark) // Force dark mode for map
             .edgesIgnoringSafeArea(.all)
             
-            // Header with title and settings button
+            // Back button overlay
             VStack {
                 HStack {
-                    Text("FRIEND MAP")
-                        .font(.system(size: 24, weight: .black))
-                        .tracking(8)
-                        .foregroundColor(.white)
-                        .shadow(color: Color(red: 56/255, green: 189/255, blue: 248/255).opacity(0.5), radius: 8)
-                        .padding(.leading)
+                    // Back button
+                    Button(action: {
+                        presentationMode.wrappedValue.dismiss()
+                    }) {
+                        ZStack {
+                            // Button background
+                            Circle()
+                                .fill(Color(red: 26/255, green: 14/255, blue: 47/255).opacity(0.85))
+                                .frame(width: 46, height: 46)
+                                .overlay(
+                                    Circle()
+                                        .stroke(Color.white.opacity(0.3), lineWidth: 1.5)
+                                )
+                                .shadow(color: Color.black.opacity(0.4), radius: 6)
+                            
+                            // X icon
+                            Image(systemName: "xmark")
+                                .font(.system(size: 20, weight: .bold))
+                                .foregroundColor(.white)
+                        }
+                    }
+                    .padding(.leading, 20)
+                    .padding(.top, 50)
                     
                     Spacer()
                     
+                    // Original map settings button - keep this from your existing code
                     Button(action: {
                         showPrivacySettings = true
                     }) {
@@ -107,29 +128,36 @@ struct MapView: View {
                             )
                             .shadow(color: Color.black.opacity(0.3), radius: 4)
                     }
-                    .padding(.trailing)
+                    .padding(.trailing, 20)
+                    .padding(.top, 50)
                 }
-                .padding(.top, 50)
-                .padding(.bottom, 10)
-                .background(
-                    Rectangle()
-                        .fill(
-                            LinearGradient(
-                                gradient: Gradient(colors: [
-                                    Color(red: 26/255, green: 14/255, blue: 47/255).opacity(0.9),
-                                    Color(red: 26/255, green: 14/255, blue: 47/255).opacity(0)
-                                ]),
-                                startPoint: .top,
-                                endPoint: .bottom
+                
+                Text("FRIENDS MAP")
+                    .font(.system(size: 16, weight: .black))
+                    .tracking(5)
+                    .foregroundColor(.white)
+                    .shadow(color: Color.black.opacity(0.5), radius: 2)
+                    .padding(.top, -5)
+                    .padding(.bottom, 10)
+                    .background(
+                        Rectangle()
+                            .fill(
+                                LinearGradient(
+                                    gradient: Gradient(colors: [
+                                        Color(red: 26/255, green: 14/255, blue: 47/255).opacity(0.8),
+                                        Color(red: 26/255, green: 14/255, blue: 47/255).opacity(0)
+                                    ]),
+                                    startPoint: .top,
+                                    endPoint: .bottom
+                                )
                             )
-                        )
-                        .frame(height: 120)
-                        .edgesIgnoringSafeArea(.top)
-                )
+                            .frame(height: 120)
+                            .edgesIgnoringSafeArea(.top)
+                    )
                 
                 Spacer()
                 
-                // Map controls
+                // Rest of your existing map controls
                 HStack {
                     Spacer()
                     
@@ -235,27 +263,19 @@ struct MapView: View {
             
             // Location permission alert overlay
             if locationPermissionManager.showCustomAlert {
-                LocationPermissionAlert(isPresented: $locationPermissionManager.showCustomAlert) {
+                LocationPermissionAlert(isPresented: $locationPermissionManager.showCustomAlert, onContinue: {
                     locationPermissionManager.requestSystemPermission()
-                }
+                })
             }
         }
         .sheet(isPresented: $showPrivacySettings) {
             MapPrivacySettingsView()
         }
         .onAppear {
-            checkLocationPermission()
             viewModel.startLocationTracking()
         }
         .onDisappear {
             viewModel.stopLocationTracking()
-        }
-    }
-    
-    private func checkLocationPermission() {
-        let status = CLLocationManager().authorizationStatus
-        if status == .denied || status == .restricted || status == .notDetermined {
-            locationPermissionManager.requestPermissionWithCustomAlert()
         }
     }
 }

@@ -38,7 +38,7 @@ struct RulesView: View {
                     )
                 
                 // Subtitle
-                Text("The Lee Kuan Yew of Productivity Apps")
+                Text("A Different Kind of Productivity")
                     .font(.system(size: 16, weight: .bold))
                     .italic()
                     .foregroundColor(.white.opacity(0.8))
