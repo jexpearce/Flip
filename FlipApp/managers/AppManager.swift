@@ -597,11 +597,10 @@ class AppManager: NSObject, ObservableObject {
     // Add a method to handle app being in background for extended periods
     private func handleExtendedBackgroundTime() {
         guard currentState == .tracking else { return }
-        
         // Calculate how long we've been in background
         let now = Date()
         let lastOrientationCheckInterval = now.timeIntervalSince(lastOrientationCheck)
-        
+
         print("Extended background check - time since last check: \(Int(lastOrientationCheckInterval)) seconds")
         
         // If it's been more than 5 minutes since the last check, consider potential state inconsistency
@@ -817,7 +816,6 @@ class AppManager: NSObject, ObservableObject {
                 activity = nil  // Important: set to nil after ending
             }
         }
-        
         clearSessionState()
         endSession()
         saveSessionState()
