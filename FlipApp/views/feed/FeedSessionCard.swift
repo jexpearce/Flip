@@ -2,17 +2,22 @@ import SwiftUI
 
 struct FeedSessionCard: View {
     let session: Session
-    let viewModel: FeedViewModel  // Add this
+    let viewModel: FeedViewModel
+    let showUserHeader: Bool
     @State private var showCommentField = false
-    @State private var comment = ""
+    @State private var comment: String = ""
     @State private var showSavedIndicator = false
     @State private var keyboardHeight: CGFloat = 0
     @FocusState private var isCommentFocused: Bool
-    // Update initializer
-        init(session: Session, viewModel: FeedViewModel) {
-            self.session = session
-            self.viewModel = viewModel
-        }
+    
+    // Update initializer with optional parameter
+    init(session: Session, viewModel: FeedViewModel, showUserHeader: Bool = true) {
+        self.session = session
+        self.viewModel = viewModel
+        self.showUserHeader = showUserHeader
+        // Initialize comment with existing value
+        self._comment = State(initialValue: session.comment ?? "")
+    }
     
     private var statusColor: LinearGradient {
         session.wasSuccessful ?
@@ -37,39 +42,41 @@ struct FeedSessionCard: View {
     private var hasContent: Bool {
         return session.sessionTitle != nil || session.sessionNotes != nil
     }
-    
-    // Check if session has participants (for multi-user sessions)
-    private var hasParticipants: Bool {
-        return session.participants != nil && !(session.participants?.isEmpty ?? true)
-    }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
-            // User Info
-            HStack(spacing: 12) {
-                ZStack {
-                    Circle()
-                        .fill(Theme.buttonGradient)
-                        .frame(width: 40, height: 40)
-                        .opacity(0.2)
-                    
-                    Image(systemName: "person.circle.fill")
-                        .font(.system(size: 32))
-                        .foregroundColor(.white)
-                        .shadow(color: Color(red: 56/255, green: 189/255, blue: 248/255).opacity(0.5), radius: 6)
+            // User Info - only show if requested
+            if showUserHeader {
+                HStack(spacing: 12) {
+                    ZStack {
+                        Circle()
+                            .fill(Theme.buttonGradient)
+                            .frame(width: 40, height: 40)
+                            .opacity(0.2)
+                        
+                        Image(systemName: "person.circle.fill")
+                            .font(.system(size: 32))
+                            .foregroundColor(.white)
+                            .shadow(color: Color(red: 56/255, green: 189/255, blue: 248/255).opacity(0.5), radius: 6)
+                    }
+
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text(session.username)
+                            .font(.system(size: 16, weight: .bold))
+                            .foregroundColor(.white)
+                            .shadow(color: Color(red: 56/255, green: 189/255, blue: 248/255).opacity(0.5), radius: 6)
+
+                        Text(session.formattedStartTime)
+                            .font(.system(size: 12))
+                            .foregroundColor(.white.opacity(0.7))
+                    }
+
+                    Spacer()
                 }
-
-                VStack(alignment: .leading, spacing: 4) {
-                    Text(session.username)
-                        .font(.system(size: 16, weight: .bold))
-                        .foregroundColor(.white)
-                        .shadow(color: Color(red: 56/255, green: 189/255, blue: 248/255).opacity(0.5), radius: 6)
-
-                    Text(session.formattedStartTime)
-                        .font(.system(size: 12))
-                        .foregroundColor(.white.opacity(0.7))
-                }
-
+            }
+            
+            // Right side action buttons
+            HStack {
                 Spacer()
                 
                 // Comment button
@@ -94,6 +101,7 @@ struct FeedSessionCard: View {
                             .foregroundColor(.white)
                     }
                 }
+                .buttonStyle(BorderlessButtonStyle())
                 .padding(.trailing, 6)
 
                 // Status Icon with enhanced styling - made larger
@@ -128,22 +136,17 @@ struct FeedSessionCard: View {
                 }
             }
             
-            // Multi-user session participants
-            if hasParticipants {
-                ParticipantBadges(participants: session.participants ?? [])
-            }
-            
-            // Session title and notes if available - REDUCED PADDING
+            // Session title and notes if available
             if hasContent {
                 Divider()
                     .background(Color.white.opacity(0.2))
-                    .padding(.vertical, 2) // Reduced vertical padding
+                    .padding(.vertical, 2)
                 
-                VStack(alignment: .leading, spacing: 6) { // Reduced spacing
+                VStack(alignment: .leading, spacing: 6) {
                     // Session Title if available
                     if let title = session.sessionTitle, !title.isEmpty {
                         Text(title)
-                            .font(.system(size: 16, weight: .bold)) // Slightly smaller text
+                            .font(.system(size: 16, weight: .bold))
                             .foregroundColor(.white)
                             .shadow(color: Color(red: 56/255, green: 189/255, blue: 248/255).opacity(0.4), radius: 4)
                             .lineLimit(2)
@@ -155,10 +158,10 @@ struct FeedSessionCard: View {
                             .font(.system(size: 14))
                             .foregroundColor(.white.opacity(0.9))
                             .multilineTextAlignment(.leading)
-                            .lineLimit(3) // One fewer line to save space
+                            .lineLimit(3)
                     }
                 }
-                .padding(.horizontal, 3) // Minimal horizontal padding
+                .padding(.horizontal, 3)
             }
             
             // Comment if available
@@ -197,38 +200,16 @@ struct FeedSessionCard: View {
                 .padding(.top, 8)
             }
         }
-        .padding(.vertical, 16) // Consistent vertical padding
+        .padding(.vertical, 16)
         .padding(.horizontal, 16)
-        .background(
-            ZStack {
-                RoundedRectangle(cornerRadius: 15)
-                    .fill(Theme.buttonGradient)
-                    .opacity(0.1)
-                
-                RoundedRectangle(cornerRadius: 15)
-                    .fill(Color.white.opacity(0.05))
-                
-                RoundedRectangle(cornerRadius: 15)
-                    .stroke(
-                        LinearGradient(
-                            colors: [
-                                Color.white.opacity(0.5),
-                                Color.white.opacity(0.1)
-                            ],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        ),
-                        lineWidth: 1
-                    )
+        .contentShape(Rectangle())
+        .onTapGesture {
+            // Dismiss keyboard when tapping on the card
+            if isCommentFocused {
+                isCommentFocused = false
             }
-        )
-        .shadow(color: Color.black.opacity(0.2), radius: 4, x: 0, y: 2)
+        }
         .onAppear {
-            // Load existing comment if available
-            if let existingComment = session.comment {
-                comment = existingComment
-            }
-            
             // Set up keyboard notifications
             NotificationCenter.default.addObserver(
                 forName: UIResponder.keyboardWillShowNotification,
@@ -251,13 +232,6 @@ struct FeedSessionCard: View {
         .onDisappear {
             // Remove keyboard observers
             NotificationCenter.default.removeObserver(self)
-        }
-        .contentShape(Rectangle())
-        .onTapGesture {
-            // Dismiss keyboard when tapping on the card
-            if isCommentFocused {
-                isCommentFocused = false
-            }
         }
     }
     
