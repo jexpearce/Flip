@@ -22,9 +22,9 @@ struct FriendLocation: Identifiable {
     let sessionDuration: Int  // in minutes
     let sessionStartTime: Date
     let isHistorical: Bool  // Flag to indicate if this is a past session
-    let sessionIndex: Int
-    let participants: [String]?
-    let participantNames: [String]?
+    let sessionIndex: Int   // Index to track which historical session (0 = current, 1 = most recent past, etc.)
+    let participants: [String]?   // User IDs of participants
+    let participantNames: [String]?  // Names of participants
     
     // Computed properties for UI
     var sessionMinutesElapsed: Int {
@@ -326,38 +326,17 @@ class MapViewModel: NSObject, ObservableObject, CLLocationManagerDelegate {
                 // Process each document into a historical location
                 if let documents = snapshot?.documents {
                     for (index, document) in documents.enumerated() {
-                        let data = document.data()
-                        
-                        guard let username = data["username"] as? String,
-                              let geoPoint = data["location"] as? GeoPoint,
-                              let wasSuccessful = data["lastFlipWasSuccessful"] as? Bool,
-                              let sessionStartTime = (data["sessionStartTime"] as? Timestamp)?.dateValue(),
-                              let sessionEndTime = (data["sessionEndTime"] as? Timestamp)?.dateValue()
-                        else { continue }
-                        
-                        let sessionDuration = data["sessionDuration"] as? Int ?? 25
-                        
-                        let location = FriendLocation(
-                            id: "\(userId)_hist_\(index + 1)",
-                            username: username,
-                            coordinate: CLLocationCoordinate2D(
-                                latitude: geoPoint.latitude,
-                                longitude: geoPoint.longitude
-                            ),
-                            isCurrentlyFlipped: false,
-                            lastFlipTime: sessionEndTime,
-                            lastFlipWasSuccessful: wasSuccessful,
-                            sessionDuration: sessionDuration,
-                            sessionStartTime: sessionStartTime,
-                            isHistorical: true,
-                            sessionIndex: index + 1
-                        )
-                        
-                        historicalLocations.append(location)
+                        if let location = self.processHistoricalDocument(document, userId: userId, index: index) {
+                            historicalLocations.append(location)
+                        }
                     }
                 }
                 
-                completion(historicalLocations)
+                // Also fetch group sessions where this user was a participant
+                self.fetchGroupSessions(userId: userId) { groupLocations in
+                    historicalLocations.append(contentsOf: groupLocations)
+                    completion(historicalLocations)
+                }
             }
     }
     
@@ -392,7 +371,9 @@ class MapViewModel: NSObject, ObservableObject, CLLocationManagerDelegate {
                 sessionDuration: sessionDuration,
                 sessionStartTime: sessionStartTime,
                 isHistorical: isHistorical,
-                sessionIndex: sessionIndex
+                sessionIndex: sessionIndex,
+                participants: nil,
+                participantNames: nil
             )
         }
     }
@@ -453,6 +434,71 @@ class MapViewModel: NSObject, ObservableObject, CLLocationManagerDelegate {
     
     func locationManager(_ manager: CLLocationManager, didFailWithError error: Error) {
         print("Location manager failed with error: \(error.localizedDescription)")
+    }
+    private func processHistoricalDocument(_ document: QueryDocumentSnapshot, userId: String, index: Int) -> FriendLocation? {
+        let data = document.data()
+        
+        guard let username = data["username"] as? String,
+              let geoPoint = data["location"] as? GeoPoint,
+              let wasSuccessful = data["lastFlipWasSuccessful"] as? Bool,
+              let sessionStartTime = (data["sessionStartTime"] as? Timestamp)?.dateValue(),
+              let sessionEndTime = (data["sessionEndTime"] as? Timestamp)?.dateValue()
+        else { return nil }
+        
+        let sessionDuration = data["sessionDuration"] as? Int ?? 25
+        let participants = data["participants"] as? [String]
+        let participantNames = data["participantNames"] as? [String]
+        
+        return FriendLocation(
+            id: "\(userId)_hist_\(index + 1)",
+            username: username,
+            coordinate: CLLocationCoordinate2D(
+                latitude: geoPoint.latitude,
+                longitude: geoPoint.longitude
+            ),
+            isCurrentlyFlipped: false,
+            lastFlipTime: sessionEndTime,
+            lastFlipWasSuccessful: wasSuccessful,
+            sessionDuration: sessionDuration,
+            sessionStartTime: sessionStartTime,
+            isHistorical: true,
+            sessionIndex: index + 1,
+            participants: participants,
+            participantNames: participantNames
+        )
+    }
+
+    // New method to fetch group sessions
+    private func fetchGroupSessions(userId: String, completion: @escaping ([FriendLocation]) -> Void) {
+        // Query for sessions where this user was a participant
+        db.collection("session_locations")
+            .whereField("participants", arrayContains: userId)
+            .order(by: "sessionEndTime", descending: true)
+            .limit(to: 5)
+            .getDocuments { [weak self] snapshot, error in
+                guard let self = self else {
+                    completion([])
+                    return
+                }
+                
+                if let error = error {
+                    print("Error fetching group sessions: \(error.localizedDescription)")
+                    completion([])
+                    return
+                }
+                
+                var groupLocations: [FriendLocation] = []
+                
+                if let documents = snapshot?.documents {
+                    for (index, document) in documents.enumerated() {
+                        if let location = self.processHistoricalDocument(document, userId: "\(userId)_group_\(index)", index: index) {
+                            groupLocations.append(location)
+                        }
+                    }
+                }
+                
+                completion(groupLocations)
+            }
     }
     
     // MARK: - Firebase Location Updates

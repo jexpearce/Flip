@@ -284,13 +284,27 @@ struct MapView: View {
         }
     }
 }
-
 struct FriendMapMarker: View {
     let friend: FriendLocation
     @State private var animate = false
     
     var body: some View {
         ZStack {
+            // Group session indicator
+            if let participants = friend.participants, participants.count > 1 {
+                // Show larger circle with overlapping profile icons
+                Circle()
+                    .fill(statusColor)
+                    .frame(width: 46, height: 46)
+                // Show participant count badge
+                Text("\(participants.count)")
+                    .font(.system(size: 12, weight: .bold))
+                    .foregroundColor(.white)
+                    .frame(width: 20, height: 20)
+                    .background(Circle().fill(Color.black.opacity(0.6)))
+                    .offset(x: 16, y: -16)
+            }
+            
             // Base circle with status color
             Circle()
                 .fill(statusColor)
@@ -308,9 +322,11 @@ struct FriendMapMarker: View {
             // Pulsing animation for active sessions
             if friend.isCurrentlyFlipped && !friend.isHistorical {
                 Circle()
-                    .stroke(statusColor, lineWidth: 2)
+                    .stroke(Color.green, lineWidth: 2)
                     .frame(width: animate ? 60 : 40, height: animate ? 60 : 40)
                     .opacity(animate ? 0 : 0.7)
+                    .animation(Animation.easeInOut(duration: 1.2).repeatForever(autoreverses: false), value: animate)
+                    .onAppear { animate = true }
             }
             
             // Session indicator icon
@@ -356,23 +372,17 @@ struct FriendMapMarker: View {
     
     private var statusColor: Color {
         if friend.isHistorical {
-            // For historical sessions, use a gray-tinted version of the normal status color
-            if friend.lastFlipWasSuccessful {
-                // Gray-green for successful historical sessions
-                return Color.gray.opacity(0.8)
-            } else {
-                // Gray-red for failed historical sessions
-                return Color.gray.opacity(0.6)
-            }
+            return friend.lastFlipWasSuccessful ? Color.gray.opacity(0.8) : Color.gray.opacity(0.6)
         } else if friend.isCurrentlyFlipped {
-            return Color(red: 56/255, green: 189/255, blue: 248/255) // Blue for active
+            return Color.green // Bright green for live sessions
         } else if friend.lastFlipWasSuccessful {
             return Color(red: 34/255, green: 197/255, blue: 94/255) // Green for success
         } else {
-            return Color(red: 239/255, green: 68/255, blue: 68/255) // Red for failure
+            return Color.red // Bright red for failures
         }
     }
 }
+
 struct FriendPreviewCard: View {
     let friend: FriendLocation
     let onDismiss: () -> Void
@@ -381,6 +391,13 @@ struct FriendPreviewCard: View {
     @StateObject private var scoreViewModel = ScoreViewModel()
     @State private var currentTime = Date()
     let timer = Timer.publish(every: 1, on: .main, in: .common).autoconnect()
+    
+    private var formattedSessionTime: String {
+        let formatter = DateFormatter()
+        formatter.dateStyle = .medium
+        formatter.timeStyle = .short
+        return formatter.string(from: friend.lastFlipTime)
+    }
     
     var body: some View {
         VStack(spacing: 0) {
@@ -482,6 +499,15 @@ struct FriendPreviewCard: View {
                                 .stroke(statusColor.opacity(0.3), lineWidth: 1)
                         )
                 )
+                
+                // New Session detail info
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("Session \(friend.lastFlipWasSuccessful ? "completed" : "failed") at:")
+                        .font(.system(size: 14, weight: .medium))
+                    Text(formattedSessionTime)
+                        .font(.system(size: 14, weight: .bold))
+                }
+                .padding(.top, 6)
             }
             .padding(.horizontal, 15)
             .padding(.top, 12)
@@ -505,7 +531,7 @@ struct FriendPreviewCard: View {
                 .padding(.vertical, 10)
             }
         }
-        .frame(width: 280, height: 145) // Fixed height
+        .frame(width: 280, height: 175) // Slightly increased height for new content
         .background(
             ZStack {
                 RoundedRectangle(cornerRadius: 14)
@@ -561,13 +587,6 @@ struct FriendPreviewCard: View {
             return Color(red: 239/255, green: 68/255, blue: 68/255) // Red for failure
         }
     }
-    private var formattedSessionTime: String {
-        let formatter = DateFormatter()
-        formatter.dateStyle = .medium
-        formatter.timeStyle = .short
-        return formatter.string(from: friend.lastFlipTime)
-    }
-
     
     private var statusIcon: String {
         if friend.isHistorical {

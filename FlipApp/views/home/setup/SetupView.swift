@@ -39,16 +39,22 @@ struct SetupView: View {
                         .retroGlow()
   
                     Image(systemName: "arrow.2.squarepath")
-                        .font(.system(size: 50))
-                        .foregroundColor(.white)
-                        .retroGlow()
-                        .rotationEffect(.degrees(isButtonPressed ? 360 : 0))
-                        .animation(
-                            .spring(response: 2.0, dampingFraction: 0.6)
-                                .repeatForever(autoreverses: false),
-                            value: isButtonPressed
-                        )
-                }
+                            .font(.system(size: 55, weight: .bold)) // Bigger & bolder SF Symbol
+                            .foregroundColor(Color.white.opacity(1.0)) // Max brightness
+                            .shadow(color: .white, radius: 5) // Adds a soft glow
+                            .overlay(
+                                Image(systemName: "arrow.2.squarepath")
+                                    .font(.system(size: 55))
+                                    .foregroundColor(.white.opacity(0.25)) // Fake stroke effect
+                                    .offset(x: 1, y: 1)
+                            )
+                            .rotationEffect(.degrees(isButtonPressed ? 360 : 0))
+                            .animation(
+                                .spring(response: 2.0, dampingFraction: 0.6)
+                                    .repeatForever(autoreverses: false),
+                                value: isButtonPressed
+                            )
+                    }
                 .padding(.top, 50)
                 .onAppear { isButtonPressed = true }
 
