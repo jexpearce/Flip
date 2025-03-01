@@ -5,14 +5,10 @@ import SwiftUI
 import FirebaseCore
 
 class LiveSessionManager: ObservableObject {
-    private static var _shared: LiveSessionManager?
-        
-        static var shared: LiveSessionManager {
-            if _shared == nil {
-                _shared = LiveSessionManager()
-            }
-            return _shared!
-        }
+    private static let _shared = LiveSessionManager()
+    static var shared: LiveSessionManager {
+        return _shared
+    }
         
         let db: Firestore
         private var sessionListeners: [String: ListenerRegistration] = [:]
@@ -190,7 +186,7 @@ class LiveSessionManager: ObservableObject {
             "remainingSeconds": remainingSeconds,
             "isPaused": isPaused,
             "participantStatus.\(userId)": isPaused ? ParticipantStatus.paused.rawValue : ParticipantStatus.active.rawValue,
-            "lastUpdateTime": Timestamp(date: Date())
+            "lastUpdateTime": FieldValue.serverTimestamp()
         ]
         
         db.collection("live_sessions").document(sessionId).updateData(updateData) { error in
@@ -339,7 +335,7 @@ class LiveSessionManager: ObservableObject {
                 "participants": updatedParticipants,
                 "joinTimes.\(userId)": Timestamp(date: now),
                 "participantStatus.\(userId)": ParticipantStatus.active.rawValue,
-                "lastUpdateTime": Timestamp(date: now)
+                "lastUpdateTime": FieldValue.serverTimestamp()
             ]
             
             self.db.collection("live_sessions").document(sessionId).updateData(updateData) { error in
@@ -390,7 +386,7 @@ class LiveSessionManager: ObservableObject {
     func updateParticipantStatus(sessionId: String, userId: String, status: ParticipantStatus) {
         let updateData: [String: Any] = [
             "participantStatus.\(userId)": status.rawValue,
-            "lastUpdateTime": Timestamp(date: Date())
+            "lastUpdateTime": FieldValue.serverTimestamp()
         ]
         
         db.collection("live_sessions").document(sessionId).updateData(updateData)

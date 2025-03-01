@@ -22,7 +22,9 @@ struct FriendLocation: Identifiable {
     let sessionDuration: Int  // in minutes
     let sessionStartTime: Date
     let isHistorical: Bool  // Flag to indicate if this is a past session
-    let sessionIndex: Int   // Index to track which historical session (0 = current, 1 = most recent past, etc.)
+    let sessionIndex: Int
+    let participants: [String]?
+    let participantNames: [String]?
     
     // Computed properties for UI
     var sessionMinutesElapsed: Int {
@@ -416,8 +418,9 @@ class MapViewModel: NSObject, ObservableObject, CLLocationManagerDelegate {
                     return
                 }
                 
-                // Return the user data
-                completion(userData)
+                DispatchQueue.main.async {
+                        completion(userData)
+                    }
             }
     }
     

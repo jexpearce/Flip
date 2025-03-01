@@ -148,20 +148,21 @@ class AppManager: NSObject, ObservableObject {
             body: "Phone must be face down when timer reaches zero")
     }
     func joinLiveSession(sessionId: String, remainingSeconds: Int, totalDuration: Int) {
-        // Set up joined session state
+        // Critical: Set state BEFORE any other operations
+        currentState = .countdown
+        countdownSeconds = 5
+        
+        // Now set the remaining parameters
         self.liveSessionId = sessionId
         self.isJoinedSession = true
-        self.selectedMinutes = totalDuration / 60 // Convert seconds to minutes
+        self.selectedMinutes = totalDuration / 60
         self.remainingSeconds = remainingSeconds
         self.allowPauses = LiveSessionManager.shared.currentJoinedSession?.allowPauses ?? false
         self.maxPauses = LiveSessionManager.shared.currentJoinedSession?.maxPauses ?? 0
         self.remainingPauses = self.maxPauses
         
-        // Save current state
+        // Save state AFTER setting all variables
         saveSessionState()
-        
-        // Start countdown to join the session
-        startCountdown()
     }
 
     private func startTrackingSession(isNewSession: Bool = true) {
@@ -860,7 +861,9 @@ class AppManager: NSObject, ObservableObject {
         DispatchQueue.main.async {
             if self.isJoinedSession {
                 // Determine the appropriate completion view
-                _ = self.determineCompletionView()
+                self.determineCompletionView { state in
+                    self.currentState = state
+                }
             } else {
                 self.currentState = .completed
             }
@@ -941,7 +944,9 @@ class AppManager: NSObject, ObservableObject {
         DispatchQueue.main.async {
             if self.isJoinedSession {
                 // Determine the appropriate completion view
-                _ = self.determineCompletionView()
+                self.determineCompletionView { state in
+                    self.currentState = state
+                }
             } else {
                 self.currentState = .failed
             }
@@ -1392,26 +1397,36 @@ class AppManager: NSObject, ObservableObject {
             break
         }
     }
-    func determineCompletionView() -> FlipState {
+    func determineCompletionView(completion: @escaping (FlipState) -> Void) {
         // If not a joined session, use standard completion
         if !isJoinedSession {
-            return currentState // Either .completed or .failed as appropriate
-        }
+                completion(currentState) // Immediately return current state
+                return
+            }
         
         // For joined sessions, we need to check all participant statuses
         guard let sessionId = liveSessionId else {
-            return currentState // Fallback to current state
-        }
-        
-        // We'll check the session outcomes and route accordingly
-        var shownState = currentState
-        
+                completion(currentState) // Fallback to current state
+                return
+            }
         LiveSessionManager.shared.db.collection("live_sessions").document(sessionId).getDocument { [weak self] document, error in
-            guard let self = self,
-                  let document = document,
+            guard let self = self else { return }
+
+            if let error = error {
+                print("Error fetching session data: \(error.localizedDescription)")
+                DispatchQueue.main.async {
+                    completion(self.currentState) // Fallback to current state
+                }
+                return
+            }
+
+            guard let document = document,
                   document.exists,
                   let data = document.data(),
                   let participantStatus = data["participantStatus"] as? [String: String] else {
+                DispatchQueue.main.async {
+                    completion(self.currentState) // Fallback to current state
+                }
                 return
             }
             
@@ -1430,28 +1445,22 @@ class AppManager: NSObject, ObservableObject {
                 }
             }
             
-            // Determine appropriate view
-            if completedCount > 0 && failedCount > 0 {
-                // Mixed outcomes - use MixedOutcomeView
-                shownState = .mixedOutcome
-            } else if failedCount > 0 {
-                // All failures
-                shownState = .failed
-            } else if completedCount > 0 && activeCount == 0 {
-                // All success - use JoinedCompletionView
-                shownState = .joinedCompleted
-            } else {
-                // Default to current state
-                shownState = self.currentState
-            }
+            let shownState: FlipState
+                    if completedCount > 0 && failedCount > 0 {
+                        shownState = .mixedOutcome
+                    } else if failedCount > 0 {
+                        shownState = .failed
+                    } else if completedCount > 0 && activeCount == 0 {
+                        shownState = .joinedCompleted
+                    } else {
+                        shownState = self.currentState
+                    }
             
             // Update the state on main thread
             DispatchQueue.main.async {
-                self.currentState = shownState
+                completion(shownState) // Pass the final state to the completion handler
             }
         }
-        
-        return shownState
     }
         
     private func clearSessionState() {

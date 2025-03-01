@@ -20,6 +20,7 @@ struct SetupView: View {
     @State private var showPauseDisabledWarning = false
     @AppStorage("hasShownPauseWarning") private var hasShownPauseWarning = false
     @ObservedObject private var liveSessionManager = LiveSessionManager.shared
+    @State private var isJoining = false
     
     // Check if we're navigating back from a joined session view
     @State private var joinLiveSessionMode = false
@@ -36,7 +37,7 @@ struct SetupView: View {
                         .tracking(8)
                         .foregroundColor(.white)
                         .retroGlow()
-
+  
                     Image(systemName: "arrow.2.squarepath")
                         .font(.system(size: 50))
                         .foregroundColor(.white)
@@ -178,10 +179,35 @@ struct SetupView: View {
                 VStack {
                     Spacer()
                     Button(action: {
-                        // Exit join mode
-                        joinLiveSessionMode = false
-                        sessionToJoin = nil
-                    }) {
+                        if joinLiveSessionMode, let sessionInfo = sessionToJoin {
+                            // Show loading indicator
+                            withAnimation { isJoining = true }
+                            
+                            LiveSessionManager.shared.joinSession(sessionId: sessionInfo.id) { success, remainingSeconds, totalDuration in
+                                DispatchQueue.main.async {
+                                    withAnimation { isJoining = false }
+                                    
+                                    if success {
+                                        // Force the state change first
+                                        appManager.currentState = .countdown
+                                        appManager.countdownSeconds = 5
+                                        
+                                        // Then call the join method
+                                        appManager.joinLiveSession(
+                                            sessionId: sessionInfo.id,
+                                            remainingSeconds: remainingSeconds,
+                                            totalDuration: totalDuration
+                                        )
+                                    } else {
+                                        // Handle failure
+                                        print("Failed to join session")
+                                    }
+                                }
+                            }
+                        } else {
+                            appManager.startCountdown()
+                        }
+                    }){
                         Text("CANCEL")
                             .font(.system(size: 16, weight: .bold))
                             .tracking(2)
@@ -201,6 +227,13 @@ struct SetupView: View {
                             )
                             .shadow(color: Color.red.opacity(0.3), radius: 4)
                     }
+                    .overlay(
+                        isJoining ?
+                            ProgressView()
+                                .tint(.white)
+                                .scaleEffect(1.2)
+                            : nil
+                    )
                     .padding(.bottom, 50)
                 }
             }

@@ -561,6 +561,13 @@ struct FriendPreviewCard: View {
             return Color(red: 239/255, green: 68/255, blue: 68/255) // Red for failure
         }
     }
+    private var formattedSessionTime: String {
+        let formatter = DateFormatter()
+        formatter.dateStyle = .medium
+        formatter.timeStyle = .short
+        return formatter.string(from: friend.lastFlipTime)
+    }
+
     
     private var statusIcon: String {
         if friend.isHistorical {

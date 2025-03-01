@@ -8,13 +8,20 @@
 import Foundation
 import SwiftUI
 
+
 class LiveSessionTimer: ObservableObject {
     @Published var currentTick: Int = 0
+    @Published var liveSession: LiveSessionManager.LiveSessionData?
     private var timer: Timer?
     
-    init() {
-        startTimer()
-    }
+    init(initialSession: LiveSessionManager.LiveSessionData? = nil) {
+            self.liveSession = initialSession
+            startTimer()
+            startSyncTimer()
+        }
+    func updateSession(session: LiveSessionManager.LiveSessionData) {
+            self.liveSession = session
+        }
     
     private func startTimer() {
         timer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { [weak self] _ in
@@ -38,49 +45,74 @@ class LiveSessionTimer: ObservableObject {
             RunLoop.current.add(timer, forMode: .common)
         }
     }
+    // Add to LiveSessionTimer class
+    private var syncTimer: Timer?
+    private let syncInterval: TimeInterval = 30 // Sync every 30 seconds
+
+    private func startSyncTimer() {
+            syncTimer = Timer.scheduledTimer(withTimeInterval: syncInterval, repeats: true) { [weak self] _ in
+                self?.synchronizeWithServer()
+            }
+            RunLoop.current.add(syncTimer!, forMode: .common)
+        }
+
+    private func synchronizeWithServer() {
+            if let sessionId = liveSession?.id {
+                LiveSessionManager.shared.getSessionDetails(sessionId: sessionId) { [weak self] updatedSession in
+                    if let updatedSession = updatedSession {
+                        DispatchQueue.main.async {
+                            self?.liveSession = updatedSession
+                        }
+                    }
+                }
+            }
+        }
     
     deinit {
-        timer?.invalidate()
-        timer = nil
-    }
+            timer?.invalidate()
+            syncTimer?.invalidate()
+            timer = nil
+            syncTimer = nil
+        }
 }
 
 // Replace the LiveSessionTimerView struct in LiveSessionTimer.swift with this:
 
 struct LiveSessionTimerView: View {
     @StateObject private var timer = LiveSessionTimer()
-    // Change from @ObservedObject to a regular property
     let liveSession: LiveSessionManager.LiveSessionData
     
     var body: some View {
-        // Display elapsed time, updating every second
-        VStack {
             Text(formattedElapsedTime)
                 .font(.system(size: 16, weight: .bold))
                 .monospacedDigit()
                 .foregroundColor(.white)
+                .onAppear {
+                    timer.updateSession(session: liveSession)
+                }
+                .id(timer.currentTick)
         }
-        .id(timer.currentTick) // Force refresh on timer tick
-    }
     
     private var formattedElapsedTime: String {
-        let elapsedSeconds = calculateElapsedSeconds()
-        let minutes = elapsedSeconds / 60
-        let seconds = elapsedSeconds % 60
-        return String(format: "%d:%02d", minutes, seconds)
-    }
+            let elapsedSeconds = calculateElapsedSeconds()
+            let minutes = elapsedSeconds / 60
+            let seconds = elapsedSeconds % 60
+            return String(format: "%d:%02d", minutes, seconds)
+        }
     
     private func calculateElapsedSeconds() -> Int {
         let totalSeconds = liveSession.targetDuration * 60
         let originalRemaining = liveSession.remainingSeconds
         
-        // Calculate time passed since last update (as Int)
+        // Calculate elapsed with drift compensation
         let timeSinceUpdate = Int(Date().timeIntervalSince1970 - liveSession.lastUpdateTime.timeIntervalSince1970)
         
-        // Only subtract time if the session is active (not paused)
-        let adjustment = liveSession.isPaused ? 0 : min(timeSinceUpdate, originalRemaining)
+        // Apply drift correction factor (can be tuned based on testing)
+        let driftCorrection = min(2, max(-2, timeSinceUpdate / 60)) // ±2 seconds max correction
         
-        // Calculate current remaining and derive elapsed
+        // Only subtract time if session is active (not paused)
+        let adjustment = liveSession.isPaused ? 0 : min(timeSinceUpdate + driftCorrection, originalRemaining)
+        
         let currentRemaining = max(0, originalRemaining - adjustment)
         return totalSeconds - currentRemaining
     }
