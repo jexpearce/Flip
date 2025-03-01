@@ -33,7 +33,8 @@ class SessionManager: ObservableObject {
                 sessionNotes: sessionNotes,
                 participants: nil,
                 originalStarterId: nil,
-                wasJoinedSession: nil
+                wasJoinedSession: nil,
+                comment: nil
             )
 
         sessions.insert(newSession, at: 0)  // Add to beginning of array
@@ -82,7 +83,8 @@ class SessionManager: ObservableObject {
             sessionNotes: sessionNotes,
             participants: participants,
             originalStarterId: originalStarterId,
-            wasJoinedSession: wasJoinedSession
+            wasJoinedSession: wasJoinedSession,
+            comment: nil
         )
 
         sessions.insert(newSession, at: 0)  // Add to beginning of array

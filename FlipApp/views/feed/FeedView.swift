@@ -49,8 +49,8 @@ struct FeedView: View {
                     } else {
                         ForEach(viewModel.feedSessions) { session in
                             NavigationLink(destination: UserProfileView(user: viewModel.getUser(for: session.userId))) {
-                                FeedSessionCard(session: session)
-                                    .contentShape(Rectangle()) // Ensure the entire area is tappable
+                                FeedSessionCard(session: session, viewModel: viewModel)
+                                    .contentShape(Rectangle())
                             }
                             .buttonStyle(PlainButtonStyle()) // Prevent default button style
                         }
@@ -67,6 +67,7 @@ struct FeedView: View {
             } message: {
                 Text(viewModel.errorMessage)
             }
+            .environmentObject(viewModel)
         }
         .background(Theme.mainGradient.edgesIgnoringSafeArea(.all)) // Apply background to NavigationView
         .navigationViewStyle(StackNavigationViewStyle()) // Use stack navigation for better compatibility
@@ -179,6 +180,32 @@ class FeedViewModel: ObservableObject {
                     self?.isLoading = false
                 }
             }
+    }
+    // Add this to the FeedViewModel class
+
+    func saveComment(sessionId: String, comment: String) {
+        guard !comment.isEmpty, let currentUserId = Auth.auth().currentUser?.uid else { return }
+        
+        // Find the session in our local collection
+        if let index = feedSessions.firstIndex(where: { $0.id.uuidString == sessionId }) {
+            // Update the Firestore document
+            firebaseManager.db.collection("sessions")
+                .document(sessionId)
+                .updateData(["comment": comment]) { [weak self] error in
+                    if let error = error {
+                        DispatchQueue.main.async {
+                            self?.showError = true
+                            self?.errorMessage = "Failed to save comment: \(error.localizedDescription)"
+                        }
+                    } else {
+                        // Update our local copy
+                        DispatchQueue.main.async {
+                            // The listener will automatically update the feedSessions array,
+                            // but we don't need to do anything here explicitly
+                        }
+                    }
+                }
+        }
     }
     
     // This is for the case when you have no friends but still want to see your own sessions

@@ -19,6 +19,9 @@ struct Session: Codable, Identifiable {
     let originalStarterId: String?    // Who started the session
     let wasJoinedSession: Bool?       // Whether this was a joined session
     
+    // New field for comments
+    let comment: String?        // Optional comment on the session
+    
     var formattedStartTime: String {
         let formatter = DateFormatter()
         formatter.dateStyle = .short
@@ -48,7 +51,8 @@ struct Session: Codable, Identifiable {
         sessionNotes: String?,
         participants: [Participant]? = nil,
         originalStarterId: String? = nil,
-        wasJoinedSession: Bool? = nil
+        wasJoinedSession: Bool? = nil,
+        comment: String? = nil
     ) -> Session {
         return Session(
             id: id,
@@ -62,7 +66,27 @@ struct Session: Codable, Identifiable {
             sessionNotes: sessionNotes,
             participants: participants,
             originalStarterId: originalStarterId,
-            wasJoinedSession: wasJoinedSession
+            wasJoinedSession: wasJoinedSession,
+            comment: comment
+        )
+    }
+    
+    // Method to update comment
+    func withUpdatedComment(_ newComment: String) -> Session {
+        return Session(
+            id: id,
+            userId: userId,
+            username: username,
+            startTime: startTime,
+            duration: duration,
+            wasSuccessful: wasSuccessful,
+            actualDuration: actualDuration,
+            sessionTitle: sessionTitle,
+            sessionNotes: sessionNotes,
+            participants: participants,
+            originalStarterId: originalStarterId,
+            wasJoinedSession: wasJoinedSession,
+            comment: newComment
         )
     }
 }

@@ -276,6 +276,11 @@ struct MapView: View {
         }
         .onDisappear {
             viewModel.stopLocationTracking()
+            
+            // This is the critical addition to ensure location tracking stops
+            Task { @MainActor in
+                LocationHandler.shared.completelyStopLocationUpdates()
+            }
         }
     }
 }

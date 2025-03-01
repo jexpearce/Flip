@@ -180,10 +180,22 @@ class MapViewModel: NSObject, ObservableObject, CLLocationManagerDelegate {
     }
     
     func stopLocationTracking() {
+        // Stop the location manager
         locationManager.stopUpdatingLocation()
+        
+        // Remove the listener
         locationListener?.remove()
+        
+        // Invalidate timer
         locationUpdateTimer?.invalidate()
         locationUpdateTimer = nil
+        
+        // This ensures we don't keep tracking in background
+        Task { @MainActor in
+            LocationHandler.shared.completelyStopLocationUpdates()
+        }
+        
+        print("Map location tracking fully stopped")
     }
     
     func refreshLocations() {

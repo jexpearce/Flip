@@ -1,12 +1,15 @@
 import BackgroundTasks
 import SwiftUI
 import UserNotifications
+import FirebaseCore
 
 @main
 struct FlipApp: App {
     @UIApplicationDelegateAdaptor(FlipAppDelegate.self) var delegate
 
     init() {
+        // Configure Firebase first, before any other initialization
+        FirebaseApp.configure()
 
         // Register tasks first, before scheduling anything
         BGTaskScheduler.shared.register(

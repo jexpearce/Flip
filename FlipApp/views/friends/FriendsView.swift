@@ -137,14 +137,45 @@ struct FriendsView: View {
                         LazyVStack(spacing: 15) {
                             // Sort friends - live sessions first, then normal friends
                             ForEach(sortedFriends) { friend in
-                                if isNavigationBlocked {
-                                    // When joining session, disable navigation
-                                    FriendCardWithLiveSession(friend: friend)
-                                } else {
+                                // Create a ZStack where the NavigationLink is behind but covers most of the card
+                                ZStack(alignment: .topTrailing) {
+                                    // NavigationLink for profile view - make it disabled when joining
                                     NavigationLink(destination: UserProfileView(user: friend.user)) {
-                                        FriendCardWithLiveSession(friend: friend)
+                                        FriendCard(
+                                            friend: friend.user,
+                                            liveSession: friend.sessionData
+                                        )
                                     }
                                     .buttonStyle(PlainButtonStyle())
+                                    .disabled(isNavigationBlocked)
+                                    
+                                    // If this friend has a live session, add the join button on top
+                                    if friend.sessionData != nil && friend.sessionData?.canJoin == true {
+                                        // This button is positioned at the top right over the card
+                                        // but outside the NavigationLink's tap area
+                                        Button {
+                                            handleJoinSession(sessionId: friend.sessionId)
+                                        } label: {
+                                            Text("JOIN LIVE")
+                                                .font(.system(size: 16, weight: .heavy))
+                                                .tracking(1)
+                                                .foregroundColor(.white)
+                                                .padding(.vertical, 8)
+                                                .padding(.horizontal, 16)
+                                                .background(
+                                                    ZStack {
+                                                        RoundedRectangle(cornerRadius: 10)
+                                                            .fill(Color.green.opacity(0.4))
+                                                        
+                                                        RoundedRectangle(cornerRadius: 10)
+                                                            .stroke(Color.green.opacity(0.8), lineWidth: 1.5)
+                                                    }
+                                                )
+                                                .shadow(color: Color.green.opacity(0.5), radius: 6)
+                                        }
+                                        .padding(.trailing, 24)
+                                        .padding(.top, 16)
+                                    }
                                 }
                             }
                         }
@@ -232,17 +263,6 @@ struct FriendsView: View {
         var id: String {
             return user.id
         }
-    }
-    
-    // FriendCard with Live Session support
-    private func FriendCardWithLiveSession(friend: FriendWithSession) -> some View {
-        FriendCard(
-            friend: friend.user,
-            liveSession: friend.sessionData,
-            onJoinSession: {
-                handleJoinSession(sessionId: friend.sessionId)
-            }
-        )
     }
     
     // Handle join session logic

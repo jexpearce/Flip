@@ -2,21 +2,50 @@ import FirebaseAuth
 import FirebaseFirestore
 import Foundation
 import SwiftUI
+import FirebaseCore
 
 class LiveSessionManager: ObservableObject {
-    static let shared = LiveSessionManager()
-    
-    let db = Firestore.firestore()
-    private var sessionListeners: [String: ListenerRegistration] = [:]
-    
-    // Published properties for UI updates
-    @Published var activeFriendSessions: [String: LiveSessionData] = [:]
-    @Published var currentJoinedSession: LiveSessionData?
-    @Published var isJoiningSession = false
-    
-    // Constants
-    private let maxParticipants = 4
-    private let minRemainingTimeToJoin = 3 * 60  // 3 minutes in seconds
+    private static var _shared: LiveSessionManager?
+        
+        static var shared: LiveSessionManager {
+            if _shared == nil {
+                _shared = LiveSessionManager()
+            }
+            return _shared!
+        }
+        
+        let db: Firestore
+        private var sessionListeners: [String: ListenerRegistration] = [:]
+        
+        // Published properties for UI updates
+        @Published var activeFriendSessions: [String: LiveSessionData] = [:]
+        @Published var currentJoinedSession: LiveSessionData?
+        @Published var isJoiningSession = false
+        
+        // Constants
+        private let maxParticipants = 4
+        private let minRemainingTimeToJoin = 3 * 60  // 3 minutes in seconds
+        
+        // MARK: - Initialization
+        
+        private init() {
+            // Safety check - verify Firebase is initialized
+            if FirebaseApp.app() == nil {
+                print("WARNING: Firebase not initialized when LiveSessionManager is created")
+                FirebaseApp.configure()
+            }
+            
+            // Get Firestore after ensuring Firebase is configured
+            self.db = Firestore.firestore()
+            
+            // Add observer for refresh requests
+            NotificationCenter.default.addObserver(
+                self,
+                selector: #selector(handleRefreshNotification),
+                name: Notification.Name("RefreshLiveSessions"),
+                object: nil
+            )
+        }
     
     // MARK: - Model Structs
     
@@ -76,16 +105,7 @@ class LiveSessionManager: ObservableObject {
     }
     
     // MARK: - Initialization
-    
-    init() {
-        // Add observer for refresh requests
-        NotificationCenter.default.addObserver(
-            self,
-            selector: #selector(handleRefreshNotification),
-            name: Notification.Name("RefreshLiveSessions"),
-            object: nil
-        )
-    }
+
     
     // MARK: - Session Management
     
@@ -277,6 +297,10 @@ class LiveSessionManager: ObservableObject {
     }
     
     func joinSession(sessionId: String, completion: @escaping (Bool, Int, Int) -> Void) {
+        if FirebaseApp.app() == nil {
+                print("Firebase not initialized. Attempting to configure.")
+                FirebaseApp.configure()
+            }
         guard let userId = Auth.auth().currentUser?.uid,
               let username = FirebaseManager.shared.currentUser?.username else {
             completion(false, 0, 0)

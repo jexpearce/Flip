@@ -1,15 +1,15 @@
 import Foundation
 import SwiftUI
+import FirebaseAuth
+import FirebaseCore
 
 struct FriendCard: View {
     let friend: FirebaseManager.FlipUser
     @State private var isPressed = false
-    @State private var isJoinPressed = false
     @State private var isGlowing = false
     
     // LiveSessionData if the friend is in an active session
     let liveSession: LiveSessionManager.LiveSessionData?
-    let onJoinSession: (() -> Void)?
     
     // Computed properties for live sessions
     private var isLive: Bool {
@@ -78,33 +78,8 @@ struct FriendCard: View {
                 if isLive {
                     // Show join button or full indicator
                     if canJoin {
-                        Button(action: {
-                            withAnimation(.spring(response: 0.3, dampingFraction: 0.6)) {
-                                isJoinPressed = true
-                            }
-                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
-                                isJoinPressed = false
-                                onJoinSession?()
-                            }
-                        }) {
-                            Text("JOIN LIVE")
-                                .font(.system(size: 16, weight: .heavy))
-                                .tracking(1)
-                                .foregroundColor(.white)
-                                .padding(.vertical, 8)
-                                .padding(.horizontal, 16)
-                                .background(
-                                    ZStack {
-                                        RoundedRectangle(cornerRadius: 10)
-                                            .fill(Color.green.opacity(0.4))
-                                        
-                                        RoundedRectangle(cornerRadius: 10)
-                                            .stroke(Color.green.opacity(0.8), lineWidth: 1.5)
-                                    }
-                                )
-                                .scaleEffect(isJoinPressed ? 0.95 : 1.0)
-                                .shadow(color: Color.green.opacity(0.5), radius: 6)
-                        }
+                        // We'll render this from the parent view
+                        Spacer().frame(width: 90, height: 36)
                     } else if isFull {
                         Text("LIVE (FULL)")
                             .font(.system(size: 14, weight: .bold))
@@ -227,15 +202,5 @@ struct FriendCard: View {
         .shadow(color: isLive && !isFull ? Color.green.opacity(0.3) : Color.black.opacity(0.2), radius: 4, x: 0, y: 2)
         .scaleEffect(isPressed ? 0.98 : 1.0)
         .animation(.spring(response: 0.3, dampingFraction: 0.6), value: isPressed)
-        .onTapGesture {
-            if !isLive {
-                withAnimation {
-                    isPressed = true
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-                        isPressed = false
-                    }
-                }
-            }
-        }
     }
 }
