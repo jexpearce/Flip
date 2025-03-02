@@ -33,41 +33,94 @@ struct RegionalLeaderboard: View {
     var body: some View {
         VStack(spacing: 12) {
             // Title
+            
+            // To:
             HStack {
-                Text("REGIONAL LEADERBOARD")
+                Text(viewModel.isBuildingSpecific ? "BUILDING LEADERBOARD" : "REGIONAL LEADERBOARD")
                     .font(.system(size: 14, weight: .black))
                     .tracking(3)
-                    .foregroundColor(Color(red: 239/255, green: 68/255, blue: 68/255)) // Reddish tint
-                    .shadow(color: Color(red: 239/255, green: 68/255, blue: 68/255).opacity(0.5), radius: 6)
+                    .foregroundColor(viewModel.isBuildingSpecific ?
+                        // Yellowish color for building leaderboard
+                        Color(red: 234/255, green: 179/255, blue: 8/255) :
+                        // Keep reddish for regional
+                        Color(red: 239/255, green: 68/255, blue: 68/255))
+                    .shadow(color: viewModel.isBuildingSpecific ?
+                        Color(red: 234/255, green: 179/255, blue: 8/255).opacity(0.5) :
+                        Color(red: 239/255, green: 68/255, blue: 68/255).opacity(0.5), radius: 6)
                 
-                Image(systemName: "location.fill")
+                Image(systemName: viewModel.isBuildingSpecific ? "building.fill" : "location.fill")
                     .font(.system(size: 14))
                     .foregroundStyle(
                         LinearGradient(
-                            colors: [
-                                Color(red: 239/255, green: 68/255, blue: 68/255),
-                                Color(red: 248/255, green: 113/255, blue: 113/255)
+                            colors: viewModel.isBuildingSpecific ?
+                            [
+                                Color(red: 234/255, green: 179/255, blue: 8/255),    // Yellow
+                                Color(red: 250/255, green: 204/255, blue: 21/255)    // Lighter yellow
+                            ] :
+                            [
+                                Color(red: 239/255, green: 68/255, blue: 68/255),    // Red
+                                Color(red: 248/255, green: 113/255, blue: 113/255)   // Lighter red
                             ],
                             startPoint: .top,
                             endPoint: .bottom
                         )
                     )
-                    .shadow(color: Color(red: 239/255, green: 68/255, blue: 68/255).opacity(0.5), radius: 4)
+                    .shadow(color: viewModel.isBuildingSpecific ?
+                        Color(red: 234/255, green: 179/255, blue: 8/255).opacity(0.5) :
+                        Color(red: 239/255, green: 68/255, blue: 68/255).opacity(0.5), radius: 4)
                 
                 Spacer()
                 
-                if viewModel.radius == 5 {
-                    Text("5 MILE RADIUS")
-                        .font(.system(size: 10, weight: .bold))
-                        .tracking(1)
-                        .foregroundColor(.white.opacity(0.7))
-                } else {
-                    Text("\(viewModel.radius) MILE RADIUS")
-                        .font(.system(size: 10, weight: .bold))
-                        .tracking(1)
-                        .foregroundColor(.white.opacity(0.7))
+                if !viewModel.isBuildingSpecific {
+                    if viewModel.radius == 5 {
+                        Text("5 MILE RADIUS")
+                            .font(.system(size: 10, weight: .bold))
+                            .tracking(1)
+                            .foregroundColor(.white.opacity(0.7))
+                    } else {
+                        Text("\(viewModel.radius) MILE RADIUS")
+                            .font(.system(size: 10, weight: .bold))
+                            .tracking(1)
+                            .foregroundColor(.white.opacity(0.7))
+                    }
                 }
             }
+            .background(
+                ZStack {
+                    RoundedRectangle(cornerRadius: 15)
+                        .fill(
+                            LinearGradient(
+                                colors: viewModel.isBuildingSpecific ?
+                                [
+                                    Color(red: 146/255, green: 123/255, blue: 21/255).opacity(0.4),  // Darker yellow
+                                    Color(red: 133/255, green: 109/255, blue: 7/255).opacity(0.3)    // Even darker yellow
+                                ] :
+                                [
+                                    Color(red: 153/255, green: 27/255, blue: 27/255).opacity(0.4),   // Dark red
+                                    Color(red: 127/255, green: 29/255, blue: 29/255).opacity(0.3)    // Darker red
+                                ],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            )
+                        )
+                    
+                    RoundedRectangle(cornerRadius: 15)
+                        .fill(Color.white.opacity(0.05))
+                    
+                    RoundedRectangle(cornerRadius: 15)
+                        .stroke(
+                            LinearGradient(
+                                colors: [
+                                    Color.white.opacity(0.5),
+                                    Color.white.opacity(0.1)
+                                ],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            ),
+                            lineWidth: 1
+                        )
+                }
+            )
             
             // Location display
             if let locationName = viewModel.locationName {
@@ -236,12 +289,14 @@ class RegionalLeaderboardViewModel: ObservableObject {
     @Published var isLoading = false
     @Published var radius: Int = 5 // Default radius in miles
     @Published var locationName: String?
+    @Published var isBuildingSpecific: Bool = false // Add this property here
     
     private var currentLocation: CLLocation?
     private let firebaseManager = FirebaseManager.shared
     private let geocoder = CLGeocoder()
     
     func loadRegionalLeaderboard(near location: CLLocation) {
+        isBuildingSpecific = false
         guard let currentUserId = Auth.auth().currentUser?.uid else { return }
         currentLocation = location
         isLoading = true
@@ -402,6 +457,7 @@ class RegionalLeaderboardViewModel: ObservableObject {
 extension RegionalLeaderboardViewModel {
     
     func loadBuildingLeaderboard(building: BuildingInfo) {
+        isBuildingSpecific = true
         guard let currentUserId = Auth.auth().currentUser?.uid else { return }
         isLoading = true
         

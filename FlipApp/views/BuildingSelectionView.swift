@@ -1,4 +1,3 @@
-import Foundation
 import SwiftUI
 import MapKit
 
@@ -6,6 +5,10 @@ struct BuildingSelectionView: View {
     @Binding var isPresented: Bool
     let buildings: [MKPlacemark]
     let onBuildingSelected: (BuildingInfo) -> Void
+    
+    @State private var frequentLocations: [BuildingInfo] = []
+    @State private var showCustomLocationCreation = false
+    @State private var nearbyCustomLocations: [BuildingInfo] = []
     
     var body: some View {
         VStack(spacing: 20) {
@@ -65,15 +68,56 @@ struct BuildingSelectionView: View {
                         }
                     }
                     
+                    // Frequent locations section
+                    if !frequentLocations.isEmpty {
+                        VStack(alignment: .leading, spacing: 8) {
+                            Text("FREQUENT LOCATIONS")
+                                .font(.system(size: 12, weight: .bold))
+                                .tracking(1)
+                                .foregroundColor(.white.opacity(0.7))
+                                .padding(.top, 10)
+                                .padding(.horizontal, 10)
+                            
+                            ForEach(frequentLocations) { location in
+                                Button(action: {
+                                    // Increment usage count when selected
+                                    CustomLocationHandler.shared.incrementLocationUsage(locationId: location.id)
+                                    onBuildingSelected(location)
+                                    isPresented = false
+                                }) {
+                                    HStack {
+                                        Image(systemName: "clock.arrow.circlepath")
+                                            .font(.system(size: 16))
+                                            .foregroundColor(Color(red: 56/255, green: 189/255, blue: 248/255))
+                                            .padding(.leading, 10)
+                                        
+                                        Text(location.name)
+                                            .font(.system(size: 16, weight: .medium))
+                                            .foregroundColor(.white)
+                                        
+                                        Spacer()
+                                        
+                                        Image(systemName: "chevron.right")
+                                            .foregroundColor(.white.opacity(0.6))
+                                            .padding(.trailing, 10)
+                                    }
+                                    .padding(.vertical, 12)
+                                    .background(
+                                        RoundedRectangle(cornerRadius: 12)
+                                            .fill(Color.white.opacity(0.08))
+                                            .overlay(
+                                                RoundedRectangle(cornerRadius: 12)
+                                                    .stroke(Color.white.opacity(0.2), lineWidth: 1)
+                                            )
+                                    )
+                                }
+                            }
+                        }
+                    }
+                    
                     // Custom building option
                     Button(action: {
-                        let buildingInfo = BuildingInfo(
-                            id: "custom-\(Date().timeIntervalSince1970)",
-                            name: "My Custom Location",
-                            coordinate: buildings.first?.coordinate ?? CLLocationCoordinate2D()
-                        )
-                        onBuildingSelected(buildingInfo)
-                        isPresented = false
+                        showCustomLocationCreation = true
                     }) {
                         HStack {
                             Image(systemName: "plus.circle.fill")
@@ -133,6 +177,34 @@ struct BuildingSelectionView: View {
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(Color.black.opacity(0.7))
         .edgesIgnoringSafeArea(.all)
+        .sheet(isPresented: $showCustomLocationCreation) {
+            // Use the first building's coordinate as the base for custom location
+            let coordinate = buildings.first?.coordinate ?? CLLocationCoordinate2D()
+            
+            CustomLocationCreationView(
+                isPresented: $showCustomLocationCreation,
+                coordinate: coordinate,
+                onLocationCreated: { buildingInfo in
+                    onBuildingSelected(buildingInfo)
+                }
+            )
+        }
+        .onAppear {
+            // Load frequent locations
+            CustomLocationHandler.shared.getFrequentLocations { locations in
+                self.frequentLocations = locations
+            }
+            
+            // Load nearby custom locations
+            if let firstBuilding = buildings.first {
+                CustomLocationHandler.shared.getNearbyCustomLocations(
+                    coordinate: firstBuilding.coordinate,
+                    radiusInMeters: 200  // 200 meters radius
+                ) { locations in
+                    self.nearbyCustomLocations = locations
+                }
+            }
+        }
     }
     
     private func formatAddress(from placemark: MKPlacemark) -> String {

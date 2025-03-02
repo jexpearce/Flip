@@ -20,35 +20,76 @@ class BuildingIdentificationService {
                 return
             }
             
-            // Start a search for nearby buildings
-            let request = MKLocalSearch.Request()
-            request.naturalLanguageQuery = "building"
-            request.region = MKCoordinateRegion(
-                center: location.coordinate,
-                span: MKCoordinateSpan(latitudeDelta: 0.005, longitudeDelta: 0.005)
-            )
+            // Create a dispatch group to handle multiple searches
+            let dispatchGroup = DispatchGroup()
+            var allResults: [MKPlacemark] = [MKPlacemark(placemark: mainPlacemark)]
             
-            let search = MKLocalSearch(request: request)
-            search.start { response, error in
-                if let error = error {
-                    completion(nil, error)
-                    return
+            // Function to perform a search with a specific query
+            let performSearch = { (query: String) in
+                dispatchGroup.enter()
+                
+                let request = MKLocalSearch.Request()
+                request.naturalLanguageQuery = query
+                // Use a very tight radius to get only very nearby places
+                request.region = MKCoordinateRegion(
+                    center: location.coordinate,
+                    span: MKCoordinateSpan(latitudeDelta: 0.002, longitudeDelta: 0.002)
+                )
+                
+                let search = MKLocalSearch(request: request)
+                search.start { response, error in
+                    defer { dispatchGroup.leave() }
+                    
+                    if let error = error {
+                        print("Search error for '\(query)': \(error.localizedDescription)")
+                        return
+                    }
+                    
+                    if let results = response?.mapItems.map({ $0.placemark }) {
+                        DispatchQueue.main.async {
+                            allResults.append(contentsOf: results)
+                        }
+                    }
+                }
+            }
+            
+            // Search for different types of buildings and departments
+            performSearch("department")
+            performSearch("building")
+            performSearch("library")
+            performSearch("hall")
+            performSearch("center")
+            
+            // When all searches complete
+            dispatchGroup.notify(queue: .main) {
+                // Remove duplicates by comparing coordinates
+                var uniqueResults: [MKPlacemark] = []
+                var seenCoordinates = Set<String>()
+                
+                for placemark in allResults {
+                    let coordKey = "\(placemark.coordinate.latitude),\(placemark.coordinate.longitude)"
+                    if !seenCoordinates.contains(coordKey) {
+                        uniqueResults.append(placemark)
+                        seenCoordinates.insert(coordKey)
+                    }
                 }
                 
-                let results = response?.mapItems.map { $0.placemark } ?? []
+                // Prioritize by distance from user
+                let sortedResults = uniqueResults.sorted { placemark1, placemark2 in
+                    let location1 = CLLocation(latitude: placemark1.coordinate.latitude, longitude: placemark1.coordinate.longitude)
+                    let location2 = CLLocation(latitude: placemark2.coordinate.latitude, longitude: placemark2.coordinate.longitude)
+                    
+                    return location.distance(from: location1) < location.distance(from: location2)
+                }
                 
-                // Add the main placemark to the results
-                var allPlacemarks = [MKPlacemark(placemark: mainPlacemark)]
-                allPlacemarks.append(contentsOf: results)
-                
-                // Limit to 5 results
-                let limitedResults = Array(allPlacemarks.prefix(5))
-                
+                // Limit to 5 closest results
+                let limitedResults = Array(sortedResults.prefix(5))
                 completion(limitedResults, nil)
             }
         }
     }
     
+    // Correctly place this method inside the class
     func getBuildingName(from placemark: MKPlacemark) -> String {
         // Try to get the building name using various properties
         if let name = placemark.name, !name.isEmpty {
