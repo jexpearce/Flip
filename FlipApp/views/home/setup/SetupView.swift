@@ -21,6 +21,7 @@ struct SetupView: View {
     @AppStorage("hasShownPauseWarning") private var hasShownPauseWarning = false
     @ObservedObject private var liveSessionManager = LiveSessionManager.shared
     @State private var isJoining = false
+    @State private var showJoiningIndicator = false
     
     // Check if we're navigating back from a joined session view
     @State private var joinLiveSessionMode = false
@@ -147,35 +148,24 @@ struct SetupView: View {
 
                 // Begin Button
                 BeginButton {
-                    withAnimation(.spring()) {
-                        if joinLiveSessionMode, let sessionInfo = sessionToJoin {
-                            // Join the live session
-                            LiveSessionManager.shared.joinSession(sessionId: sessionInfo.id) { success, remainingSeconds, totalDuration in
-                                if success {
-                                    appManager.joinLiveSession(
-                                        sessionId: sessionInfo.id,
-                                        remainingSeconds: remainingSeconds,
-                                        totalDuration: totalDuration
-                                    )
-                                }
-                            }
-                        } else {
-                            // Start a regular session
-                            appManager.startCountdown()
-                        }
+                    // Only start a regular session here, joining is handled in onAppear
+                    if !joinLiveSessionMode {
+                        appManager.startCountdown()
                     }
                 }
                 .overlay(
                     Group {
                         if joinLiveSessionMode {
-                            Text("JOIN")
+                            Text("JOINING...")
                                 .font(.system(size: 36, weight: .black))
                                 .tracking(8)
                                 .foregroundColor(.white)
                                 .shadow(color: Color.green.opacity(0.6), radius: 8)
+                                .opacity(showJoiningIndicator ? 1 : 0)
                         }
                     }
                 )
+                .disabled(joinLiveSessionMode) // Disable when joining
 
                 Spacer()
             }
@@ -185,35 +175,10 @@ struct SetupView: View {
                 VStack {
                     Spacer()
                     Button(action: {
-                        if joinLiveSessionMode, let sessionInfo = sessionToJoin {
-                            // Show loading indicator
-                            withAnimation { isJoining = true }
-                            
-                            LiveSessionManager.shared.joinSession(sessionId: sessionInfo.id) { success, remainingSeconds, totalDuration in
-                                DispatchQueue.main.async {
-                                    withAnimation { isJoining = false }
-                                    
-                                    if success {
-                                        // Force the state change first
-                                        appManager.currentState = .countdown
-                                        appManager.countdownSeconds = 5
-                                        
-                                        // Then call the join method
-                                        appManager.joinLiveSession(
-                                            sessionId: sessionInfo.id,
-                                            remainingSeconds: remainingSeconds,
-                                            totalDuration: totalDuration
-                                        )
-                                    } else {
-                                        // Handle failure
-                                        print("Failed to join session")
-                                    }
-                                }
-                            }
-                        } else {
-                            appManager.startCountdown()
-                        }
-                    }){
+                        // FIXED: This button now correctly cancels join mode instead of trying to join
+                        joinLiveSessionMode = false
+                        sessionToJoin = nil
+                    }) {
                         Text("CANCEL")
                             .font(.system(size: 16, weight: .bold))
                             .tracking(2)
@@ -233,15 +198,28 @@ struct SetupView: View {
                             )
                             .shadow(color: Color.red.opacity(0.3), radius: 4)
                     }
-                    .overlay(
-                        isJoining ?
-                            ProgressView()
-                                .tint(.white)
-                                .scaleEffect(1.2)
-                            : nil
-                    )
+                    .disabled(showJoiningIndicator) // Disable during join process
                     .padding(.bottom, 50)
                 }
+            }
+            
+            // Loading Overlay
+            if showJoiningIndicator {
+                Color.black.opacity(0.4)
+                    .edgesIgnoringSafeArea(.all)
+                    .overlay(
+                        VStack {
+                            ProgressView()
+                                .scaleEffect(2)
+                                .tint(.white)
+                            
+                            Text("Joining Session...")
+                                .font(.system(size: 18, weight: .bold))
+                                .foregroundColor(.white)
+                                .padding(.top, 20)
+                        }
+                    )
+                    .transition(.opacity)
             }
             
             // Custom Alert Overlay
@@ -360,10 +338,51 @@ struct SetupView: View {
                 joinLiveSessionMode = true
                 sessionToJoin = sessionData
                 
-                // Get the session details to show the remaining time
+                // Show joining indicator
+                withAnimation {
+                    showJoiningIndicator = true
+                }
+                
+                // Get session details and AUTO-JOIN after verification
                 LiveSessionManager.shared.getSessionDetails(sessionId: sessionData.id) { session in
                     if let session = session {
-                        appManager.selectedMinutes = session.targetDuration
+                        DispatchQueue.main.async {
+                            // Set timer and values first
+                            appManager.selectedMinutes = session.targetDuration
+                            
+                            // Then auto-join the session
+                            LiveSessionManager.shared.joinSession(sessionId: sessionData.id) { success, remainingSeconds, totalDuration in
+                                if success {
+                                    appManager.joinLiveSession(
+                                        sessionId: sessionData.id,
+                                        remainingSeconds: remainingSeconds,
+                                        totalDuration: totalDuration
+                                    )
+                                    
+                                    // Hide join indicator after short delay
+                                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                                        withAnimation {
+                                            showJoiningIndicator = false
+                                        }
+                                    }
+                                } else {
+                                    // Handle failure
+                                    print("Failed to join session")
+                                    withAnimation {
+                                        showJoiningIndicator = false
+                                        joinLiveSessionMode = false
+                                    }
+                                }
+                            }
+                        }
+                    } else {
+                        // Session doesn't exist, reset join mode
+                        DispatchQueue.main.async {
+                            withAnimation {
+                                showJoiningIndicator = false
+                                joinLiveSessionMode = false
+                            }
+                        }
                     }
                 }
             }

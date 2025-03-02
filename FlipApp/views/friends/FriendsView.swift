@@ -227,12 +227,27 @@ struct FriendsView: View {
                 return sessionData.participants.contains(friend.id)
             }
             
+            // Add this after you find the session
             if let (sessionId, sessionData) = session {
-                result.append(FriendWithSession(
-                    user: friend,
-                    sessionId: sessionId,
-                    sessionData: sessionData
-                ))
+                // Additional checks to filter out stale sessions
+                let isSessionTooOld = Date().timeIntervalSince(sessionData.lastUpdateTime) > 300 // 5 minutes
+                let sessionEndTime = sessionData.startTime.addingTimeInterval(TimeInterval(sessionData.targetDuration * 60))
+                let isSessionEnded = Date() > sessionEndTime
+                
+                if !isSessionTooOld && !isSessionEnded && sessionData.remainingSeconds > 0 {
+                    result.append(FriendWithSession(
+                        user: friend,
+                        sessionId: sessionId,
+                        sessionData: sessionData
+                    ))
+                } else {
+                    // Add without session data if it's stale
+                    result.append(FriendWithSession(
+                        user: friend,
+                        sessionId: nil,
+                        sessionData: nil
+                    ))
+                }
             } else {
                 result.append(FriendWithSession(
                     user: friend,
@@ -266,8 +281,16 @@ struct FriendsView: View {
     }
     
     // Handle join session logic
+    // Replace the handleJoinSession method in FriendsView.swift with this:
+
+    // Handle join session logic
     private func handleJoinSession(sessionId: String?) {
-        guard let sessionId = sessionId else { return }
+        guard let sessionId = sessionId else {
+            print("No session ID provided for joining")
+            return
+        }
+        
+        print("Attempting to join session with ID: \(sessionId)")
         
         // Block if user is already in a session
         if appManager.currentState != .initial {
@@ -278,20 +301,42 @@ struct FriendsView: View {
         
         isJoiningSession = true
         
-        // Try to join the session
+        // Get friend name from active sessions
+        let friendName = liveSessionManager.activeFriendSessions[sessionId]?.starterUsername ?? "Friend"
+        
+        // First, try the direct join method from LiveSessionManager
         LiveSessionManager.shared.joinSession(sessionId: sessionId) { success, remainingSeconds, totalDuration in
             DispatchQueue.main.async {
                 isJoiningSession = false
                 
                 if success {
-                    // Start the joined session
+                    print("Successfully joined session \(sessionId) via LiveSessionManager")
+                    // Start the joined session directly through AppManager
                     appManager.joinLiveSession(
                         sessionId: sessionId,
                         remainingSeconds: remainingSeconds,
                         totalDuration: totalDuration
                     )
+                    
+                    // Also trigger home tab switch
+                    NotificationCenter.default.post(
+                        name: Notification.Name("SwitchToHomeTab"),
+                        object: nil
+                    )
                 } else {
-                    // Show error
+                    // Try backup method using coordinator if direct join fails
+                    print("Direct join failed, trying via coordinator...")
+                    
+                    // Use the coordinator to pass session information
+                    SessionJoinCoordinator.shared.setJoinSession(id: sessionId, name: friendName)
+                    
+                    // Trigger home tab switch
+                    NotificationCenter.default.post(
+                        name: Notification.Name("SwitchToHomeTab"),
+                        object: nil
+                    )
+                    
+                    // Show error if both methods fail
                     alertMessage = "Unable to join the session. It may be full or no longer available."
                     showAlert = true
                 }

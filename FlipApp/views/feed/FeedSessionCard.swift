@@ -8,6 +8,9 @@ struct FeedSessionCard: View {
     @State private var comment: String = ""
     @State private var showSavedIndicator = false
     @State private var keyboardHeight: CGFloat = 0
+    @State private var isLiked: Bool = false
+    @State private var likesCount: Int = 0
+    @State private var showLikesSheet = false
     @FocusState private var isCommentFocused: Bool
     
     // Update initializer with optional parameter
@@ -17,6 +20,33 @@ struct FeedSessionCard: View {
         self.showUserHeader = showUserHeader
         // Initialize comment with existing value
         self._comment = State(initialValue: session.comment ?? "")
+        
+        // Initialize likes from the viewModel
+        let sessionId = session.id.uuidString
+        self._isLiked = State(initialValue: viewModel.isLikedByUser(sessionId: sessionId))
+        self._likesCount = State(initialValue: viewModel.getLikesForSession(sessionId: sessionId))
+    }
+    
+    private var cardGradient: LinearGradient {
+        if session.wasSuccessful {
+            return LinearGradient(
+                colors: [
+                    Color(red: 26/255, green: 32/255, blue: 58/255).opacity(0.9),
+                    Color(red: 17/255, green: 54/255, blue: 71/255).opacity(0.8)
+                ],
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            )
+        } else {
+            return LinearGradient(
+                colors: [
+                    Color(red: 45/255, green: 21/255, blue: 38/255).opacity(0.9),
+                    Color(red: 26/255, green: 32/255, blue: 58/255).opacity(0.8)
+                ],
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            )
+        }
     }
     
     private var statusColor: LinearGradient {
@@ -40,119 +70,86 @@ struct FeedSessionCard: View {
     }
     
     private var hasContent: Bool {
-        return session.sessionTitle != nil || session.sessionNotes != nil
+        return (session.sessionTitle != nil && !session.sessionTitle!.isEmpty) ||
+               (session.sessionNotes != nil && !session.sessionNotes!.isEmpty)
+    }
+    
+    private var hasComment: Bool {
+        return session.comment != nil && !session.comment!.isEmpty
+    }
+    
+    private var hasGroupParticipants: Bool {
+        return session.participants != nil && !session.participants!.isEmpty && session.participants!.count > 1
+    }
+    
+    private var userProfileImageURL: String? {
+        return viewModel.users[session.userId]?.profileImageURL
     }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
-            // User Info - only show if requested
-            if showUserHeader {
-                HStack(spacing: 12) {
-                    ZStack {
-                        Circle()
-                            .fill(Theme.buttonGradient)
-                            .frame(width: 40, height: 40)
-                            .opacity(0.2)
-                        
-                        Image(systemName: "person.circle.fill")
-                            .font(.system(size: 32))
-                            .foregroundColor(.white)
-                            .shadow(color: Color(red: 56/255, green: 189/255, blue: 248/255).opacity(0.5), radius: 6)
-                    }
+            // Top section with user info and action buttons
+            HStack(spacing: 12) {
+                // Left side: User info - only show if requested
+                if showUserHeader {
+                    ProfileAvatarView(
+                        imageURL: userProfileImageURL,
+                        size: 40,
+                        username: session.username
+                    )
 
-                    VStack(alignment: .leading, spacing: 4) {
+                    VStack(alignment: .leading, spacing: 2) {
                         Text(session.username)
                             .font(.system(size: 16, weight: .bold))
                             .foregroundColor(.white)
-                            .shadow(color: Color(red: 56/255, green: 189/255, blue: 248/255).opacity(0.5), radius: 6)
+                            .shadow(color: Theme.lightTealBlue.opacity(0.5), radius: 6)
 
                         Text(session.formattedStartTime)
                             .font(.system(size: 12))
                             .foregroundColor(.white.opacity(0.7))
                     }
-
-                    Spacer()
                 }
-            }
-            
-            // Right side action buttons
-            HStack {
+
                 Spacer()
                 
-                // Comment button
-                Button(action: {
-                    withAnimation(.spring()) {
-                        showCommentField.toggle()
-                        if showCommentField {
-                            // Focus the comment field after a brief delay
-                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-                                isCommentFocused = true
-                            }
-                        }
-                    }
-                }) {
-                    ZStack {
-                        Circle()
-                            .fill(Color.white.opacity(0.1))
-                            .frame(width: 36, height: 36)
-                        
-                        Image(systemName: session.comment != nil ? "text.bubble.fill" : "text.bubble")
-                            .font(.system(size: 16))
-                            .foregroundColor(.white)
-                    }
-                }
-                .buttonStyle(BorderlessButtonStyle())
-                .padding(.trailing, 6)
-
-                // Status Icon with enhanced styling - made larger
+                // Right side: Status icon
                 ZStack {
                     Circle()
                         .fill(statusColor)
-                        .frame(width: 44, height: 44)
+                        .frame(width: 36, height: 36)
                         .opacity(0.8)
                     
-                    Image(systemName: session.wasSuccessful ? "checkmark.circle.fill" : "xmark.circle.fill")
-                        .font(.system(size: 28))
+                    Image(systemName: session.wasSuccessful ? "checkmark" : "xmark")
+                        .font(.system(size: 14, weight: .bold))
                         .foregroundColor(.white)
-                        .shadow(color: session.wasSuccessful ? Color.green.opacity(0.5) : Color.red.opacity(0.5), radius: 4)
-                }
-            }
-
-            // Session duration info
-            VStack(alignment: .leading, spacing: 2) {
-                Text("\(session.duration) min session")
-                    .font(.system(size: 20, weight: .bold))
-                    .foregroundColor(.white)
-                    .shadow(color: Color(red: 56/255, green: 189/255, blue: 248/255).opacity(0.5), radius: 6)
-
-                if !session.wasSuccessful {
-                    HStack(spacing: 6) {
-                        Image(systemName: "timer")
-                            .font(.system(size: 12))
-                        Text("Lasted \(session.actualDuration) min")
-                            .font(.system(size: 14))
-                    }
-                    .foregroundColor(.white.opacity(0.7))
                 }
             }
             
-            // Session title and notes if available
-            if hasContent {
-                Divider()
-                    .background(Color.white.opacity(0.2))
-                    .padding(.vertical, 2)
+            // Session info section
+            HStack {
+                Text("\(session.duration) min session")
+                    .font(.system(size: 18, weight: .bold))
+                    .foregroundColor(.white)
                 
-                VStack(alignment: .leading, spacing: 6) {
-                    // Session Title if available
+                if !session.wasSuccessful {
+                    Text("• Lasted \(session.actualDuration) min")
+                        .font(.system(size: 14))
+                        .foregroundColor(.white.opacity(0.7))
+                }
+                
+                Spacer()
+            }
+            
+            // Content sections - only if content exists
+            if hasContent {
+                VStack(alignment: .leading, spacing: 4) {
                     if let title = session.sessionTitle, !title.isEmpty {
                         Text(title)
                             .font(.system(size: 16, weight: .bold))
                             .foregroundColor(.white)
-                            .shadow(color: Color(red: 56/255, green: 189/255, blue: 248/255).opacity(0.4), radius: 4)
                             .lineLimit(2)
                     }
                     
-                    // Session Notes if available
                     if let notes = session.sessionNotes, !notes.isEmpty {
                         Text(notes)
                             .font(.system(size: 14))
@@ -161,28 +158,131 @@ struct FeedSessionCard: View {
                             .lineLimit(3)
                     }
                 }
-                .padding(.horizontal, 3)
+                .padding(.vertical, 4)
             }
             
-            // Comment if available
-            if let comment = session.comment, !comment.isEmpty {
-                Divider()
-                    .background(Color.white.opacity(0.2))
-                    .padding(.vertical, 2)
-                
+            // Comment section - only if comment exists
+            if hasComment {
                 HStack(alignment: .top, spacing: 8) {
                     Image(systemName: "text.bubble.fill")
                         .font(.system(size: 14))
                         .foregroundColor(.white.opacity(0.6))
                     
-                    Text(comment)
-                        .font(.system(size: 14))
-                        .foregroundColor(.white.opacity(0.9))
-                        .lineLimit(3)
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(session.username)
+                            .font(.system(size: 12, weight: .semibold))
+                            .foregroundColor(Theme.lightTealBlue.opacity(0.9))
+                        
+                        Text(session.comment!)
+                            .font(.system(size: 14))
+                            .foregroundColor(.white.opacity(0.9))
+                            .lineLimit(3)
+                    }
                 }
-                .padding(.horizontal, 3)
-                .padding(.top, 2)
+                .padding(.vertical, 4)
             }
+            
+            // Group session participants - only if it's a group session
+            if hasGroupParticipants {
+                VStack(alignment: .leading, spacing: 6) {
+                    Text("GROUP SESSION")
+                        .font(.system(size: 12, weight: .medium))
+                        .tracking(1)
+                        .foregroundColor(.white.opacity(0.7))
+                    
+                    ScrollView(.horizontal, showsIndicators: false) {
+                        HStack(spacing: 8) {
+                            ForEach(session.participants!) { participant in
+                                GroupParticipantBadge(
+                                    username: participant.username,
+                                    wasSuccessful: participant.wasSuccessful
+                                )
+                            }
+                        }
+                    }
+                }
+                .padding(.vertical, 2)
+            }
+            
+            // Action buttons and likes section
+            VStack(spacing: 8) {
+                // Like info section
+                if likesCount > 0 {
+                    Button(action: {
+                        showLikesSheet = true
+                    }) {
+                        HStack(spacing: 4) {
+                            Image(systemName: "heart.fill")
+                                .font(.system(size: 12))
+                                .foregroundColor(Theme.pink.opacity(0.8))
+                            
+                            if likesCount == 1 {
+                                Text("1 like")
+                                    .font(.system(size: 12))
+                                    .foregroundColor(.white.opacity(0.7))
+                            } else {
+                                Text("\(likesCount) likes")
+                                    .font(.system(size: 12))
+                                    .foregroundColor(.white.opacity(0.7))
+                            }
+                        }
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                    }
+                    .buttonStyle(PlainButtonStyle())
+                }
+                
+                // Action buttons
+                HStack(spacing: 16) {
+                    // Like button
+                    Button(action: {
+                        isLiked.toggle()
+                        if isLiked {
+                            likesCount += 1
+                        } else if likesCount > 0 {
+                            likesCount -= 1
+                        }
+                        viewModel.likeSession(sessionId: session.id.uuidString)
+                    }) {
+                        HStack(spacing: 4) {
+                            Image(systemName: isLiked ? "heart.fill" : "heart")
+                                .font(.system(size: 16))
+                                .foregroundColor(isLiked ? Theme.pink : .white)
+                            
+                            Text("Like")
+                                .font(.system(size: 14))
+                                .foregroundColor(isLiked ? Theme.pink : .white.opacity(0.9))
+                        }
+                    }
+                    .buttonStyle(PlainButtonStyle())
+                    
+                    // Comment button
+                    Button(action: {
+                        withAnimation(.spring()) {
+                            showCommentField.toggle()
+                            if showCommentField {
+                                // Focus the comment field after a brief delay
+                                DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                                    isCommentFocused = true
+                                }
+                            }
+                        }
+                    }) {
+                        HStack(spacing: 4) {
+                            Image(systemName: hasComment ? "text.bubble.fill" : "text.bubble")
+                                .font(.system(size: 16))
+                                .foregroundColor(.white)
+                            
+                            Text("Comment")
+                                .font(.system(size: 14))
+                                .foregroundColor(.white.opacity(0.9))
+                        }
+                    }
+                    .buttonStyle(PlainButtonStyle())
+                    
+                    Spacer()
+                }
+            }
+            .padding(.top, 4)
             
             // Comment field
             if showCommentField {
@@ -202,12 +302,38 @@ struct FeedSessionCard: View {
         }
         .padding(.vertical, 16)
         .padding(.horizontal, 16)
+        .background(
+            ZStack {
+                RoundedRectangle(cornerRadius: 15)
+                    .fill(cardGradient)
+                
+                RoundedRectangle(cornerRadius: 15)
+                    .fill(Color.white.opacity(0.05))
+                
+                RoundedRectangle(cornerRadius: 15)
+                    .stroke(
+                        LinearGradient(
+                            colors: [
+                                Color.white.opacity(0.5),
+                                Color.white.opacity(0.1)
+                            ],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        ),
+                        lineWidth: 1
+                    )
+            }
+        )
+        .shadow(color: Color.black.opacity(0.2), radius: 4, x: 0, y: 2)
         .contentShape(Rectangle())
         .onTapGesture {
             // Dismiss keyboard when tapping on the card
             if isCommentFocused {
                 isCommentFocused = false
             }
+        }
+        .sheet(isPresented: $showLikesSheet) {
+            LikesListView(sessionId: session.id.uuidString, likesCount: likesCount)
         }
         .onAppear {
             // Set up keyboard notifications
@@ -255,33 +381,6 @@ struct FeedSessionCard: View {
     }
 }
 
-// ParticipantBadges displays the participants in a group session
-struct ParticipantBadges: View {
-    let participants: [Session.Participant]
-    
-    var body: some View {
-        VStack(alignment: .leading, spacing: 6) {
-            Text("GROUP SESSION")
-                .font(.system(size: 12, weight: .medium))
-                .tracking(1)
-                .foregroundColor(.white.opacity(0.7))
-            
-            ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: 8) {
-                    ForEach(participants) { participant in
-                        GroupParticipantBadge(
-                            username: participant.username,
-                            wasSuccessful: participant.wasSuccessful
-                        )
-                    }
-                }
-                .padding(.vertical, 4)
-            }
-        }
-        .padding(.top, 4)
-    }
-}
-
 // Individual participant badge
 struct GroupParticipantBadge: View {
     let username: String
@@ -320,6 +419,7 @@ struct CommentInputField: View {
     var onSubmit: (String) -> Void
     
     private let maxChars = 100
+    
     var body: some View {
         VStack(spacing: 8) {
             // Break down the HStack into more manageable chunks
@@ -365,7 +465,7 @@ struct CommentInputField: View {
                     RoundedRectangle(cornerRadius: 8)
                         .stroke(
                             isFocused ?
-                            Color(red: 56/255, green: 189/255, blue: 248/255).opacity(0.6) :
+                            Theme.lightTealBlue.opacity(0.6) :
                                 Color.white.opacity(0.2),
                             lineWidth: 1
                         )
@@ -451,10 +551,10 @@ struct CommentInputField: View {
             .frame(width: 70)
             .background(
                 Capsule()
-                    .fill(Color(red: 56/255, green: 189/255, blue: 248/255).opacity(0.5))
+                    .fill(Theme.lightTealBlue.opacity(0.5))
                     .overlay(
                         Capsule()
-                            .stroke(Color(red: 56/255, green: 189/255, blue: 248/255).opacity(0.8), lineWidth: 1)
+                            .stroke(Theme.lightTealBlue.opacity(0.8), lineWidth: 1)
                     )
             )
         }
@@ -470,4 +570,80 @@ struct CommentInputField: View {
                     .stroke(Color.white.opacity(0.1), lineWidth: 1)
             )
     }
+}
+
+// Likes list view
+struct LikesListView: View {
+    let sessionId: String
+    let likesCount: Int
+    @Environment(\.presentationMode) var presentationMode
+    @State private var users: [MockUser] = []
+    
+    // Mock struct for demo purposes
+    struct MockUser: Identifiable {
+        let id = UUID()
+        let username: String
+        let imageURL: String?
+    }
+    
+    var body: some View {
+        VStack {
+            // Header
+            HStack {
+                Text("Likes")
+                    .font(.system(size: 18, weight: .bold))
+                    .foregroundColor(.white)
+                
+                Spacer()
+                
+                Button(action: {
+                    presentationMode.wrappedValue.dismiss()
+                }) {
+                    Image(systemName: "xmark.circle.fill")
+                        .font(.system(size: 24))
+                        .foregroundColor(.white.opacity(0.6))
+                }
+            }
+            .padding()
+            
+            // Users list
+            ScrollView {
+                LazyVStack(spacing: 2) {
+                    ForEach(users) { user in
+                        HStack(spacing: 12) {
+                            // Profile image (placeholder)
+                            ZStack {
+                                Circle()
+                                    .fill(LinearGradient(
+                                        colors: [Theme.pink.opacity(0.5), Theme.purple.opacity(0.5)],
+                                        startPoint: .topLeading,
+                                        endPoint: .bottomTrailing
+                                    ))
+                                    .frame(width: 40, height: 40)
+                                
+                                Text(String(user.username.prefix(1)))
+                                    .font(.system(size: 16, weight: .bold))
+                                    .foregroundColor(.white)
+                            }
+                            
+                            // Username
+                            Text(user.username)
+                                .font(.system(size: 16, weight: .medium))
+                                .foregroundColor(.white)
+                            
+                            Spacer()
+                        }
+                        .padding(.horizontal)
+                        .padding(.vertical, 8)
+                    }
+                }
+            }
+            
+            Spacer()
+        }
+        .background(Theme.mainGradient.edgesIgnoringSafeArea(.all))
+        .onAppear {
+        }
+    }
+
 }

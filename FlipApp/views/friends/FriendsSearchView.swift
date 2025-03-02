@@ -118,6 +118,14 @@ struct UserSearchCard: View {
     
     var body: some View {
         HStack {
+            // User profile picture
+            ProfileAvatarView(
+                imageURL: user.profileImageURL,
+                size: 50,
+                username: user.username
+            )
+            
+            // User info
             VStack(alignment: .leading, spacing: 5) {
                 Text(user.username)
                     .font(.system(size: 18, weight: .bold))
@@ -131,6 +139,7 @@ struct UserSearchCard: View {
                 .font(.system(size: 14))
                 .foregroundColor(.white.opacity(0.7))
             }
+            .padding(.leading, 4)
 
             Spacer()
 
@@ -271,6 +280,7 @@ struct UserSearchCard: View {
         .padding(.horizontal)
     }
 }
+
 enum RequestStatus {
     case none
     case sent

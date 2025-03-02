@@ -35,9 +35,12 @@ struct UserProfileView: View {
             VStack(spacing: 20) {
                 // Profile Header with enhanced styling and rank wheel
                 HStack(alignment: .top, spacing: 15) {
-                    // Rank Circle
-                    RankCircle(score: userScore)
-                        .frame(width: 60, height: 60)
+                    // Profile Picture
+                    ZoomableProfileAvatar(
+                            imageURL: user.profileImageURL,
+                            size: 80,
+                            username: user.username
+                        )
                     
                     VStack(alignment: .leading, spacing: 12) {
                         Text(user.username)
@@ -54,6 +57,10 @@ struct UserProfileView: View {
                     }
                     
                     Spacer()
+                    
+                    // Rank Circle
+                    RankCircle(score: userScore)
+                        .frame(width: 60, height: 60)
                     
                     // Only show remove friend button if this is not the current user's profile
                     // and if they are a friend

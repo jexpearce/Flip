@@ -287,6 +287,7 @@ struct MapView: View {
 struct FriendMapMarker: View {
     let friend: FriendLocation
     @State private var animate = false
+    @State private var profileImage: Image?
     
     var body: some View {
         ZStack {
@@ -314,10 +315,19 @@ struct FriendMapMarker: View {
                         .stroke(Color.white, lineWidth: friend.isHistorical ? 1 : 2)
                 )
             
-            // Profile image placeholder
-            Image(systemName: "person.fill")
-                .font(.system(size: friend.isHistorical ? 14 : 16))
-                .foregroundColor(.white)
+            // Use the cached profile image if available, otherwise show default
+            if let profileImage = profileImage {
+                profileImage
+                    .resizable()
+                    .scaledToFill()
+                    .frame(width: friend.isHistorical ? 28 : 32, height: friend.isHistorical ? 28 : 32)
+                    .clipShape(Circle())
+            } else {
+                // Default placeholder
+                Text(String(friend.username.prefix(1).uppercased()))
+                    .font(.system(size: friend.isHistorical ? 12 : 14, weight: .bold))
+                    .foregroundColor(.white)
+            }
             
             // Pulsing animation for active sessions
             if friend.isCurrentlyFlipped && !friend.isHistorical {
@@ -367,6 +377,9 @@ struct FriendMapMarker: View {
                     animate = true
                 }
             }
+            
+            // Try to load the user's profile image
+            loadProfileImage()
         }
     }
     
@@ -380,6 +393,30 @@ struct FriendMapMarker: View {
         } else {
             return Color.red // Bright red for failures
         }
+    }
+    
+    // Load the profile image
+    private func loadProfileImage() {
+        // First get a clean user ID (without historical suffix)
+        let cleanUserId = String(friend.id.split(separator: "_").first ?? "")
+        
+        // Query Firestore for the user's profile image URL
+        FirebaseManager.shared.db.collection("users").document(cleanUserId)
+            .getDocument { document, error in
+                if let userData = try? document?.data(as: FirebaseManager.FlipUser.self),
+                   let imageURLString = userData.profileImageURL,
+                   let imageURL = URL(string: imageURLString) {
+                    
+                    // Download the image
+                    URLSession.shared.dataTask(with: imageURL) { data, response, error in
+                        if let data = data, let uiImage = UIImage(data: data) {
+                            DispatchQueue.main.async {
+                                self.profileImage = Image(uiImage: uiImage)
+                            }
+                        }
+                    }.resume()
+                }
+            }
     }
 }
 

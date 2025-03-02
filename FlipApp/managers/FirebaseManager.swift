@@ -19,6 +19,7 @@ class FirebaseManager: ObservableObject {
         var friends: [String]  // User IDs
         var friendRequests: [String]  // New: incoming friend requests
         var sentRequests: [String]  // New: outgoing friend requests
+        var profileImageURL: String?  // New: URL to profile image
         
     }
 

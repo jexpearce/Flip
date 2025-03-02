@@ -1,10 +1,3 @@
-//
-//  WeeklyLeaderboard.swift
-//  FlipApp
-//
-//  Created by Jex Pearce on 2/25/25.
-//
-
 import Foundation
 import SwiftUI
 import FirebaseAuth
@@ -58,7 +51,7 @@ struct WeeklyLeaderboard: View {
                 
                 Spacer()
                 
-                Text("LONGEST SESSIONS")
+                Text("TOTAL FOCUS TIME")
                     .font(.system(size: 10, weight: .bold))
                     .tracking(1)
                     .foregroundColor(.white.opacity(0.7))
@@ -113,8 +106,8 @@ struct WeeklyLeaderboard: View {
                                 .lineLimit(1)
                                 .frame(maxWidth: .infinity, alignment: .leading)
                             
-                            // Duration
-                            Text("\(entry.duration) min")
+                            // Duration - now shows total time
+                            Text("\(entry.totalTime) min")
                                 .font(.system(size: 16, weight: .black))
                                 .foregroundColor(Color(red: 234/255, green: 179/255, blue: 8/255))
                                 .shadow(color: Color(red: 234/255, green: 179/255, blue: 8/255).opacity(0.3), radius: 4)
@@ -168,11 +161,11 @@ struct WeeklyLeaderboard: View {
     }
 }
 
-// Data model for leaderboard entries
+// Updated data model for leaderboard entries
 struct LeaderboardEntry: Identifiable {
     let id: String
     let username: String
-    let duration: Int
+    let totalTime: Int
 }
 
 // ViewModel for Leaderboard
@@ -200,17 +193,14 @@ class LeaderboardViewModel: ObservableObject {
                 var userIds = userData.friends
                 userIds.append(currentUserId)
                 
-                self.fetchWeeklyTopSessions(for: userIds)
+                self.fetchWeeklyTotalFocusTime(for: userIds)
             }
     }
     
-    private func fetchWeeklyTopSessions(for userIds: [String]) {
+    private func fetchWeeklyTotalFocusTime(for userIds: [String]) {
         let calendar = Calendar.current
         let currentDate = Date()
         let weekStart = calendar.date(from: calendar.dateComponents([.yearForWeekOfYear, .weekOfYear], from: currentDate))!
-        let dateFormatter = DateFormatter()
-        dateFormatter.dateFormat = "yyyy-MM-dd'T'HH:mm:ss"
-        let weekStartString = dateFormatter.string(from: weekStart)
         
         // Fetch all sessions from this week for these users
         firebaseManager.db.collection("sessions")
@@ -235,22 +225,27 @@ class LeaderboardViewModel: ObservableObject {
                     calendar.isDate(session.startTime, inSameWeekAs: weekStart)
                 }
                 
-                // Group by user, find max duration for each
-                var userBestSessions: [String: (username: String, duration: Int)] = [:]
+                // Group by user, sum up total time for each
+                var userTotalTimes: [String: (username: String, totalTime: Int)] = [:]
                 
                 for session in thisWeeksSessions {
-                    if let existingBest = userBestSessions[session.userId],
-                       existingBest.duration >= session.actualDuration {
-                        continue
-                    }
+                    let userId = session.userId
+                    let username = session.username
+                    let sessionTime = session.actualDuration
                     
-                    userBestSessions[session.userId] = (session.username, session.actualDuration)
+                    if let existingData = userTotalTimes[userId] {
+                        // Add to existing total
+                        userTotalTimes[userId] = (username, existingData.totalTime + sessionTime)
+                    } else {
+                        // Create new entry
+                        userTotalTimes[userId] = (username, sessionTime)
+                    }
                 }
                 
                 // Convert to leaderboard entries and sort
-                let entries = userBestSessions.map { userId, details in
-                    LeaderboardEntry(id: userId, username: details.username, duration: details.duration)
-                }.sorted { $0.duration > $1.duration }
+                let entries = userTotalTimes.map { userId, details in
+                    LeaderboardEntry(id: userId, username: details.username, totalTime: details.totalTime)
+                }.sorted { $0.totalTime > $1.totalTime }
                 
                 DispatchQueue.main.async {
                     self.leaderboardEntries = entries

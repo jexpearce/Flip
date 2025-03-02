@@ -87,6 +87,9 @@ struct NavigationFeedSessionCard: View {
     @State private var comment: String = ""
     @State private var showSavedIndicator = false
     @FocusState private var isCommentFocused: Bool
+    private var userProfileImageURL: String? {
+            return viewModel.users[session.userId]?.profileImageURL
+        }
     
     init(session: Session, viewModel: FeedViewModel) {
         self.session = session
@@ -100,17 +103,12 @@ struct NavigationFeedSessionCard: View {
             // Top section with user profile link
             NavigationLink(destination: UserProfileView(user: viewModel.getUser(for: session.userId))) {
                 HStack(spacing: 12) {
-                    // Profile pic
-                    Circle()
-                        .fill(Theme.buttonGradient)
-                        .frame(width: 40, height: 40)
-                        .opacity(0.2)
-                        .overlay(
-                            Image(systemName: "person.circle.fill")
-                                .font(.system(size: 32))
-                                .foregroundColor(.white)
-                                .shadow(color: Color(red: 56/255, green: 189/255, blue: 248/255).opacity(0.5), radius: 6)
-                        )
+                                    // Profile pic - replace with ProfileAvatarView
+                                    ProfileAvatarView(
+                                        imageURL: userProfileImageURL,
+                                        size: 40,
+                                        username: session.username
+                                    )
                         
                     // Username and time
                     VStack(alignment: .leading, spacing: 4) {
@@ -396,7 +394,7 @@ class FeedViewModel: ObservableObject {
             }
     }
     
-    private func loadUserData(userId: String) {
+    func loadUserData(userId: String) {
         firebaseManager.db.collection("users").document(userId)
             .getDocument { [weak self] document, error in
                 if let userData = try? document?.data(as: FirebaseManager.FlipUser.self) {

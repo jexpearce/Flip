@@ -86,6 +86,7 @@ class FriendManager: ObservableObject {
             return
         }
         
+        
         // Use the coordinator to pass session information
         SessionJoinCoordinator.shared.setJoinSession(id: sessionId, name: friendName)
         

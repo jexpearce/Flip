@@ -7,6 +7,8 @@ struct FriendCard: View {
     let friend: FirebaseManager.FlipUser
     @State private var isPressed = false
     @State private var isGlowing = false
+    @State private var elapsedSeconds: Int = 0
+    @State private var timer: Timer? = nil
     
     // LiveSessionData if the friend is in an active session
     let liveSession: LiveSessionManager.LiveSessionData?
@@ -23,43 +25,66 @@ struct FriendCard: View {
     private var canJoin: Bool {
         return liveSession?.canJoin ?? false
     }
+    
+    // Computed real-time elapsed time string
+    private var formattedElapsedTime: String {
+        guard let session = liveSession else { return "0:00" }
+        
+        let totalElapsed = session.elapsedSeconds + (session.isPaused ? 0 : elapsedSeconds)
+        let minutes = totalElapsed / 60
+        let seconds = totalElapsed % 60
+        return String(format: "%d:%02d", minutes, seconds)
+    }
 
     var body: some View {
         VStack(spacing: 0) {
             HStack {
-                // LEFT SIDE: User info or Live indicator
-                if isLive {
-                    // When Live: Show elapsed time and target
-                    VStack(alignment: .leading, spacing: 5) {
+                // LEFT SIDE: Profile picture with Live indicator if active
+                ZStack(alignment: .topTrailing) {
+                    ProfileAvatarView(
+                        imageURL: friend.profileImageURL,
+                        size: 50,
+                        username: friend.username
+                    )
+                    
+                    // Live indicator badge
+                    if isLive {
+                        Circle()
+                            .fill(isFull ? Color.gray : Color.green)
+                            .frame(width: 12, height: 12)
+                            .shadow(color: Color.green.opacity(0.6), radius: isGlowing ? 4 : 2)
+                            .animation(Animation.easeInOut(duration: 1.5).repeatForever(autoreverses: true), value: isGlowing)
+                            .overlay(
+                                Circle()
+                                    .stroke(Color.black, lineWidth: 1)
+                            )
+                            .offset(x: 2, y: -2)
+                            .onAppear {
+                                isGlowing = true
+                            }
+                    }
+                }
+                
+                // User info section
+                VStack(alignment: .leading, spacing: 5) {
+                    if isLive {
+                        // When Live: LIVE text
                         HStack(spacing: 4) {
-                            Circle()
-                                .fill(isFull ? Color.gray : Color.green)
-                                .frame(width: 8, height: 8)
-                                .shadow(color: Color.green.opacity(0.6), radius: isGlowing ? 4 : 2)
-                                .animation(Animation.easeInOut(duration: 1.5).repeatForever(autoreverses: true), value: isGlowing)
-                                .onAppear {
-                                    isGlowing = true
-                                }
-                            
                             Text("LIVE")
                                 .font(.system(size: 14, weight: .heavy))
                                 .foregroundColor(isFull ? .gray : .green)
                                 .shadow(color: Color.green.opacity(0.6), radius: isGlowing ? 4 : 2)
                         }
-                        
-                        Text(friend.username)
-                            .font(.system(size: 16, weight: .bold))
-                            .foregroundColor(.white)
-                            .shadow(color: Color(red: 56/255, green: 189/255, blue: 248/255).opacity(0.5), radius: 6)
                     }
-                } else {
-                    // Normal state: Show user info
-                    VStack(alignment: .leading, spacing: 5) {
-                        Text(friend.username)
-                            .font(.system(size: 18, weight: .bold))
-                            .foregroundColor(.white)
-                            .shadow(color: Color(red: 56/255, green: 189/255, blue: 248/255).opacity(0.5), radius: 6)
-
+                    
+                    // Always show username
+                    Text(friend.username)
+                        .font(.system(size: 18, weight: .bold))
+                        .foregroundColor(.white)
+                        .shadow(color: Color(red: 56/255, green: 189/255, blue: 248/255).opacity(0.5), radius: 6)
+                    
+                    // Show session count in normal state
+                    if !isLive {
                         HStack(spacing: 6) {
                             Image(systemName: "timer")
                                 .font(.system(size: 12))
@@ -71,6 +96,7 @@ struct FriendCard: View {
                         }
                     }
                 }
+                .padding(.leading, 8)
 
                 Spacer()
 
@@ -132,10 +158,12 @@ struct FriendCard: View {
                                 .tracking(1)
                                 .foregroundColor(.white.opacity(0.7))
                             
-                            Text(session.elapsedTimeString)
+                            // Use our real-time updated timer here instead of the static value
+                            Text(formattedElapsedTime)
                                 .font(.system(size: 16, weight: .bold))
                                 .monospacedDigit()
                                 .foregroundColor(.white)
+                                .id(elapsedSeconds) // Force refresh when counter changes
                         }
                         
                         Spacer()
@@ -202,5 +230,34 @@ struct FriendCard: View {
         .shadow(color: isLive && !isFull ? Color.green.opacity(0.3) : Color.black.opacity(0.2), radius: 4, x: 0, y: 2)
         .scaleEffect(isPressed ? 0.98 : 1.0)
         .animation(.spring(response: 0.3, dampingFraction: 0.6), value: isPressed)
+        .onAppear {
+            startTimer()
+        }
+        .onDisappear {
+            stopTimer()
+        }
+    }
+    
+    // Start timer to update the elapsed time every second
+    private func startTimer() {
+        // Only start the timer if this is a live session and not paused
+        guard isLive, let session = liveSession, !session.isPaused else { return }
+        
+        elapsedSeconds = 0
+        timer?.invalidate()
+        
+        timer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { _ in
+            elapsedSeconds += 1
+        }
+        
+        // Make sure timer runs during scrolling
+        if let timer = timer {
+            RunLoop.current.add(timer, forMode: .common)
+        }
+    }
+    
+    private func stopTimer() {
+        timer?.invalidate()
+        timer = nil
     }
 }

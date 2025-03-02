@@ -5,11 +5,15 @@ struct ProfileView: View {
     @EnvironmentObject var sessionManager: SessionManager
     @StateObject private var authManager = AuthManager.shared
     @StateObject private var scoreManager = ScoreManager.shared
+    @StateObject private var profileImageManager = ProfileImageManager()
+    
     @State private var isSigningOut = false
     @State private var showAllSessions = false
     @State private var showStatsDetail = false
     @State private var showDetailedStats = false
     @State private var username = FirebaseManager.shared.currentUser?.username ?? "User"
+    @State private var showUploadProgress = false
+    
     private func loadProfileDataFromFirestore() {
         guard let userId = Auth.auth().currentUser?.uid else { return }
         
@@ -29,15 +33,9 @@ struct ProfileView: View {
                 // Update the UI with Firestore data
                 DispatchQueue.main.async {
                     self.username = userData.username
-                    
-                    // Update session statistics from Firestore instead of local data
-                    // For example, in the Stats cards, replace SessionManager values with userData values
-                    // Example: totalSuccessfulSessions with userData.totalSessions
                 }
             }
     }
-
-    // Then, add this function call to .onAppear
     
     private var displayedSessions: [Session] {
         if showAllSessions {
@@ -137,6 +135,61 @@ struct ProfileView: View {
                 }
                 .padding(.top, 20)
                 .padding(.horizontal)
+                
+                // New Profile Picture Section
+                VStack(spacing: 15) {
+                    // Profile Picture with Edit Button
+                    ZStack(alignment: .bottomTrailing) {
+                        ZoomableProfileAvatar(
+                                    imageURL: FirebaseManager.shared.currentUser?.profileImageURL,
+                                    size: 120,
+                                    username: username
+                                )
+                        
+                        // Edit button overlay
+                        Button(action: {
+                            profileImageManager.selectImage()
+                        }) {
+                            ZStack {
+                                Circle()
+                                    .fill(Theme.buttonGradient)
+                                    .frame(width: 36, height: 36)
+                                    .opacity(0.9)
+                                
+                                Image(systemName: "camera.fill")
+                                    .font(.system(size: 18))
+                                    .foregroundColor(.white)
+                            }
+                            .overlay(
+                                Circle()
+                                    .stroke(Color.white, lineWidth: 2)
+                            )
+                            .shadow(color: Color.black.opacity(0.3), radius: 4)
+                        }
+                    }
+                    .padding(.bottom, 4)
+                    
+                    // Username display
+                    Text(username)
+                        .font(.system(size: 24, weight: .bold))
+                        .foregroundColor(.white)
+                        .shadow(color: Color(red: 56/255, green: 189/255, blue: 248/255).opacity(0.5), radius: 6)
+                    
+                    // Upload progress indicator (only shown while uploading)
+                    if profileImageManager.isUploading {
+                        VStack(spacing: 8) {
+                            ProgressView(value: profileImageManager.uploadProgress)
+                                .progressViewStyle(LinearProgressViewStyle(tint: Color(red: 56/255, green: 189/255, blue: 248/255)))
+                                .frame(width: 200)
+                            
+                            Text("Uploading profile picture...")
+                                .font(.system(size: 14))
+                                .foregroundColor(.white.opacity(0.7))
+                        }
+                        .padding(.top, 4)
+                    }
+                }
+                .padding(.vertical, 10)
                 
                 // Streamlined Discipline rank card
                 VStack(spacing: 15) {
@@ -422,7 +475,32 @@ struct ProfileView: View {
                     self.username = currentUser.username
                 }
                 loadProfileDataFromFirestore()
+                profileImageManager.loadProfileImage()
             }
+        }
+        .sheet(isPresented: $profileImageManager.isImagePickerPresented) {
+            PHPickerRepresentable(
+                selectedImage: $profileImageManager.selectedImage,
+                isPresented: $profileImageManager.isImagePickerPresented
+            ) {
+                profileImageManager.isCropperPresented = true
+            }
+        }
+        .sheet(isPresented: $profileImageManager.isCropperPresented) {
+            MovableCircleCropperView(
+                image: $profileImageManager.selectedImage,
+                isPresented: $profileImageManager.isCropperPresented
+            ) { croppedImage in
+                profileImageManager.profileImage = croppedImage
+                profileImageManager.uploadImage()
+            }
+        }
+        .alert(isPresented: $profileImageManager.showUploadError) {
+            Alert(
+                title: Text("Upload Error"),
+                message: Text(profileImageManager.errorMessage),
+                dismissButton: .default(Text("OK"))
+            )
         }
     }
 }
