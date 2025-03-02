@@ -206,7 +206,7 @@ struct FeedSessionCard: View {
             
             // Action buttons and likes section
             VStack(spacing: 8) {
-                // Like info section
+                // Like info section - Only show if there are likes
                 if likesCount > 0 {
                     Button(action: {
                         showLikesSheet = true
@@ -235,13 +235,19 @@ struct FeedSessionCard: View {
                 HStack(spacing: 16) {
                     // Like button
                     Button(action: {
+                        // Toggle like state via ViewModel
+                        viewModel.likeSession(sessionId: session.id.uuidString)
+                        
+                        // Update local state for immediate UI feedback
                         isLiked.toggle()
+                        
+                        // Update the count for immediate feedback
+                        // (this will be properly updated when the Firestore listener fires)
                         if isLiked {
                             likesCount += 1
                         } else if likesCount > 0 {
                             likesCount -= 1
                         }
-                        viewModel.likeSession(sessionId: session.id.uuidString)
                     }) {
                         HStack(spacing: 4) {
                             Image(systemName: isLiked ? "heart.fill" : "heart")
@@ -333,9 +339,12 @@ struct FeedSessionCard: View {
             }
         }
         .sheet(isPresented: $showLikesSheet) {
-            LikesListView(sessionId: session.id.uuidString, likesCount: likesCount)
+            CompactLikesListView(sessionId: session.id.uuidString, likesCount: likesCount, viewModel: viewModel)
         }
         .onAppear {
+            // Update like state when the view appears
+            updateLikeState()
+            
             // Set up keyboard notifications
             NotificationCenter.default.addObserver(
                 forName: UIResponder.keyboardWillShowNotification,
@@ -359,7 +368,22 @@ struct FeedSessionCard: View {
             // Remove keyboard observers
             NotificationCenter.default.removeObserver(self)
         }
+        .onChange(of: viewModel.likedByUser[session.id.uuidString]) { newValue in
+            updateLikeState()
+        }
+        .onChange(of: viewModel.sessionLikes[session.id.uuidString]) { newValue in
+            updateLikeState()
+        }
     }
+    
+    private func updateLikeState() {
+        let sessionId = session.id.uuidString
+        
+        // Get like status from viewModel
+        isLiked = viewModel.isLikedByUser(sessionId: sessionId)
+        likesCount = viewModel.getLikesForSession(sessionId: sessionId)
+    }
+    
     
     private func saveComment(_ newComment: String) {
         guard !newComment.isEmpty else { return }
@@ -571,27 +595,26 @@ struct CommentInputField: View {
             )
     }
 }
-
-// Likes list view
-struct LikesListView: View {
+struct CompactLikesListView: View {
     let sessionId: String
     let likesCount: Int
     @Environment(\.presentationMode) var presentationMode
-    @State private var users: [MockUser] = []
+    @State private var users: [FirebaseManager.FlipUser] = []
+    @State private var isLoading = true
+    let viewModel: FeedViewModel
     
-    // Mock struct for demo purposes
-    struct MockUser: Identifiable {
-        let id = UUID()
-        let username: String
-        let imageURL: String?
+    init(sessionId: String, likesCount: Int, viewModel: FeedViewModel = FeedViewModel()) {
+        self.sessionId = sessionId
+        self.likesCount = likesCount
+        self.viewModel = viewModel
     }
     
     var body: some View {
         VStack {
             // Header
             HStack {
-                Text("Likes")
-                    .font(.system(size: 18, weight: .bold))
+                Text("\(likesCount) \(likesCount == 1 ? "Like" : "Likes")")
+                    .font(.system(size: 16, weight: .bold))
                     .foregroundColor(.white)
                 
                 Spacer()
@@ -600,50 +623,95 @@ struct LikesListView: View {
                     presentationMode.wrappedValue.dismiss()
                 }) {
                     Image(systemName: "xmark.circle.fill")
-                        .font(.system(size: 24))
+                        .font(.system(size: 20))
                         .foregroundColor(.white.opacity(0.6))
                 }
             }
-            .padding()
+            .padding(.horizontal, 16)
+            .padding(.top, 12)
+            .padding(.bottom, 8)
             
-            // Users list
-            ScrollView {
-                LazyVStack(spacing: 2) {
-                    ForEach(users) { user in
-                        HStack(spacing: 12) {
-                            // Profile image (placeholder)
-                            ZStack {
-                                Circle()
-                                    .fill(LinearGradient(
-                                        colors: [Theme.pink.opacity(0.5), Theme.purple.opacity(0.5)],
-                                        startPoint: .topLeading,
-                                        endPoint: .bottomTrailing
-                                    ))
-                                    .frame(width: 40, height: 40)
-                                
-                                Text(String(user.username.prefix(1)))
-                                    .font(.system(size: 16, weight: .bold))
-                                    .foregroundColor(.white)
+            Divider()
+                .background(Color.white.opacity(0.2))
+            
+            if isLoading {
+                HStack {
+                    Spacer()
+                    ProgressView()
+                        .tint(.white)
+                        .scaleEffect(1.2)
+                    Spacer()
+                }
+                .padding()
+            } else if users.isEmpty {
+                Text("No likes yet")
+                    .font(.system(size: 14, weight: .medium))
+                    .foregroundColor(.white.opacity(0.7))
+                    .frame(maxWidth: .infinity, alignment: .center)
+                    .padding()
+            } else {
+                // Users list
+                ScrollView {
+                    LazyVStack(spacing: 0) {
+                        ForEach(users) { user in
+                            NavigationLink(destination: UserProfileView(user: user)) {
+                                HStack(spacing: 12) {
+                                    // Profile image
+                                    ProfileAvatarView(
+                                        imageURL: user.profileImageURL,
+                                        size: 36,
+                                        username: user.username
+                                    )
+                                    
+                                    // Username
+                                    Text(user.username)
+                                        .font(.system(size: 14, weight: .medium))
+                                        .foregroundColor(.white)
+                                    
+                                    Spacer()
+                                    
+                                    // Chevron
+                                    Image(systemName: "chevron.right")
+                                        .font(.system(size: 12))
+                                        .foregroundColor(.white.opacity(0.5))
+                                }
+                                .padding(.horizontal, 16)
+                                .padding(.vertical, 10)
                             }
+                            .buttonStyle(PlainButtonStyle())
                             
-                            // Username
-                            Text(user.username)
-                                .font(.system(size: 16, weight: .medium))
-                                .foregroundColor(.white)
-                            
-                            Spacer()
+                            Divider()
+                                .background(Color.white.opacity(0.1))
+                                .padding(.horizontal, 16)
                         }
-                        .padding(.horizontal)
-                        .padding(.vertical, 8)
                     }
                 }
+                .frame(maxHeight: 300) // Limit the height for compact display
             }
-            
-            Spacer()
         }
-        .background(Theme.mainGradient.edgesIgnoringSafeArea(.all))
+        .background(
+            LinearGradient(
+                colors: [
+                    Color(red: 26/255, green: 14/255, blue: 47/255),
+                    Color(red: 48/255, green: 30/255, blue: 103/255)
+                ],
+                startPoint: .top,
+                endPoint: .bottom
+            )
+        )
+        .frame(width: 280)
+        .cornerRadius(16)
         .onAppear {
+            loadUsers()
         }
     }
-
+    
+    private func loadUsers() {
+        isLoading = true
+        
+        viewModel.getLikeUsers(sessionId: sessionId) { likeUsers in
+            self.users = likeUsers
+            self.isLoading = false
+        }
+    }
 }

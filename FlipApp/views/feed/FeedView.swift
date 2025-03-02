@@ -1,4 +1,5 @@
 import FirebaseAuth
+import FirebaseFirestore
 import SwiftUI
 
 struct FeedView: View {
@@ -9,11 +10,12 @@ struct FeedView: View {
         NavigationView {
             ScrollView {
                 VStack(spacing: 25) {
+                    // Header
                     Text("FEED")
                         .font(.system(size: 28, weight: .black))
                         .tracking(8)
                         .foregroundColor(.white)
-                        .shadow(color: Color(red: 56/255, green: 189/255, blue: 248/255).opacity(0.5), radius: 8)
+                        .shadow(color: Theme.lightTealBlue.opacity(0.5), radius: 8)
                         .padding(.top, 20)
 
                     if viewModel.isLoading {
@@ -27,7 +29,7 @@ struct FeedView: View {
                     } else {
                         // Session cards
                         ForEach(viewModel.feedSessions) { session in
-                            NavigationFeedSessionCard(
+                            FeedSessionCard(
                                 session: session,
                                 viewModel: viewModel
                             )
@@ -36,8 +38,22 @@ struct FeedView: View {
                 }
                 .padding(.horizontal)
             }
-            .background(Theme.mainGradient.edgesIgnoringSafeArea(.all))
+            .background(
+                LinearGradient(
+                    colors: [
+                        Color(red: 26/255, green: 14/255, blue: 47/255),
+                        Color(red: 48/255, green: 30/255, blue: 103/255),
+                        Color(red: 26/255, green: 14/255, blue: 47/255)
+                    ],
+                    startPoint: .top,
+                    endPoint: .bottom
+                )
+                .edgesIgnoringSafeArea(.all)
+            )
             .onAppear {
+                viewModel.loadFeed()
+            }
+            .refreshable {
                 viewModel.loadFeed()
             }
             .alert("Error", isPresented: $viewModel.showError) {
@@ -46,7 +62,18 @@ struct FeedView: View {
                 Text(viewModel.errorMessage)
             }
         }
-        .background(Theme.mainGradient.edgesIgnoringSafeArea(.all))
+        .background(
+            LinearGradient(
+                colors: [
+                    Color(red: 26/255, green: 14/255, blue: 47/255),
+                    Color(red: 48/255, green: 30/255, blue: 103/255),
+                    Color(red: 26/255, green: 14/255, blue: 47/255)
+                ],
+                startPoint: .top,
+                endPoint: .bottom
+            )
+            .edgesIgnoringSafeArea(.all)
+        )
         .navigationViewStyle(StackNavigationViewStyle())
     }
 }
@@ -54,85 +81,119 @@ struct FeedView: View {
 // Empty state component
 struct EmptyFeedView: View {
     var body: some View {
-        VStack(spacing: 15) {
+        VStack(spacing: 20) {
             ZStack {
                 Circle()
-                    .fill(Theme.buttonGradient)
-                    .frame(width: 80, height: 80)
-                    .opacity(0.2)
+                    .fill(
+                        LinearGradient(
+                            colors: [Theme.pink.opacity(0.3), Theme.purple.opacity(0.3)],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        )
+                    )
+                    .frame(width: 90, height: 90)
                 
-                Image(systemName: "person.2")
-                    .font(.system(size: 50))
+                Image(systemName: "doc.text.image")
+                    .font(.system(size: 40))
                     .foregroundColor(.white)
-                    .shadow(color: Color(red: 56/255, green: 189/255, blue: 248/255).opacity(0.5), radius: 8)
+                    .shadow(color: Theme.lightTealBlue.opacity(0.5), radius: 8)
             }
 
             Text("No Sessions Yet")
                 .font(.system(size: 24, weight: .bold))
                 .foregroundColor(.white)
-                .shadow(color: Color(red: 56/255, green: 189/255, blue: 248/255).opacity(0.4), radius: 6)
+                .shadow(color: Theme.lightTealBlue.opacity(0.4), radius: 6)
 
-            Text("Add friends to see their focus sessions")
+            Text("Add friends to see their focus sessions in your feed")
                 .font(.system(size: 16))
                 .foregroundColor(.white.opacity(0.7))
                 .multilineTextAlignment(.center)
+                .padding(.horizontal, 20)
+            
+            Button(action: {
+                // Navigate to Friends view or show Friend search
+                NotificationCenter.default.post(
+                    name: Notification.Name("SwitchToFriendsTab"),
+                    object: nil
+                )
+            }) {
+                Text("Find Friends")
+                    .font(.system(size: 16, weight: .bold))
+                    .foregroundColor(.white)
+                    .padding(.horizontal, 24)
+                    .padding(.vertical, 12)
+                    .background(
+                        RoundedRectangle(cornerRadius: 20)
+                            .fill(
+                                LinearGradient(
+                                    colors: [Theme.pink.opacity(0.7), Theme.purple.opacity(0.7)],
+                                    startPoint: .leading,
+                                    endPoint: .trailing
+                                )
+                            )
+                    )
+                    .shadow(color: Theme.purple.opacity(0.3), radius: 5)
+            }
         }
         .padding(.top, 50)
     }
 }
+
 struct NavigationFeedSessionCard: View {
     let session: Session
     let viewModel: FeedViewModel
     @State private var showCommentField = false
     @State private var comment: String = ""
     @State private var showSavedIndicator = false
+    @State private var isLiked: Bool = false
+    @State private var likesCount: Int = 0
+    @State private var showLikesSheet = false
     @FocusState private var isCommentFocused: Bool
+    
     private var userProfileImageURL: String? {
-            return viewModel.users[session.userId]?.profileImageURL
-        }
+        return viewModel.users[session.userId]?.profileImageURL
+    }
     
     init(session: Session, viewModel: FeedViewModel) {
         self.session = session
         self.viewModel = viewModel
         // Initialize comment with existing value
         self._comment = State(initialValue: session.comment ?? "")
+        
+        // Initialize likes from the viewModel
+        let sessionId = session.id.uuidString
+        self._isLiked = State(initialValue: viewModel.isLikedByUser(sessionId: sessionId))
+        self._likesCount = State(initialValue: viewModel.getLikesForSession(sessionId: sessionId))
     }
     
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
-            // Top section with user profile link
-            NavigationLink(destination: UserProfileView(user: viewModel.getUser(for: session.userId))) {
-                HStack(spacing: 12) {
-                                    // Profile pic - replace with ProfileAvatarView
-                                    ProfileAvatarView(
-                                        imageURL: userProfileImageURL,
-                                        size: 40,
-                                        username: session.username
-                                    )
-                        
-                    // Username and time
-                    VStack(alignment: .leading, spacing: 4) {
+            // Top section with user info
+            HStack(spacing: 12) {
+                NavigationLink(destination: UserProfileView(user: viewModel.getUser(for: session.userId))) {
+                    // Profile pic
+                    ProfileAvatarView(
+                        imageURL: userProfileImageURL,
+                        size: 40,
+                        username: session.username
+                    )
+                }
+                .buttonStyle(PlainButtonStyle())
+                
+                // Username and time
+                VStack(alignment: .leading, spacing: 4) {
+                    NavigationLink(destination: UserProfileView(user: viewModel.getUser(for: session.userId))) {
                         Text(session.username)
                             .font(.system(size: 16, weight: .bold))
                             .foregroundColor(.white)
-                            .shadow(color: Color(red: 56/255, green: 189/255, blue: 248/255).opacity(0.5), radius: 6)
-
-                        Text(session.formattedStartTime)
-                            .font(.system(size: 12))
-                            .foregroundColor(.white.opacity(0.7))
+                            .shadow(color: Theme.lightTealBlue.opacity(0.5), radius: 6)
                     }
+                    .buttonStyle(PlainButtonStyle())
                     
-                    Spacer()
+                    Text(session.formattedStartTime)
+                        .font(.system(size: 12))
+                        .foregroundColor(.white.opacity(0.7))
                 }
-            }
-            .buttonStyle(PlainButtonStyle())
-            
-            // Session info (moved down from the header)
-            HStack {
-                Text("\(session.duration) min session")
-                    .font(.system(size: 18, weight: .bold))
-                    .foregroundColor(.white)
-                    .shadow(color: Color(red: 56/255, green: 189/255, blue: 248/255).opacity(0.5), radius: 6)
                 
                 Spacer()
                 
@@ -150,23 +211,22 @@ struct NavigationFeedSessionCard: View {
                 }
             }
             
-            // Show actual duration if session failed
-            if !session.wasSuccessful {
-                HStack(spacing: 6) {
-                    Image(systemName: "timer")
-                        .font(.system(size: 12))
-                    Text("Lasted \(session.actualDuration) min")
+            // Session info
+            HStack {
+                Text("\(session.duration) min session")
+                    .font(.system(size: 18, weight: .bold))
+                    .foregroundColor(.white)
+                
+                if !session.wasSuccessful {
+                    Text("• Lasted \(session.actualDuration) min")
                         .font(.system(size: 14))
                         .foregroundColor(.white.opacity(0.7))
                 }
+                
+                Spacer()
             }
             
-            // Divider for visual separation
-            Divider()
-                .background(Color.white.opacity(0.2))
-                .padding(.vertical, 4)
-            
-            // Session title and notes if available
+            // Content sections - only if content exists
             if let title = session.sessionTitle, !title.isEmpty {
                 Text(title)
                     .font(.system(size: 16, weight: .bold))
@@ -188,10 +248,19 @@ struct NavigationFeedSessionCard: View {
                         .font(.system(size: 14))
                         .foregroundColor(.white.opacity(0.6))
                     
-                    Text(comment)
-                        .font(.system(size: 14))
-                        .foregroundColor(.white.opacity(0.9))
-                        .lineLimit(2)
+                    VStack(alignment: .leading, spacing: 2) {
+                        NavigationLink(destination: UserProfileView(user: viewModel.getUser(for: session.userId))) {
+                            Text(session.username)
+                                .font(.system(size: 12, weight: .semibold))
+                                .foregroundColor(Theme.lightTealBlue.opacity(0.9))
+                        }
+                        .buttonStyle(PlainButtonStyle())
+                        
+                        Text(comment)
+                            .font(.system(size: 14))
+                            .foregroundColor(.white.opacity(0.9))
+                            .lineLimit(2)
+                    }
                 }
                 .padding(.top, 2)
             }
@@ -207,7 +276,7 @@ struct NavigationFeedSessionCard: View {
                     .tracking(1)
                     .foregroundColor(.white.opacity(0.7))
                 
-                // Vertical layout for participants instead of horizontal
+                // Vertical layout for participants
                 VStack(alignment: .leading, spacing: 6) {
                     ForEach(participants) { participant in
                         NavigationLink(
@@ -241,10 +310,65 @@ struct NavigationFeedSessionCard: View {
                 }
             }
             
-            // Comment button
+            // Like info section - Only show if there are likes
+            if likesCount > 0 {
+                Button(action: {
+                    showLikesSheet = true
+                }) {
+                    HStack(spacing: 4) {
+                        Image(systemName: "heart.fill")
+                            .font(.system(size: 12))
+                            .foregroundColor(Theme.pink.opacity(0.8))
+                        
+                        if likesCount == 1 {
+                            Text("1 like")
+                                .font(.system(size: 12))
+                                .foregroundColor(.white.opacity(0.7))
+                        } else {
+                            Text("\(likesCount) likes")
+                                .font(.system(size: 12))
+                                .foregroundColor(.white.opacity(0.7))
+                        }
+                    }
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                }
+                .buttonStyle(PlainButtonStyle())
+                .padding(.top, 4)
+            }
+            
+            // Action buttons
             HStack {
                 Spacer()
                 
+                // Like button
+                Button(action: {
+                    // Toggle like state via ViewModel
+                    viewModel.likeSession(sessionId: session.id.uuidString)
+                    
+                    // Update local state for immediate UI feedback
+                    isLiked.toggle()
+                    
+                    // Update the count for immediate feedback
+                    if isLiked {
+                        likesCount += 1
+                    } else if likesCount > 0 {
+                        likesCount -= 1
+                    }
+                }) {
+                    ZStack {
+                        Circle()
+                            .fill(Color.white.opacity(0.1))
+                            .frame(width: 36, height: 36)
+                        
+                        Image(systemName: isLiked ? "heart.fill" : "heart")
+                            .font(.system(size: 16))
+                            .foregroundColor(isLiked ? Theme.pink : .white)
+                    }
+                }
+                .buttonStyle(BorderlessButtonStyle())
+                .padding(.trailing, 6)
+                
+                // Comment button
                 Button(action: {
                     withAnimation(.spring()) {
                         showCommentField.toggle()
@@ -290,8 +414,26 @@ struct NavigationFeedSessionCard: View {
         .background(
             ZStack {
                 RoundedRectangle(cornerRadius: 15)
-                    .fill(Theme.buttonGradient)
-                    .opacity(0.1)
+                    .fill(
+                        session.wasSuccessful ?
+                        LinearGradient(
+                            colors: [
+                                Color(red: 26/255, green: 32/255, blue: 58/255).opacity(0.9),
+                                Color(red: 17/255, green: 54/255, blue: 71/255).opacity(0.8)
+                            ],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        )
+                        :
+                        LinearGradient(
+                            colors: [
+                                Color(red: 45/255, green: 21/255, blue: 38/255).opacity(0.9),
+                                Color(red: 26/255, green: 32/255, blue: 58/255).opacity(0.8)
+                            ],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        )
+                    )
                 
                 RoundedRectangle(cornerRadius: 15)
                     .fill(Color.white.opacity(0.05))
@@ -318,6 +460,26 @@ struct NavigationFeedSessionCard: View {
                 isCommentFocused = false
             }
         }
+        .popover(isPresented: $showLikesSheet, arrowEdge: .top) {
+            CompactLikesListView(sessionId: session.id.uuidString, likesCount: likesCount, viewModel: viewModel)
+        }
+        .onAppear {
+            updateLikeState()
+        }
+        .onChange(of: viewModel.likedByUser[session.id.uuidString]) { newValue in
+            updateLikeState()
+        }
+        .onChange(of: viewModel.sessionLikes[session.id.uuidString]) { newValue in
+            updateLikeState()
+        }
+    }
+    
+    private func updateLikeState() {
+        let sessionId = session.id.uuidString
+        
+        // Get like status from viewModel
+        isLiked = viewModel.isLikedByUser(sessionId: sessionId)
+        likesCount = viewModel.getLikesForSession(sessionId: sessionId)
     }
     
     private func saveComment(_ newComment: String) {
@@ -339,13 +501,19 @@ struct NavigationFeedSessionCard: View {
         }
     }
 }
+
 class FeedViewModel: ObservableObject {
     @Published var feedSessions: [Session] = []
     @Published var users: [String: FirebaseManager.FlipUser] = [:]
     @Published var isLoading = false
     @Published var showError = false
     @Published var errorMessage = ""
+    @Published var sessionLikes: [String: Int] = [:] // Map session ID to like count
+    @Published var likedByUser: [String: Bool] = [:] // Map session ID to whether current user liked it
+    @Published var likesUsers: [String: [String]] = [:] // Map session ID to array of user IDs who liked it
+    
     private let firebaseManager = FirebaseManager.shared
+    private var likesListeners: [String: ListenerRegistration] = [:]
 
     func loadFeed() {
         guard let userId = Auth.auth().currentUser?.uid else { return }
@@ -429,69 +597,222 @@ class FeedViewModel: ObservableObject {
     }
 
     private func loadFriendSessions(userIds: [String]) {
+        // Remove any existing listeners
+        cleanupLikesListeners()
+        
         firebaseManager.db.collection("sessions")
             .whereField("userId", in: userIds)
             .order(by: "startTime", descending: true)
             .limit(to: 50)
             .addSnapshotListener { [weak self] snapshot, error in
+                guard let self = self else { return }
+                
                 DispatchQueue.main.async {
                     if let error = error {
-                        self?.showError = true
-                        self?.errorMessage = error.localizedDescription
+                        self.showError = true
+                        self.errorMessage = error.localizedDescription
                     } else if let documents = snapshot?.documents {
-                        self?.feedSessions = documents.compactMap { document in
+                        self.feedSessions = documents.compactMap { document in
                             try? document.data(as: Session.self)
                         }
+                        
+                        // Load like data for each session
+                        for session in self.feedSessions {
+                            self.loadLikesForSession(session.id.uuidString)
+                        }
                     }
-                    self?.isLoading = false
+                    self.isLoading = false
                 }
             }
     }
-    // Add this to the FeedViewModel class
-
-    func saveComment(sessionId: String, comment: String) {
-        guard !comment.isEmpty, let currentUserId = Auth.auth().currentUser?.uid else { return }
-        
-        // Find the session in our local collection
-        if let index = feedSessions.firstIndex(where: { $0.id.uuidString == sessionId }) {
-            // Update the Firestore document
-            firebaseManager.db.collection("sessions")
-                .document(sessionId)
-                .updateData(["comment": comment]) { [weak self] error in
-                    if let error = error {
-                        DispatchQueue.main.async {
-                            self?.showError = true
-                            self?.errorMessage = "Failed to save comment: \(error.localizedDescription)"
-                        }
-                    } else {
-                        // Update our local copy
-                        DispatchQueue.main.async {
-                            // The listener will automatically update the feedSessions array,
-                            // but we don't need to do anything here explicitly
-                        }
-                    }
-                }
-        }
-    }
     
-    // This is for the case when you have no friends but still want to see your own sessions
     private func loadCurrentUserSessions(userId: String) {
+        // Remove any existing listeners
+        cleanupLikesListeners()
+        
         firebaseManager.db.collection("sessions")
             .whereField("userId", isEqualTo: userId)
             .order(by: "startTime", descending: true)
             .limit(to: 50)
             .addSnapshotListener { [weak self] snapshot, error in
+                guard let self = self else { return }
+                
                 DispatchQueue.main.async {
                     if let error = error {
-                        self?.showError = true
-                        self?.errorMessage = error.localizedDescription
+                        self.showError = true
+                        self.errorMessage = error.localizedDescription
                     } else if let documents = snapshot?.documents {
-                        self?.feedSessions = documents.compactMap { document in
+                        self.feedSessions = documents.compactMap { document in
                             try? document.data(as: Session.self)
                         }
+                        
+                        // Load like data for each session
+                        for session in self.feedSessions {
+                            self.loadLikesForSession(session.id.uuidString)
+                        }
                     }
-                    self?.isLoading = false
+                    self.isLoading = false
                 }
             }
+    }
+    
+    private func loadLikesForSession(_ sessionId: String) {
+        guard let currentUserId = Auth.auth().currentUser?.uid else { return }
+        
+        // Create a listener for this session's likes
+        let listener = firebaseManager.db.collection("likes")
+            .whereField("sessionId", isEqualTo: sessionId)
+            .addSnapshotListener { [weak self] snapshot, error in
+                guard let self = self, let documents = snapshot?.documents else {
+                    return
+                }
+                
+                DispatchQueue.main.async {
+                    // Get all user IDs who liked this session
+                    let userIds = documents.compactMap { document -> String? in
+                        return document.data()["userId"] as? String
+                    }
+                    
+                    // Update the session likes info
+                    self.sessionLikes[sessionId] = userIds.count
+                    self.likedByUser[sessionId] = userIds.contains(currentUserId)
+                    self.likesUsers[sessionId] = userIds
+                    
+                    // Trigger UI update
+                    self.objectWillChange.send()
+                }
+            }
+        
+        // Store the listener for cleanup
+        likesListeners[sessionId] = listener
+    }
+    
+    private func cleanupLikesListeners() {
+        for (_, listener) in likesListeners {
+            listener.remove()
+        }
+        likesListeners.removeAll()
+    }
+
+    func saveComment(sessionId: String, comment: String) {
+        guard !comment.isEmpty, let currentUserId = Auth.auth().currentUser?.uid else { return }
+        
+        // Update the Firestore document
+        firebaseManager.db.collection("sessions")
+            .document(sessionId)
+            .updateData(["comment": comment]) { [weak self] error in
+                if let error = error {
+                    DispatchQueue.main.async {
+                        self?.showError = true
+                        self?.errorMessage = "Failed to save comment: \(error.localizedDescription)"
+                    }
+                }
+            }
+    }
+    
+    // Like/unlike a session
+    func likeSession(sessionId: String) {
+        guard let currentUserId = Auth.auth().currentUser?.uid else { return }
+        
+        // Create a unique ID for the like document
+        let likeId = "\(sessionId)_\(currentUserId)"
+        let likeRef = firebaseManager.db.collection("likes").document(likeId)
+        
+        // Check if user already liked this session
+        likeRef.getDocument { [weak self] document, error in
+            guard let self = self else { return }
+            
+            if let document = document, document.exists {
+                // User already liked the session, so unlike it
+                likeRef.delete { error in
+                    if let error = error {
+                        print("Error removing like: \(error.localizedDescription)")
+                    }
+                }
+            } else {
+                // User hasn't liked the session yet, so add a like
+                let timestamp = Timestamp(date: Date())
+                
+                // Get user data for display
+                let username = self.users[currentUserId]?.username ?? "User"
+                
+                // Store like data
+                let likeData: [String: Any] = [
+                    "userId": currentUserId,
+                    "username": username,
+                    "sessionId": sessionId,
+                    "timestamp": timestamp
+                ]
+                
+                likeRef.setData(likeData) { error in
+                    if let error = error {
+                        print("Error adding like: \(error.localizedDescription)")
+                    }
+                }
+            }
+        }
+    }
+    
+    // Get likes count for a session
+    func getLikesForSession(sessionId: String) -> Int {
+        return sessionLikes[sessionId] ?? 0
+    }
+    
+    // Check if current user liked a session
+    func isLikedByUser(sessionId: String) -> Bool {
+        return likedByUser[sessionId] ?? false
+    }
+    
+    // Get users who liked a session
+    func getLikeUsers(sessionId: String, completion: @escaping ([FirebaseManager.FlipUser]) -> Void) {
+        let userIds = likesUsers[sessionId] ?? []
+        
+        if userIds.isEmpty {
+            completion([])
+            return
+        }
+        
+        // For small lists, we can use our cached user data
+        var likeUsers: [FirebaseManager.FlipUser] = []
+        var missingUserIds: [String] = []
+        
+        for userId in userIds {
+            if let user = users[userId] {
+                likeUsers.append(user)
+            } else {
+                missingUserIds.append(userId)
+            }
+        }
+        
+        // If we have all users cached, return them
+        if missingUserIds.isEmpty {
+            completion(likeUsers)
+            return
+        }
+        
+        // Otherwise, load missing users from Firestore
+        let group = DispatchGroup()
+        
+        for userId in missingUserIds {
+            group.enter()
+            
+            firebaseManager.db.collection("users").document(userId).getDocument { [weak self] document, error in
+                if let userData = try? document?.data(as: FirebaseManager.FlipUser.self) {
+                    likeUsers.append(userData)
+                    
+                    // Cache the user for future use
+                    self?.users[userId] = userData
+                }
+                group.leave()
+            }
+        }
+        
+        group.notify(queue: .main) {
+            completion(likeUsers)
+        }
+    }
+    
+    deinit {
+        cleanupLikesListeners()
     }
 }
