@@ -1,6 +1,7 @@
 import Foundation
 import CoreLocation
 import MapKit
+import FirebaseFirestore
 
 class BuildingIdentificationService {
     static let shared = BuildingIdentificationService()
@@ -62,34 +63,102 @@ class BuildingIdentificationService {
             
             // When all searches complete
             dispatchGroup.notify(queue: .main) {
-                // Remove duplicates by comparing coordinates
+                // Deduplicate results more effectively
                 var uniqueResults: [MKPlacemark] = []
+                var seenNames = Set<String>()
                 var seenCoordinates = Set<String>()
                 
                 for placemark in allResults {
+                    let name = self.getBuildingName(from: placemark).lowercased()
                     let coordKey = "\(placemark.coordinate.latitude),\(placemark.coordinate.longitude)"
-                    if !seenCoordinates.contains(coordKey) {
+                    
+                    // Skip if we've seen this name or exact coordinate before
+                    if !seenNames.contains(name) && !seenCoordinates.contains(coordKey) {
                         uniqueResults.append(placemark)
+                        seenNames.insert(name)
                         seenCoordinates.insert(coordKey)
                     }
                 }
                 
-                // Prioritize by distance from user
-                let sortedResults = uniqueResults.sorted { placemark1, placemark2 in
-                    let location1 = CLLocation(latitude: placemark1.coordinate.latitude, longitude: placemark1.coordinate.longitude)
-                    let location2 = CLLocation(latitude: placemark2.coordinate.latitude, longitude: placemark2.coordinate.longitude)
+                // Before sorting, get session counts for each building
+                self.getSessionCountsForBuildings(placemarks: uniqueResults) { buildingsWithCounts in
+                    // Sort buildings by session count (most active first)
+                    let sortedResults = buildingsWithCounts.sorted { building1, building2 in
+                        let count1 = building1.1
+                        let count2 = building2.1
+                        
+                        if count1 == count2 {
+                            // If same count, sort by distance from user
+                            let location1 = CLLocation(latitude: building1.0.coordinate.latitude, longitude: building1.0.coordinate.longitude)
+                            let location2 = CLLocation(latitude: building2.0.coordinate.latitude, longitude: building2.0.coordinate.longitude)
+                            
+                            return location.distance(from: location1) < location.distance(from: location2)
+                        }
+                        
+                        return count1 > count2
+                    }
                     
-                    return location.distance(from: location1) < location.distance(from: location2)
+                    // Return just the placemarks, sorted by popularity
+                    let finalPlacemarks = sortedResults.map { $0.0 }
+                    
+                    // Limit to 5 results
+                    let limitedResults = Array(finalPlacemarks.prefix(5))
+                    completion(limitedResults, nil)
                 }
-                
-                // Limit to 5 closest results
-                let limitedResults = Array(sortedResults.prefix(5))
-                completion(limitedResults, nil)
             }
         }
     }
     
-    // Correctly place this method inside the class
+    // New method to get session counts for buildings
+    private func getSessionCountsForBuildings(placemarks: [MKPlacemark], completion: @escaping ([(MKPlacemark, Int)]) -> Void) {
+        let db = Firestore.firestore()
+        let calendar = Calendar.current
+        let oneWeekAgo = calendar.date(byAdding: .weekOfYear, value: -1, to: Date())!
+        
+        // For each placemark, we'll determine how many sessions occurred there
+        var buildingsWithCounts: [(MKPlacemark, Int)] = []
+        let dispatchGroup = DispatchGroup()
+        
+        for placemark in placemarks {
+            dispatchGroup.enter()
+            
+            // Create a buildingId based on coordinates
+            let buildingId = "building-\(placemark.coordinate.latitude)-\(placemark.coordinate.longitude)"
+            
+            // Query for sessions in this building from the past week
+            db.collection("session_locations")
+                .whereField("sessionEndTime", isGreaterThan: Timestamp(date: oneWeekAgo))
+                .getDocuments { snapshot, error in
+                    defer { dispatchGroup.leave() }
+                    
+                    if let error = error {
+                        print("Error getting session counts: \(error.localizedDescription)")
+                        buildingsWithCounts.append((placemark, 0))
+                        return
+                    }
+                    
+                    // Count sessions near this building (within 100m)
+                    let buildingLocation = CLLocation(latitude: placemark.coordinate.latitude, longitude: placemark.coordinate.longitude)
+                    var sessionCount = 0
+                    
+                    for document in snapshot?.documents ?? [] {
+                        if let geoPoint = document.data()["location"] as? GeoPoint {
+                            let sessionLocation = CLLocation(latitude: geoPoint.latitude, longitude: geoPoint.longitude)
+                            if buildingLocation.distance(from: sessionLocation) <= 100 { // Within 100 meters
+                                sessionCount += 1
+                            }
+                        }
+                    }
+                    
+                    buildingsWithCounts.append((placemark, sessionCount))
+                }
+        }
+        
+        dispatchGroup.notify(queue: .main) {
+            completion(buildingsWithCounts)
+        }
+    }
+    
     func getBuildingName(from placemark: MKPlacemark) -> String {
         // Try to get the building name using various properties
         if let name = placemark.name, !name.isEmpty {

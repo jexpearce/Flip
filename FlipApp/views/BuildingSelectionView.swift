@@ -1,5 +1,7 @@
 import SwiftUI
 import MapKit
+import FirebaseFirestore
+import Foundation
 
 struct BuildingSelectionView: View {
     @Binding var isPresented: Bool
@@ -9,6 +11,8 @@ struct BuildingSelectionView: View {
     @State private var frequentLocations: [BuildingInfo] = []
     @State private var showCustomLocationCreation = false
     @State private var nearbyCustomLocations: [BuildingInfo] = []
+    @State private var sessionCounts: [String: Int] = [:]
+    @State private var isLoadingCounts = true
     
     var body: some View {
         VStack(spacing: 20) {
@@ -51,6 +55,24 @@ struct BuildingSelectionView: View {
                                 .padding(.leading, 10)
                                 
                                 Spacer()
+                                
+                                // Session count badge
+                                if let count = sessionCounts[buildingToKey(building)], count > 0 {
+                                    Text("\(count) sessions")
+                                        .font(.system(size: 12, weight: .bold))
+                                        .foregroundColor(.white)
+                                        .padding(.horizontal, 8)
+                                        .padding(.vertical, 4)
+                                        .background(
+                                            Capsule()
+                                                .fill(Color(red: 234/255, green: 179/255, blue: 8/255).opacity(0.3))
+                                                .overlay(
+                                                    Capsule()
+                                                        .stroke(Color(red: 234/255, green: 179/255, blue: 8/255).opacity(0.5), lineWidth: 1)
+                                                )
+                                        )
+                                        .padding(.trailing, 6)
+                                }
                                 
                                 Image(systemName: "chevron.right")
                                     .foregroundColor(.white.opacity(0.6))
@@ -204,6 +226,9 @@ struct BuildingSelectionView: View {
                     self.nearbyCustomLocations = locations
                 }
             }
+            
+            // Load session counts for buildings
+            loadSessionCounts()
         }
     }
     
@@ -223,5 +248,63 @@ struct BuildingSelectionView: View {
         }
         
         return address.isEmpty ? "No address available" : address
+    }
+    // Add these methods to your BuildingSelectionView
+
+    // Helper method to convert MKPlacemark to a key string for dictionary
+    private func buildingToKey(_ building: MKPlacemark) -> String {
+        return "\(building.coordinate.latitude),\(building.coordinate.longitude)"
+    }
+
+    private func loadSessionCounts() {
+        isLoadingCounts = true
+        let db = Firestore.firestore()
+        let calendar = Calendar.current
+        let oneWeekAgo = calendar.date(byAdding: .weekOfYear, value: -1, to: Date())!
+        
+        // For each building, count sessions from the past week
+        let dispatchGroup = DispatchGroup()
+        var tempCounts: [String: Int] = [:]
+        
+        for building in buildings {
+            let buildingKey = buildingToKey(building)
+            dispatchGroup.enter()
+            
+            let buildingLocation = CLLocation(latitude: building.coordinate.latitude, longitude: building.coordinate.longitude)
+            let radius = 100.0 // 100 meters around building
+            
+            // Query all sessions from the past week
+            db.collection("session_locations")
+                .whereField("sessionEndTime", isGreaterThan: Timestamp(date: oneWeekAgo))
+                .getDocuments { snapshot, error in
+                    defer { dispatchGroup.leave() }
+                    
+                    if let error = error {
+                        print("Error fetching session data: \(error.localizedDescription)")
+                        tempCounts[buildingKey] = 0
+                        return
+                    }
+                    
+                    // Count sessions within radius of this building
+                    var count = 0
+                    for document in snapshot?.documents ?? [] {
+                        if let geoPoint = document.data()["location"] as? GeoPoint {
+                            let sessionLocation = CLLocation(latitude: geoPoint.latitude, longitude: geoPoint.longitude)
+                            let distance = buildingLocation.distance(from: sessionLocation)
+                            
+                            if distance <= radius {
+                                count += 1
+                            }
+                        }
+                    }
+                    
+                    tempCounts[buildingKey] = count
+                }
+        }
+        
+        dispatchGroup.notify(queue: .main) {
+            self.sessionCounts = tempCounts
+            self.isLoadingCounts = false
+        }
     }
 }

@@ -1,13 +1,10 @@
-//
-//  RegionalLeaderboard.swift
-//  FlipApp
-//
 import Foundation
 import SwiftUI
 import FirebaseAuth
 import FirebaseFirestore
 import CoreLocation
 
+// STRUCTURE 1: RegionalLeaderboard View
 struct RegionalLeaderboard: View {
     @ObservedObject var viewModel: RegionalLeaderboardViewModel
     
@@ -33,106 +30,66 @@ struct RegionalLeaderboard: View {
     var body: some View {
         VStack(spacing: 12) {
             // Title
-            
-            // To:
             HStack {
                 Text(viewModel.isBuildingSpecific ? "BUILDING LEADERBOARD" : "REGIONAL LEADERBOARD")
-                    .font(.system(size: 14, weight: .black))
+                    .font(.system(size: 16, weight: .black))  // Increased from 14 to 18
                     .tracking(3)
                     .foregroundColor(viewModel.isBuildingSpecific ?
-                        // Yellowish color for building leaderboard
-                        Color(red: 234/255, green: 179/255, blue: 8/255) :
-                        // Keep reddish for regional
-                        Color(red: 239/255, green: 68/255, blue: 68/255))
+                                     Color(red: 234/255, green: 179/255, blue: 8/255) :
+                                        Color(red: 239/255, green: 68/255, blue: 68/255))
                     .shadow(color: viewModel.isBuildingSpecific ?
-                        Color(red: 234/255, green: 179/255, blue: 8/255).opacity(0.5) :
-                        Color(red: 239/255, green: 68/255, blue: 68/255).opacity(0.5), radius: 6)
+                            Color(red: 234/255, green: 179/255, blue: 8/255).opacity(0.5) :
+                                Color(red: 239/255, green: 68/255, blue: 68/255).opacity(0.5), radius: 6)
                 
                 Image(systemName: viewModel.isBuildingSpecific ? "building.fill" : "location.fill")
-                    .font(.system(size: 14))
+                    .font(.system(size: 16))  // Increased from 14 to 18
                     .foregroundStyle(
                         LinearGradient(
                             colors: viewModel.isBuildingSpecific ?
                             [
-                                Color(red: 234/255, green: 179/255, blue: 8/255),    // Yellow
-                                Color(red: 250/255, green: 204/255, blue: 21/255)    // Lighter yellow
+                                Color(red: 234/255, green: 179/255, blue: 8/255),
+                                Color(red: 250/255, green: 204/255, blue: 21/255)
                             ] :
-                            [
-                                Color(red: 239/255, green: 68/255, blue: 68/255),    // Red
-                                Color(red: 248/255, green: 113/255, blue: 113/255)   // Lighter red
-                            ],
+                                [
+                                    Color(red: 239/255, green: 68/255, blue: 68/255),
+                                    Color(red: 248/255, green: 113/255, blue: 113/255)
+                                ],
                             startPoint: .top,
                             endPoint: .bottom
                         )
                     )
                     .shadow(color: viewModel.isBuildingSpecific ?
-                        Color(red: 234/255, green: 179/255, blue: 8/255).opacity(0.5) :
-                        Color(red: 239/255, green: 68/255, blue: 68/255).opacity(0.5), radius: 4)
+                            Color(red: 234/255, green: 179/255, blue: 8/255).opacity(0.5) :
+                                Color(red: 239/255, green: 68/255, blue: 68/255).opacity(0.5), radius: 4)
                 
                 Spacer()
                 
                 if !viewModel.isBuildingSpecific {
                     if viewModel.radius == 5 {
                         Text("5 MILE RADIUS")
-                            .font(.system(size: 10, weight: .bold))
+                            .font(.system(size: 12, weight: .bold))  // Increased from 10 to 12
                             .tracking(1)
                             .foregroundColor(.white.opacity(0.7))
                     } else {
                         Text("\(viewModel.radius) MILE RADIUS")
-                            .font(.system(size: 10, weight: .bold))
+                            .font(.system(size: 12, weight: .bold))  // Increased from 10 to 12
                             .tracking(1)
                             .foregroundColor(.white.opacity(0.7))
                     }
                 }
             }
-            .background(
-                ZStack {
-                    RoundedRectangle(cornerRadius: 15)
-                        .fill(
-                            LinearGradient(
-                                colors: viewModel.isBuildingSpecific ?
-                                [
-                                    Color(red: 146/255, green: 123/255, blue: 21/255).opacity(0.4),  // Darker yellow
-                                    Color(red: 133/255, green: 109/255, blue: 7/255).opacity(0.3)    // Even darker yellow
-                                ] :
-                                [
-                                    Color(red: 153/255, green: 27/255, blue: 27/255).opacity(0.4),   // Dark red
-                                    Color(red: 127/255, green: 29/255, blue: 29/255).opacity(0.3)    // Darker red
-                                ],
-                                startPoint: .topLeading,
-                                endPoint: .bottomTrailing
-                            )
-                        )
-                    
-                    RoundedRectangle(cornerRadius: 15)
-                        .fill(Color.white.opacity(0.05))
-                    
-                    RoundedRectangle(cornerRadius: 15)
-                        .stroke(
-                            LinearGradient(
-                                colors: [
-                                    Color.white.opacity(0.5),
-                                    Color.white.opacity(0.1)
-                                ],
-                                startPoint: .topLeading,
-                                endPoint: .bottomTrailing
-                            ),
-                            lineWidth: 1
-                        )
-                }
-            )
             
             // Location display
             if let locationName = viewModel.locationName {
                 HStack {
                     Text(locationName)
-                        .font(.system(size: 12, weight: .medium))
-                        .foregroundColor(.white.opacity(0.8))
+                        .font(.system(size: 16, weight: .medium))  // Increased from 12 to 16
+                        .foregroundColor(.white.opacity(0.9))  // Increased opacity from 0.8 to 0.9
                     
                     Spacer()
                 }
-                .padding(.top, -5)
-                .padding(.bottom, 5)
+                .padding(.top, 0)  // Changed from -5 to 0
+                .padding(.bottom, 10)  // Increased from 5 to 10
             }
             
             if viewModel.isLoading {
@@ -145,32 +102,46 @@ struct RegionalLeaderboard: View {
                     Spacer()
                 }
             } else if viewModel.leaderboardEntries.isEmpty {
-                Text("No active users in your area this week")
-                    .font(.system(size: 14))
+                VStack(spacing: 12) {
+                    Image(systemName: viewModel.isBuildingSpecific ? "building.2.crop.circle" : "mappin.circle")
+                        .font(.system(size: 40))
+                        .foregroundColor(.white.opacity(0.5))
+                        .padding(.bottom, 5)
+                    
+                    Text(viewModel.isBuildingSpecific ?
+                         "No sessions in this building yet" :
+                            "No active users in your area this week")
+                    .font(.system(size: 16, weight: .medium))  // Increased from 14 to 16
                     .foregroundColor(.white.opacity(0.7))
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 15)
+                    .multilineTextAlignment(.center)
+                    
+                    Text("Complete a session to be the first!")
+                        .font(.system(size: 14))
+                        .foregroundColor(.white.opacity(0.5))
+                }
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 30)  // Increased from 15 to 30
             } else {
                 // Leaderboard entries
                 VStack(spacing: 8) {
                     ForEach(Array(viewModel.leaderboardEntries.prefix(10).enumerated()), id: \.element.id) { index, entry in
-                        HStack {
+                        HStack(spacing: 12) {  // Increased spacing from 8 to 12
                             // Rank with medal indicator
-                            HStack(spacing: 8) {
+                            HStack(spacing: 10) {  // Increased spacing
                                 Text("\(index + 1)")
-                                    .font(.system(size: 16, weight: .black))
+                                    .font(.system(size: 18, weight: .black))  // Increased from 16 to 18
                                     .foregroundColor(.white)
-                                    .frame(width: 24)
+                                    .frame(width: 28)  // Increased width from 24 to 28
                                 
                                 // Medal for top 3
                                 if index < 3 {
                                     ZStack {
                                         Circle()
                                             .fill(index == 0 ? goldColor : (index == 1 ? silverColor : bronzeColor))
-                                            .frame(width: 22, height: 22)
+                                            .frame(width: 26, height: 26)  // Increased from 22 to 26
                                         
                                         Image(systemName: "medal.fill")
-                                            .font(.system(size: 12))
+                                            .font(.system(size: 14))  // Increased from 12 to 14
                                             .foregroundColor(.white)
                                             .shadow(color: Color.black.opacity(0.2), radius: 1)
                                     }
@@ -179,7 +150,7 @@ struct RegionalLeaderboard: View {
                             
                             // Username
                             Text(entry.username)
-                                .font(.system(size: 16, weight: .bold))
+                                .font(.system(size: 18, weight: .bold))  // Increased from 16 to 18
                                 .foregroundColor(.white)
                                 .lineLimit(1)
                                 .frame(maxWidth: .infinity, alignment: .leading)
@@ -187,103 +158,115 @@ struct RegionalLeaderboard: View {
                             // Only show distance for friends
                             if entry.distance > 0 && entry.isFriend {
                                 Text("\(entry.formattedDistance)")
-                                    .font(.system(size: 12))
+                                    .font(.system(size: 14))  // Increased from 12 to 14
                                     .foregroundColor(.white.opacity(0.7))
                             }
                             
                             // Friend icon if a friend
                             if entry.isFriend {
                                 Image(systemName: "person.fill")
-                                    .font(.system(size: 12))
+                                    .font(.system(size: 14))  // Increased from 12 to 14
                                     .foregroundColor(Color(red: 56/255, green: 189/255, blue: 248/255))
                             }
                             
                             // Duration
                             Text("\(entry.duration) min")
-                                .font(.system(size: 16, weight: .black))
-                                .foregroundColor(Color(red: 239/255, green: 68/255, blue: 68/255)) // Reddish tint
-                                .shadow(color: Color(red: 239/255, green: 68/255, blue: 68/255).opacity(0.3), radius: 4)
+                                .font(.system(size: 18, weight: .black))  // Increased from 16 to 18
+                                .foregroundColor(viewModel.isBuildingSpecific ?
+                                                 Color(red: 234/255, green: 179/255, blue: 8/255) :
+                                                    Color(red: 239/255, green: 68/255, blue: 68/255))
+                                .shadow(color: viewModel.isBuildingSpecific ?
+                                        Color(red: 234/255, green: 179/255, blue: 8/255).opacity(0.3) :
+                                            Color(red: 239/255, green: 68/255, blue: 68/255).opacity(0.3), radius: 4)
                         }
-                        .padding(.vertical, 8)
-                        .padding(.horizontal, 12)
+                        .padding(.vertical, 12)  // Increased from 8 to 12
+                        .padding(.horizontal, 16)  // Increased from 12 to 16
                         .background(
-                            RoundedRectangle(cornerRadius: 10)
-                                .fill(Color.white.opacity(0.05))
+                            RoundedRectangle(cornerRadius: 12)  // Increased from 10 to 12
+                                .fill(Color.white.opacity(0.08))  // Increased opacity from 0.05 to 0.08
                         )
+                        .padding(.vertical, 2)  // Add some spacing between entries
+                    }
+                    
+                    // Radius control
+                    if !viewModel.isBuildingSpecific {
+                        HStack {
+                            Spacer()
+                            
+                            Button(action: {
+                                viewModel.decreaseRadius()
+                            }) {
+                                Image(systemName: "minus.circle.fill")
+                                    .font(.system(size: 24))
+                                    .foregroundColor(.white.opacity(0.8))
+                            }
+                            .disabled(viewModel.radius <= 1)
+                            .opacity(viewModel.radius <= 1 ? 0.5 : 1.0)
+                            
+                            Text("\(viewModel.radius) mi")
+                                .font(.system(size: 14, weight: .bold))
+                                .foregroundColor(.white)
+                                .frame(width: 40)
+                            
+                            Button(action: {
+                                viewModel.increaseRadius()
+                            }) {
+                                Image(systemName: "plus.circle.fill")
+                                    .font(.system(size: 24))
+                                    .foregroundColor(.white.opacity(0.8))
+                            }
+                            .disabled(viewModel.radius >= 20)
+                            .opacity(viewModel.radius >= 20 ? 0.5 : 1.0)
+                            
+                            Spacer()
+                        }
+                        .padding(.top, 8)
                     }
                 }
-                
-                // Radius control
-                HStack {
-                    Spacer()
-                    
-                    Button(action: {
-                        viewModel.decreaseRadius()
-                    }) {
-                        Image(systemName: "minus.circle.fill")
-                            .font(.system(size: 24))
-                            .foregroundColor(.white.opacity(0.8))
-                    }
-                    .disabled(viewModel.radius <= 1)
-                    .opacity(viewModel.radius <= 1 ? 0.5 : 1.0)
-                    
-                    Text("\(viewModel.radius) mi")
-                        .font(.system(size: 14, weight: .bold))
-                        .foregroundColor(.white)
-                        .frame(width: 40)
-                    
-                    Button(action: {
-                        viewModel.increaseRadius()
-                    }) {
-                        Image(systemName: "plus.circle.fill")
-                            .font(.system(size: 24))
-                            .foregroundColor(.white.opacity(0.8))
-                    }
-                    .disabled(viewModel.radius >= 20)
-                    .opacity(viewModel.radius >= 20 ? 0.5 : 1.0)
-                    
-                    Spacer()
-                }
-                .padding(.top, 8)
             }
         }
-        .padding()
+        .padding(.horizontal, 18)  // Increased main container padding
         .background(
             ZStack {
-                RoundedRectangle(cornerRadius: 15)
+                RoundedRectangle(cornerRadius: 18)  // Increased from 15 to 18
                     .fill(
                         LinearGradient(
-                            colors: [
-                                Color(red: 153/255, green: 27/255, blue: 27/255).opacity(0.4),
-                                Color(red: 127/255, green: 29/255, blue: 29/255).opacity(0.3)
-                            ],
+                            colors: viewModel.isBuildingSpecific ?
+                            [
+                                Color(red: 146/255, green: 123/255, blue: 21/255).opacity(0.4),
+                                Color(red: 133/255, green: 109/255, blue: 7/255).opacity(0.3)
+                            ] :
+                                [
+                                    Color(red: 153/255, green: 27/255, blue: 27/255).opacity(0.4),
+                                    Color(red: 127/255, green: 29/255, blue: 29/255).opacity(0.3)
+                                ],
                             startPoint: .topLeading,
                             endPoint: .bottomTrailing
                         )
                     )
                 
-                RoundedRectangle(cornerRadius: 15)
-                    .fill(Color.white.opacity(0.05))
+                RoundedRectangle(cornerRadius: 18)  // Increased from 15 to 18
+                    .fill(Color.white.opacity(0.07))  // Increased from 0.05 to 0.07
                 
-                RoundedRectangle(cornerRadius: 15)
+                RoundedRectangle(cornerRadius: 18)  // Increased from 15 to 18
                     .stroke(
                         LinearGradient(
                             colors: [
-                                Color.white.opacity(0.5),
+                                Color.white.opacity(0.6),  // Increased from 0.5 to 0.6
                                 Color.white.opacity(0.1)
                             ],
                             startPoint: .topLeading,
                             endPoint: .bottomTrailing
                         ),
-                        lineWidth: 1
+                        lineWidth: 1.5  // Increased from 1 to 1.5
                     )
             }
         )
-        .shadow(color: Color.black.opacity(0.2), radius: 4, x: 0, y: 2)
+        .shadow(color: Color.black.opacity(0.25), radius: 8, x: 0, y: 3)
     }
 }
 
-// ViewModel for Regional Leaderboard
+// STRUCTURE 2: RegionalLeaderboardViewModel class - moved outside struct
 class RegionalLeaderboardViewModel: ObservableObject {
     @Published var leaderboardEntries: [RegionalLeaderboardEntry] = []
     @Published var isLoading = false
@@ -453,7 +436,8 @@ class RegionalLeaderboardViewModel: ObservableObject {
         }
     }
 }
-// Extension to RegionalLeaderboardViewModel
+    
+// STRUCTURE 3: Extension for RegionalLeaderboardViewModel - moved outside class
 extension RegionalLeaderboardViewModel {
     
     func loadBuildingLeaderboard(building: BuildingInfo) {
@@ -575,8 +559,8 @@ extension RegionalLeaderboardViewModel {
         }
     }
 }
-
-// Data model for regional leaderboard entries
+    
+// STRUCTURE 4: RegionalLeaderboardEntry struct - moved outside
 struct RegionalLeaderboardEntry: Identifiable {
     let id: String
     let userId: String
@@ -600,7 +584,7 @@ struct RegionalLeaderboardEntry: Identifiable {
     }
 }
 
-// Helper model for session with location data
+// STRUCTURE 5: SessionWithLocation struct - moved outside
 struct SessionWithLocation {
     let id: String
     let userId: String

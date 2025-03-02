@@ -241,7 +241,9 @@ struct MapView: View {
                     Spacer()
                     
                     FriendPreviewCard(friend: friend, onDismiss: {
-                        selectedFriend = nil
+                        DispatchQueue.main.async {
+                                        selectedFriend = nil
+                                    }
                     }, onViewProfile: {
                         // Extract clean userId (remove historical session suffix if present)
                         let userId = String(friend.id.split(separator: "_").first ?? "")
@@ -250,7 +252,9 @@ struct MapView: View {
                         viewModel.loadUserForProfile(userId: userId) { user in
                             if let user = user {
                                 // Navigate to friend profile
-                                viewRouter.showFriendProfile(friend: user)
+                                DispatchQueue.main.async {
+                                    viewRouter.showFriendProfile(friend: user)
+                                }
                                 selectedFriend = nil
                             }
                         }
@@ -273,6 +277,9 @@ struct MapView: View {
         }
         .onAppear {
             viewModel.startLocationTracking()
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                    viewModel.refreshLocations()
+                }
         }
         .onDisappear {
             viewModel.stopLocationTracking()
@@ -288,6 +295,27 @@ struct FriendMapMarker: View {
     let friend: FriendLocation
     @State private var animate = false
     @State private var profileImage: Image?
+    
+    private var statusColor: Color {
+        if friend.isHistorical {
+            // Historical sessions - use gray shades
+            return friend.lastFlipWasSuccessful ?
+                Color.gray.opacity(0.8) :
+                Color(red: 180/255, green: 180/255, blue: 180/255).opacity(0.6) // Slightly lighter gray for failed
+        } else if friend.isCurrentlyFlipped {
+            // Active session - green
+            return Color.green
+        } else {
+            // Completed or failed session
+            if friend.lastFlipWasSuccessful {
+                // Success - green
+                return Color(red: 34/255, green: 197/255, blue: 94/255)
+            } else {
+                // Failed - red (ensure this condition is properly evaluated)
+                return Color(red: 239/255, green: 68/255, blue: 68/255)
+            }
+        }
+    }
     
     var body: some View {
         ZStack {
@@ -380,18 +408,6 @@ struct FriendMapMarker: View {
             
             // Try to load the user's profile image
             loadProfileImage()
-        }
-    }
-    
-    private var statusColor: Color {
-        if friend.isHistorical {
-            return friend.lastFlipWasSuccessful ? Color.gray.opacity(0.8) : Color.gray.opacity(0.6)
-        } else if friend.isCurrentlyFlipped {
-            return Color.green // Bright green for live sessions
-        } else if friend.lastFlipWasSuccessful {
-            return Color(red: 34/255, green: 197/255, blue: 94/255) // Green for success
-        } else {
-            return Color.red // Bright red for failures
         }
     }
     
@@ -613,15 +629,22 @@ struct FriendPreviewCard: View {
     
     private var statusColor: Color {
         if friend.isHistorical {
+            // Historical sessions - use gray shades
             return friend.lastFlipWasSuccessful ?
-                Color(red: 116/255, green: 116/255, blue: 116/255) : // Gray-green for historical success
-                Color(red: 116/255, green: 116/255, blue: 116/255)   // Gray-red for historical failure
+                Color.gray.opacity(0.8) :
+                Color(red: 180/255, green: 180/255, blue: 180/255).opacity(0.6) // Slightly lighter gray for failed
         } else if friend.isCurrentlyFlipped {
-            return Color(red: 56/255, green: 189/255, blue: 248/255) // Blue for active
-        } else if friend.lastFlipWasSuccessful {
-            return Color(red: 34/255, green: 197/255, blue: 94/255) // Green for success
+            // Active session - green
+            return Color.green
         } else {
-            return Color(red: 239/255, green: 68/255, blue: 68/255) // Red for failure
+            // Completed or failed session
+            if friend.lastFlipWasSuccessful {
+                // Success - green
+                return Color(red: 34/255, green: 197/255, blue: 94/255)
+            } else {
+                // Failed - red (ensure this condition is properly evaluated)
+                return Color(red: 239/255, green: 68/255, blue: 68/255)
+            }
         }
     }
     
