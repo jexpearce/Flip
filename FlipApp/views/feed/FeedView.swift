@@ -501,6 +501,28 @@ struct NavigationFeedSessionCard: View {
         }
     }
 }
+struct SessionComment: Codable, Identifiable {
+    var id: String // Document ID
+    let sessionId: String
+    let userId: String
+    let username: String
+    let comment: String
+    let timestamp: Date
+    
+    // Computed property for timestamp formatting
+    var formattedTime: String {
+        let formatter = DateFormatter()
+        if Calendar.current.isDateInToday(timestamp) {
+            formatter.dateFormat = "h:mm a"
+            return "Today at \(formatter.string(from: timestamp))"
+        } else if Calendar.current.isDateInYesterday(timestamp) {
+            return "Yesterday"
+        } else {
+            formatter.dateFormat = "MMM d"
+            return formatter.string(from: timestamp)
+        }
+    }
+}
 
 class FeedViewModel: ObservableObject {
     @Published var feedSessions: [Session] = []
@@ -508,6 +530,8 @@ class FeedViewModel: ObservableObject {
     @Published var isLoading = false
     @Published var showError = false
     @Published var errorMessage = ""
+    @Published var sessionComments: [String: [SessionComment]] = [:] // Map session ID to comments array
+    private var commentsListeners: [String: ListenerRegistration] = [:]
     @Published var sessionLikes: [String: Int] = [:] // Map session ID to like count
     @Published var likedByUser: [String: Bool] = [:] // Map session ID to whether current user liked it
     @Published var likesUsers: [String: [String]] = [:] // Map session ID to array of user IDs who liked it
@@ -518,6 +542,8 @@ class FeedViewModel: ObservableObject {
     func loadFeed() {
         guard let userId = Auth.auth().currentUser?.uid else { return }
         isLoading = true
+        cleanupLikesListeners()
+        cleanupCommentsListeners()
 
         firebaseManager.db.collection("users").document(userId)
             .getDocument { [weak self] document, error in
@@ -595,7 +621,7 @@ class FeedViewModel: ObservableObject {
             sentRequests: []
         )
     }
-
+    
     private func loadFriendSessions(userIds: [String]) {
         // Remove any existing listeners
         cleanupLikesListeners()
@@ -686,6 +712,96 @@ class FeedViewModel: ObservableObject {
         // Store the listener for cleanup
         likesListeners[sessionId] = listener
     }
+    func loadCommentsForSession(_ sessionId: String) {
+        // Remove any existing listener
+        commentsListeners[sessionId]?.remove()
+        
+        // Create a new listener for comments
+        let listener = firebaseManager.db.collection("sessions")
+            .document(sessionId)
+            .collection("comments")
+            .order(by: "timestamp", descending: false)
+            .addSnapshotListener { [weak self] snapshot, error in
+                guard let self = self, let documents = snapshot?.documents else {
+                    return
+                }
+                
+                DispatchQueue.main.async {
+                    // Parse comments
+                    self.sessionComments[sessionId] = documents.compactMap { document in
+                        guard let userId = document.data()["userId"] as? String,
+                              let username = document.data()["username"] as? String,
+                              let comment = document.data()["comment"] as? String,
+                              let timestamp = document.data()["timestamp"] as? Timestamp else {
+                            return nil
+                        }
+                        
+                        return SessionComment(
+                            id: document.documentID,
+                            sessionId: sessionId,
+                            userId: userId,
+                            username: username,
+                            comment: comment,
+                            timestamp: timestamp.dateValue()
+                        )
+                    }
+                    
+                    // Trigger UI update
+                    self.objectWillChange.send()
+                }
+            }
+        
+        // Store the listener for cleanup
+        commentsListeners[sessionId] = listener
+    }
+
+    // Add this method to add a new comment (instead of updating)
+    func addComment(sessionId: String, comment: String, userId: String, username: String) {
+        guard !comment.isEmpty else { return }
+        
+        // Create comment data
+        let commentData: [String: Any] = [
+            "userId": userId,
+            "username": username,
+            "comment": comment,
+            "timestamp": Timestamp(date: Date())
+        ]
+        
+        // Add to the comments subcollection
+        firebaseManager.db.collection("sessions")
+            .document(sessionId)
+            .collection("comments")
+            .addDocument(data: commentData) { [weak self] error in
+                if let error = error {
+                    DispatchQueue.main.async {
+                        self?.showError = true
+                        self?.errorMessage = "Failed to save comment: \(error.localizedDescription)"
+                    }
+                }
+            }
+    }
+    func deleteComment(sessionId: String, commentId: String) {
+        firebaseManager.db.collection("sessions")
+            .document(sessionId)
+            .collection("comments")
+            .document(commentId)
+            .delete { [weak self] error in
+                if let error = error {
+                    DispatchQueue.main.async {
+                        self?.showError = true
+                        self?.errorMessage = "Failed to delete comment: \(error.localizedDescription)"
+                    }
+                }
+            }
+    }
+
+    // Add this method to cleanup listeners
+    func cleanupCommentsListeners() {
+        for (_, listener) in commentsListeners {
+            listener.remove()
+        }
+        commentsListeners.removeAll()
+    }
     
     private func cleanupLikesListeners() {
         for (_, listener) in likesListeners {
@@ -694,6 +810,7 @@ class FeedViewModel: ObservableObject {
         likesListeners.removeAll()
     }
 
+    // Original comment method - kept for backward compatibility
     func saveComment(sessionId: String, comment: String) {
         guard !comment.isEmpty, let currentUserId = Auth.auth().currentUser?.uid else { return }
         
@@ -709,6 +826,32 @@ class FeedViewModel: ObservableObject {
                 }
             }
     }
+    
+    // New method to save comment with commentor information
+    func saveCommentWithUser(sessionId: String, comment: String, userId: String, username: String) {
+        guard !comment.isEmpty else { return }
+        
+        // Store more information about the comment
+        let commentData: [String: Any] = [
+            "comment": comment,
+            "commentorId": userId,
+            "commentorName": username,
+            "commentTime": Timestamp(date: Date())
+        ]
+        
+        // Update the Firestore document
+        firebaseManager.db.collection("sessions")
+            .document(sessionId)
+            .updateData(commentData) { [weak self] error in
+                if let error = error {
+                    DispatchQueue.main.async {
+                        self?.showError = true
+                        self?.errorMessage = "Failed to save comment: \(error.localizedDescription)"
+                    }
+                }
+            }
+    }
+    
     
     // Like/unlike a session
     func likeSession(sessionId: String) {
@@ -757,6 +900,7 @@ class FeedViewModel: ObservableObject {
     func getLikesForSession(sessionId: String) -> Int {
         return sessionLikes[sessionId] ?? 0
     }
+    
     
     // Check if current user liked a session
     func isLikedByUser(sessionId: String) -> Bool {
@@ -814,5 +958,6 @@ class FeedViewModel: ObservableObject {
     
     deinit {
         cleanupLikesListeners()
+        cleanupCommentsListeners()
     }
 }

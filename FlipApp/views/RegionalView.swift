@@ -2,9 +2,10 @@ import SwiftUI
 import FirebaseAuth
 import FirebaseFirestore
 import CoreLocation
+import MapKit
 
 struct RegionalView: View {
-    @StateObject private var viewModel = RegionalViewModel()
+    @StateObject private var viewModel = RegionalViewModel.shared
     @EnvironmentObject var viewRouter: ViewRouter
     @State private var showMap = false
     @StateObject private var locationPermissionManager = LocationPermissionManager.shared
@@ -30,6 +31,41 @@ struct RegionalView: View {
                     }
                     .padding(.top, 50)
                     .padding(.bottom, 10)
+                    
+                    // Building selection button - NEW
+                    Button(action: {
+                        viewModel.startBuildingIdentification()
+                    }) {
+                        HStack {
+                            VStack(alignment: .leading, spacing: 4) {
+                                Text("CURRENT BUILDING")
+                                    .font(.system(size: 12, weight: .bold))
+                                    .tracking(2)
+                                    .foregroundColor(.white.opacity(0.7))
+                                
+                                Text(viewModel.selectedBuilding?.name ?? "Tap to select building")
+                                    .font(.system(size: 16, weight: .bold))
+                                    .foregroundColor(.white)
+                            }
+                            
+                            Spacer()
+                            
+                            Image(systemName: "arrow.triangle.2.circlepath")
+                                .font(.system(size: 16))
+                                .foregroundColor(.white.opacity(0.7))
+                        }
+                        .padding()
+                        .background(
+                            ZStack {
+                                RoundedRectangle(cornerRadius: 12)
+                                    .fill(Color.white.opacity(0.08))
+                                
+                                RoundedRectangle(cornerRadius: 12)
+                                    .stroke(Color.white.opacity(0.2), lineWidth: 1)
+                            }
+                        )
+                        .padding(.horizontal)
+                    }
                     
                     // Regional Leaderboard with reddish tint
                     RegionalLeaderboard(viewModel: viewModel.leaderboardViewModel)
@@ -115,6 +151,15 @@ struct RegionalView: View {
                     .padding(.bottom, 30)
                 }
             }
+            .sheet(isPresented: $viewModel.showBuildingSelection) {
+                BuildingSelectionView(
+                    isPresented: $viewModel.showBuildingSelection,
+                    buildings: viewModel.suggestedBuildings,
+                    onBuildingSelected: { building in
+                        viewModel.selectBuilding(building)
+                    }
+                )
+            }
         }
         .fullScreenCover(isPresented: $showMap) {
             MapView()
@@ -122,7 +167,7 @@ struct RegionalView: View {
         }
         .onAppear {
             checkLocationPermission()
-            viewModel.loadNearbyUsers()
+            viewModel.loadCurrentBuilding()
         }
     }
     
@@ -133,23 +178,28 @@ struct RegionalView: View {
         }
     }
 }
-
-// ViewModel for the Regional view
-class RegionalViewModel: ObservableObject {
+class RegionalViewModel: NSObject, ObservableObject, CLLocationManagerDelegate {
+    static let shared = RegionalViewModel()
+    
     @Published var leaderboardViewModel = RegionalLeaderboardViewModel()
     @Published var currentLocation: CLLocation?
+    @Published var selectedBuilding: BuildingInfo?
+    @Published var suggestedBuildings: [MKPlacemark] = []
+    @Published var showBuildingSelection = false
+    
     private let locationManager = CLLocationManager()
     
-    init() {
+    override init() {
+        super.init()
         setupLocationManager()
     }
     
     private func setupLocationManager() {
+        locationManager.delegate = self // Critical: Set the delegate
         locationManager.desiredAccuracy = kCLLocationAccuracyHundredMeters
         locationManager.requestWhenInUseAuthorization()
-        locationManager.startUpdatingLocation()
         
-        // Listen for location updates
+        // Listen for location updates from LocationHandler
         NotificationCenter.default.addObserver(
             forName: NSNotification.Name("locationUpdated"),
             object: nil,
@@ -162,14 +212,129 @@ class RegionalViewModel: ObservableObject {
         }
     }
     
+    // MARK: - CLLocationManagerDelegate Methods
+    
+    func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
+        guard let location = locations.last else { return }
+        self.currentLocation = location
+        print("Location update received in RegionalViewModel: \(location.coordinate)")
+    }
+    
+    func locationManager(_ manager: CLLocationManager, didFailWithError error: Error) {
+        print("Location manager failed with error: \(error.localizedDescription)")
+    }
+    
     @MainActor
-        func loadNearbyUsers() {
-            // This will trigger loading of the regional leaderboard
-            let location = LocationHandler.shared.lastLocation
-            if location.horizontalAccuracy > 0 {
-                leaderboardViewModel.loadRegionalLeaderboard(near: location)
-            } else if let managerLocation = currentLocation {
-                leaderboardViewModel.loadRegionalLeaderboard(near: managerLocation)
+    func loadNearbyUsers() {
+        // If we have a selected building, load building leaderboard
+        if let building = selectedBuilding {
+            leaderboardViewModel.loadBuildingLeaderboard(building: building)
+            return
+        }
+        
+        // Otherwise load regional leaderboard based on location
+        let location = LocationHandler.shared.lastLocation
+        if location.horizontalAccuracy > 0 {
+            leaderboardViewModel.loadRegionalLeaderboard(near: location)
+        } else if let managerLocation = currentLocation {
+            leaderboardViewModel.loadRegionalLeaderboard(near: managerLocation)
+        }
+    }
+    
+    @MainActor
+    func startBuildingIdentification() {
+        // Request high-accuracy location for building identification
+        locationManager.desiredAccuracy = kCLLocationAccuracyBest
+        locationManager.requestLocation()
+        
+        var location: CLLocation
+        
+        // Get the most accurate location available
+        let lastLocation = LocationHandler.shared.lastLocation
+        
+        if lastLocation.horizontalAccuracy > 0 && lastLocation.horizontalAccuracy < 50 {
+            location = lastLocation
+        } else if let managerLocation = currentLocation,
+                  managerLocation.horizontalAccuracy > 0 && managerLocation.horizontalAccuracy < 50 {
+            location = managerLocation
+        } else {
+            // If we don't have an accurate location, use the last known location
+            location = lastLocation
+        }
+        
+        BuildingIdentificationService.shared.identifyNearbyBuildings(at: location) { buildings, error in
+            if let error = error {
+                print("Error identifying buildings: \(error.localizedDescription)")
+                return
+            }
+            
+            guard let buildings = buildings, !buildings.isEmpty else {
+                print("No buildings found nearby")
+                return
+            }
+            
+            DispatchQueue.main.async {
+                self.suggestedBuildings = buildings
+                self.showBuildingSelection = true
             }
         }
+    }
+    
+    func selectBuilding(_ building: BuildingInfo) {
+        self.selectedBuilding = building
+        
+        // Save the selected building to Firestore
+        if let userId = Auth.auth().currentUser?.uid {
+            let buildingData: [String: Any] = [
+                "id": building.id,
+                "name": building.name,
+                "latitude": building.coordinate.latitude,
+                "longitude": building.coordinate.longitude,
+                "lastUpdated": FieldValue.serverTimestamp()
+            ]
+            
+            FirebaseManager.shared.db.collection("users").document(userId)
+                .collection("settings").document("currentBuilding")
+                .setData(buildingData) { error in
+                    if let error = error {
+                        print("Error saving building info: \(error.localizedDescription)")
+                    } else {
+                        print("Building info saved successfully")
+                        
+                        // Load the building-specific leaderboard
+                        DispatchQueue.main.async {
+                            self.leaderboardViewModel.loadBuildingLeaderboard(building: building)
+                        }
+                    }
+                }
+        }
+    }
+    
+    func loadCurrentBuilding() {
+        guard let userId = Auth.auth().currentUser?.uid else { return }
+        
+        FirebaseManager.shared.db.collection("users").document(userId)
+            .collection("settings").document("currentBuilding")
+            .getDocument { [weak self] document, error in
+                if let data = document?.data(),
+                   let id = data["id"] as? String,
+                   let name = data["name"] as? String,
+                   let latitude = data["latitude"] as? Double,
+                   let longitude = data["longitude"] as? Double {
+                    
+                    let coordinate = CLLocationCoordinate2D(latitude: latitude, longitude: longitude)
+                    let building = BuildingInfo(id: id, name: name, coordinate: coordinate)
+                    
+                    DispatchQueue.main.async {
+                        self?.selectedBuilding = building
+                        self?.leaderboardViewModel.loadBuildingLeaderboard(building: building)
+                    }
+                } else {
+                    // No building set yet, load users based on GPS location
+                    DispatchQueue.main.async {
+                        self?.loadNearbyUsers()
+                    }
+                }
+            }
+    }
 }

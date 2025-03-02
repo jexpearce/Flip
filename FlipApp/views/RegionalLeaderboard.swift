@@ -398,6 +398,127 @@ class RegionalLeaderboardViewModel: ObservableObject {
         }
     }
 }
+// Extension to RegionalLeaderboardViewModel
+extension RegionalLeaderboardViewModel {
+    
+    func loadBuildingLeaderboard(building: BuildingInfo) {
+        guard let currentUserId = Auth.auth().currentUser?.uid else { return }
+        isLoading = true
+        
+        // First get the user's friends list to mark friends in leaderboard
+        firebaseManager.db.collection("users").document(currentUserId)
+            .getDocument { [weak self] document, error in
+                guard let self = self,
+                      let userData = try? document?.data(as: FirebaseManager.FlipUser.self)
+                else {
+                    self?.isLoading = false
+                    return
+                }
+                
+                let friendIds = userData.friends
+                
+                // Set the building name for display
+                self.locationName = building.name
+                
+                // Fetch all sessions in this building
+                self.fetchBuildingTopSessions(building: building, friendIds: friendIds)
+            }
+    }
+    
+    private func fetchBuildingTopSessions(building: BuildingInfo, friendIds: [String]) {
+        guard let currentUserId = Auth.auth().currentUser?.uid else { return }
+        
+        let db = Firestore.firestore()
+        let calendar = Calendar.current
+        let currentDate = Date()
+        let weekStart = calendar.date(from: calendar.dateComponents([.yearForWeekOfYear, .weekOfYear], from: currentDate))!
+        
+        // Query sessions with building ID
+        let query = db.collection("session_locations")
+            .whereField("buildingId", isEqualTo: building.id)
+            .whereField("lastFlipWasSuccessful", isEqualTo: true)
+            .order(by: "actualDuration", descending: true)
+            .limit(to: 50)
+        
+        query.getDocuments { [weak self] snapshot, error in
+            guard let self = self,
+                  let snapshot = snapshot else {
+                self?.isLoading = false
+                return
+            }
+            
+            var matchingSessions: [SessionWithLocation] = []
+            
+            for document in snapshot.documents {
+                let data = document.data()
+                
+                // Extract session info
+                guard let userId = data["userId"] as? String,
+                      let username = data["username"] as? String,
+                      let geoPoint = data["location"] as? GeoPoint,
+                      let actualDuration = data["actualDuration"] as? Int,
+                      let wasSuccessful = data["lastFlipWasSuccessful"] as? Bool,
+                      let sessionStartTime = (data["sessionStartTime"] as? Timestamp)?.dateValue() else {
+                    continue
+                }
+                
+                // Check if session is from this week and successful
+                if calendar.isDate(sessionStartTime, inSameWeekAs: weekStart) && wasSuccessful {
+                    // Calculate distance from building center
+                    let sessionLocation = CLLocation(latitude: geoPoint.latitude, longitude: geoPoint.longitude)
+                    let buildingLocation = CLLocation(latitude: building.coordinate.latitude, longitude: building.coordinate.longitude)
+                    let distance = sessionLocation.distance(from: buildingLocation)
+                    
+                    // Only show distance for friends and current user
+                    let showDistance = userId == currentUserId || friendIds.contains(userId)
+                    
+                    let session = SessionWithLocation(
+                        id: document.documentID,
+                        userId: userId,
+                        username: username,
+                        duration: actualDuration,
+                        location: sessionLocation,
+                        distance: showDistance ? distance : 0,
+                        isFriend: friendIds.contains(userId),
+                        isCurrentUser: userId == currentUserId
+                    )
+                    
+                    matchingSessions.append(session)
+                }
+            }
+            
+            // Group by user, find max duration for each
+            var userBestSessions: [String: SessionWithLocation] = [:]
+            
+            for session in matchingSessions {
+                if let existingBest = userBestSessions[session.userId],
+                   existingBest.duration >= session.duration {
+                    continue
+                }
+                
+                userBestSessions[session.userId] = session
+            }
+            
+            // Convert to leaderboard entries and sort
+            let entries = userBestSessions.values.map { session in
+                RegionalLeaderboardEntry(
+                    id: session.id,
+                    userId: session.userId,
+                    username: session.username,
+                    duration: session.duration,
+                    distance: session.isCurrentUser ? 0 : session.distance,
+                    isFriend: session.isFriend,
+                    isCurrentUser: session.isCurrentUser
+                )
+            }.sorted { $0.duration > $1.duration }
+            
+            DispatchQueue.main.async {
+                self.leaderboardEntries = entries
+                self.isLoading = false
+            }
+        }
+    }
+}
 
 // Data model for regional leaderboard entries
 struct RegionalLeaderboardEntry: Identifiable {

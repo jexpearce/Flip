@@ -1,4 +1,5 @@
 import SwiftUI
+import FirebaseAuth
 
 struct FeedSessionCard: View {
     let session: Session
@@ -75,7 +76,8 @@ struct FeedSessionCard: View {
     }
     
     private var hasComment: Bool {
-        return session.comment != nil && !session.comment!.isEmpty
+        return (session.comment != nil && !session.comment!.isEmpty) ||
+               (viewModel.sessionComments[session.id.uuidString]?.count ?? 0) > 0
     }
     
     private var hasGroupParticipants: Bool {
@@ -85,6 +87,11 @@ struct FeedSessionCard: View {
     private var userProfileImageURL: String? {
         return viewModel.users[session.userId]?.profileImageURL
     }
+    
+    private var currentUserName: String {
+        guard let userId = Auth.auth().currentUser?.uid else { return "You" }
+        return viewModel.users[userId]?.username ?? "You"
+    }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
@@ -92,17 +99,23 @@ struct FeedSessionCard: View {
             HStack(spacing: 12) {
                 // Left side: User info - only show if requested
                 if showUserHeader {
-                    ProfileAvatarView(
-                        imageURL: userProfileImageURL,
-                        size: 40,
-                        username: session.username
-                    )
+                    NavigationLink(destination: UserProfileView(user: viewModel.getUser(for: session.userId))) {
+                        ProfileAvatarView(
+                            imageURL: userProfileImageURL,
+                            size: 40,
+                            username: session.username
+                        )
+                    }
+                    .buttonStyle(PlainButtonStyle())
 
                     VStack(alignment: .leading, spacing: 2) {
-                        Text(session.username)
-                            .font(.system(size: 16, weight: .bold))
-                            .foregroundColor(.white)
-                            .shadow(color: Theme.lightTealBlue.opacity(0.5), radius: 6)
+                        NavigationLink(destination: UserProfileView(user: viewModel.getUser(for: session.userId))) {
+                            Text(session.username)
+                                .font(.system(size: 16, weight: .bold))
+                                .foregroundColor(.white)
+                                .shadow(color: Theme.lightTealBlue.opacity(0.5), radius: 6)
+                        }
+                        .buttonStyle(PlainButtonStyle())
 
                         Text(session.formattedStartTime)
                             .font(.system(size: 12))
@@ -161,25 +174,9 @@ struct FeedSessionCard: View {
                 .padding(.vertical, 4)
             }
             
-            // Comment section - only if comment exists
-            if hasComment {
-                HStack(alignment: .top, spacing: 8) {
-                    Image(systemName: "text.bubble.fill")
-                        .font(.system(size: 14))
-                        .foregroundColor(.white.opacity(0.6))
-                    
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text(session.username)
-                            .font(.system(size: 12, weight: .semibold))
-                            .foregroundColor(Theme.lightTealBlue.opacity(0.9))
-                        
-                        Text(session.comment!)
-                            .font(.system(size: 14))
-                            .foregroundColor(.white.opacity(0.9))
-                            .lineLimit(3)
-                    }
-                }
-                .padding(.vertical, 4)
+            // Comment section - using the improved CommentView component
+            if hasComment || (viewModel.sessionComments[session.id.uuidString]?.count ?? 0) > 0 {
+                CommentsView(session: session, viewModel: viewModel)
             }
             
             // Group session participants - only if it's a group session
@@ -193,10 +190,13 @@ struct FeedSessionCard: View {
                     ScrollView(.horizontal, showsIndicators: false) {
                         HStack(spacing: 8) {
                             ForEach(session.participants!) { participant in
-                                GroupParticipantBadge(
-                                    username: participant.username,
-                                    wasSuccessful: participant.wasSuccessful
-                                )
+                                NavigationLink(destination: UserProfileView(user: viewModel.getUser(for: participant.id))) {
+                                    GroupParticipantBadge(
+                                        username: participant.username,
+                                        wasSuccessful: participant.wasSuccessful
+                                    )
+                                }
+                                .buttonStyle(PlainButtonStyle())
                             }
                         }
                     }
@@ -338,7 +338,7 @@ struct FeedSessionCard: View {
                 isCommentFocused = false
             }
         }
-        .sheet(isPresented: $showLikesSheet) {
+        .popover(isPresented: $showLikesSheet, arrowEdge: .top) {
             CompactLikesListView(sessionId: session.id.uuidString, likesCount: likesCount, viewModel: viewModel)
         }
         .onAppear {
@@ -386,10 +386,21 @@ struct FeedSessionCard: View {
     
     
     private func saveComment(_ newComment: String) {
-        guard !newComment.isEmpty else { return }
+        guard !comment.isEmpty else { return }
         
-        // Save comment to Firestore
-        viewModel.saveComment(sessionId: session.id.uuidString, comment: newComment)
+        // Get the current user's ID and name
+        guard let currentUserId = Auth.auth().currentUser?.uid else { return }
+        
+        // Get the current user's name for the comment
+        let commentorName = currentUserName
+        
+        // Save comment to new subcollection
+        viewModel.addComment(
+            sessionId: session.id.uuidString,
+            comment: newComment,
+            userId: currentUserId,
+            username: commentorName
+        )
         
         // Show the saved indicator
         withAnimation {
@@ -712,6 +723,147 @@ struct CompactLikesListView: View {
         viewModel.getLikeUsers(sessionId: sessionId) { likeUsers in
             self.users = likeUsers
             self.isLoading = false
+        }
+    }
+}
+// Replace the existing CommentView with this one
+// Updated CommentsView with the fixed CommentBubble
+struct CommentsView: View {
+    let session: Session
+    let viewModel: FeedViewModel
+    
+    var body: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            // Display existing comments from sessionComments
+            if let comments = viewModel.sessionComments[session.id.uuidString], !comments.isEmpty {
+                ForEach(comments) { comment in
+                    CommentBubble(comment: comment, viewModel: viewModel)
+                }
+            }
+            // For backward compatibility, handle legacy comment field
+            else if let comment = session.comment, !comment.isEmpty {
+                // Legacy comment
+                HStack(alignment: .top, spacing: 8) {
+                    Image(systemName: "text.bubble.fill")
+                        .font(.system(size: 14))
+                        .foregroundColor(.white.opacity(0.6))
+                    
+                    VStack(alignment: .leading, spacing: 2) {
+                        // Check if we have commentor information
+                        if let commentorId = session.commentorId, let commentorName = session.commentorName {
+                            // Display the comment with the correct user
+                            NavigationLink(destination: UserProfileView(user: viewModel.getUser(for: commentorId))) {
+                                Text(commentorName)
+                                    .font(.system(size: 12, weight: .semibold))
+                                    .foregroundColor(Theme.lightTealBlue.opacity(0.9))
+                            }
+                            .buttonStyle(PlainButtonStyle())
+                            
+                            Text(comment)
+                                .font(.system(size: 14))
+                                .foregroundColor(.white.opacity(0.9))
+                                .lineLimit(3)
+                            
+                            // Show comment time if available
+                            if let commentTime = session.commentTime {
+                                Text(formatTime(commentTime))
+                                    .font(.system(size: 10))
+                                    .foregroundColor(.white.opacity(0.5))
+                            }
+                        } else {
+                            // Legacy comments without user info - show session owner
+                            NavigationLink(destination: UserProfileView(user: viewModel.getUser(for: session.userId))) {
+                                Text(session.username)
+                                    .font(.system(size: 12, weight: .semibold))
+                                    .foregroundColor(Theme.lightTealBlue.opacity(0.9))
+                            }
+                            .buttonStyle(PlainButtonStyle())
+                            
+                            Text(comment)
+                                .font(.system(size: 14))
+                                .foregroundColor(.white.opacity(0.9))
+                                .lineLimit(3)
+                        }
+                    }
+                }
+                .padding(.vertical, 4)
+            }
+        }
+        .onAppear {
+            // Load comments when view appears
+            viewModel.loadCommentsForSession(session.id.uuidString)
+        }
+    }
+    
+    private func formatTime(_ date: Date) -> String {
+        let calendar = Calendar.current
+        if calendar.isDateInToday(date) {
+            let formatter = DateFormatter()
+            formatter.dateFormat = "h:mm a"
+            return "Today at \(formatter.string(from: date))"
+        } else if calendar.isDateInYesterday(date) {
+            return "Yesterday"
+        } else {
+            let formatter = DateFormatter()
+            formatter.dateFormat = "MMM d"
+            return formatter.string(from: date)
+        }
+    }
+}
+
+// Add a new component for individual comments
+// Update the CommentBubble with delete functionality
+struct CommentBubble: View {
+    let comment: SessionComment
+    let viewModel: FeedViewModel
+    @State private var showDeleteAlert = false
+    
+    var body: some View {
+        HStack(alignment: .top, spacing: 8) {
+            Image(systemName: "text.bubble.fill")
+                .font(.system(size: 14))
+                .foregroundColor(.white.opacity(0.6))
+            
+            VStack(alignment: .leading, spacing: 2) {
+                NavigationLink(destination: UserProfileView(user: viewModel.getUser(for: comment.userId))) {
+                    Text(comment.username)
+                        .font(.system(size: 12, weight: .semibold))
+                        .foregroundColor(Theme.lightTealBlue.opacity(0.9))
+                }
+                .buttonStyle(PlainButtonStyle())
+                
+                Text(comment.comment)
+                    .font(.system(size: 14))
+                    .foregroundColor(.white.opacity(0.9))
+                    .lineLimit(3)
+                
+                Text(comment.formattedTime)
+                    .font(.system(size: 10))
+                    .foregroundColor(.white.opacity(0.5))
+            }
+        }
+        .padding(.vertical, 4)
+        .contentShape(Rectangle()) // Make the entire area tappable
+        .onLongPressGesture(minimumDuration: 0.5) {
+            // Only show delete option if comment belongs to current user
+            if comment.userId == Auth.auth().currentUser?.uid {
+                showDeleteAlert = true
+                
+                // Haptic feedback
+                let generator = UIImpactFeedbackGenerator(style: .medium)
+                generator.impactOccurred()
+            }
+        }
+        .alert(isPresented: $showDeleteAlert) {
+            Alert(
+                title: Text("Delete Comment"),
+                message: Text("Are you sure you want to delete this comment?"),
+                primaryButton: .destructive(Text("Delete")) {
+                    // Delete the comment
+                    viewModel.deleteComment(sessionId: comment.sessionId, commentId: comment.id)
+                },
+                secondaryButton: .cancel()
+            )
         }
     }
 }

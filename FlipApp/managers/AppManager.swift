@@ -1571,6 +1571,7 @@ class AppManager: NSObject, ObservableObject {
                     self?.friendNotificationCount += 1
                 }
         }
+
     @MainActor
     func updateLocationDuringSession() {
         // This gets called periodically from your tracking methods
@@ -1581,8 +1582,17 @@ class AppManager: NSObject, ObservableObject {
         let userId = Auth.auth().currentUser?.uid ?? ""
         let username = FirebaseManager.shared.currentUser?.username ?? "User"
         
+        // Get current building information if available
+        var buildingId: String?
+        var buildingName: String?
+        
+        if let building = RegionalViewModel.shared.selectedBuilding {
+            buildingId = building.id
+            buildingName = building.name
+        }
+        
         // Create location data for current session
-        let locationData: [String: Any] = [
+        var locationData: [String: Any] = [
             "userId": userId,
             "username": username,
             "currentLocation": GeoPoint(
@@ -1597,6 +1607,12 @@ class AppManager: NSObject, ObservableObject {
             "locationUpdatedAt": Timestamp(date: Date())
         ]
         
+        // Add building information if available
+        if let buildingId = buildingId, let buildingName = buildingName {
+            locationData["buildingId"] = buildingId
+            locationData["buildingName"] = buildingName
+        }
+        
         // Update location data for current session
         FirebaseManager.shared.db.collection("locations").document(userId).setData(locationData, merge: true)
         
@@ -1609,7 +1625,7 @@ class AppManager: NSObject, ObservableObject {
             let sessionId = "\(userId)_\(Int(Date().timeIntervalSince1970))"
             
             // Store historical session data
-            let sessionData: [String: Any] = [
+            var sessionData: [String: Any] = [
                 "userId": userId,
                 "username": username,
                 "location": GeoPoint(
@@ -1626,17 +1642,30 @@ class AppManager: NSObject, ObservableObject {
                 "createdAt": FieldValue.serverTimestamp()
             ]
             
+            // Add building information if available
+            if let buildingId = buildingId, let buildingName = buildingName {
+                sessionData["buildingId"] = buildingId
+                sessionData["buildingName"] = buildingName
+            }
+            
             // We set this in both collections to ensure availability
             FirebaseManager.shared.db.collection("session_locations").document(sessionId).setData(sessionData)
             
             // This is an important change - also update the locations collection with the final state
-            // This ensures historical data is available even if session_locations isn't checked
-            FirebaseManager.shared.db.collection("locations").document(userId).setData([
+            var finalStateData: [String: Any] = [
                 "isCurrentlyFlipped": false,
                 "lastFlipWasSuccessful": currentState == .completed,
                 "lastFlipTime": Timestamp(date: Date()),
                 "sessionEndTime": Timestamp(date: Date())
-            ], merge: true)
+            ]
+            
+            // Add building information to final state if available
+            if let buildingId = buildingId, let buildingName = buildingName {
+                finalStateData["buildingId"] = buildingId
+                finalStateData["buildingName"] = buildingName
+            }
+            
+            FirebaseManager.shared.db.collection("locations").document(userId).setData(finalStateData, merge: true)
         }
     }
         

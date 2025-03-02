@@ -19,8 +19,11 @@ struct Session: Codable, Identifiable {
     let originalStarterId: String?    // Who started the session
     let wasJoinedSession: Bool?       // Whether this was a joined session
     
-    // New field for comments
-    let comment: String?        // Optional comment on the session
+    // New fields for comments
+    let comment: String?              // Optional comment on the session
+    let commentorId: String?          // Who made the comment
+    let commentorName: String?        // Username of the commentor
+    let commentTime: Date?            // When the comment was made
     
     var formattedStartTime: String {
         let formatter = DateFormatter()
@@ -52,7 +55,10 @@ struct Session: Codable, Identifiable {
         participants: [Participant]? = nil,
         originalStarterId: String? = nil,
         wasJoinedSession: Bool? = nil,
-        comment: String? = nil
+        comment: String? = nil,
+        commentorId: String? = nil,
+        commentorName: String? = nil,
+        commentTime: Date? = nil
     ) -> Session {
         return Session(
             id: id,
@@ -67,11 +73,36 @@ struct Session: Codable, Identifiable {
             participants: participants,
             originalStarterId: originalStarterId,
             wasJoinedSession: wasJoinedSession,
-            comment: comment
+            comment: comment,
+            commentorId: commentorId,
+            commentorName: commentorName,
+            commentTime: commentTime
         )
     }
     
-    // Method to update comment
+    // Method to update comment with commentor information
+    func withUpdatedComment(_ newComment: String, commentorId: String, commentorName: String) -> Session {
+        return Session(
+            id: id,
+            userId: userId,
+            username: username,
+            startTime: startTime,
+            duration: duration,
+            wasSuccessful: wasSuccessful,
+            actualDuration: actualDuration,
+            sessionTitle: sessionTitle,
+            sessionNotes: sessionNotes,
+            participants: participants,
+            originalStarterId: originalStarterId,
+            wasJoinedSession: wasJoinedSession,
+            comment: newComment,
+            commentorId: commentorId,
+            commentorName: commentorName,
+            commentTime: Date()
+        )
+    }
+    
+    // Keep the original method for backward compatibility
     func withUpdatedComment(_ newComment: String) -> Session {
         return Session(
             id: id,
@@ -86,7 +117,10 @@ struct Session: Codable, Identifiable {
             participants: participants,
             originalStarterId: originalStarterId,
             wasJoinedSession: wasJoinedSession,
-            comment: newComment
+            comment: newComment,
+            commentorId: nil,
+            commentorName: nil,
+            commentTime: nil
         )
     }
 }
