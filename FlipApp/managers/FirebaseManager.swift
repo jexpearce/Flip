@@ -79,6 +79,41 @@ extension FirebaseManager {
             }
         }
     }
+    // Add this to FirebaseManager.swift
+    private func pruneOldSessions(forUserId userId: String, maxSessions: Int = 10) {
+        // Query for this user's sessions, ordered by end time
+        db.collection("session_locations")
+            .whereField("userId", isEqualTo: userId)
+            .order(by: "sessionEndTime", descending: true)
+            .getDocuments { [weak self] snapshot, error in
+                guard let self = self,
+                      let documents = snapshot?.documents,
+                      documents.count > maxSessions,
+                      error == nil else {
+                    return
+                }
+                
+                // Skip the first 'maxSessions' (most recent) and delete the rest
+                let sessionsToDelete = documents.suffix(from: maxSessions)
+                print("Pruning \(sessionsToDelete.count) old map sessions for user \(userId)")
+                
+                // Use a batch for efficient deletion
+                let batch = self.db.batch()
+                
+                for sessionDoc in sessionsToDelete {
+                    batch.deleteDocument(sessionDoc.reference)
+                }
+                
+                // Execute the batch deletion
+                batch.commit { error in
+                    if let error = error {
+                        print("Error pruning old map sessions: \(error.localizedDescription)")
+                    } else {
+                        print("Successfully pruned \(sessionsToDelete.count) old map sessions")
+                    }
+                }
+            }
+    }
     
     // Add this version of updateLocationDuringSession to use in AppManager
     func saveSessionLocation(session: CompletedSession) {

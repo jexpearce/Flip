@@ -202,6 +202,7 @@ class MapViewModel: NSObject, ObservableObject, CLLocationManagerDelegate {
     
     func refreshLocations() {
         // Fetch fresh data without stopping tracking
+        print("Refreshing map locations...")
         startListeningForLocationUpdates()
     }
     
@@ -240,9 +241,6 @@ class MapViewModel: NSObject, ObservableObject, CLLocationManagerDelegate {
         // Stop any existing listener
         locationListener?.remove()
         
-        // Create array to hold all locations (current and historical)
-        var allLocations: [FriendLocation] = []
-        
         // Listen for real-time updates of active sessions
         locationListener = db.collection("locations")
             .whereField("userId", in: userIds)
@@ -258,12 +256,10 @@ class MapViewModel: NSObject, ObservableObject, CLLocationManagerDelegate {
                 var currentLocations: [FriendLocation] = []
                 if let documents = snapshot?.documents {
                     currentLocations = self.processLocationDocuments(documents, isHistorical: false, sessionIndex: 0)
-                    
-                    // Debug log to track what we're getting
                     print("Received \(currentLocations.count) current locations")
                 }
                 
-                // Now fetch historical sessions for each user (if enabled)
+                // Now fetch historical sessions for each user - always limit to 3 per user
                 let dispatchGroup = DispatchGroup()
                 var historicalLocations: [FriendLocation] = []
                 
@@ -279,7 +275,6 @@ class MapViewModel: NSObject, ObservableObject, CLLocationManagerDelegate {
                     // Update UI with all locations
                     self.friendLocations = currentLocations + historicalLocations
                     
-                    // Debug log for total
                     print("Total locations displayed: \(self.friendLocations.count) (Current: \(currentLocations.count), Historical: \(historicalLocations.count))")
                     
                     // Center on user location if this is first load
@@ -294,10 +289,9 @@ class MapViewModel: NSObject, ObservableObject, CLLocationManagerDelegate {
             }
     }
     
-    // Enhanced to fetch multiple historical sessions
     private func fetchHistoricalSessions(userId: String, limit: Int, completion: @escaping ([FriendLocation]) -> Void) {
-        // Check if session history should be shown in privacy settings
-        let showSessionHistory = true // Default to true, ideally get from settings
+        // Always show session history for map functionality
+        let showSessionHistory = true
         
         if !showSessionHistory {
             completion([])
@@ -326,7 +320,7 @@ class MapViewModel: NSObject, ObservableObject, CLLocationManagerDelegate {
                 // Process each document into a historical location
                 if let documents = snapshot?.documents {
                     for (index, document) in documents.enumerated() {
-                        if let location = self.processHistoricalDocument(document, userId: userId, index: index) {
+                        if let location = self.processHistoricalDocument(document, userId: userId, index: index + 1) {
                             historicalLocations.append(location)
                         }
                     }
@@ -334,8 +328,32 @@ class MapViewModel: NSObject, ObservableObject, CLLocationManagerDelegate {
                 
                 // Also fetch group sessions where this user was a participant
                 self.fetchGroupSessions(userId: userId) { groupLocations in
-                    historicalLocations.append(contentsOf: groupLocations)
-                    completion(historicalLocations)
+                    // First, combine and sort all locations
+                    let allLocations = (historicalLocations + groupLocations)
+                        .sorted(by: { $0.lastFlipTime > $1.lastFlipTime })
+                    
+                    // Take only the first 'limit' elements
+                    let limitedLocations = allLocations.prefix(limit)
+                    
+                    // Now update indices in a separate step after the array is created
+                    let result = limitedLocations.enumerated().map { index, location -> FriendLocation in
+                        return FriendLocation(
+                            id: location.id,
+                            username: location.username,
+                            coordinate: location.coordinate,
+                            isCurrentlyFlipped: location.isCurrentlyFlipped,
+                            lastFlipTime: location.lastFlipTime,
+                            lastFlipWasSuccessful: location.lastFlipWasSuccessful,
+                            sessionDuration: location.sessionDuration,
+                            sessionStartTime: location.sessionStartTime,
+                            isHistorical: true,
+                            sessionIndex: index + 1, // +1 because current session is 0
+                            participants: location.participants,
+                            participantNames: location.participantNames
+                        )
+                    }
+                    
+                    completion(Array(result))
                 }
             }
     }

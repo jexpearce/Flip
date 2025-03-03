@@ -4,6 +4,7 @@ import FirebaseFirestore
 import CoreLocation
 import MapKit
 
+// Update the RegionalView struct body to use the new BuildingSelectorButton
 struct RegionalView: View {
     @StateObject private var viewModel = RegionalViewModel.shared
     @EnvironmentObject var viewRouter: ViewRouter
@@ -32,42 +33,15 @@ struct RegionalView: View {
                     .padding(.top, 50)
                     .padding(.bottom, 10)
                     
-                    // Building selection button - NEW
-                    Button(action: {
-                        viewModel.startBuildingIdentification()
-                    }) {
-                        HStack {
-                            VStack(alignment: .leading, spacing: 4) {
-                                Text("CURRENT BUILDING")
-                                    .font(.system(size: 12, weight: .bold))
-                                    .tracking(2)
-                                    .foregroundColor(.white.opacity(0.7))
-                                
-                                Text(viewModel.selectedBuilding?.name ?? "Tap to select building")
-                                    .font(.system(size: 16, weight: .bold))
-                                    .foregroundColor(.white)
-                            }
-                            
-                            Spacer()
-                            
-                            Image(systemName: "arrow.triangle.2.circlepath")
-                                .font(.system(size: 16))
-                                .foregroundColor(.white.opacity(0.7))
+                    // Building selection button - Improved version
+                    BuildingSelectorButton(
+                        buildingName: viewModel.selectedBuilding?.name,
+                        action: {
+                            viewModel.startBuildingIdentification()
                         }
-                        .padding()
-                        .background(
-                            ZStack {
-                                RoundedRectangle(cornerRadius: 12)
-                                    .fill(Color.white.opacity(0.08))
-                                
-                                RoundedRectangle(cornerRadius: 12)
-                                    .stroke(Color.white.opacity(0.2), lineWidth: 1)
-                            }
-                        )
-                        .padding(.horizontal)
-                    }
+                    )
                     
-                    // Regional Leaderboard with reddish tint
+                    // Regional Leaderboard with improved layout
                     RegionalLeaderboard(viewModel: viewModel.leaderboardViewModel)
                         .padding(.horizontal)
                     

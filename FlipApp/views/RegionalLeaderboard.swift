@@ -4,9 +4,10 @@ import FirebaseAuth
 import FirebaseFirestore
 import CoreLocation
 
-// STRUCTURE 1: RegionalLeaderboard View
 struct RegionalLeaderboard: View {
     @ObservedObject var viewModel: RegionalLeaderboardViewModel
+    @State private var selectedUserId: String?
+    @State private var showUserProfile = false
     
     // Medal colors
     private let goldColor = LinearGradient(
@@ -29,68 +30,50 @@ struct RegionalLeaderboard: View {
     
     var body: some View {
         VStack(spacing: 12) {
-            // Title
-            HStack {
-                Text(viewModel.isBuildingSpecific ? "BUILDING LEADERBOARD" : "REGIONAL LEADERBOARD")
-                    .font(.system(size: 16, weight: .black))  // Increased from 14 to 18
-                    .tracking(3)
-                    .foregroundColor(viewModel.isBuildingSpecific ?
-                                     Color(red: 234/255, green: 179/255, blue: 8/255) :
-                                        Color(red: 239/255, green: 68/255, blue: 68/255))
+            // Title section
+            VStack(spacing: 4) {
+                // Main title
+                Text(viewModel.isBuildingSpecific ? "LONGEST FLIP OF THE WEEK" : "REGIONAL LEADERBOARD")
+                    .font(.system(size: 16, weight: .black))
+                    .tracking(2)
+                    .foregroundColor(.white)
                     .shadow(color: viewModel.isBuildingSpecific ?
                             Color(red: 234/255, green: 179/255, blue: 8/255).opacity(0.5) :
-                                Color(red: 239/255, green: 68/255, blue: 68/255).opacity(0.5), radius: 6)
+                            Color(red: 239/255, green: 68/255, blue: 68/255).opacity(0.5), radius: 4)
+                    .frame(maxWidth: .infinity, alignment: .center)
                 
-                Image(systemName: viewModel.isBuildingSpecific ? "building.fill" : "location.fill")
-                    .font(.system(size: 16))  // Increased from 14 to 18
-                    .foregroundStyle(
+                // Subtitle with location
+                if let locationName = viewModel.locationName {
+                    Text("in \(locationName)")
+                        .font(.system(size: 14, weight: .medium))
+                        .foregroundColor(.white.opacity(0.8))
+                        .lineLimit(1)
+                        .frame(maxWidth: .infinity, alignment: .center)
+                }
+            }
+            .padding(.vertical, 12)
+            .padding(.horizontal, 16)
+            .background(
+                RoundedRectangle(cornerRadius: 12)
+                    .fill(viewModel.isBuildingSpecific ?
                         LinearGradient(
-                            colors: viewModel.isBuildingSpecific ?
-                            [
-                                Color(red: 234/255, green: 179/255, blue: 8/255),
-                                Color(red: 250/255, green: 204/255, blue: 21/255)
-                            ] :
-                                [
-                                    Color(red: 239/255, green: 68/255, blue: 68/255),
-                                    Color(red: 248/255, green: 113/255, blue: 113/255)
-                                ],
-                            startPoint: .top,
-                            endPoint: .bottom
+                            colors: [
+                                Color(red: 234/255, green: 179/255, blue: 8/255).opacity(0.6),
+                                Color(red: 250/255, green: 204/255, blue: 21/255).opacity(0.4)
+                            ],
+                            startPoint: .leading,
+                            endPoint: .trailing
+                        ) :
+                        LinearGradient(
+                            colors: [
+                                Color(red: 239/255, green: 68/255, blue: 68/255).opacity(0.6),
+                                Color(red: 248/255, green: 113/255, blue: 113/255).opacity(0.4)
+                            ],
+                            startPoint: .leading,
+                            endPoint: .trailing
                         )
                     )
-                    .shadow(color: viewModel.isBuildingSpecific ?
-                            Color(red: 234/255, green: 179/255, blue: 8/255).opacity(0.5) :
-                                Color(red: 239/255, green: 68/255, blue: 68/255).opacity(0.5), radius: 4)
-                
-                Spacer()
-                
-                if !viewModel.isBuildingSpecific {
-                    if viewModel.radius == 5 {
-                        Text("5 MILE RADIUS")
-                            .font(.system(size: 12, weight: .bold))  // Increased from 10 to 12
-                            .tracking(1)
-                            .foregroundColor(.white.opacity(0.7))
-                    } else {
-                        Text("\(viewModel.radius) MILE RADIUS")
-                            .font(.system(size: 12, weight: .bold))  // Increased from 10 to 12
-                            .tracking(1)
-                            .foregroundColor(.white.opacity(0.7))
-                    }
-                }
-            }
-            
-            // Location display
-            if let locationName = viewModel.locationName {
-                HStack {
-                    Text(locationName)
-                        .font(.system(size: 16, weight: .medium))  // Increased from 12 to 16
-                        .foregroundColor(.white.opacity(0.9))  // Increased opacity from 0.8 to 0.9
-                    
-                    Spacer()
-                }
-                .padding(.top, 0)  // Changed from -5 to 0
-                .padding(.bottom, 10)  // Increased from 5 to 10
-            }
+            )
             
             if viewModel.isLoading {
                 HStack {
@@ -111,7 +94,7 @@ struct RegionalLeaderboard: View {
                     Text(viewModel.isBuildingSpecific ?
                          "No sessions in this building yet" :
                             "No active users in your area this week")
-                    .font(.system(size: 16, weight: .medium))  // Increased from 14 to 16
+                    .font(.system(size: 16, weight: .medium))
                     .foregroundColor(.white.opacity(0.7))
                     .multilineTextAlignment(.center)
                     
@@ -120,72 +103,66 @@ struct RegionalLeaderboard: View {
                         .foregroundColor(.white.opacity(0.5))
                 }
                 .frame(maxWidth: .infinity)
-                .padding(.vertical, 30)  // Increased from 15 to 30
+                .padding(.vertical, 30)
             } else {
                 // Leaderboard entries
                 VStack(spacing: 8) {
                     ForEach(Array(viewModel.leaderboardEntries.prefix(10).enumerated()), id: \.element.id) { index, entry in
-                        HStack(spacing: 12) {  // Increased spacing from 8 to 12
-                            // Rank with medal indicator
-                            HStack(spacing: 10) {  // Increased spacing
+                        Button(action: {
+                            self.selectedUserId = entry.userId
+                            self.showUserProfile = true
+                        }) {
+                            HStack(spacing: 12) {
+                                // Rank number
                                 Text("\(index + 1)")
-                                    .font(.system(size: 18, weight: .black))  // Increased from 16 to 18
+                                    .font(.system(size: 18, weight: .black))
                                     .foregroundColor(.white)
-                                    .frame(width: 28)  // Increased width from 24 to 28
+                                    .frame(width: 24)
                                 
                                 // Medal for top 3
                                 if index < 3 {
                                     ZStack {
                                         Circle()
                                             .fill(index == 0 ? goldColor : (index == 1 ? silverColor : bronzeColor))
-                                            .frame(width: 26, height: 26)  // Increased from 22 to 26
+                                            .frame(width: 26, height: 26)
                                         
                                         Image(systemName: "medal.fill")
-                                            .font(.system(size: 14))  // Increased from 12 to 14
+                                            .font(.system(size: 14))
                                             .foregroundColor(.white)
                                             .shadow(color: Color.black.opacity(0.2), radius: 1)
                                     }
                                 }
+                                
+                                // Profile picture
+                                ProfileImage(userId: entry.userId, size: 32)
+                                
+                                // Username with underline to indicate it's clickable
+                                Text(entry.username)
+                                    .font(.system(size: 16, weight: .bold))
+                                    .foregroundColor(.white)
+                                    .lineLimit(1)
+                                    .frame(maxWidth: .infinity, alignment: .leading)
+                                    .underline(color: .white.opacity(0.3))
+                                
+                                // Duration
+                                Text("\(entry.duration) min")
+                                    .font(.system(size: 18, weight: .black))
+                                    .foregroundColor(viewModel.isBuildingSpecific ?
+                                                     Color(red: 234/255, green: 179/255, blue: 8/255) :
+                                                        Color(red: 239/255, green: 68/255, blue: 68/255))
+                                    .shadow(color: viewModel.isBuildingSpecific ?
+                                            Color(red: 234/255, green: 179/255, blue: 8/255).opacity(0.3) :
+                                                Color(red: 239/255, green: 68/255, blue: 68/255).opacity(0.3), radius: 4)
                             }
-                            
-                            // Username
-                            Text(entry.username)
-                                .font(.system(size: 18, weight: .bold))  // Increased from 16 to 18
-                                .foregroundColor(.white)
-                                .lineLimit(1)
-                                .frame(maxWidth: .infinity, alignment: .leading)
-                            
-                            // Only show distance for friends
-                            if entry.distance > 0 && entry.isFriend {
-                                Text("\(entry.formattedDistance)")
-                                    .font(.system(size: 14))  // Increased from 12 to 14
-                                    .foregroundColor(.white.opacity(0.7))
-                            }
-                            
-                            // Friend icon if a friend
-                            if entry.isFriend {
-                                Image(systemName: "person.fill")
-                                    .font(.system(size: 14))  // Increased from 12 to 14
-                                    .foregroundColor(Color(red: 56/255, green: 189/255, blue: 248/255))
-                            }
-                            
-                            // Duration
-                            Text("\(entry.duration) min")
-                                .font(.system(size: 18, weight: .black))  // Increased from 16 to 18
-                                .foregroundColor(viewModel.isBuildingSpecific ?
-                                                 Color(red: 234/255, green: 179/255, blue: 8/255) :
-                                                    Color(red: 239/255, green: 68/255, blue: 68/255))
-                                .shadow(color: viewModel.isBuildingSpecific ?
-                                        Color(red: 234/255, green: 179/255, blue: 8/255).opacity(0.3) :
-                                            Color(red: 239/255, green: 68/255, blue: 68/255).opacity(0.3), radius: 4)
+                            .padding(.vertical, 10)
+                            .padding(.horizontal, 16)
+                            .background(
+                                RoundedRectangle(cornerRadius: 12)
+                                    .fill(Color.white.opacity(0.08))
+                            )
                         }
-                        .padding(.vertical, 12)  // Increased from 8 to 12
-                        .padding(.horizontal, 16)  // Increased from 12 to 16
-                        .background(
-                            RoundedRectangle(cornerRadius: 12)  // Increased from 10 to 12
-                                .fill(Color.white.opacity(0.08))  // Increased opacity from 0.05 to 0.08
-                        )
-                        .padding(.vertical, 2)  // Add some spacing between entries
+                        .buttonStyle(PlainButtonStyle())
+                        .padding(.vertical, 2)
                     }
                     
                     // Radius control
@@ -225,10 +202,10 @@ struct RegionalLeaderboard: View {
                 }
             }
         }
-        .padding(.horizontal, 18)  // Increased main container padding
+        .padding(.horizontal, 18)
         .background(
             ZStack {
-                RoundedRectangle(cornerRadius: 18)  // Increased from 15 to 18
+                RoundedRectangle(cornerRadius: 18)
                     .fill(
                         LinearGradient(
                             colors: viewModel.isBuildingSpecific ?
@@ -245,27 +222,202 @@ struct RegionalLeaderboard: View {
                         )
                     )
                 
-                RoundedRectangle(cornerRadius: 18)  // Increased from 15 to 18
-                    .fill(Color.white.opacity(0.07))  // Increased from 0.05 to 0.07
+                RoundedRectangle(cornerRadius: 18)
+                    .fill(Color.white.opacity(0.07))
                 
-                RoundedRectangle(cornerRadius: 18)  // Increased from 15 to 18
+                RoundedRectangle(cornerRadius: 18)
                     .stroke(
                         LinearGradient(
                             colors: [
-                                Color.white.opacity(0.6),  // Increased from 0.5 to 0.6
+                                Color.white.opacity(0.6),
                                 Color.white.opacity(0.1)
                             ],
                             startPoint: .topLeading,
                             endPoint: .bottomTrailing
                         ),
-                        lineWidth: 1.5  // Increased from 1 to 1.5
+                        lineWidth: 1.5
                     )
             }
         )
         .shadow(color: Color.black.opacity(0.25), radius: 8, x: 0, y: 3)
+        .sheet(isPresented: $showUserProfile, content: {
+            if let userId = selectedUserId {
+                UserProfileSheet(userId: userId)
+            }
+        })
     }
 }
 
+// This component fetches and displays user profiles
+struct UserProfileSheet: View {
+    let userId: String
+    @State private var user: FirebaseManager.FlipUser?
+    @State private var isLoading = true
+    @Environment(\.presentationMode) var presentationMode
+    
+    var body: some View {
+        NavigationView {
+            Group {
+                if isLoading {
+                    ProgressView("Loading profile...")
+                        .tint(.white)
+                } else if let user = user {
+                    UserProfileView(user: user)
+                } else {
+                    Text("Could not load user profile")
+                        .foregroundColor(.white)
+                }
+            }
+            .navigationBarItems(trailing: Button("Close") {
+                presentationMode.wrappedValue.dismiss()
+            })
+            .navigationBarTitleDisplayMode(.inline)
+        }
+        .onAppear {
+            loadUser()
+        }
+    }
+    
+    private func loadUser() {
+        FirebaseManager.shared.db.collection("users").document(userId).getDocument { snapshot, error in
+            isLoading = false
+            if let error = error {
+                print("Error loading user: \(error.localizedDescription)")
+                return
+            }
+            
+            if let userData = try? snapshot?.data(as: FirebaseManager.FlipUser.self) {
+                self.user = userData
+            }
+        }
+    }
+}
+
+// Profile image component that loads user profile pictures
+struct ProfileImage: View {
+    let userId: String
+    let size: CGFloat
+    @State private var imageURL: String?
+    @State private var username: String = ""
+    
+    var body: some View {
+        Group {
+            if let imageURL = imageURL, !imageURL.isEmpty {
+                AsyncImage(url: URL(string: imageURL)) { phase in
+                    switch phase {
+                    case .empty:
+                        ProgressView()
+                            .frame(width: size, height: size)
+                    case .success(let image):
+                        image
+                            .resizable()
+                            .aspectRatio(contentMode: .fill)
+                            .frame(width: size, height: size)
+                            .clipShape(Circle())
+                    case .failure:
+                        DefaultProfileImage(username: username, size: size)
+                    @unknown default:
+                        DefaultProfileImage(username: username, size: size)
+                    }
+                }
+            } else {
+                DefaultProfileImage(username: username, size: size)
+            }
+        }
+        .frame(width: size, height: size)
+        .onAppear {
+            loadUserData()
+        }
+    }
+    
+    private func loadUserData() {
+        FirebaseManager.shared.db.collection("users").document(userId).getDocument { snapshot, error in
+            if let data = snapshot?.data() {
+                self.imageURL = data["profileImageURL"] as? String
+                self.username = data["username"] as? String ?? ""
+            }
+        }
+    }
+}
+
+// Default profile image to use when user has no profile picture
+struct DefaultProfileImage: View {
+    let username: String
+    let size: CGFloat
+    
+    private var initials: String {
+        guard !username.isEmpty else { return "?" }
+        let firstChar = String(username.prefix(1)).uppercased()
+        return firstChar
+    }
+    
+    var body: some View {
+        ZStack {
+            Circle()
+                .fill(LinearGradient(
+                    colors: [Color.blue.opacity(0.7), Color.blue.opacity(0.4)],
+                    startPoint: .topLeading,
+                    endPoint: .bottomTrailing
+                ))
+            
+            Text(initials)
+                .font(.system(size: size * 0.4, weight: .bold))
+                .foregroundColor(.white)
+        }
+        .frame(width: size, height: size)
+    }
+}
+
+// Improved Current Building Button to add to RegionalView.swift
+struct BuildingSelectorButton: View {
+    let buildingName: String?
+    let action: () -> Void
+    
+    var body: some View {
+        Button(action: action) {
+            HStack {
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("CURRENT BUILDING")
+                        .font(.system(size: 12, weight: .bold))
+                        .tracking(2)
+                        .foregroundColor(.white.opacity(0.7))
+                    
+                    Text(buildingName ?? "Tap to select building")
+                        .font(.system(size: 16, weight: .bold))
+                        .foregroundColor(.white)
+                }
+                
+                Spacer()
+                
+                VStack(spacing: 2) {
+                    Image(systemName: "arrow.triangle.2.circlepath")
+                        .font(.system(size: 16))
+                        .foregroundColor(.white.opacity(0.7))
+                    
+                    Text("SWITCH")
+                        .font(.system(size: 10, weight: .bold))
+                        .foregroundColor(.white.opacity(0.7))
+                }
+                .padding(8)
+                .background(
+                    RoundedRectangle(cornerRadius: 8)
+                        .fill(Color.white.opacity(0.1))
+                )
+            }
+            .padding()
+            .background(
+                ZStack {
+                    RoundedRectangle(cornerRadius: 12)
+                        .fill(Color.white.opacity(0.08))
+                    
+                    RoundedRectangle(cornerRadius: 12)
+                        .stroke(Color.white.opacity(0.2), lineWidth: 1)
+                }
+            )
+            .padding(.horizontal)
+        }
+    }
+}
 // STRUCTURE 2: RegionalLeaderboardViewModel class - moved outside struct
 class RegionalLeaderboardViewModel: ObservableObject {
     @Published var leaderboardEntries: [RegionalLeaderboardEntry] = []

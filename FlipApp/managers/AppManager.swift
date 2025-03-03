@@ -1610,25 +1610,21 @@ class AppManager: NSObject, ObservableObject {
         // Update location data for current session
         FirebaseManager.shared.db.collection("locations").document(userId).setData(locationData, merge: true)
         
-        // If session completed or failed, also store as a session location for historical tracking
+        // Only save session data if session completed or failed
         if currentState == .completed || currentState == .failed {
-            // Calculate actual duration for the session
-            let actualDuration = (selectedMinutes * 60 - remainingSeconds) / 60
-            let startTime = Date().addingTimeInterval(-Double(selectedMinutes * 60 - remainingSeconds))
-            
-            // Create a new CompletedSession object
+            // Create completed session data
             let completedSession = CompletedSession(
                 userId: userId,
                 username: username,
                 location: location.coordinate,
                 duration: selectedMinutes,
-                actualDuration: actualDuration,
+                actualDuration: (selectedMinutes * 60 - remainingSeconds) / 60,
                 wasSuccessful: currentState == .completed,
-                startTime: startTime,
+                startTime: Date().addingTimeInterval(-Double(selectedMinutes * 60 - remainingSeconds)),
                 building: currentBuilding
             )
             
-            // Use FirebaseManager to save the session location
+            // Use FirebaseManager to save
             FirebaseManager.shared.saveSessionLocation(session: completedSession)
         }
     }

@@ -50,7 +50,6 @@ class ScoreViewModel: ObservableObject {
 }
 
 
-// Add this modification to your existing MapView
 struct MapView: View {
     @StateObject private var viewModel = MapViewModel()
     @State private var showPrivacySettings = false
@@ -157,7 +156,7 @@ struct MapView: View {
                 
                 Spacer()
                 
-                // Rest of your existing map controls
+                // Map controls
                 HStack {
                     Spacer()
                     
@@ -241,26 +240,10 @@ struct MapView: View {
                     Spacer()
                     
                     FriendPreviewCard(friend: friend, onDismiss: {
-                        DispatchQueue.main.async {
-                                        selectedFriend = nil
-                                    }
-                    }, onViewProfile: {
-                        // Extract clean userId (remove historical session suffix if present)
-                        let userId = String(friend.id.split(separator: "_").first ?? "")
-                        
-                        // Load user profile and navigate
-                        viewModel.loadUserForProfile(userId: userId) { user in
-                            if let user = user {
-                                
-                                // Navigate to friend profile
-                                DispatchQueue.main.async {
-                                    viewRouter.showFriendProfile(friend: user)
-                                    viewRouter.selectedTab = 3 // Switch to Friends tab
-                                }
-                                selectedFriend = nil
-                            }
+                        withAnimation {
+                            selectedFriend = nil
                         }
-                    })
+                    }, onViewProfile: {})
                     .transition(.move(edge: .bottom).combined(with: .opacity))
                     .padding(.bottom, 100) // Above tab bar
                     .padding(.horizontal)
@@ -279,14 +262,14 @@ struct MapView: View {
         }
         .onAppear {
             viewModel.startLocationTracking()
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-                    viewModel.refreshLocations()
-                }
+            
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                viewModel.refreshLocations()
+            }
         }
         .onDisappear {
             viewModel.stopLocationTracking()
             
-            // This is the critical addition to ensure location tracking stops
             Task { @MainActor in
                 LocationHandler.shared.completelyStopLocationUpdates()
             }
