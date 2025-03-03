@@ -34,7 +34,7 @@ struct BuildingSelectionView: View {
                         Button(action: {
                             let buildingName = BuildingIdentificationService.shared.getBuildingName(from: building)
                             let buildingInfo = BuildingInfo(
-                                id: "\(building.coordinate.latitude)-\(building.coordinate.longitude)",
+                                id: "", // The BuildingInfo init will standardize this
                                 name: buildingName,
                                 coordinate: building.coordinate
                             )

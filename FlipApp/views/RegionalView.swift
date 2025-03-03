@@ -280,13 +280,22 @@ class RegionalViewModel: NSObject, ObservableObject, CLLocationManagerDelegate {
         }
     }
     
+    // In RegionalViewModel.swift
+    // Update the selectBuilding method
+
     func selectBuilding(_ building: BuildingInfo) {
         self.selectedBuilding = building
+        
+        // For debugging - print exact coordinate values and building ID
+        let standardizedId = String(format: "building-%.6f-%.6f", building.coordinate.latitude, building.coordinate.longitude)
+        print("🏢 Selected building: \(building.name)")
+        print("🌐 Coordinates: \(building.coordinate.latitude), \(building.coordinate.longitude)")
+        print("🆔 Standardized ID: \(standardizedId)")
         
         // Save the selected building to Firestore
         if let userId = Auth.auth().currentUser?.uid {
             let buildingData: [String: Any] = [
-                "id": building.id,
+                "id": standardizedId, // Use standardized ID here
                 "name": building.name,
                 "latitude": building.coordinate.latitude,
                 "longitude": building.coordinate.longitude,
@@ -299,9 +308,9 @@ class RegionalViewModel: NSObject, ObservableObject, CLLocationManagerDelegate {
                     if let error = error {
                         print("Error saving building info: \(error.localizedDescription)")
                     } else {
-                        print("Building info saved successfully")
+                        print("Building info saved successfully with standardized ID: \(standardizedId)")
                         
-                        // Load the building-specific leaderboard
+                        // When loading the leaderboard, also check nearby sessions that might not have the exact building ID
                         DispatchQueue.main.async {
                             self.leaderboardViewModel.loadBuildingLeaderboard(building: building)
                         }

@@ -109,7 +109,7 @@ class BuildingIdentificationService {
         }
     }
     
-    // New method to get session counts for buildings
+
     private func getSessionCountsForBuildings(placemarks: [MKPlacemark], completion: @escaping ([(MKPlacemark, Int)]) -> Void) {
         let db = Firestore.firestore()
         let calendar = Calendar.current
@@ -122,11 +122,15 @@ class BuildingIdentificationService {
         for placemark in placemarks {
             dispatchGroup.enter()
             
-            // Create a buildingId based on coordinates
-            let buildingId = "building-\(placemark.coordinate.latitude)-\(placemark.coordinate.longitude)"
+            // Create standardized building ID - THIS IS THE KEY CHANGE
+            let buildingId = String(format: "building-%.6f-%.6f", placemark.coordinate.latitude, placemark.coordinate.longitude)
             
-            // Query for sessions in this building from the past week
+            // Debug output to verify building ID format
+            print("Checking sessions for building ID: \(buildingId)")
+            
+            // Query for sessions with this building ID directly
             db.collection("session_locations")
+                .whereField("buildingId", isEqualTo: buildingId)
                 .whereField("sessionEndTime", isGreaterThan: Timestamp(date: oneWeekAgo))
                 .getDocuments { snapshot, error in
                     defer { dispatchGroup.leave() }
@@ -137,19 +141,8 @@ class BuildingIdentificationService {
                         return
                     }
                     
-                    // Count sessions near this building (within 100m)
-                    let buildingLocation = CLLocation(latitude: placemark.coordinate.latitude, longitude: placemark.coordinate.longitude)
-                    var sessionCount = 0
-                    
-                    for document in snapshot?.documents ?? [] {
-                        if let geoPoint = document.data()["location"] as? GeoPoint {
-                            let sessionLocation = CLLocation(latitude: geoPoint.latitude, longitude: geoPoint.longitude)
-                            if buildingLocation.distance(from: sessionLocation) <= 100 { // Within 100 meters
-                                sessionCount += 1
-                            }
-                        }
-                    }
-                    
+                    let sessionCount = snapshot?.documents.count ?? 0
+                    print("Found \(sessionCount) sessions for building ID: \(buildingId)")
                     buildingsWithCounts.append((placemark, sessionCount))
                 }
         }

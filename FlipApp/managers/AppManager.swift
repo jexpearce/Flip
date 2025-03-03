@@ -842,19 +842,18 @@ class AppManager: NSObject, ObservableObject {
         Task {@MainActor in
             self.updateLocationDuringSession()
         }
+        Task { @MainActor in
+            let currentBuildingId = RegionalViewModel.shared.selectedBuilding?.id
+            let currentBuildingName = RegionalViewModel.shared.selectedBuilding?.name
+            print("🏢 Current building at session completion: \(currentBuildingName ?? "None") [ID: \(currentBuildingId ?? "None")]")
+        }
         
         // 7. Record session
-        if let sessionId = liveSessionId, isJoinedSession {
+        if let _ = liveSessionId, isJoinedSession {
             // For joined sessions, need to record all participants
             recordMultiUserSession(wasSuccessful: true)
-        } else {
-            // Regular single-user session
-            sessionManager.addSession(
-                duration: selectedMinutes,
-                wasSuccessful: true,
-                actualDuration: selectedMinutes
-            )
         }
+        
         updateUserStats(successful: true)
 
         // 8. Update UI state - check participant outcomes for joined sessions
@@ -926,16 +925,9 @@ class AppManager: NSObject, ObservableObject {
         // Calculate actual duration in minutes
         let actualDuration = (selectedMinutes * 60 - remainingSeconds) / 60
 
-        if let sessionId = liveSessionId, isJoinedSession {
+        if let _  = liveSessionId, isJoinedSession {
             // For joined sessions, need to record all participants
             recordMultiUserSession(wasSuccessful: false)
-        } else {
-            // Regular single-user session
-            sessionManager.addSession(
-                duration: selectedMinutes,
-                wasSuccessful: false,
-                actualDuration: actualDuration
-            )
         }
         
         updateUserStats(successful: false)
@@ -1572,6 +1564,9 @@ class AppManager: NSObject, ObservableObject {
                 }
         }
 
+    // In AppManager.swift
+    // Update the updateLocationDuringSession method
+
     @MainActor
     func updateLocationDuringSession() {
         // This gets called periodically from your tracking methods
@@ -1587,11 +1582,14 @@ class AppManager: NSObject, ObservableObject {
         var buildingName: String?
         
         if let building = RegionalViewModel.shared.selectedBuilding {
-            buildingId = building.id
+            // Use the standardized building ID format
+            buildingId = String(format: "building-%.6f-%.6f", building.coordinate.latitude, building.coordinate.longitude)
             buildingName = building.name
+            print("📍 Found building for session: \(building.name) [ID: \(buildingId ?? "None")]")
+        } else {
+            print("⚠️ No building selected for this session")
         }
         
-        // Create location data for current session
         var locationData: [String: Any] = [
             "userId": userId,
             "username": username,
@@ -1607,7 +1605,6 @@ class AppManager: NSObject, ObservableObject {
             "locationUpdatedAt": Timestamp(date: Date())
         ]
         
-        // Add building information if available
         if let buildingId = buildingId, let buildingName = buildingName {
             locationData["buildingId"] = buildingId
             locationData["buildingName"] = buildingName
@@ -1642,10 +1639,12 @@ class AppManager: NSObject, ObservableObject {
                 "createdAt": FieldValue.serverTimestamp()
             ]
             
-            // Add building information if available
+            // Add building information if available - using our standardized ID
             if let buildingId = buildingId, let buildingName = buildingName {
                 sessionData["buildingId"] = buildingId
                 sessionData["buildingName"] = buildingName
+                // Add debug print to verify the building ID being stored
+                print("📝 Storing session with building ID: \(buildingId)")
             }
             
             // We set this in both collections to ensure availability

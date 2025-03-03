@@ -14,7 +14,7 @@ class CustomLocationHandler {
         }
         
         // Create a unique ID for the custom location
-        let locationId = "custom-\(coordinate.latitude)-\(coordinate.longitude)-\(Date().timeIntervalSince1970)"
+        let locationId = String(format: "building-%.6f-%.6f", coordinate.latitude, coordinate.longitude)
         
         let locationData: [String: Any] = [
             "id": locationId,

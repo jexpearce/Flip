@@ -416,6 +416,7 @@ class RegionalLeaderboardViewModel: ObservableObject {
                 userBestSessions[session.userId] = session
             }
             
+            
             // Convert to leaderboard entries and sort
             let entries = userBestSessions.values.map { session in
                 RegionalLeaderboardEntry(
@@ -465,17 +466,23 @@ extension RegionalLeaderboardViewModel {
             }
     }
     
+    // In RegionalLeaderboardViewModel.swift
+    // Update the fetchBuildingTopSessions method
+
     private func fetchBuildingTopSessions(building: BuildingInfo, friendIds: [String]) {
         guard let currentUserId = Auth.auth().currentUser?.uid else { return }
         
         let db = Firestore.firestore()
-        let calendar = Calendar.current
-        let currentDate = Date()
-        let weekStart = calendar.date(from: calendar.dateComponents([.yearForWeekOfYear, .weekOfYear], from: currentDate))!
         
-        // Query sessions with building ID
+        // Create standardized building ID
+        let buildingId = String(format: "building-%.6f-%.6f", building.coordinate.latitude, building.coordinate.longitude)
+        
+        // Add debug print to see what building ID we're querying for
+        print("🔍 Querying sessions for building ID: \(buildingId)")
+        
+        // Query sessions with building ID - NOW USES THE STANDARDIZED ID
         let query = db.collection("session_locations")
-            .whereField("buildingId", isEqualTo: building.id)
+            .whereField("buildingId", isEqualTo: buildingId)
             .whereField("lastFlipWasSuccessful", isEqualTo: true)
             .order(by: "actualDuration", descending: true)
             .limit(to: 50)
@@ -485,6 +492,38 @@ extension RegionalLeaderboardViewModel {
                   let snapshot = snapshot else {
                 self?.isLoading = false
                 return
+            }
+            
+            // Log number of results found
+            print("📊 Found \(snapshot.documents.count) sessions for building ID: \(buildingId)")
+            
+            // If no sessions were found, also try querying without the success filter to debug
+            if snapshot.documents.isEmpty {
+                db.collection("session_locations")
+                    .whereField("buildingId", isEqualTo: buildingId)
+                    .getDocuments { (snapshot, error) in
+                        if let error = error {
+                            print("Error in all-sessions query: \(error.localizedDescription)")
+                        } else {
+                            print("🔎 Found \(snapshot?.documents.count ?? 0) total sessions (including unsuccessful ones)")
+                            
+                            // Print sample buildingIds from the collection to debug
+                            db.collection("session_locations")
+                                .limit(to: 5)
+                                .getDocuments { (snapshot, error) in
+                                    if let documents = snapshot?.documents {
+                                        print("Sample buildingIds in session_locations:")
+                                        for doc in documents {
+                                            if let docBuildingId = doc.data()["buildingId"] as? String {
+                                                print("- \(docBuildingId)")
+                                            } else {
+                                                print("- No buildingId field")
+                                            }
+                                        }
+                                    }
+                                }
+                        }
+                    }
             }
             
             var matchingSessions: [SessionWithLocation] = []
@@ -497,34 +536,31 @@ extension RegionalLeaderboardViewModel {
                       let username = data["username"] as? String,
                       let geoPoint = data["location"] as? GeoPoint,
                       let actualDuration = data["actualDuration"] as? Int,
-                      let wasSuccessful = data["lastFlipWasSuccessful"] as? Bool,
-                      let sessionStartTime = (data["sessionStartTime"] as? Timestamp)?.dateValue() else {
+                      let wasSuccessful = data["lastFlipWasSuccessful"] as? Bool else {
+                    print("⚠️ Missing required fields in session document")
                     continue
                 }
                 
-                // Check if session is from this week and successful
-                if calendar.isDate(sessionStartTime, inSameWeekAs: weekStart) && wasSuccessful {
-                    // Calculate distance from building center
-                    let sessionLocation = CLLocation(latitude: geoPoint.latitude, longitude: geoPoint.longitude)
-                    let buildingLocation = CLLocation(latitude: building.coordinate.latitude, longitude: building.coordinate.longitude)
-                    let distance = sessionLocation.distance(from: buildingLocation)
-                    
-                    // Only show distance for friends and current user
-                    let showDistance = userId == currentUserId || friendIds.contains(userId)
-                    
-                    let session = SessionWithLocation(
-                        id: document.documentID,
-                        userId: userId,
-                        username: username,
-                        duration: actualDuration,
-                        location: sessionLocation,
-                        distance: showDistance ? distance : 0,
-                        isFriend: friendIds.contains(userId),
-                        isCurrentUser: userId == currentUserId
-                    )
-                    
-                    matchingSessions.append(session)
-                }
+                // Create session data structure
+                let sessionLocation = CLLocation(latitude: geoPoint.latitude, longitude: geoPoint.longitude)
+                let buildingLocation = CLLocation(latitude: building.coordinate.latitude, longitude: building.coordinate.longitude)
+                let distance = sessionLocation.distance(from: buildingLocation)
+                
+                // Only show distance for friends and current user
+                let showDistance = userId == currentUserId || friendIds.contains(userId)
+                
+                let session = SessionWithLocation(
+                    id: document.documentID,
+                    userId: userId,
+                    username: username,
+                    duration: actualDuration,
+                    location: sessionLocation,
+                    distance: showDistance ? distance : 0,
+                    isFriend: friendIds.contains(userId),
+                    isCurrentUser: userId == currentUserId
+                )
+                
+                matchingSessions.append(session)
             }
             
             // Group by user, find max duration for each
@@ -551,6 +587,9 @@ extension RegionalLeaderboardViewModel {
                     isCurrentUser: session.isCurrentUser
                 )
             }.sorted { $0.duration > $1.duration }
+            
+            // Log final number of entries
+            print("📊 Final leaderboard entries: \(entries.count)")
             
             DispatchQueue.main.async {
                 self.leaderboardEntries = entries

@@ -12,7 +12,8 @@ struct BuildingInfo: Codable, Identifiable, Equatable {
     }
     
     init(id: String, name: String, coordinate: CLLocationCoordinate2D) {
-        self.id = id
+        // Standardize building ID format regardless of what was passed in
+        self.id = String(format: "building-%.6f-%.6f", coordinate.latitude, coordinate.longitude)
         self.name = name
         self.coordinate = coordinate
     }
