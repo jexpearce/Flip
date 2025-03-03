@@ -731,6 +731,7 @@ struct CompactLikesListView: View {
 struct CommentsView: View {
     let session: Session
     let viewModel: FeedViewModel
+    @State private var hasLoadedComments = false
     
     var body: some View {
         VStack(alignment: .leading, spacing: 4) {

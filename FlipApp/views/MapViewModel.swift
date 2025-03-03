@@ -440,10 +440,20 @@ class MapViewModel: NSObject, ObservableObject, CLLocationManagerDelegate {
         
         guard let username = data["username"] as? String,
               let geoPoint = data["location"] as? GeoPoint,
-              let wasSuccessful = data["lastFlipWasSuccessful"] as? Bool,
               let sessionStartTime = (data["sessionStartTime"] as? Timestamp)?.dateValue(),
               let sessionEndTime = (data["sessionEndTime"] as? Timestamp)?.dateValue()
         else { return nil }
+        
+        // IMPORTANT CHANGE: Explicitly check for the wasSuccessful field and add debug
+        let wasSuccessful: Bool
+        if let successValue = data["lastFlipWasSuccessful"] as? Bool {
+            wasSuccessful = successValue
+            print("Session for \(username) success status: \(wasSuccessful)")
+        } else {
+            // Default to true if field is missing
+            wasSuccessful = true
+            print("WARNING: Missing success status for \(username), defaulting to true")
+        }
         
         let sessionDuration = data["sessionDuration"] as? Int ?? 25
         let participants = data["participants"] as? [String]
@@ -458,7 +468,7 @@ class MapViewModel: NSObject, ObservableObject, CLLocationManagerDelegate {
             ),
             isCurrentlyFlipped: false,
             lastFlipTime: sessionEndTime,
-            lastFlipWasSuccessful: wasSuccessful,
+            lastFlipWasSuccessful: wasSuccessful,  // Use our explicitly checked value
             sessionDuration: sessionDuration,
             sessionStartTime: sessionStartTime,
             isHistorical: true,

@@ -251,9 +251,11 @@ struct MapView: View {
                         // Load user profile and navigate
                         viewModel.loadUserForProfile(userId: userId) { user in
                             if let user = user {
+                                
                                 // Navigate to friend profile
                                 DispatchQueue.main.async {
                                     viewRouter.showFriendProfile(friend: user)
+                                    viewRouter.selectedTab = 3 // Switch to Friends tab
                                 }
                                 selectedFriend = nil
                             }
