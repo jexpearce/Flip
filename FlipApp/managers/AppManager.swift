@@ -1564,12 +1564,9 @@ class AppManager: NSObject, ObservableObject {
                 }
         }
 
-    // In AppManager.swift
-    // Update the updateLocationDuringSession method
 
     @MainActor
     func updateLocationDuringSession() {
-        // This gets called periodically from your tracking methods
         guard LocationHandler.shared.lastLocation.horizontalAccuracy >= 0 else { return }
         let location = LocationHandler.shared.lastLocation
         
@@ -1578,18 +1575,15 @@ class AppManager: NSObject, ObservableObject {
         let username = FirebaseManager.shared.currentUser?.username ?? "User"
         
         // Get current building information if available
-        var buildingId: String?
-        var buildingName: String?
+        let currentBuilding = RegionalViewModel.shared.selectedBuilding
         
-        if let building = RegionalViewModel.shared.selectedBuilding {
-            // Use the standardized building ID format
-            buildingId = String(format: "building-%.6f-%.6f", building.coordinate.latitude, building.coordinate.longitude)
-            buildingName = building.name
-            print("📍 Found building for session: \(building.name) [ID: \(buildingId ?? "None")]")
+        if let building = currentBuilding {
+            print("📍 Found building for session: \(building.name) [ID: \(building.id)]")
         } else {
             print("⚠️ No building selected for this session")
         }
         
+        // Create common location data
         var locationData: [String: Any] = [
             "userId": userId,
             "username": username,
@@ -1605,9 +1599,12 @@ class AppManager: NSObject, ObservableObject {
             "locationUpdatedAt": Timestamp(date: Date())
         ]
         
-        if let buildingId = buildingId, let buildingName = buildingName {
-            locationData["buildingId"] = buildingId
-            locationData["buildingName"] = buildingName
+        // Add building information if available
+        if let building = currentBuilding {
+            locationData["buildingId"] = building.id
+            locationData["buildingName"] = building.name
+            locationData["buildingLatitude"] = building.coordinate.latitude
+            locationData["buildingLongitude"] = building.coordinate.longitude
         }
         
         // Update location data for current session
@@ -1617,57 +1614,25 @@ class AppManager: NSObject, ObservableObject {
         if currentState == .completed || currentState == .failed {
             // Calculate actual duration for the session
             let actualDuration = (selectedMinutes * 60 - remainingSeconds) / 60
+            let startTime = Date().addingTimeInterval(-Double(selectedMinutes * 60 - remainingSeconds))
             
-            // Create a document ID using timestamp to ensure uniqueness
-            let sessionId = "\(userId)_\(Int(Date().timeIntervalSince1970))"
+            // Create a new CompletedSession object
+            let completedSession = CompletedSession(
+                userId: userId,
+                username: username,
+                location: location.coordinate,
+                duration: selectedMinutes,
+                actualDuration: actualDuration,
+                wasSuccessful: currentState == .completed,
+                startTime: startTime,
+                building: currentBuilding
+            )
             
-            // Store historical session data
-            var sessionData: [String: Any] = [
-                "userId": userId,
-                "username": username,
-                "location": GeoPoint(
-                    latitude: location.coordinate.latitude,
-                    longitude: location.coordinate.longitude
-                ),
-                "isCurrentlyFlipped": false,
-                "lastFlipTime": Timestamp(date: Date()),
-                "lastFlipWasSuccessful": currentState == .completed,
-                "sessionDuration": selectedMinutes,
-                "actualDuration": actualDuration,
-                "sessionStartTime": Timestamp(date: Date().addingTimeInterval(-Double(selectedMinutes * 60 - remainingSeconds))),
-                "sessionEndTime": Timestamp(date: Date()),
-                "createdAt": FieldValue.serverTimestamp()
-            ]
-            
-            // Add building information if available - using our standardized ID
-            if let buildingId = buildingId, let buildingName = buildingName {
-                sessionData["buildingId"] = buildingId
-                sessionData["buildingName"] = buildingName
-                // Add debug print to verify the building ID being stored
-                print("📝 Storing session with building ID: \(buildingId)")
-            }
-            
-            // We set this in both collections to ensure availability
-            FirebaseManager.shared.db.collection("session_locations").document(sessionId).setData(sessionData)
-            
-            // This is an important change - also update the locations collection with the final state
-            var finalStateData: [String: Any] = [
-                "isCurrentlyFlipped": false,
-                "lastFlipWasSuccessful": currentState == .completed,
-                "lastFlipTime": Timestamp(date: Date()),
-                "sessionEndTime": Timestamp(date: Date())
-            ]
-            
-            // Add building information to final state if available
-            if let buildingId = buildingId, let buildingName = buildingName {
-                finalStateData["buildingId"] = buildingId
-                finalStateData["buildingName"] = buildingName
-            }
-            
-            FirebaseManager.shared.db.collection("locations").document(userId).setData(finalStateData, merge: true)
+            // Use FirebaseManager to save the session location
+            FirebaseManager.shared.saveSessionLocation(session: completedSession)
         }
     }
-        
+   
     
 
         // MARK: - App Lifecycle
