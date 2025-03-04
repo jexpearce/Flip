@@ -51,10 +51,18 @@ struct FeedView: View {
                 .edgesIgnoringSafeArea(.all)
             )
             .onAppear {
+                print("FeedView appeared - loading feed data")
                 viewModel.loadFeed()
             }
             .refreshable {
+                print("FeedView refreshed - reloading feed data")
                 viewModel.loadFeed()
+            }
+            .onDisappear {
+                // Clean up listeners when view disappears to prevent memory leaks
+                print("FeedView disappeared - cleaning up listeners")
+                viewModel.cleanupLikesListeners()
+                viewModel.cleanupCommentsListeners()
             }
             .alert("Error", isPresented: $viewModel.showError) {
                 Button("OK", role: .cancel) {}
@@ -77,7 +85,6 @@ struct FeedView: View {
         .navigationViewStyle(StackNavigationViewStyle())
     }
 }
-
 // Empty state component
 struct EmptyFeedView: View {
     var body: some View {
@@ -587,7 +594,6 @@ class FeedViewModel: ObservableObject {
                 }
             }
     }
-    
     func loadUserData(userId: String) {
         firebaseManager.db.collection("users").document(userId)
             .getDocument { [weak self] document, error in
@@ -625,6 +631,9 @@ class FeedViewModel: ObservableObject {
     private func loadFriendSessions(userIds: [String]) {
         // Remove any existing listeners
         cleanupLikesListeners()
+        cleanupCommentsListeners()
+        
+        print("Loading sessions for users: \(userIds)")
         
         firebaseManager.db.collection("sessions")
             .whereField("userId", in: userIds)
@@ -637,24 +646,29 @@ class FeedViewModel: ObservableObject {
                     if let error = error {
                         self.showError = true
                         self.errorMessage = error.localizedDescription
+                        print("Error loading sessions: \(error.localizedDescription)")
                     } else if let documents = snapshot?.documents {
+                        print("Loaded \(documents.count) sessions")
+                        
                         self.feedSessions = documents.compactMap { document in
                             try? document.data(as: Session.self)
                         }
                         
-                        // Load like data for each session
-                        for session in self.feedSessions {
-                            self.loadLikesForSession(session.id.uuidString)
-                        }
+                        // After loading sessions, load all associated data
+                        self.loadAllSessionData()
                     }
                     self.isLoading = false
                 }
             }
     }
     
+    // Update the loadCurrentUserSessions method similarly
     private func loadCurrentUserSessions(userId: String) {
         // Remove any existing listeners
         cleanupLikesListeners()
+        cleanupCommentsListeners()
+        
+        print("Loading sessions for user: \(userId)")
         
         firebaseManager.db.collection("sessions")
             .whereField("userId", isEqualTo: userId)
@@ -667,50 +681,20 @@ class FeedViewModel: ObservableObject {
                     if let error = error {
                         self.showError = true
                         self.errorMessage = error.localizedDescription
+                        print("Error loading sessions: \(error.localizedDescription)")
                     } else if let documents = snapshot?.documents {
+                        print("Loaded \(documents.count) sessions")
+                        
                         self.feedSessions = documents.compactMap { document in
                             try? document.data(as: Session.self)
                         }
                         
-                        // Load like data for each session
-                        for session in self.feedSessions {
-                            self.loadLikesForSession(session.id.uuidString)
-                        }
+                        // After loading sessions, load all associated data
+                        self.loadAllSessionData()
                     }
                     self.isLoading = false
                 }
             }
-    }
-    
-    private func loadLikesForSession(_ sessionId: String) {
-        guard let currentUserId = Auth.auth().currentUser?.uid else { return }
-        
-        // Create a listener for this session's likes
-        let listener = firebaseManager.db.collection("likes")
-            .whereField("sessionId", isEqualTo: sessionId)
-            .addSnapshotListener { [weak self] snapshot, error in
-                guard let self = self, let documents = snapshot?.documents else {
-                    return
-                }
-                
-                DispatchQueue.main.async {
-                    // Get all user IDs who liked this session
-                    let userIds = documents.compactMap { document -> String? in
-                        return document.data()["userId"] as? String
-                    }
-                    
-                    // Update the session likes info
-                    self.sessionLikes[sessionId] = userIds.count
-                    self.likedByUser[sessionId] = userIds.contains(currentUserId)
-                    self.likesUsers[sessionId] = userIds
-                    
-                    // Trigger UI update
-                    self.objectWillChange.send()
-                }
-            }
-        
-        // Store the listener for cleanup
-        likesListeners[sessionId] = listener
     }
     func loadCommentsForSession(_ sessionId: String) {
         // Remove any existing listener
@@ -811,7 +795,7 @@ class FeedViewModel: ObservableObject {
         commentsListeners.removeAll()
     }
     
-    private func cleanupLikesListeners() {
+    func cleanupLikesListeners() {
         for (_, listener) in likesListeners {
             listener.remove()
         }
@@ -878,8 +862,6 @@ class FeedViewModel: ObservableObject {
         }
     }
     
-    
-    // Like/unlike a session
     func likeSession(sessionId: String) {
         guard let currentUserId = Auth.auth().currentUser?.uid else { return }
         
@@ -887,19 +869,46 @@ class FeedViewModel: ObservableObject {
         let likeId = "\(sessionId)_\(currentUserId)"
         let likeRef = firebaseManager.db.collection("likes").document(likeId)
         
+        print("Processing like toggle for session: \(sessionId), user: \(currentUserId)")
+        
         // Check if user already liked this session
         likeRef.getDocument { [weak self] document, error in
             guard let self = self else { return }
             
+            if let error = error {
+                print("Error checking like status: \(error.localizedDescription)")
+                return
+            }
+            
             if let document = document, document.exists {
                 // User already liked the session, so unlike it
+                print("Unlike action: Removing existing like")
                 likeRef.delete { error in
                     if let error = error {
                         print("Error removing like: \(error.localizedDescription)")
+                    } else {
+                        print("Like removed successfully")
+                        
+                        // Update local state for immediate UI feedback
+                        DispatchQueue.main.async {
+                            self.likedByUser[sessionId] = false
+                            if let count = self.sessionLikes[sessionId], count > 0 {
+                                self.sessionLikes[sessionId] = count - 1
+                            }
+                            
+                            // Update user lists
+                            if var users = self.likesUsers[sessionId] {
+                                users.removeAll { $0 == currentUserId }
+                                self.likesUsers[sessionId] = users
+                            }
+                            
+                            self.objectWillChange.send()
+                        }
                     }
                 }
             } else {
                 // User hasn't liked the session yet, so add a like
+                print("Like action: Adding new like")
                 let timestamp = Timestamp(date: Date())
                 
                 // Get user data for display
@@ -916,10 +925,82 @@ class FeedViewModel: ObservableObject {
                 likeRef.setData(likeData) { error in
                     if let error = error {
                         print("Error adding like: \(error.localizedDescription)")
+                    } else {
+                        print("Like added successfully")
+                        
+                        // Update local state for immediate UI feedback
+                        DispatchQueue.main.async {
+                            self.likedByUser[sessionId] = true
+                            let currentCount = self.sessionLikes[sessionId] ?? 0
+                            self.sessionLikes[sessionId] = currentCount + 1
+                            
+                            // Update user lists
+                            var users = self.likesUsers[sessionId] ?? []
+                            if !users.contains(currentUserId) {
+                                users.append(currentUserId)
+                                self.likesUsers[sessionId] = users
+                            }
+                            
+                            self.objectWillChange.send()
+                        }
                     }
                 }
             }
         }
+    }
+
+    // Improved method to load likes
+    func loadLikesForSession(_ sessionId: String) {
+        guard let currentUserId = Auth.auth().currentUser?.uid else { return }
+        
+        print("Loading likes for session: \(sessionId)")
+        
+        // Remove any existing listener
+        likesListeners[sessionId]?.remove()
+        
+        // Create a listener for this session's likes
+        let listener = firebaseManager.db.collection("likes")
+            .whereField("sessionId", isEqualTo: sessionId)
+            .addSnapshotListener { [weak self] snapshot, error in
+                guard let self = self else { return }
+                
+                if let error = error {
+                    print("Error loading likes: \(error.localizedDescription)")
+                    return
+                }
+                
+                guard let documents = snapshot?.documents else {
+                    print("No likes found for session: \(sessionId)")
+                    // Initialize with empty data
+                    DispatchQueue.main.async {
+                        self.sessionLikes[sessionId] = 0
+                        self.likedByUser[sessionId] = false
+                        self.likesUsers[sessionId] = []
+                        self.objectWillChange.send()
+                    }
+                    return
+                }
+                
+                print("Found \(documents.count) likes for session: \(sessionId)")
+                
+                DispatchQueue.main.async {
+                    // Get all user IDs who liked this session
+                    let userIds = documents.compactMap { document -> String? in
+                        return document.data()["userId"] as? String
+                    }
+                    
+                    // Update the session likes info
+                    self.sessionLikes[sessionId] = userIds.count
+                    self.likedByUser[sessionId] = userIds.contains(currentUserId)
+                    self.likesUsers[sessionId] = userIds
+                    
+                    // Trigger UI update
+                    self.objectWillChange.send()
+                }
+            }
+        
+        // Store the listener for cleanup
+        likesListeners[sessionId] = listener
     }
     
     // Get likes count for a session
