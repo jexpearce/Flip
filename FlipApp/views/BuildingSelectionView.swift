@@ -21,62 +21,183 @@ struct BuildingSelectionView: View {
                 .tracking(4)
                 .foregroundColor(.white)
                 .shadow(color: Color(red: 56/255, green: 189/255, blue: 248/255).opacity(0.5), radius: 8)
-            
-            Text("Choose the building you're currently in:")
-                .font(.system(size: 16))
-                .foregroundColor(.white.opacity(0.8))
-                .multilineTextAlignment(.center)
-                .padding(.bottom, 10)
-            
-            ScrollView {
-                VStack(spacing: 10) {
-                    ForEach(buildings, id: \.self) { building in
-                        Button(action: {
-                            let buildingName = BuildingIdentificationService.shared.getBuildingName(from: building)
-                            let buildingInfo = BuildingInfo(
-                                id: "", // The BuildingInfo init will standardize this
-                                name: buildingName,
-                                coordinate: building.coordinate
-                            )
-                            onBuildingSelected(buildingInfo)
-                            isPresented = false
-                        }) {
-                            HStack {
-                                VStack(alignment: .leading, spacing: 4) {
-                                    Text(BuildingIdentificationService.shared.getBuildingName(from: building))
-                                        .font(.system(size: 16, weight: .bold))
-                                        .foregroundColor(.white)
-                                    
-                                    Text(formatAddress(from: building))
-                                        .font(.system(size: 14))
-                                        .foregroundColor(.white.opacity(0.7))
-                                        .lineLimit(1)
+            if buildings.isEmpty {
+                            // No buildings view
+                            VStack(spacing: 20) {
+                                Image(systemName: "building.2.slash")
+                                    .font(.system(size: 60))
+                                    .foregroundColor(.white.opacity(0.7))
+                                    .padding()
+                                
+                                Text("No Buildings Detected Nearby")
+                                    .font(.system(size: 20, weight: .bold))
+                                    .foregroundColor(.white)
+                                    .multilineTextAlignment(.center)
+                                
+                                Text("You don't appear to be near any recognizable buildings. You can create a custom location instead.")
+                                    .font(.system(size: 16))
+                                    .foregroundColor(.white.opacity(0.8))
+                                    .multilineTextAlignment(.center)
+                                    .padding(.horizontal, 20)
+                                
+                                Button(action: {
+                                    showCustomLocationCreation = true
+                                }) {
+                                    HStack {
+                                        Image(systemName: "plus.circle.fill")
+                                            .font(.system(size: 20))
+                                            .foregroundColor(Color(red: 56/255, green: 189/255, blue: 248/255))
+                                        
+                                        Text("Create Custom Location")
+                                            .font(.system(size: 18, weight: .bold))
+                                            .foregroundColor(.white)
+                                    }
+                                    .padding()
+                                    .frame(maxWidth: .infinity)
+                                    .background(
+                                        RoundedRectangle(cornerRadius: 12)
+                                            .fill(Color.white.opacity(0.15))
+                                            .overlay(
+                                                RoundedRectangle(cornerRadius: 12)
+                                                    .stroke(Color(red: 56/255, green: 189/255, blue: 248/255).opacity(0.5), lineWidth: 1.5)
+                                            )
+                                    )
+                                    .padding(.horizontal, 20)
                                 }
-                                .padding(.leading, 10)
+                            }
+                            .padding(.vertical, 30)
+            } else {
+                
+                Text("Choose the building you're currently in:")
+                    .font(.system(size: 16))
+                    .foregroundColor(.white.opacity(0.8))
+                    .multilineTextAlignment(.center)
+                    .padding(.bottom, 10)
+                
+                ScrollView {
+                    VStack(spacing: 10) {
+                        ForEach(buildings, id: \.self) { building in
+                            Button(action: {
+                                let buildingName = BuildingIdentificationService.shared.getBuildingName(from: building)
+                                let buildingInfo = BuildingInfo(
+                                    id: "", // The BuildingInfo init will standardize this
+                                    name: buildingName,
+                                    coordinate: building.coordinate
+                                )
+                                onBuildingSelected(buildingInfo)
+                                isPresented = false
+                            }) {
+                                HStack {
+                                    VStack(alignment: .leading, spacing: 4) {
+                                        Text(BuildingIdentificationService.shared.getBuildingName(from: building))
+                                            .font(.system(size: 16, weight: .bold))
+                                            .foregroundColor(.white)
+                                        
+                                        Text(formatAddress(from: building))
+                                            .font(.system(size: 14))
+                                            .foregroundColor(.white.opacity(0.7))
+                                            .lineLimit(1)
+                                    }
+                                    .padding(.leading, 10)
+                                    
+                                    Spacer()
+                                    
+                                    // Session count badge
+                                    if let count = sessionCounts[buildingToKey(building)], count > 0 {
+                                        Text("\(count) sessions")
+                                            .font(.system(size: 12, weight: .bold))
+                                            .foregroundColor(.white)
+                                            .padding(.horizontal, 8)
+                                            .padding(.vertical, 4)
+                                            .background(
+                                                Capsule()
+                                                    .fill(Color(red: 234/255, green: 179/255, blue: 8/255).opacity(0.3))
+                                                    .overlay(
+                                                        Capsule()
+                                                            .stroke(Color(red: 234/255, green: 179/255, blue: 8/255).opacity(0.5), lineWidth: 1)
+                                                    )
+                                            )
+                                            .padding(.trailing, 6)
+                                    }
+                                    
+                                    Image(systemName: "chevron.right")
+                                        .foregroundColor(.white.opacity(0.6))
+                                        .padding(.trailing, 10)
+                                }
+                                .padding(.vertical, 12)
+                                .background(
+                                    RoundedRectangle(cornerRadius: 12)
+                                        .fill(Color.white.opacity(0.08))
+                                        .overlay(
+                                            RoundedRectangle(cornerRadius: 12)
+                                                .stroke(Color.white.opacity(0.2), lineWidth: 1)
+                                        )
+                                )
+                            }
+                        }
+                        
+                        // Frequent locations section
+                        if !frequentLocations.isEmpty {
+                            VStack(alignment: .leading, spacing: 8) {
+                                Text("FREQUENT LOCATIONS")
+                                    .font(.system(size: 12, weight: .bold))
+                                    .tracking(1)
+                                    .foregroundColor(.white.opacity(0.7))
+                                    .padding(.top, 10)
+                                    .padding(.horizontal, 10)
                                 
-                                Spacer()
-                                
-                                // Session count badge
-                                if let count = sessionCounts[buildingToKey(building)], count > 0 {
-                                    Text("\(count) sessions")
-                                        .font(.system(size: 12, weight: .bold))
-                                        .foregroundColor(.white)
-                                        .padding(.horizontal, 8)
-                                        .padding(.vertical, 4)
+                                ForEach(frequentLocations) { location in
+                                    Button(action: {
+                                        // Increment usage count when selected
+                                        CustomLocationHandler.shared.incrementLocationUsage(locationId: location.id)
+                                        onBuildingSelected(location)
+                                        isPresented = false
+                                    }) {
+                                        HStack {
+                                            Image(systemName: "clock.arrow.circlepath")
+                                                .font(.system(size: 16))
+                                                .foregroundColor(Color(red: 56/255, green: 189/255, blue: 248/255))
+                                                .padding(.leading, 10)
+                                            
+                                            Text(location.name)
+                                                .font(.system(size: 16, weight: .medium))
+                                                .foregroundColor(.white)
+                                            
+                                            Spacer()
+                                            
+                                            Image(systemName: "chevron.right")
+                                                .foregroundColor(.white.opacity(0.6))
+                                                .padding(.trailing, 10)
+                                        }
+                                        .padding(.vertical, 12)
                                         .background(
-                                            Capsule()
-                                                .fill(Color(red: 234/255, green: 179/255, blue: 8/255).opacity(0.3))
+                                            RoundedRectangle(cornerRadius: 12)
+                                                .fill(Color.white.opacity(0.08))
                                                 .overlay(
-                                                    Capsule()
-                                                        .stroke(Color(red: 234/255, green: 179/255, blue: 8/255).opacity(0.5), lineWidth: 1)
+                                                    RoundedRectangle(cornerRadius: 12)
+                                                        .stroke(Color.white.opacity(0.2), lineWidth: 1)
                                                 )
                                         )
-                                        .padding(.trailing, 6)
+                                    }
                                 }
+                            }
+                        }
+                        
+                        // Custom building option
+                        Button(action: {
+                            showCustomLocationCreation = true
+                        }) {
+                            HStack {
+                                Image(systemName: "plus.circle.fill")
+                                    .font(.system(size: 20))
+                                    .foregroundColor(Color(red: 56/255, green: 189/255, blue: 248/255))
+                                    .padding(.leading, 10)
                                 
-                                Image(systemName: "chevron.right")
-                                    .foregroundColor(.white.opacity(0.6))
-                                    .padding(.trailing, 10)
+                                Text("Add Custom Location")
+                                    .font(.system(size: 16, weight: .bold))
+                                    .foregroundColor(.white)
+                                
+                                Spacer()
                             }
                             .padding(.vertical, 12)
                             .background(
@@ -84,87 +205,13 @@ struct BuildingSelectionView: View {
                                     .fill(Color.white.opacity(0.08))
                                     .overlay(
                                         RoundedRectangle(cornerRadius: 12)
-                                            .stroke(Color.white.opacity(0.2), lineWidth: 1)
+                                            .stroke(Color(red: 56/255, green: 189/255, blue: 248/255).opacity(0.3), lineWidth: 1)
                                     )
                             )
                         }
                     }
-                    
-                    // Frequent locations section
-                    if !frequentLocations.isEmpty {
-                        VStack(alignment: .leading, spacing: 8) {
-                            Text("FREQUENT LOCATIONS")
-                                .font(.system(size: 12, weight: .bold))
-                                .tracking(1)
-                                .foregroundColor(.white.opacity(0.7))
-                                .padding(.top, 10)
-                                .padding(.horizontal, 10)
-                            
-                            ForEach(frequentLocations) { location in
-                                Button(action: {
-                                    // Increment usage count when selected
-                                    CustomLocationHandler.shared.incrementLocationUsage(locationId: location.id)
-                                    onBuildingSelected(location)
-                                    isPresented = false
-                                }) {
-                                    HStack {
-                                        Image(systemName: "clock.arrow.circlepath")
-                                            .font(.system(size: 16))
-                                            .foregroundColor(Color(red: 56/255, green: 189/255, blue: 248/255))
-                                            .padding(.leading, 10)
-                                        
-                                        Text(location.name)
-                                            .font(.system(size: 16, weight: .medium))
-                                            .foregroundColor(.white)
-                                        
-                                        Spacer()
-                                        
-                                        Image(systemName: "chevron.right")
-                                            .foregroundColor(.white.opacity(0.6))
-                                            .padding(.trailing, 10)
-                                    }
-                                    .padding(.vertical, 12)
-                                    .background(
-                                        RoundedRectangle(cornerRadius: 12)
-                                            .fill(Color.white.opacity(0.08))
-                                            .overlay(
-                                                RoundedRectangle(cornerRadius: 12)
-                                                    .stroke(Color.white.opacity(0.2), lineWidth: 1)
-                                            )
-                                    )
-                                }
-                            }
-                        }
-                    }
-                    
-                    // Custom building option
-                    Button(action: {
-                        showCustomLocationCreation = true
-                    }) {
-                        HStack {
-                            Image(systemName: "plus.circle.fill")
-                                .font(.system(size: 20))
-                                .foregroundColor(Color(red: 56/255, green: 189/255, blue: 248/255))
-                                .padding(.leading, 10)
-                            
-                            Text("Add Custom Location")
-                                .font(.system(size: 16, weight: .bold))
-                                .foregroundColor(.white)
-                            
-                            Spacer()
-                        }
-                        .padding(.vertical, 12)
-                        .background(
-                            RoundedRectangle(cornerRadius: 12)
-                                .fill(Color.white.opacity(0.08))
-                                .overlay(
-                                    RoundedRectangle(cornerRadius: 12)
-                                        .stroke(Color(red: 56/255, green: 189/255, blue: 248/255).opacity(0.3), lineWidth: 1)
-                                )
-                        )
-                    }
+                    .padding(.horizontal)
                 }
-                .padding(.horizontal)
             }
             
             Button(action: {
@@ -249,7 +296,24 @@ struct BuildingSelectionView: View {
         
         return address.isEmpty ? "No address available" : address
     }
-    // Add these methods to your BuildingSelectionView
+    private func formatDistance(to building: MKPlacemark) -> String {
+            let buildingLocation = CLLocation(latitude: building.coordinate.latitude, longitude: building.coordinate.longitude)
+            let userLocation = LocationHandler.shared.lastLocation
+            
+            let distance = userLocation.distance(from: buildingLocation)
+            
+            if distance < 50 {
+                return "< 50m"
+            } else if distance < 100 {
+                return "< 100m"
+            } else if distance < 1000 {
+                return "\(Int(distance))m"
+            } else {
+                let kilometers = distance / 1000.0
+                return String(format: "%.1f km", kilometers)
+            }
+        }
+    
 
     // Helper method to convert MKPlacemark to a key string for dictionary
     private func buildingToKey(_ building: MKPlacemark) -> String {

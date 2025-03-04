@@ -4,6 +4,73 @@ import FirebaseFirestore
 import CoreLocation
 import MapKit
 
+
+struct BuildingSelectorButton: View {
+    let buildingName: String?
+    let action: () -> Void
+    let refreshAction: () -> Void
+    @Binding var isRefreshing: Bool
+    
+    var body: some View {
+        HStack {
+            Button(action: action) {
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("CURRENT BUILDING")
+                        .font(.system(size: 12, weight: .bold))
+                        .tracking(2)
+                        .foregroundColor(.white.opacity(0.7))
+                    
+                    Text(buildingName ?? "Tap to select building")
+                        .font(.system(size: 16, weight: .bold))
+                        .foregroundColor(.white)
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(.vertical, 12)
+                .padding(.horizontal, 16)
+            }
+            
+            // Refresh button
+            Button(action: refreshAction) {
+                ZStack {
+                    if isRefreshing {
+                        ProgressView()
+                            .progressViewStyle(CircularProgressViewStyle(tint: .white))
+                            .scaleEffect(0.8)
+                    } else {
+                        VStack(spacing: 2) {
+                            Image(systemName: "arrow.triangle.2.circlepath")
+                                .font(.system(size: 16))
+                                .foregroundColor(.white.opacity(0.7))
+                            
+                            Text("REFRESH")
+                                .font(.system(size: 10, weight: .bold))
+                                .foregroundColor(.white.opacity(0.7))
+                        }
+                    }
+                }
+                .frame(width: 60)
+                .padding(.vertical, 12)
+                .background(
+                    RoundedRectangle(cornerRadius: 8)
+                        .fill(Color.white.opacity(0.1))
+                )
+            }
+            .disabled(isRefreshing)
+        }
+        .background(
+            ZStack {
+                RoundedRectangle(cornerRadius: 12)
+                    .fill(Color.white.opacity(0.08))
+                
+                RoundedRectangle(cornerRadius: 12)
+                    .stroke(Color.white.opacity(0.2), lineWidth: 1)
+            }
+        )
+        .padding(.horizontal)
+    }
+}
+
+
 // Update the RegionalView struct body to use the new BuildingSelectorButton
 struct RegionalView: View {
     @StateObject private var viewModel = RegionalViewModel.shared
@@ -38,7 +105,11 @@ struct RegionalView: View {
                         buildingName: viewModel.selectedBuilding?.name,
                         action: {
                             viewModel.startBuildingIdentification()
-                        }
+                        },
+                        refreshAction: {
+                            viewModel.refreshCurrentBuilding()
+                        },
+                        isRefreshing: $viewModel.isRefreshing
                     )
                     
                     // Regional Leaderboard with improved layout
@@ -160,6 +231,8 @@ class RegionalViewModel: NSObject, ObservableObject, CLLocationManagerDelegate {
     @Published var selectedBuilding: BuildingInfo?
     @Published var suggestedBuildings: [MKPlacemark] = []
     @Published var showBuildingSelection = false
+    @Published var isRefreshing = false
+    @Published var showCustomLocationCreation = false
     
     private let locationManager = CLLocationManager()
     
@@ -185,6 +258,44 @@ class RegionalViewModel: NSObject, ObservableObject, CLLocationManagerDelegate {
             }
         }
     }
+    @MainActor func refreshCurrentBuilding() {
+            isRefreshing = true
+            
+            // Request a high accuracy location update
+            locationManager.desiredAccuracy = kCLLocationAccuracyBest
+            locationManager.requestLocation()
+            
+            // Get current location
+            let location = LocationHandler.shared.lastLocation
+            
+            // Skip if location is invalid
+            guard location.horizontalAccuracy > 0 else {
+                isRefreshing = false
+                return
+            }
+            
+            // If we have a selected building, check if user has moved far from it
+            if let building = selectedBuilding {
+                let buildingLocation = CLLocation(
+                    latitude: building.coordinate.latitude,
+                    longitude: building.coordinate.longitude
+                )
+                
+                let distance = location.distance(from: buildingLocation)
+                
+                // If user has moved more than threshold, suggest a building change
+                if distance > 100 { // 100 meters away from current building
+                    print("User has moved \(Int(distance))m from current building, checking for new buildings...")
+                    startBuildingIdentification()
+                } else {
+                    // Still in the same building
+                    isRefreshing = false
+                }
+            } else {
+                // No building selected, try to find one
+                startBuildingIdentification()
+            }
+        }
     
     // MARK: - CLLocationManagerDelegate Methods
     
@@ -217,42 +328,46 @@ class RegionalViewModel: NSObject, ObservableObject, CLLocationManagerDelegate {
     
     @MainActor
     func startBuildingIdentification() {
-        // Request high-accuracy location for building identification
-        locationManager.desiredAccuracy = kCLLocationAccuracyBest
-        locationManager.requestLocation()
-        
-        var location: CLLocation
-        
-        // Get the most accurate location available
-        let lastLocation = LocationHandler.shared.lastLocation
-        
-        if lastLocation.horizontalAccuracy > 0 && lastLocation.horizontalAccuracy < 50 {
-            location = lastLocation
-        } else if let managerLocation = currentLocation,
-                  managerLocation.horizontalAccuracy > 0 && managerLocation.horizontalAccuracy < 50 {
-            location = managerLocation
-        } else {
-            // If we don't have an accurate location, use the last known location
-            location = lastLocation
-        }
-        
-        BuildingIdentificationService.shared.identifyNearbyBuildings(at: location) { buildings, error in
-            if let error = error {
-                print("Error identifying buildings: \(error.localizedDescription)")
-                return
+            // Request high-accuracy location for building identification
+            locationManager.desiredAccuracy = kCLLocationAccuracyBest
+            locationManager.requestLocation()
+            
+            var location: CLLocation
+            
+            // Get the most accurate location available
+            let lastLocation = LocationHandler.shared.lastLocation
+            
+            if lastLocation.horizontalAccuracy > 0 && lastLocation.horizontalAccuracy < 50 {
+                location = lastLocation
+            } else if let managerLocation = currentLocation,
+                      managerLocation.horizontalAccuracy > 0 && managerLocation.horizontalAccuracy < 50 {
+                location = managerLocation
+            } else {
+                // If we don't have an accurate location, use the last known location
+                location = lastLocation
             }
             
-            guard let buildings = buildings, !buildings.isEmpty else {
-                print("No buildings found nearby")
-                return
-            }
-            
-            DispatchQueue.main.async {
-                self.suggestedBuildings = buildings
-                self.showBuildingSelection = true
+            BuildingIdentificationService.shared.identifyNearbyBuildings(at: location) { [weak self] buildings, error in
+                guard let self = self else { return }
+                
+                self.isRefreshing = false
+                
+                if let error = error {
+                    print("Error identifying buildings: \(error.localizedDescription)")
+                    return
+                }
+                
+                DispatchQueue.main.async {
+                    if let buildings = buildings, !buildings.isEmpty {
+                        self.suggestedBuildings = buildings
+                        self.showBuildingSelection = true
+                    } else {
+                        // No buildings found - show a custom popup
+                        self.showNoNearbyBuildingsAlert()
+                    }
+                }
             }
         }
-    }
     
     // In RegionalViewModel.swift
     // Update the selectBuilding method
@@ -293,6 +408,7 @@ class RegionalViewModel: NSObject, ObservableObject, CLLocationManagerDelegate {
         }
     }
     
+    
     func loadCurrentBuilding() {
         guard let userId = Auth.auth().currentUser?.uid else { return }
         
@@ -320,4 +436,28 @@ class RegionalViewModel: NSObject, ObservableObject, CLLocationManagerDelegate {
                 }
             }
     }
-}
+    private func showNoNearbyBuildingsAlert() {
+            // Create custom alert if needed
+            // For simplicity, let's use a standard alert
+            let alert = UIAlertController(
+                title: "No Buildings Nearby",
+                message: "You don't appear to be near any recognizable buildings. You can create a custom location instead.",
+                preferredStyle: .alert
+            )
+            
+            alert.addAction(UIAlertAction(title: "Create Custom Location", style: .default) { _ in
+                // Show custom location creation screen
+                // This would typically navigate to a custom location creation screen
+                self.showCustomLocationCreation = true
+            })
+            
+            alert.addAction(UIAlertAction(title: "Cancel", style: .cancel))
+            
+            // Find the current UIWindow and present the alert
+            if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
+               let rootViewController = windowScene.windows.first?.rootViewController {
+                rootViewController.present(alert, animated: true)
+            }
+        }
+    }
+

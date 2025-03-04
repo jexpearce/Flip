@@ -368,56 +368,7 @@ struct DefaultProfileImage: View {
     }
 }
 
-// Improved Current Building Button to add to RegionalView.swift
-struct BuildingSelectorButton: View {
-    let buildingName: String?
-    let action: () -> Void
-    
-    var body: some View {
-        Button(action: action) {
-            HStack {
-                VStack(alignment: .leading, spacing: 4) {
-                    Text("CURRENT BUILDING")
-                        .font(.system(size: 12, weight: .bold))
-                        .tracking(2)
-                        .foregroundColor(.white.opacity(0.7))
-                    
-                    Text(buildingName ?? "Tap to select building")
-                        .font(.system(size: 16, weight: .bold))
-                        .foregroundColor(.white)
-                }
-                
-                Spacer()
-                
-                VStack(spacing: 2) {
-                    Image(systemName: "arrow.triangle.2.circlepath")
-                        .font(.system(size: 16))
-                        .foregroundColor(.white.opacity(0.7))
-                    
-                    Text("SWITCH")
-                        .font(.system(size: 10, weight: .bold))
-                        .foregroundColor(.white.opacity(0.7))
-                }
-                .padding(8)
-                .background(
-                    RoundedRectangle(cornerRadius: 8)
-                        .fill(Color.white.opacity(0.1))
-                )
-            }
-            .padding()
-            .background(
-                ZStack {
-                    RoundedRectangle(cornerRadius: 12)
-                        .fill(Color.white.opacity(0.08))
-                    
-                    RoundedRectangle(cornerRadius: 12)
-                        .stroke(Color.white.opacity(0.2), lineWidth: 1)
-                }
-            )
-            .padding(.horizontal)
-        }
-    }
-}
+
 // STRUCTURE 2: RegionalLeaderboardViewModel class - moved outside struct
 class RegionalLeaderboardViewModel: ObservableObject {
     @Published var leaderboardEntries: [RegionalLeaderboardEntry] = []
@@ -530,7 +481,7 @@ class RegionalLeaderboardViewModel: ObservableObject {
                 }
                 
                 // Check if session is from this week and successful
-                if calendar.isDate(sessionStartTime, inSameWeekAs: weekStart) && wasSuccessful {
+                if calendar.compare(sessionStartTime, to: weekStart, toGranularity: .weekOfYear) == .orderedSame && wasSuccessful {
                     // Calculate distance
                     let sessionLocation = CLLocation(latitude: geoPoint.latitude, longitude: geoPoint.longitude)
                     let distance = sessionLocation.distance(from: CLLocation(latitude: center.latitude, longitude: center.longitude))
@@ -686,7 +637,6 @@ extension RegionalLeaderboardViewModel {
             self.isLoading = false
         }
     }
-    
     private func fetchBuildingTopSessions(building: BuildingInfo, friendIds: [String]) {
         guard let currentUserId = Auth.auth().currentUser?.uid else { return }
         
@@ -700,9 +650,9 @@ extension RegionalLeaderboardViewModel {
         
         // Get the building's location as a CLLocation
         let buildingLocation = CLLocation(latitude: building.coordinate.latitude, longitude: building.coordinate.longitude)
-        let radius = 100.0 // Search within 100 meters of the building
         
-        // First try exact building ID match
+        // Use exact building ID match only - no proximity-based fallback
+        // This ensures sessions only appear in their own building's leaderboard
         db.collection("session_locations")
             .whereField("buildingId", isEqualTo: buildingId)
             .whereField("lastFlipWasSuccessful", isEqualTo: true)
@@ -711,58 +661,25 @@ extension RegionalLeaderboardViewModel {
             .getDocuments { [weak self] snapshot, error in
                 guard let self = self else { return }
                 
-                // First check for exact building ID matches
-                if let documents = snapshot?.documents, !documents.isEmpty {
-                    print("📊 Found \(documents.count) sessions with exact building ID match")
-                    self.processSessionDocuments(documents, buildingLocation, friendIds, currentUserId)
+                if let error = error {
+                    print("❌ Error fetching building sessions: \(error.localizedDescription)")
+                    self.isLoading = false
                     return
                 }
                 
-                print("⚠️ No exact building ID matches, trying proximity search")
+                guard let documents = snapshot?.documents else {
+                    print("❌ No documents in snapshot")
+                    self.leaderboardEntries = []
+                    self.isLoading = false
+                    return
+                }
                 
-                // If no exact matches, try proximity search
-                db.collection("session_locations")
-                    .whereField("lastFlipWasSuccessful", isEqualTo: true)
-                    .order(by: "actualDuration", descending: true)
-                    .limit(to: 100)
-                    .getDocuments { [weak self] snapshot, error in
-                        guard let self = self else { return }
-                        
-                        if let error = error {
-                            print("❌ Error in proximity search: \(error.localizedDescription)")
-                            self.isLoading = false
-                            return
-                        }
-                        
-                        guard let documents = snapshot?.documents else {
-                            print("❌ No documents found in proximity search")
-                            self.isLoading = false
-                            return
-                        }
-                        
-                        print("🔍 Filtering \(documents.count) sessions by proximity")
-                        
-                        // Filter by proximity to building
-                        var nearbyDocuments: [QueryDocumentSnapshot] = []
-                        
-                        for document in documents {
-                            if let geoPoint = document.data()["location"] as? GeoPoint {
-                                let sessionLocation = CLLocation(latitude: geoPoint.latitude, longitude: geoPoint.longitude)
-                                let distance = sessionLocation.distance(from: buildingLocation)
-                                
-                                if distance <= radius {
-                                    nearbyDocuments.append(document)
-                                }
-                            }
-                        }
-                        
-                        print("📊 Found \(nearbyDocuments.count) sessions within \(Int(radius))m of building")
-                        self.processSessionDocuments(nearbyDocuments, buildingLocation, friendIds, currentUserId)
-                    }
+                print("📊 Found \(documents.count) sessions with exact building ID match")
+                self.processSessionDocuments(documents, buildingLocation, friendIds, currentUserId)
             }
     }
 }
-    
+
 // STRUCTURE 4: RegionalLeaderboardEntry struct - moved outside
 struct RegionalLeaderboardEntry: Identifiable {
     let id: String
