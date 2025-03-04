@@ -292,38 +292,60 @@ class LiveSessionManager: ObservableObject {
             lastUpdateTime: lastUpdateTimestamp.dateValue()
         )
     }
-    
     func joinSession(sessionId: String, completion: @escaping (Bool, Int, Int) -> Void) {
+        // Ensure Firebase is initialized
         if FirebaseApp.app() == nil {
-                print("Firebase not initialized. Attempting to configure.")
-                FirebaseApp.configure()
-            }
+            print("Firebase not initialized. Attempting to configure.")
+            FirebaseApp.configure()
+        }
+        
         guard let userId = Auth.auth().currentUser?.uid,
               let username = FirebaseManager.shared.currentUser?.username else {
+            print("User not authenticated, cannot join session")
             completion(false, 0, 0)
             return
         }
         
         isJoiningSession = true
         
-        // Get the session first
+        // Get the session first with better error handling
         db.collection("live_sessions").document(sessionId).getDocument { [weak self] document, error in
-            guard let self = self,
-                  let document = document,
-                  document.exists,
-                  let sessionData = self.parseLiveSessionDocument(document) else {
-                self?.isJoiningSession = false
+            guard let self = self else {
+                print("Self reference lost")
+                completion(false, 0, 0)
+                return
+            }
+            
+            if let error = error {
+                print("Error fetching session: \(error.localizedDescription)")
+                self.isJoiningSession = false
+                completion(false, 0, 0)
+                return
+            }
+            
+            guard let document = document, document.exists else {
+                print("Session document doesn't exist")
+                self.isJoiningSession = false
+                completion(false, 0, 0)
+                return
+            }
+            
+            guard let sessionData = self.parseLiveSessionDocument(document) else {
+                print("Failed to parse session document")
+                self.isJoiningSession = false
                 completion(false, 0, 0)
                 return
             }
             
             // Check if session can be joined
             if !sessionData.canJoin {
+                print("Session cannot be joined: full=\(sessionData.isFull), time_remaining=\(sessionData.remainingSeconds)")
                 self.isJoiningSession = false
                 completion(false, 0, 0)
                 return
             }
             
+            // Proceed with joining (rest of the existing code...)
             // Update session with new participant
             var updatedParticipants = sessionData.participants
             if !updatedParticipants.contains(userId) {
@@ -350,10 +372,19 @@ class LiveSessionManager: ObservableObject {
                     // Listen for updates to this session
                     self.listenToJoinedSession(sessionId: sessionId)
                     
-                    self.isJoiningSession = false
-                    
-                    // Return success with the remaining time and total duration
-                    completion(true, sessionData.remainingSeconds, sessionData.targetDuration)
+                    // Get a fresh copy of the session data
+                    self.getSessionDetails(sessionId: sessionId) { updatedData in
+                        if let data = updatedData {
+                            // Pass current data to completion handler
+                            DispatchQueue.main.async {
+                                self.isJoiningSession = false
+                                completion(true, data.remainingSeconds, data.targetDuration)
+                            }
+                        } else {
+                            self.isJoiningSession = false
+                            completion(true, sessionData.remainingSeconds, sessionData.targetDuration)
+                        }
+                    }
                 }
             }
         }
@@ -502,7 +533,6 @@ class LiveSessionManager: ObservableObject {
             }
         }
     }
-    // Add this to LiveSessionManager to handle paused sessions during joined sessions
 
     func handlePausedSessionParticipant(sessionId: String, userId: String, isPaused: Bool) {
         // Update participant status

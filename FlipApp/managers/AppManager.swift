@@ -148,21 +148,32 @@ class AppManager: NSObject, ObservableObject {
             body: "Phone must be face down when timer reaches zero")
     }
     func joinLiveSession(sessionId: String, remainingSeconds: Int, totalDuration: Int) {
-        // Critical: Set state BEFORE any other operations
-        currentState = .countdown
-        countdownSeconds = 5
-        
-        // Now set the remaining parameters
+        // Initialize all values first BEFORE changing state
         self.liveSessionId = sessionId
         self.isJoinedSession = true
         self.selectedMinutes = totalDuration / 60
         self.remainingSeconds = remainingSeconds
-        self.allowPauses = LiveSessionManager.shared.currentJoinedSession?.allowPauses ?? false
-        self.maxPauses = LiveSessionManager.shared.currentJoinedSession?.maxPauses ?? 0
+        
+        // Safely get pause settings with fallbacks
+        if let joinedSession = LiveSessionManager.shared.currentJoinedSession {
+            self.allowPauses = joinedSession.allowPauses
+            self.maxPauses = joinedSession.maxPauses
+        } else {
+            // Default values if joined session data isn't available yet
+            self.allowPauses = false
+            self.maxPauses = 0
+        }
         self.remainingPauses = self.maxPauses
         
-        // Save state AFTER setting all variables
+        // Save state to ensure persistence
         saveSessionState()
+        
+        // Now that all values are set, start the countdown properly
+        countdownSeconds = 5
+        currentState = .countdown  // Set state after other values
+        
+        // IMPORTANT: Actually start the countdown timer
+        startCountdown(fromRestoration: false)
     }
 
     private func startTrackingSession(isNewSession: Bool = true) {

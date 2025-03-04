@@ -769,17 +769,25 @@ class FeedViewModel: ObservableObject {
         
         // Add to the comments subcollection
         firebaseManager.db.collection("sessions")
-            .document(sessionId)
-            .collection("comments")
-            .addDocument(data: commentData) { [weak self] error in
-                if let error = error {
-                    DispatchQueue.main.async {
-                        self?.showError = true
-                        self?.errorMessage = "Failed to save comment: \(error.localizedDescription)"
+                .document(sessionId)
+                .collection("comments")
+                .addDocument(data: commentData) { [weak self] error in
+                    if let error = error {
+                        DispatchQueue.main.async {
+                            self?.showError = true
+                            self?.errorMessage = "Failed to save comment: \(error.localizedDescription)"
+                            print("Error saving comment: \(error.localizedDescription)")
+                        }
+                    } else {
+                        print("Comment saved successfully")
+                        
+                        // Explicitly reload the comments for this session
+                        DispatchQueue.main.async {
+                            self?.loadCommentsForSession(sessionId)
+                        }
                     }
                 }
-            }
-    }
+        }
     func deleteComment(sessionId: String, commentId: String) {
         firebaseManager.db.collection("sessions")
             .document(sessionId)
@@ -850,6 +858,24 @@ class FeedViewModel: ObservableObject {
                     }
                 }
             }
+    }
+    func loadAllSessionData() {
+        print("Loading data for all visible sessions")
+        
+        // First clean up any existing listeners
+        cleanupCommentsListeners()
+        cleanupLikesListeners()
+        
+        // Then load likes and comments for each visible session
+        for session in feedSessions {
+            let sessionId = session.id.uuidString
+            
+            // Load likes
+            loadLikesForSession(sessionId)
+            
+            // Load comments
+            loadCommentsForSession(sessionId)
+        }
     }
     
     

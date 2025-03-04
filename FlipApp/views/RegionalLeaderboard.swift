@@ -650,6 +650,7 @@ extension RegionalLeaderboardViewModel {
         
         // Get the building's location as a CLLocation
         let buildingLocation = CLLocation(latitude: building.coordinate.latitude, longitude: building.coordinate.longitude)
+        let radius = 100.0 // Search within 100 meters of the building
         
         // Use exact building ID match only - no proximity-based fallback
         // This ensures sessions only appear in their own building's leaderboard
@@ -661,21 +662,52 @@ extension RegionalLeaderboardViewModel {
             .getDocuments { [weak self] snapshot, error in
                 guard let self = self else { return }
                 
-                if let error = error {
-                    print("❌ Error fetching building sessions: \(error.localizedDescription)")
-                    self.isLoading = false
-                    return
-                }
+                if let documents = snapshot?.documents, !documents.isEmpty {
+                                    print("📊 Found \(documents.count) sessions with exact building ID match")
+                                    self.processSessionDocuments(documents, buildingLocation, friendIds, currentUserId)
+                                    return
+                                }
+                // If no exact matches, try proximity search
+                                db.collection("session_locations")
+                                    .whereField("lastFlipWasSuccessful", isEqualTo: true)
+                                    .order(by: "actualDuration", descending: true)
+                                    .limit(to: 100)
+                                    .getDocuments { [weak self] snapshot, error in
+                                        guard let self = self else { return }
+                                        
+                                        if let error = error {
+                                            print("❌ Error in proximity search: \(error.localizedDescription)")
+                                            self.isLoading = false
+                                            return
+                                        }
+                                        
+                                        guard let documents = snapshot?.documents else {
+                                            print("❌ No documents found in proximity search")
+                                            self.isLoading = false
+                                            return
+                                        }
+                                        
+                                        print("🔍 Filtering \(documents.count) sessions by proximity")
+                                        
+                                        // Filter by proximity to building
+                                        var nearbyDocuments: [QueryDocumentSnapshot] = []
+                                        
+                                        for document in documents {
+                                            if let geoPoint = document.data()["location"] as? GeoPoint {
+                                                let sessionLocation = CLLocation(latitude: geoPoint.latitude, longitude: geoPoint.longitude)
+                                                let distance = sessionLocation.distance(from: buildingLocation)
+                                                
+                                                if distance <= radius {
+                                                    nearbyDocuments.append(document)
+                                                }
+                                            }
+                                        }
+                                        
+                                        print("📊 Found \(nearbyDocuments.count) sessions within \(Int(radius))m of building")
+                                        self.processSessionDocuments(nearbyDocuments, buildingLocation, friendIds, currentUserId)
+                                    }
                 
-                guard let documents = snapshot?.documents else {
-                    print("❌ No documents in snapshot")
-                    self.leaderboardEntries = []
-                    self.isLoading = false
-                    return
-                }
-                
-                print("📊 Found \(documents.count) sessions with exact building ID match")
-                self.processSessionDocuments(documents, buildingLocation, friendIds, currentUserId)
+
             }
     }
 }

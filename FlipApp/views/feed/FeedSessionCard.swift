@@ -263,13 +263,20 @@ struct FeedSessionCard: View {
                     
                     // Comment button
                     Button(action: {
+                        print("Comment button pressed, current state: \(showCommentField)")
+                        // Reset comment field state to ensure it can be toggled again
                         withAnimation(.spring()) {
-                            showCommentField.toggle()
-                            if showCommentField {
+                            // Force reset the comment field if it's already in a hidden state
+                            if !showCommentField {
+                                comment = ""  // Clear any previous comment text
+                                showCommentField = true
                                 // Focus the comment field after a brief delay
                                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
                                     isCommentFocused = true
                                 }
+                            } else {
+                                showCommentField = false
+                                isCommentFocused = false
                             }
                         }
                     }) {
@@ -394,13 +401,22 @@ struct FeedSessionCard: View {
         // Get the current user's name for the comment
         let commentorName = currentUserName
         
+        // Save the comment text before clearing the input
+        let commentToSave = comment
+        
+        // Clear the comment field immediately for UI feedback
+        self.comment = ""
+        
         // Save comment to new subcollection
         viewModel.addComment(
             sessionId: session.id.uuidString,
-            comment: newComment,
+            comment: commentToSave,
             userId: currentUserId,
             username: commentorName
         )
+        
+        // Explicitly reload comments after adding
+        viewModel.loadCommentsForSession(session.id.uuidString)
         
         // Show the saved indicator
         withAnimation {
@@ -410,7 +426,12 @@ struct FeedSessionCard: View {
         DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
             withAnimation {
                 showSavedIndicator = false
+                
+                // Important: This allows the comment button to be clicked again
                 showCommentField = false
+                isCommentFocused = false
+                
+                print("Comment field reset after submission")
             }
         }
     }
@@ -445,7 +466,6 @@ struct GroupParticipantBadge: View {
     }
 }
 
-// Comment input field component
 struct CommentInputField: View {
     @Binding var comment: String
     @FocusState var isFocused: Bool
@@ -473,6 +493,13 @@ struct CommentInputField: View {
         .background(
             backgroundContainer
         )
+        .onAppear {
+            // When the comment field appears, make sure it's empty and focused
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                isFocused = true
+            }
+            print("Comment input field appeared")
+        }
     }
     
     private var commentInputContainer: some View {
@@ -547,8 +574,10 @@ struct CommentInputField: View {
         Button(action: {
             isFocused = false
             withAnimation(.spring()) {
+                comment = ""  // Clear comment on cancel
                 showCommentField = false
             }
+            print("Comment cancelled")
         }) {
             Text("Cancel")
                 .font(.system(size: 14, weight: .medium))
@@ -569,7 +598,8 @@ struct CommentInputField: View {
     private var submitButton: some View {
         Button(action: {
             isFocused = false
-            onSubmit(comment)
+            let currentComment = comment  // Capture current comment
+            onSubmit(currentComment)  // Pass the comment
         }) {
             HStack {
                 if showSavedIndicator {
@@ -606,6 +636,7 @@ struct CommentInputField: View {
             )
     }
 }
+
 struct CompactLikesListView: View {
     let sessionId: String
     let likesCount: Int
@@ -726,12 +757,10 @@ struct CompactLikesListView: View {
         }
     }
 }
-// Replace the existing CommentView with this one
-// Updated CommentsView with the fixed CommentBubble
+
 struct CommentsView: View {
     let session: Session
     let viewModel: FeedViewModel
-    @State private var hasLoadedComments = false
     
     var body: some View {
         VStack(alignment: .leading, spacing: 4) {
@@ -743,7 +772,7 @@ struct CommentsView: View {
             }
             // For backward compatibility, handle legacy comment field
             else if let comment = session.comment, !comment.isEmpty {
-                // Legacy comment
+                // Legacy comment handling
                 HStack(alignment: .top, spacing: 8) {
                     Image(systemName: "text.bubble.fill")
                         .font(.system(size: 14))
@@ -792,6 +821,7 @@ struct CommentsView: View {
         }
         .onAppear {
             // Load comments when view appears
+            print("CommentsView appeared for session: \(session.id.uuidString)")
             viewModel.loadCommentsForSession(session.id.uuidString)
         }
     }

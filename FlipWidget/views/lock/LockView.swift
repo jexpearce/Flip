@@ -20,17 +20,18 @@ struct LockView: View {
             
             // Content with glass effect container
             VStack(spacing: 12) {
-                if context.state.isFailed {
-                    FailedLockView()
-                        .transition(.opacity.combined(with: .scale))
-                } else if context.state.wasSuccessful {
-                    SuccessLockView()
-                        .transition(.opacity.combined(with: .scale))
-                } else {
-                    ActiveLockView(context: context)
-                        .transition(.opacity.combined(with: .scale))
-                }
-            }
+                            // Order matters - check wasSuccessful first, then isFailed
+                            if context.state.wasSuccessful {
+                                SuccessLockView()
+                                    .transition(.opacity.combined(with: .scale))
+                            } else if context.state.isFailed {
+                                FailedLockView()
+                                    .transition(.opacity.combined(with: .scale))
+                            } else {
+                                ActiveLockView(context: context)
+                                    .transition(.opacity.combined(with: .scale))
+                            }
+                        }
             .padding()
             .background(Color.white.opacity(0.05))  // Glass effect
             .overlay(  // Subtle border

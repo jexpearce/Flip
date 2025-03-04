@@ -1,19 +1,4 @@
 import SwiftUI
-class SessionJoinCoordinator {
-    static let shared = SessionJoinCoordinator()
-    
-    private var sessionData: (id: String, name: String)? = nil
-    
-    func setJoinSession(id: String, name: String) {
-        sessionData = (id, name)
-    }
-    
-    func getJoinSession() -> (id: String, name: String)? {
-        let data = sessionData
-        sessionData = nil
-        return data
-    }
-}
 struct SetupView: View {
     @EnvironmentObject var appManager: AppManager
     @State private var isButtonPressed = false

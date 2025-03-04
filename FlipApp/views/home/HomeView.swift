@@ -3,6 +3,8 @@ import SwiftUI
 struct HomeView: View {
     @EnvironmentObject var appManager: AppManager
     @EnvironmentObject var sessionManager: SessionManager
+    @ObservedObject private var sessionJoinCoordinator = SessionJoinCoordinator.shared
+    @ObservedObject private var liveSessionManager = LiveSessionManager.shared
     @State private var showRules = false
     
     var body: some View {
@@ -55,6 +57,47 @@ struct HomeView: View {
                     rankColor: sessionManager.promotionRankColor
                 )
                 .zIndex(100) // Ensure it appears above other content
+            }
+        }
+        .onAppear {
+            // Check if there's a pending session join request
+            if sessionJoinCoordinator.shouldJoinSession,
+               let sessionId = sessionJoinCoordinator.pendingSessionId {
+                
+                // Start the joining process
+                liveSessionManager.isJoiningSession = true
+                
+                // First get session details
+                liveSessionManager.getSessionDetails(sessionId: sessionId) { sessionData in
+                    if let session = sessionData {
+                        // Join the session
+                        liveSessionManager.joinSession(sessionId: sessionId) { success, remainingSeconds, totalDuration in
+                            if success {
+                                // Actually join the live session with proper timing values
+                                DispatchQueue.main.async {
+                                    // Use AppManager to join the session
+                                    appManager.joinLiveSession(
+                                        sessionId: sessionId,
+                                        remainingSeconds: remainingSeconds,
+                                        totalDuration: totalDuration
+                                    )
+                                }
+                            }
+                            
+                            // Clear pending session either way
+                            DispatchQueue.main.async {
+                                sessionJoinCoordinator.clearPendingSession()
+                                liveSessionManager.isJoiningSession = false
+                            }
+                        }
+                    } else {
+                        // No valid session found
+                        DispatchQueue.main.async {
+                            sessionJoinCoordinator.clearPendingSession()
+                            liveSessionManager.isJoiningSession = false
+                        }
+                    }
+                }
             }
         }
     }

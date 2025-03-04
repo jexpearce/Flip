@@ -1,15 +1,4 @@
-//
-//  FriendViewModel.swift
-//  FlipApp
-//
-//  Created by Jex Pearce on 2/9/25.
-//
-//  FriendViewModel.swift
-//  FlipApp
-//
-//  Created by Jex Pearce on 2/9/25.
-//
-
+import SwiftUI
 import FirebaseAuth
 import FirebaseFirestore
 import Foundation
