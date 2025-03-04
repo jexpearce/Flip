@@ -1,9 +1,3 @@
-//
-//  MapViewModel.swift
-//  FlipApp
-//
-//  Created by Jex Pearce on 2/25/25.
-
 import Foundation
 import SwiftUI
 import MapKit
@@ -64,8 +58,6 @@ struct FriendLocation: Identifiable {
         }
     }
 }
-
-// Enum for location visibility settings
 enum LocationVisibilityLevel: String, CaseIterable {
     case everyone = "Everyone"
     case friendsOnly = "Friends Only"
@@ -137,7 +129,6 @@ class MapPrivacyViewModel: ObservableObject {
     }
 }
 
-// Main ViewModel for the Map View - Enhanced with improved location tracking
 class MapViewModel: NSObject, ObservableObject, CLLocationManagerDelegate {
     @Published var region = MKCoordinateRegion(
         center: CLLocationCoordinate2D(latitude: 37.7749, longitude: -122.4194),
@@ -156,24 +147,24 @@ class MapViewModel: NSObject, ObservableObject, CLLocationManagerDelegate {
         super.init()
         locationManager.delegate = self
         locationManager.desiredAccuracy = kCLLocationAccuracyBest
-        locationManager.allowsBackgroundLocationUpdates = true
-        locationManager.pausesLocationUpdatesAutomatically = false
-        locationManager.showsBackgroundLocationIndicator = true
-        
-        // Request authorization on init
-        requestLocationAuthorization()
-    }
-    
-    private func requestLocationAuthorization() {
-        locationManager.requestAlwaysAuthorization()
+        locationManager.allowsBackgroundLocationUpdates = false // Prevent background tracking
+        locationManager.pausesLocationUpdatesAutomatically = true
+        locationManager.showsBackgroundLocationIndicator = false
     }
     
     func startLocationTracking() {
-        // Start continuous location updates
+        // Request authorization first
+        if locationManager.authorizationStatus == .notDetermined {
+            locationManager.requestWhenInUseAuthorization()
+        }
+        
+        // Start location updates but with limited accuracy for the map view
+        locationManager.desiredAccuracy = kCLLocationAccuracyHundredMeters
+        locationManager.distanceFilter = 50 // Only update after significant movement
         locationManager.startUpdatingLocation()
         
-        // Setup a timer to refresh locations periodically
-        locationUpdateTimer = Timer.scheduledTimer(withTimeInterval: 30, repeats: true) { [weak self] _ in
+        // Setup a timer to refresh locations periodically - less frequent to save battery
+        locationUpdateTimer = Timer.scheduledTimer(withTimeInterval: 60, repeats: true) { [weak self] _ in
             self?.refreshLocations()
         }
         
@@ -182,27 +173,24 @@ class MapViewModel: NSObject, ObservableObject, CLLocationManagerDelegate {
     }
     
     func stopLocationTracking() {
-        // Stop the location manager
+        // Stop location manager
         locationManager.stopUpdatingLocation()
         
-        // Remove the listener
+        // Remove Firestore listeners
         locationListener?.remove()
         
-        // Invalidate timer
+        // Invalidate refresh timer
         locationUpdateTimer?.invalidate()
         locationUpdateTimer = nil
-        
-        // This ensures we don't keep tracking in background
         Task { @MainActor in
             LocationHandler.shared.completelyStopLocationUpdates()
         }
         
-        print("Map location tracking fully stopped")
+        print("Map location tracking stopped")
     }
     
     func refreshLocations() {
-        // Fetch fresh data without stopping tracking
-        print("Refreshing map locations...")
+        // Fresh reload of friend locations
         startListeningForLocationUpdates()
     }
     
@@ -219,10 +207,11 @@ class MapViewModel: NSObject, ObservableObject, CLLocationManagerDelegate {
     
     // MARK: - Friend Locations & Session History
     
+    // In MapViewModel.swift, modify the startListeningForLocationUpdates method
     private func startListeningForLocationUpdates() {
         guard let currentUserId = Auth.auth().currentUser?.uid else { return }
         
-        // First get the user's friends list
+        // Get the user's friends list
         db.collection("users").document(currentUserId).getDocument { [weak self] document, error in
             guard let self = self,
                   let userData = try? document?.data(as: FirebaseManager.FlipUser.self)
@@ -234,6 +223,23 @@ class MapViewModel: NSObject, ObservableObject, CLLocationManagerDelegate {
             
             // Listen for location updates from these users
             self.listenForLocations(userIds: userIds)
+            
+            // Fetch historical sessions for EACH user, including friends
+            let dispatchGroup = DispatchGroup()
+            var historicalLocations: [FriendLocation] = []
+            
+            for userId in userIds {
+                dispatchGroup.enter()
+                self.fetchHistoricalSessions(userId: userId, limit: 3) { locations in
+                    historicalLocations.append(contentsOf: locations)
+                    dispatchGroup.leave()
+                }
+            }
+            
+            dispatchGroup.notify(queue: .main) {
+                // Update UI with historical locations
+                self.friendLocations = historicalLocations
+            }
         }
     }
     
@@ -259,7 +265,7 @@ class MapViewModel: NSObject, ObservableObject, CLLocationManagerDelegate {
                     print("Received \(currentLocations.count) current locations")
                 }
                 
-                // Now fetch historical sessions for each user - always limit to 3 per user
+                // Now fetch historical sessions for each user
                 let dispatchGroup = DispatchGroup()
                 var historicalLocations: [FriendLocation] = []
                 
@@ -290,17 +296,14 @@ class MapViewModel: NSObject, ObservableObject, CLLocationManagerDelegate {
     }
     
     private func fetchHistoricalSessions(userId: String, limit: Int, completion: @escaping ([FriendLocation]) -> Void) {
-        // Always show session history for map functionality
-        let showSessionHistory = true
+        // Fetch historical sessions from session_locations collection with a time cutoff
+        let oneMonthAgo = Calendar.current.date(byAdding: .month, value: -1, to: Date()) ?? Date()
         
-        if !showSessionHistory {
-            completion([])
-            return
         }
         
-        // Fetch historical sessions from session_locations collection
         db.collection("session_locations")
             .whereField("userId", isEqualTo: userId)
+            .whereField("sessionEndTime", isGreaterThan: Timestamp(date: oneMonthAgo)) // Only sessions from last month
             .order(by: "sessionEndTime", descending: true)
             .limit(to: limit)
             .getDocuments { [weak self] snapshot, error in
@@ -367,9 +370,10 @@ class MapViewModel: NSObject, ObservableObject, CLLocationManagerDelegate {
                   let geoPoint = data["currentLocation"] as? GeoPoint,
                   let isFlipped = data["isCurrentlyFlipped"] as? Bool,
                   let timestamp = (data["lastFlipTime"] as? Timestamp)?.dateValue(),
-                  let wasSuccessful = data["lastFlipWasSuccessful"] as? Bool
+                  let wasSuccessful = data["lastFlipWasSuccessful"] as? Bool,
+                  Date().timeIntervalSince(timestamp) < 7200 // Ignore sessions older than 2 hours
             else {
-                print("Skipping document - missing required fields")
+                print("Skipping document - missing required fields or too old")
                 return nil
             }
             
@@ -418,8 +422,8 @@ class MapViewModel: NSObject, ObservableObject, CLLocationManagerDelegate {
                 }
                 
                 DispatchQueue.main.async {
-                        completion(userData)
-                    }
+                    completion(userData)
+                }
             }
     }
     
@@ -459,18 +463,18 @@ class MapViewModel: NSObject, ObservableObject, CLLocationManagerDelegate {
         guard let username = data["username"] as? String,
               let geoPoint = data["location"] as? GeoPoint,
               let sessionStartTime = (data["sessionStartTime"] as? Timestamp)?.dateValue(),
-              let sessionEndTime = (data["sessionEndTime"] as? Timestamp)?.dateValue()
+              let sessionEndTime = (data["sessionEndTime"] as? Timestamp)?.dateValue(),
+              // Don't show sessions from more than a month ago
+              Date().timeIntervalSince(sessionEndTime) < 2592000
         else { return nil }
         
         // IMPORTANT CHANGE: Explicitly check for the wasSuccessful field and add debug
         let wasSuccessful: Bool
         if let successValue = data["lastFlipWasSuccessful"] as? Bool {
             wasSuccessful = successValue
-            print("Session for \(username) success status: \(wasSuccessful)")
         } else {
             // Default to true if field is missing
             wasSuccessful = true
-            print("WARNING: Missing success status for \(username), defaulting to true")
         }
         
         let sessionDuration = data["sessionDuration"] as? Int ?? 25
@@ -478,7 +482,7 @@ class MapViewModel: NSObject, ObservableObject, CLLocationManagerDelegate {
         let participantNames = data["participantNames"] as? [String]
         
         return FriendLocation(
-            id: "\(userId)_hist_\(index + 1)",
+            id: "\(userId)_hist_\(index)",
             username: username,
             coordinate: CLLocationCoordinate2D(
                 latitude: geoPoint.latitude,
@@ -486,21 +490,25 @@ class MapViewModel: NSObject, ObservableObject, CLLocationManagerDelegate {
             ),
             isCurrentlyFlipped: false,
             lastFlipTime: sessionEndTime,
-            lastFlipWasSuccessful: wasSuccessful,  // Use our explicitly checked value
+            lastFlipWasSuccessful: wasSuccessful,
             sessionDuration: sessionDuration,
             sessionStartTime: sessionStartTime,
             isHistorical: true,
-            sessionIndex: index + 1,
+            sessionIndex: index,
             participants: participants,
             participantNames: participantNames
         )
     }
-
+    
     // New method to fetch group sessions
     private func fetchGroupSessions(userId: String, completion: @escaping ([FriendLocation]) -> Void) {
+        // One month time limit
+        let oneMonthAgo = Calendar.current.date(byAdding: .month, value: -1, to: Date()) ?? Date()
+        
         // Query for sessions where this user was a participant
         db.collection("session_locations")
             .whereField("participants", arrayContains: userId)
+            .whereField("sessionEndTime", isGreaterThan: Timestamp(date: oneMonthAgo))
             .order(by: "sessionEndTime", descending: true)
             .limit(to: 5)
             .getDocuments { [weak self] snapshot, error in
@@ -538,25 +546,26 @@ class MapViewModel: NSObject, ObservableObject, CLLocationManagerDelegate {
         // Get current app state from AppManager
         let appManager = AppManager.shared
         let isInRelevantState = appManager.currentState == .tracking ||
-                               appManager.currentState == .completed ||
-                               appManager.currentState == .failed
+        appManager.currentState == .completed ||
+        appManager.currentState == .failed
         
-        // Get username from FirebaseManager
-        let username = FirebaseManager.shared.currentUser?.username ?? "User"
-        
-        // Create base location data
-        var locationData: [String: Any] = [
-            "userId": userId,
-            "username": username,
-            "currentLocation": GeoPoint(
-                latitude: location.coordinate.latitude,
-                longitude: location.coordinate.longitude
-            ),
-            "locationUpdatedAt": Timestamp(date: Date())
-        ]
-        
-        // Add session-specific data if in a relevant state
+        // ONLY update location in Firebase if in an active session
         if isInRelevantState {
+            // Get username from FirebaseManager
+            let username = FirebaseManager.shared.currentUser?.username ?? "User"
+            
+            // Create base location data
+            var locationData: [String: Any] = [
+                "userId": userId,
+                "username": username,
+                "currentLocation": GeoPoint(
+                    latitude: location.coordinate.latitude,
+                    longitude: location.coordinate.longitude
+                ),
+                "locationUpdatedAt": Timestamp(date: Date())
+            ]
+            
+            // Add session-specific data
             let isCurrentlyFlipped = appManager.currentState == .tracking && appManager.isFaceDown
             let sessionDuration = appManager.selectedMinutes
             let sessionStartTime = Date().addingTimeInterval(-Double(appManager.remainingSeconds))
@@ -568,16 +577,12 @@ class MapViewModel: NSObject, ObservableObject, CLLocationManagerDelegate {
             locationData["lastFlipWasSuccessful"] = isSuccessful
             locationData["sessionDuration"] = sessionDuration
             locationData["sessionStartTime"] = Timestamp(date: sessionStartTime)
-        } else {
-            // For non-session state, set defaults for session fields
-            locationData["isCurrentlyFlipped"] = false
-            locationData["lastFlipWasSuccessful"] = true
-        }
-        
-        // Update location in Firestore
-        db.collection("locations").document(userId).setData(locationData, merge: true) { error in
-            if let error = error {
-                print("Error updating location: \(error.localizedDescription)")
+            
+            // Update location in Firestore
+            db.collection("locations").document(userId).setData(locationData, merge: true) { error in
+                if let error = error {
+                    print("Error updating location: \(error.localizedDescription)")
+                }
             }
         }
     }

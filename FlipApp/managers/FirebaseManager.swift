@@ -80,40 +80,64 @@ extension FirebaseManager {
         }
     }
     // Add this to FirebaseManager.swift
-    private func pruneOldSessions(forUserId userId: String, maxSessions: Int = 10) {
-        // Query for this user's sessions, ordered by end time
+    func pruneOldSessions(forUserId userId: String) {
+        // Get a timestamp for 30 days ago
+        let calendar = Calendar.current
+        let thirtyDaysAgo = calendar.date(byAdding: .day, value: -10, to: Date()) ?? Date()
+        
+        // First, delete any very old sessions (more than 30 days old)
         db.collection("session_locations")
             .whereField("userId", isEqualTo: userId)
+            .whereField("sessionEndTime", isLessThan: Timestamp(date: thirtyDaysAgo))
+            .getDocuments { [weak self] snapshot, error in
+                guard let self = self, let documents = snapshot?.documents, !documents.isEmpty else {
+                    return
+                }
+                
+                let batch = self.db.batch()
+                for doc in documents {
+                    batch.deleteDocument(doc.reference)
+                }
+                
+                batch.commit { error in
+                    if let error = error {
+                        print("Error deleting old sessions: \(error)")
+                    } else {
+                        print("Deleted \(documents.count) sessions older than 10 days")
+                    }
+                }
+            }
+        
+        // Next, make sure we only keep the 10 most recent sessions within the last 30 days
+        db.collection("session_locations")
+            .whereField("userId", isEqualTo: userId)
+            .whereField("sessionEndTime", isGreaterThan: Timestamp(date: thirtyDaysAgo))
             .order(by: "sessionEndTime", descending: true)
             .getDocuments { [weak self] snapshot, error in
                 guard let self = self,
                       let documents = snapshot?.documents,
-                      documents.count > maxSessions,
-                      error == nil else {
+                      documents.count > 10 else {
                     return
                 }
                 
-                // Skip the first 'maxSessions' (most recent) and delete the rest
-                let sessionsToDelete = documents.suffix(from: maxSessions)
-                print("Pruning \(sessionsToDelete.count) old map sessions for user \(userId)")
+                // Keep the 10 most recent, delete the rest
+                let docsToDelete = documents.suffix(from: 10)
                 
-                // Use a batch for efficient deletion
                 let batch = self.db.batch()
-                
-                for sessionDoc in sessionsToDelete {
-                    batch.deleteDocument(sessionDoc.reference)
+                for doc in docsToDelete {
+                    batch.deleteDocument(doc.reference)
                 }
                 
-                // Execute the batch deletion
                 batch.commit { error in
                     if let error = error {
-                        print("Error pruning old map sessions: \(error.localizedDescription)")
+                        print("Error pruning excess sessions: \(error)")
                     } else {
-                        print("Successfully pruned \(sessionsToDelete.count) old map sessions")
+                        print("Pruned \(docsToDelete.count) excess sessions for map display")
                     }
                 }
             }
     }
+
     
     // Add this version of updateLocationDuringSession to use in AppManager
     func saveSessionLocation(session: CompletedSession) {
@@ -141,24 +165,34 @@ extension FirebaseManager {
             sessionData["buildingLongitude"] = building.coordinate.longitude
         }
         
-        print("💾 Attempting to save session: \(sessionId)")
+        print("💾 Saving session: \(sessionId)")
         print("📍 Location: \(session.location.latitude), \(session.location.longitude)")
         if let building = session.building {
             print("🏢 Building: \(building.name) [ID: \(building.id)]")
         }
         
         // Save to Firestore
-        db.collection("session_locations").document(sessionId).setData(sessionData) { error in
+        db.collection("session_locations").document(sessionId).setData(sessionData) { [weak self] error in
             if let error = error {
                 print("❌ SAVE ERROR: \(error.localizedDescription)")
             } else {
                 print("✅ SESSION SAVED SUCCESSFULLY: \(sessionId)")
                 
-                // Force refresh building leaderboard
+                // Prune old sessions to keep the map clean
+                self?.pruneOldSessions(forUserId: session.userId)
+                
+                // Force refresh building leaderboard if needed
                 if let building = session.building {
                     DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
                         RegionalViewModel.shared.leaderboardViewModel.loadBuildingLeaderboard(building: building)
                     }
+                }
+                
+                // Clean up stale location data
+                if session.wasSuccessful {
+                    // Only remove from active locations when session completed successfully
+                    // to ensure failed sessions still show up properly
+                    self?.db.collection("locations").document(session.userId).delete()
                 }
             }
         }

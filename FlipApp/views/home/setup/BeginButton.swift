@@ -13,19 +13,25 @@ struct BeginButton: View {
     let action: () -> Void
     @State private var isPressed = false
     @State private var isPulsing = false
+    @ObservedObject private var permissionManager = PermissionManager.shared
     
     var body: some View {
-        Button(action: {
-            isPressed = true
-            withAnimation(.spring()) {
-                isPulsing = true
-            }
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-                isPressed = false
-                isPulsing = false
-            }
-            action()
-        }) {
+            Button(action: {
+                isPressed = true
+                withAnimation(.spring()) {
+                    isPulsing = true
+                }
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                    isPressed = false
+                    isPulsing = false
+                }
+                
+                if permissionManager.allPermissionsGranted {
+                    action()
+                } else {
+                    permissionManager.showPermissionRequiredAlert = true
+                }
+            }) {
             Text("BEGIN")
                 .font(.system(size: 24, weight: .black))  // Changed to match app font
                 .tracking(4)
@@ -38,10 +44,15 @@ struct BeginButton: View {
                         RoundedRectangle(cornerRadius: 30)
                             .fill(
                                 LinearGradient(
-                                    colors: [
-                                        Color(red: 129/255, green: 140/255, blue: 248/255),
-                                        Color(red: 99/255, green: 102/255, blue: 241/255)
-                                    ],
+                                                                    colors: permissionManager.allPermissionsGranted ?
+                                                                            [
+                                                                                Color(red: 129/255, green: 140/255, blue: 248/255),
+                                                                                Color(red: 99/255, green: 102/255, blue: 241/255)
+                                                                            ] :
+                                                                            [
+                                                                                Color.gray.opacity(0.5),
+                                                                                Color.gray.opacity(0.3)
+                                                                            ],
                                     startPoint: .leading,
                                     endPoint: .trailing
                                 )
@@ -72,6 +83,7 @@ struct BeginButton: View {
                     radius: isPulsing ? 15 : 8
                 )
                 .scaleEffect(isPressed ? 0.95 : 1.0)
+                .opacity(permissionManager.allPermissionsGranted ? 1.0 : 0.6)
         }
         .padding(.horizontal, 40)
         .padding(.top, 10)

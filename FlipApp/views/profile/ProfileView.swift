@@ -295,7 +295,6 @@ struct ProfileView: View {
                     ScoreHistoryView()
                 }
 
-                // Enhanced Longest Session Card - Weekly Stats with View More button
                 VStack(spacing: 8) {
                     // Week's longest flip
                     HStack {
@@ -312,14 +311,14 @@ struct ProfileView: View {
                                     .foregroundStyle(
                                         LinearGradient(
                                             colors: [
-                                                Color(red: 234/255, green: 179/255, blue: 8/255),
-                                                Color(red: 253/255, green: 224/255, blue: 71/255)
+                                                Color(red: 147/255, green: 51/255, blue: 234/255),  // Vibrant Purple
+                                                Color(red: 236/255, green: 72/255, blue: 153/255)   // Bright Pink
                                             ],
                                             startPoint: .top,
                                             endPoint: .bottom
                                         )
                                     )
-                                    .shadow(color: Color(red: 234/255, green: 179/255, blue: 8/255).opacity(0.5), radius: 4)
+                                    .shadow(color: Color(red: 147/255, green: 51/255, blue: 234/255).opacity(0.5), radius: 4)
                             }
 
                             Text(weeksLongestSession != nil ? "\(weeksLongestSession!) min" : "No sessions yet this week")
@@ -343,6 +342,18 @@ struct ProfileView: View {
                             .background(
                                 ZStack {
                                     RoundedRectangle(cornerRadius: 10)
+                                        .fill(
+                                            LinearGradient(
+                                                colors: [
+                                                    Color(red: 147/255, green: 51/255, blue: 234/255).opacity(0.6),  // Vibrant Purple
+                                                    Color(red: 236/255, green: 72/255, blue: 153/255).opacity(0.4)   // Bright Pink
+                                                ],
+                                                startPoint: .topLeading,
+                                                endPoint: .bottomTrailing
+                                            )
+                                        )
+                                    
+                                    RoundedRectangle(cornerRadius: 10)
                                         .fill(Color.white.opacity(0.1))
                                     
                                     RoundedRectangle(cornerRadius: 10)
@@ -358,8 +369,8 @@ struct ProfileView: View {
                             .fill(
                                 LinearGradient(
                                     colors: [
-                                        Color(red: 239/255, green: 68/255, blue: 68/255).opacity(0.4),
-                                        Color(red: 236/255, green: 72/255, blue: 153/255).opacity(0.3)
+                                        Color(red: 147/255, green: 51/255, blue: 234/255).opacity(0.3),  // Vibrant Purple
+                                        Color(red: 236/255, green: 72/255, blue: 153/255).opacity(0.2)   // Bright Pink
                                     ],
                                     startPoint: .topLeading,
                                     endPoint: .bottomTrailing

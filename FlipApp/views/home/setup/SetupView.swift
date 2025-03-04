@@ -22,6 +22,7 @@ struct SetupView: View {
     @ObservedObject private var liveSessionManager = LiveSessionManager.shared
     @State private var isJoining = false
     @State private var showJoiningIndicator = false
+    @ObservedObject private var permissionManager = PermissionManager.shared
     
     // Check if we're navigating back from a joined session view
     @State private var joinLiveSessionMode = false
@@ -331,7 +332,30 @@ struct SetupView: View {
                     )
                     .transition(.opacity)
             }
-        }
+            if permissionManager.showPermissionRequiredAlert {
+                            PermissionRequiredAlert(isPresented: $permissionManager.showPermissionRequiredAlert)
+                        }
+                        
+                        // Motion Permission Alert
+                        if permissionManager.showMotionAlert {
+                            MotionPermissionAlert(
+                                isPresented: $permissionManager.showMotionAlert,
+                                onContinue: {
+                                    permissionManager.requestMotionPermission()
+                                }
+                            )
+                        }
+                        
+                        // Notification Permission Alert
+                        if permissionManager.showNotificationAlert {
+                            NotificationPermissionAlert(
+                                isPresented: $permissionManager.showNotificationAlert,
+                                onContinue: {
+                                    permissionManager.requestNotificationPermission()
+                                }
+                            )
+                        }
+                    }
         .onAppear {
             // Check if we're being called to join a session
             if let sessionData = SessionJoinCoordinator.shared.getJoinSession() {
@@ -387,5 +411,130 @@ struct SetupView: View {
                 }
             }
         }
+    }
+}
+
+struct PermissionRequiredAlert: View {
+    @Binding var isPresented: Bool
+    @ObservedObject private var permissionManager = PermissionManager.shared
+    
+    var body: some View {
+        ZStack {
+            Color.black.opacity(0.7)
+                .edgesIgnoringSafeArea(.all)
+            
+            VStack(spacing: 20) {
+                // Warning icon
+                Image(systemName: "exclamationmark.triangle.fill")
+                    .font(.system(size: 50))
+                    .foregroundStyle(
+                        LinearGradient(
+                            colors: [Color.yellow, Color.orange],
+                            startPoint: .top,
+                            endPoint: .bottom
+                        )
+                    )
+                    .shadow(color: Color.orange.opacity(0.5), radius: 6)
+                
+                // Title
+                Text("PERMISSIONS REQUIRED")
+                    .font(.system(size: 22, weight: .black))
+                    .tracking(4)
+                    .foregroundColor(.white)
+                    .shadow(color: Color.orange.opacity(0.6), radius: 4)
+                
+                // Description
+                Text("FLIP needs location and motion access to track when your phone is flipped. Without these permissions, the app cannot function.")
+                    .font(.system(size: 16))
+                    .multilineTextAlignment(.center)
+                    .foregroundColor(.white.opacity(0.9))
+                    .padding(.horizontal, 15)
+                
+                // Location status
+                permissionStatus(
+                    title: "Location",
+                    isGranted: permissionManager.locationAuthStatus == .authorizedWhenInUse ||
+                              permissionManager.locationAuthStatus == .authorizedAlways
+                )
+                
+                // Motion status
+                permissionStatus(
+                    title: "Motion Tracking",
+                    isGranted: permissionManager.motionPermissionGranted
+                )
+                
+                // Buttons
+                HStack(spacing: 15) {
+                    Button(action: {
+                        isPresented = false
+                        PermissionManager.shared.showPermissionRequiredAlert = false
+                        permissionManager.requestAllPermissions()
+                    }) {
+                        Text("ENABLE")
+                            .font(.system(size: 16, weight: .bold))
+                            .foregroundColor(.white)
+                            .frame(width: 120, height: 45)
+                            .background(
+                                RoundedRectangle(cornerRadius: 20)
+                                    .fill(Theme.buttonGradient)
+                            )
+                            .shadow(color: Color(red: 56/255, green: 189/255, blue: 248/255).opacity(0.3), radius: 4)
+                    }
+                    
+                    Button(action: {
+                        isPresented = false
+                    }) {
+                        Text("CANCEL")
+                            .font(.system(size: 16, weight: .bold))
+                            .foregroundColor(.white.opacity(0.8))
+                            .frame(width: 120, height: 45)
+                            .background(
+                                RoundedRectangle(cornerRadius: 20)
+                                    .fill(Color.gray.opacity(0.3))
+                                    .stroke(Color.white.opacity(0.2), lineWidth: 1)
+                            )
+                    }
+                }
+                .padding(.top, 10)
+            }
+            .padding(25)
+            .background(
+                ZStack {
+                    RoundedRectangle(cornerRadius: 20)
+                        .fill(Theme.darkGray)
+                    
+                    RoundedRectangle(cornerRadius: 20)
+                        .fill(Color.black.opacity(0.3))
+                    
+                    RoundedRectangle(cornerRadius: 20)
+                        .stroke(Color.white.opacity(0.3), lineWidth: 1)
+                }
+            )
+            .frame(maxWidth: 320)
+            .shadow(color: Color.black.opacity(0.5), radius: 20)
+            .transition(.scale(scale: 0.85).combined(with: .opacity))
+            .animation(.spring(), value: isPresented)
+        }
+    }
+    
+    private func permissionStatus(title: String, isGranted: Bool) -> some View {
+        HStack {
+            Text(title)
+                .font(.system(size: 16, weight: .medium))
+                .foregroundColor(.white.opacity(0.9))
+            
+            Spacer()
+            
+            Image(systemName: isGranted ? "checkmark.circle.fill" : "xmark.circle.fill")
+                .foregroundColor(isGranted ? .green : .red)
+                .font(.system(size: 20))
+        }
+        .padding(.horizontal, 20)
+        .padding(.vertical, 8)
+        .background(
+            RoundedRectangle(cornerRadius: 10)
+                .fill(Color.white.opacity(0.05))
+        )
+        .padding(.horizontal, 10)
     }
 }

@@ -23,6 +23,9 @@ struct LockView: View {
                 if context.state.isFailed {
                     FailedLockView()
                         .transition(.opacity.combined(with: .scale))
+                } else if context.state.wasSuccessful {
+                    SuccessLockView()
+                        .transition(.opacity.combined(with: .scale))
                 } else {
                     ActiveLockView(context: context)
                         .transition(.opacity.combined(with: .scale))

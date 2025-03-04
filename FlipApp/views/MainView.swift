@@ -26,10 +26,13 @@ class ViewRouter: ObservableObject {
             NotificationCenter.default.removeObserver(self)
         }
 }
-
 struct MainView: View {
     @StateObject private var authManager = AuthManager.shared
     @StateObject private var viewRouter = ViewRouter()
+    
+    // Add this for permission management
+    @StateObject private var permissionManager = PermissionManager.shared
+    @State private var checkPermissionsOnAppear = true
 
     var body: some View {
         if authManager.isAuthenticated {
@@ -41,7 +44,7 @@ struct MainView: View {
                     }
                     .tag(0)
                 
-                // Second tab (left of center) - UPDATED: Now RegionalView instead of MapView
+                // Second tab (left of center) - RegionalView
                 RegionalView()
                     .tabItem {
                         Label("Regional", systemImage: "location.fill")
@@ -99,8 +102,26 @@ struct MainView: View {
                 if #available(iOS 15.0, *) {
                     UITabBar.appearance().scrollEdgeAppearance = appearance
                 }
+                
+                // NEW CODE: Check permissions when app launches
+                if checkPermissionsOnAppear {
+                    checkPermissionsOnAppear = false
+                    
+                    // Check permissions status
+                    permissionManager.checkPermissions()
+                    
+                    // If permissions are not granted and this is a returning user,
+                    // start the permission flow after a short delay
+                    if !permissionManager.allPermissionsGranted {
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
+                            permissionManager.requestAllPermissions()
+                        }
+                    }
+                }
             }
             .environmentObject(viewRouter)
+            // Add the permission manager as an environment object
+            .environmentObject(permissionManager)
         } else {
             AuthView().frame(maxWidth: .infinity, maxHeight: .infinity)
                 .background(Theme.mainGradient)

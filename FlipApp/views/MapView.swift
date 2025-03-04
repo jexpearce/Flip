@@ -283,22 +283,44 @@ struct FriendMapMarker: View {
     
     private var statusColor: Color {
         if friend.isHistorical {
-            // Historical sessions - use gray shades
-            return friend.lastFlipWasSuccessful ?
-                Color.gray.opacity(0.8) :
-                Color(red: 180/255, green: 180/255, blue: 180/255).opacity(0.6) // Slightly lighter gray for failed
+            // Historical sessions - with correct transparency based on index
+            let baseColor = friend.lastFlipWasSuccessful ?
+                Color(red: 34/255, green: 197/255, blue: 94/255) : // Success green
+                Color(red: 239/255, green: 68/255, blue: 68/255)   // Failure red
+            
+            // Apply opacity based on session index
+            switch friend.sessionIndex {
+            case 1: return baseColor.opacity(0.8)      // Most recent historical
+            case 2: return baseColor.opacity(0.6)      // Second most recent
+            case 3: return baseColor.opacity(0.4)      // Third most recent
+            default: return baseColor.opacity(0.3)     // Fallback
+            }
         } else if friend.isCurrentlyFlipped {
-            // Active session - green
-            return Color.green
+            // Live session - use blue instead of green
+            return Color(red: 59/255, green: 130/255, blue: 246/255) // Blue
         } else {
             // Completed or failed session
             if friend.lastFlipWasSuccessful {
                 // Success - green
                 return Color(red: 34/255, green: 197/255, blue: 94/255)
             } else {
-                // Failed - red (ensure this condition is properly evaluated)
+                // Failed - red
                 return Color(red: 239/255, green: 68/255, blue: 68/255)
             }
+        }
+    }
+    
+    private var markerSize: CGFloat {
+        // Slightly smaller for historical sessions based on recency
+        if friend.isHistorical {
+            switch friend.sessionIndex {
+            case 1: return 32  // Most recent historical
+            case 2: return 28  // Second most recent
+            case 3: return 24  // Third most recent
+            default: return 22
+            }
+        } else {
+            return 36 // Current/Live session
         }
     }
     
@@ -309,7 +331,7 @@ struct FriendMapMarker: View {
                 // Show larger circle with overlapping profile icons
                 Circle()
                     .fill(statusColor)
-                    .frame(width: 46, height: 46)
+                    .frame(width: markerSize + 10, height: markerSize + 10)
                 // Show participant count badge
                 Text("\(participants.count)")
                     .font(.system(size: 12, weight: .bold))
@@ -322,7 +344,7 @@ struct FriendMapMarker: View {
             // Base circle with status color
             Circle()
                 .fill(statusColor)
-                .frame(width: friend.isHistorical ? 30 : 36, height: friend.isHistorical ? 30 : 36)
+                .frame(width: markerSize, height: markerSize)
                 .overlay(
                     Circle()
                         .stroke(Color.white, lineWidth: friend.isHistorical ? 1 : 2)
@@ -333,7 +355,7 @@ struct FriendMapMarker: View {
                 profileImage
                     .resizable()
                     .scaledToFill()
-                    .frame(width: friend.isHistorical ? 28 : 32, height: friend.isHistorical ? 28 : 32)
+                    .frame(width: markerSize - 4, height: markerSize - 4)
                     .clipShape(Circle())
             } else {
                 // Default placeholder
@@ -342,10 +364,10 @@ struct FriendMapMarker: View {
                     .foregroundColor(.white)
             }
             
-            // Pulsing animation for active sessions
+            // Pulsing animation for active sessions - blue color for LIVE sessions
             if friend.isCurrentlyFlipped && !friend.isHistorical {
                 Circle()
-                    .stroke(Color.green, lineWidth: 2)
+                    .stroke(Color(red: 59/255, green: 130/255, blue: 246/255), lineWidth: 2)
                     .frame(width: animate ? 60 : 40, height: animate ? 60 : 40)
                     .opacity(animate ? 0 : 0.7)
                     .animation(Animation.easeInOut(duration: 1.2).repeatForever(autoreverses: false), value: animate)
@@ -354,15 +376,16 @@ struct FriendMapMarker: View {
             
             // Session indicator icon
             if friend.isCurrentlyFlipped && !friend.isHistorical {
-                Image(systemName: "iphone")
-                    .font(.system(size: 12))
-                    .foregroundColor(.white)
-                    .background(
-                        Circle()
-                            .fill(statusColor)
-                            .frame(width: 20, height: 20)
-                    )
-                    .offset(x: 14, y: -14)
+                ZStack {
+                    Circle()
+                        .fill(Color(red: 59/255, green: 130/255, blue: 246/255))
+                        .frame(width: 20, height: 20)
+                    
+                    Text("LIVE")
+                        .font(.system(size: 8, weight: .bold))
+                        .foregroundColor(.white)
+                }
+                .offset(x: 14, y: -14)
             }
             
             // Historical session index badge
@@ -383,7 +406,7 @@ struct FriendMapMarker: View {
             }
         }
         .shadow(color: statusColor.opacity(friend.isHistorical ? 0.3 : 0.5), radius: friend.isHistorical ? 2 : 4)
-        .opacity(friend.isHistorical ? 0.7 : 1.0)
+        .opacity(friend.isHistorical ? (1.0 - (Double(friend.sessionIndex) * 0.15)) : 1.0)  // Additional subtle opacity adjustment
         .onAppear {
             if friend.isCurrentlyFlipped && !friend.isHistorical {
                 withAnimation(Animation.easeInOut(duration: 1.5).repeatForever(autoreverses: false)) {
@@ -420,7 +443,6 @@ struct FriendMapMarker: View {
             }
     }
 }
-
 struct FriendPreviewCard: View {
     let friend: FriendLocation
     let onDismiss: () -> Void

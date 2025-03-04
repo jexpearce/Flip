@@ -802,14 +802,15 @@ class AppManager: NSObject, ObservableObject {
                         remainingPauses: remainingPauses,
                         isPaused: false,
                         isFailed: false,
+                        wasSuccessful: true, // Mark as successful
                         flipBackTimeRemaining: nil,
                         lastUpdate: Date()
                     )
 
                     await activity.end(
-                        ActivityContent(state: finalState, staleDate: nil),
-                        dismissalPolicy: .immediate
-                    )
+                                    ActivityContent(state: finalState, staleDate: nil),
+                                    dismissalPolicy: .after(Date().addingTimeInterval(5)) // Show for 5 seconds
+                                )
                 }
                 activity = nil
             }
@@ -887,15 +888,16 @@ class AppManager: NSObject, ObservableObject {
                         remainingPauses: remainingPauses,
                         isPaused: false,
                         isFailed: true,
+                        wasSuccessful: false,
                         flipBackTimeRemaining: nil,
                         countdownMessage: nil,
                         lastUpdate: Date()
                     )
 
                     await activity.end(
-                        ActivityContent(state: finalState, staleDate: nil),
-                        dismissalPolicy: .immediate
-                    )
+                                    ActivityContent(state: finalState, staleDate: nil),
+                                    dismissalPolicy: .after(Date().addingTimeInterval(5)) // Show for 5 seconds
+                                )
                 }
                 activity = nil  // Important: set to nil after ending
             }
@@ -1201,6 +1203,7 @@ class AppManager: NSObject, ObservableObject {
                 remainingPauses: remainingPauses,
                 isPaused: currentState == .paused,
                 isFailed: currentState == .failed,
+                wasSuccessful: currentState == .completed,
                 flipBackTimeRemaining: (currentState == .tracking
                     && !isFaceDown)
                     ? flipBackTimeRemaining : nil,

@@ -320,7 +320,7 @@ struct AuthView: View {
                                     showSuccessOverlay = false
                                     authManager.signUpSuccess = false
                                     // Show location permission alert after success
-                                    locationPermissionManager.requestPermissionWithCustomAlert()
+                                    PermissionManager.shared.requestAllPermissions()
                                     // Auto-switch to sign in
                                     isSignUp = false
                                 }
