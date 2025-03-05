@@ -122,21 +122,31 @@ struct PausedView: View {
                     )
                     .shadow(color: Color.black.opacity(0.2), radius: 8)
                     
-                    // Session time remaining
+                    // Simplified status display - just shows pauses remaining
                     VStack(spacing: 8) {
-                        Text("SESSION RESUMING AT")
+                        Text("PAUSES REMAINING")
                             .font(.system(size: 16, weight: .bold))
                             .tracking(2)
                             .foregroundColor(.white.opacity(0.8))
                         
-                        Text(formatTime(seconds: appManager.pausedRemainingSeconds))
-                            .font(.system(size: 36, weight: .bold, design: .monospaced))
+                        Text("\(appManager.remainingPauses)")
+                            .font(.system(size: 56, weight: .bold))
                             .foregroundColor(.white)
                             .shadow(color: Color(red: 168/255, green: 85/255, blue: 247/255).opacity(0.6), radius: 6)
                         
-                        Text("\(appManager.remainingPauses) \(appManager.remainingPauses == 1 ? "pause" : "pauses") remaining")
-                            .font(.system(size: 14, weight: .medium))
-                            .foregroundColor(.white.opacity(0.8))
+                        if appManager.remainingPauses == 1 {
+                            Text("Last pause available")
+                                .font(.system(size: 14, weight: .medium))
+                                .foregroundColor(.white.opacity(0.8))
+                        } else if appManager.remainingPauses > 1 {
+                            Text("\(appManager.remainingPauses) pauses available")
+                                .font(.system(size: 14, weight: .medium))
+                                .foregroundColor(.white.opacity(0.8))
+                        } else {
+                            Text("No more pauses available")
+                                .font(.system(size: 14, weight: .medium))
+                                .foregroundColor(.white.opacity(0.8))
+                        }
                     }
                     .padding(.vertical, 15)
                     .padding(.horizontal, 25)

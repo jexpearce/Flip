@@ -19,7 +19,7 @@ struct LockView: View {
             .ignoresSafeArea()
             
             // Content with glass effect container
-            VStack(spacing: 12) {
+            VStack(spacing: 8) { // Reduced from 12 to 8 for more compact layout
                 // Order matters - check wasSuccessful first
                 if let wasSuccessful = context.state.wasSuccessful, wasSuccessful {
                     SuccessLockView()
@@ -35,7 +35,7 @@ struct LockView: View {
                         .id("active") // Force view refresh when state changes
                 }
             }
-            .padding()
+            .padding(8) // Reduced from standard padding to 8
             .background(
                 RoundedRectangle(cornerRadius: 15)
                     .fill(Color.white.opacity(0.05))  // Glass effect

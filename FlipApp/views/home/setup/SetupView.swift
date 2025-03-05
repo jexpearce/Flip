@@ -12,6 +12,7 @@ struct SetupView: View {
     @State private var showJoiningIndicator = false
     @ObservedObject private var permissionManager = PermissionManager.shared
     @State private var viewRouter = ViewRouter()
+    @State private var showLocationSelector = false
     
     // Check if we're navigating back from a joined session view
     @State private var joinLiveSessionMode = false
@@ -25,25 +26,71 @@ struct SetupView: View {
         ZStack {
             // Main View Content
             ScrollView {
-                VStack(spacing: 25) {
-                    // FLIP Logo at the top
+                VStack(spacing: 8) { // Reduced spacing from 25 to 15
+                    // Top Bar with Logo and Buttons
+                    HStack {
+                        // Location Button
+                        // Modify the location button in the HStack at the top of the SetupView body
+                        Button(action: {
+                            // Toggle the popup instead of just showing it
+                            showLocationSelector.toggle()
+                        }) {
+                            ZStack {
+                                Circle()
+                                    .fill(Theme.buttonGradient)
+                                    .frame(width: 35, height: 35)
+                                    .overlay(
+                                        Circle()
+                                            .stroke(
+                                                LinearGradient(
+                                                    colors: [
+                                                        Color.white.opacity(0.6),
+                                                        Color.white.opacity(0.2)
+                                                    ],
+                                                    startPoint: .topLeading,
+                                                    endPoint: .bottomTrailing
+                                                ),
+                                                lineWidth: 1
+                                            )
+                                    )
+                                    .shadow(color: Theme.purpleShadow.opacity(0.3), radius: 4)
+                                
+                                Image(systemName: "building.2")
+                                    .font(.system(size: 16, weight: .bold))
+                                    .foregroundColor(.white)
+                            }
+                        }
+                        .padding(.top, 5)
+
+                        Spacer()
+                        
+                    }
+                    .padding(.horizontal, 20)
+                    .padding(.top, 2)
+                    
+                    // FLIP Logo adjusted slightly higher
                     FlipLogo()
                     .padding(.horizontal)
+                    .padding(.top, -40) // Negative padding to move up slightly
                     
-                    // Current Building Indicator
-                    CurrentBuildingIndicator(
-                        buildingName: regionalViewModel.selectedBuilding?.name ?? "Detecting location..."
-                    ) {
-                        // Switch to Regional tab
-                        viewRouter.selectedTab = 1
-                        NotificationCenter.default.post(name: Notification.Name("SwitchToRegionalTab"), object: nil)
+                    // Location Popup
+                    if showLocationSelector {
+                        LocationSelectorPopup(
+                            buildingName: regionalViewModel.selectedBuilding?.name ?? "Detecting location...",
+                            isPresented: $showLocationSelector,
+                            onChangeLocation: {
+                                // Switch to Regional tab
+                                viewRouter.selectedTab = 1
+                                NotificationCenter.default.post(name: Notification.Name("SwitchToRegionalTab"), object: nil)
+                            }
+                        )
+                        .transition(.scale.combined(with: .opacity))
+                        .zIndex(1)
+                        .padding(.horizontal, 24)
                     }
-                    .padding(.horizontal, 24)
-                    .padding(.top, 5)
-                    .padding(.bottom, 10)
                     
                     // Set Time Title
-                    VStack(spacing: 4) {
+                    VStack(spacing: 2) { // Reduced spacing from 4 to 2
                         if joinLiveSessionMode, let sessionInfo = sessionToJoin {
                             Text("JOIN \(sessionInfo.name.uppercased())'S SESSION")
                                 .font(.system(size: 20, weight: .black))
@@ -62,58 +109,48 @@ struct SetupView: View {
                                 .tracking(8)
                                 .foregroundColor(Theme.yellow)
                                 .retroGlow()
-                                .padding(.top, 5)
                             
-                            Text("タイマーの設定")
-                                .font(.system(size: 12, weight: .medium))
-                                .tracking(3)
-                                .foregroundColor(.white.opacity(0.7))
                         }
                     }
+                    .padding(.top, -5)
 
                     // Circular Time Picker
                     CircularTime(selectedMinutes: $appManager.selectedMinutes)
-                        .padding(.top, -10)
-                        .disabled(joinLiveSessionMode) // Disable time selection for joined sessions
+                        .padding(.top, -15) // Increase negative padding from -15 to -20
+                        .disabled(joinLiveSessionMode)
                         .opacity(joinLiveSessionMode ? 0.7 : 1)
-                        .frame(height: 300)
+                        .frame(height: 280) // Reduce from 290 to 280
 
-                    // Controls Section - redesigned with 3 controls
-                    VStack(spacing: 16) {
-                        // 1. Allow Pause Toggle
-                        ControlButton(title: "ALLOW PAUSE") {
-                            Spacer()
-                            Toggle("", isOn: $appManager.allowPauses)
-                                .toggleStyle(ModernToggleStyle())
-                                .disabled(joinLiveSessionMode) // Disable in join mode
-                                .onChange(of: appManager.allowPauses) { newValue in
-                                    if !newValue {
-                                        // Only show the warning if it hasn't been shown before
-                                        if !hasShownPauseWarning {
-                                            showPauseDisabledWarning = true
-                                            hasShownPauseWarning = true
+                    // Controls Section - Redesigned with horizontal layout
+                    VStack(spacing: 12) { // Reduced spacing
+                        // Row 1: Allow Pause and # of Pauses in horizontal layout
+                        HStack(spacing: 12) {
+                            // 1. Allow Pause Toggle - Reduced width
+                            ControlButton(title: "ALLOW PAUSE") {
+                                Toggle("", isOn: $appManager.allowPauses)
+                                    .toggleStyle(ModernToggleStyle())
+                                    .disabled(joinLiveSessionMode) // Disable in join mode
+                                    .onChange(of: appManager.allowPauses) { newValue in
+                                        if !newValue {
+                                            // Only show the warning if it hasn't been shown before
+                                            if !hasShownPauseWarning {
+                                                showPauseDisabledWarning = true
+                                                hasShownPauseWarning = true
+                                            }
+                                            appManager.maxPauses = 0
+                                            isInfinitePauses = false
+                                        } else {
+                                            appManager.maxPauses = 3 // Default number of pauses
                                         }
-                                        appManager.maxPauses = 0
-                                        isInfinitePauses = false
-                                    } else {
-                                        appManager.maxPauses = 3 // Default number of pauses
                                     }
-                                }
-                            Spacer()
-                        }
-
-                        // 2. Number of Pauses with Infinite option
-                        ControlButton(title: "# OF PAUSES", isDisabled: !appManager.allowPauses || joinLiveSessionMode) {
-                            HStack {
-                                NumberPicker(
+                            }
+                            .frame(width: UIScreen.main.bounds.width * 0.43)
+                            
+                            // 2. Number of Pauses with Infinite option incorporated into the picker
+                            ControlButton(title: "# OF PAUSES", isDisabled: !appManager.allowPauses || joinLiveSessionMode) {
+                                NumberPickerWithInfinity(
                                     range: 1...5,
                                     selection: $appManager.maxPauses,
-                                    isDisabled: !appManager.allowPauses || joinLiveSessionMode || isInfinitePauses
-                                )
-                                
-                                Spacer()
-                                
-                                InfinityToggle(
                                     isInfinite: $isInfinitePauses,
                                     isDisabled: !appManager.allowPauses || joinLiveSessionMode
                                 )
@@ -127,10 +164,11 @@ struct SetupView: View {
                                     }
                                 }
                             }
+                            .frame(width: UIScreen.main.bounds.width * 0.43)
                         }
                         
                         // 3. Pause Duration Selector
-                        ControlButton(title: "PAUSE DURATION", isDisabled: !appManager.allowPauses || joinLiveSessionMode) {
+                        ControlButton(title: "PAUSE DURATION", isDisabled: !appManager.allowPauses || joinLiveSessionMode, reducedHeight: true) {
                             ModernPickerStyle(
                                 options: pauseDurationLabels,
                                 selection: $selectedPauseDurationIndex,
@@ -141,8 +179,8 @@ struct SetupView: View {
                             }
                         }
                     }
-                    .padding(.horizontal, 24)
-                    .padding(.top, 5)
+                    .padding(.horizontal, 20)
+                    .padding(.top, 0)  // Reduced padding
 
                     // Begin Button
                     BeginButton {
@@ -164,9 +202,9 @@ struct SetupView: View {
                         }
                     )
                     .disabled(joinLiveSessionMode) // Disable when joining
-                    .padding(.bottom, 50)
+                    .padding(.top, 5)  // Reduced from bottom 50 to top 5
                 }
-                .padding(.top, 20)
+                .padding(.top, 15)  // Reduced from 20 to 10
             }
             
             // Join Session Mode Control - shown only during join mode
@@ -436,6 +474,198 @@ struct SetupView: View {
             }
         }
         .environmentObject(viewRouter)
+    }
+}
+// Full LocationSelectorPopup implementation
+
+struct LocationSelectorPopup: View {
+    let buildingName: String  // Keep for compatibility
+    @Binding var isPresented: Bool
+    let onChangeLocation: () -> Void  // Keep for compatibility
+    @ObservedObject private var regionalViewModel = RegionalViewModel.shared
+    
+    var body: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            HStack {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("CURRENT LOCATION")
+                        .font(.system(size: 12, weight: .bold))
+                        .tracking(1)
+                        .foregroundColor(Theme.yellow.opacity(0.9))
+                    
+                    // Use the passed building name (which comes from RegionalViewModel)
+                    Text(buildingName)
+                        .font(.system(size: 16, weight: .bold))
+                        .foregroundColor(.white)
+                        .lineLimit(1)
+                }
+                
+                Spacer()
+                
+                HStack {
+                    Button(action: onChangeLocation) {
+                        HStack(spacing: 4) {
+                            Text("CHANGE")
+                                .font(.system(size: 10, weight: .bold))
+                                .tracking(1)
+                            
+                            Image(systemName: "chevron.right")
+                                .font(.system(size: 8, weight: .bold))
+                        }
+                        .foregroundColor(Theme.yellow.opacity(0.9))
+                        .padding(.horizontal, 10)
+                        .padding(.vertical, 6)
+                        .background(
+                            RoundedRectangle(cornerRadius: 12)
+                                .fill(Color.white.opacity(0.1))
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 12)
+                                        .stroke(Color.white.opacity(0.2), lineWidth: 1)
+                                )
+                        )
+                    }
+                    
+                    Button(action: {
+                        withAnimation(.spring()) {
+                            isPresented = false
+                        }
+                    }) {
+                        Image(systemName: "xmark")
+                            .font(.system(size: 12, weight: .bold))
+                            .foregroundColor(.white.opacity(0.7))
+                            .padding(8)
+                            .background(
+                                Circle()
+                                    .fill(Color.white.opacity(0.1))
+                            )
+                    }
+                }
+            }
+        }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 12)
+        .background(
+            ZStack {
+                RoundedRectangle(cornerRadius: 16)
+                    .fill(
+                        LinearGradient(
+                            colors: [
+                                Color(red: 60/255, green: 30/255, blue: 110/255).opacity(0.3),
+                                Color(red: 40/255, green: 20/255, blue: 80/255).opacity(0.2)
+                            ],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        )
+                    )
+                
+                RoundedRectangle(cornerRadius: 16)
+                    .fill(Color.white.opacity(0.05))
+                
+                RoundedRectangle(cornerRadius: 16)
+                    .stroke(
+                        LinearGradient(
+                            colors: [
+                                Color.white.opacity(0.4),
+                                Color.white.opacity(0.1)
+                            ],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        ),
+                        lineWidth: 1
+                    )
+            }
+        )
+        .shadow(color: Color.black.opacity(0.15), radius: 4)
+    }
+}
+
+struct NumberPickerWithInfinity: View {
+    let range: ClosedRange<Int>
+    @Binding var selection: Int
+    @Binding var isInfinite: Bool
+    var isDisabled: Bool = false
+    
+    var body: some View {
+        HStack(spacing: 8) {
+            // Minus button
+            Button(action: {
+                if !isDisabled && !isInfinite && selection > range.lowerBound {
+                    withAnimation(.spring()) {
+                        selection -= 1
+                    }
+                }
+            }) {
+                Image(systemName: "minus")
+                    .font(.system(size: 16, weight: .bold))
+                    .foregroundColor(.white.opacity(0.8))
+                    .frame(width: 30, height: 30)
+                    .background(
+                        Circle()
+                            .fill(Color.white.opacity(0.1))
+                    )
+            }
+            .buttonStyle(PlainButtonStyle())
+            .disabled(isDisabled || isInfinite || selection <= range.lowerBound)
+            .opacity((isDisabled || isInfinite || selection <= range.lowerBound) ? 0.5 : 1)
+            
+            // Value display or infinity
+            ZStack {
+                // Number display (shown when not infinite)
+                Text("\(selection)")
+                    .font(.system(size: 20, weight: .bold))
+                    .foregroundColor(.white)
+                    .frame(minWidth: 40)
+                    .opacity(isInfinite ? 0 : 1)
+                
+                // Infinity symbol (shown when infinite)
+                Image(systemName: "infinity")
+                    .font(.system(size: 20, weight: .bold))
+                    .foregroundColor(Theme.yellow)
+                    .frame(minWidth: 40)
+                    .opacity(isInfinite ? 1 : 0)
+            }
+            
+            // Plus/Infinity toggle button
+            Button(action: {
+                if !isDisabled {
+                    if selection < range.upperBound && !isInfinite {
+                        withAnimation(.spring()) {
+                            selection += 1
+                        }
+                    } else if selection >= range.upperBound && !isInfinite {
+                        // When we reach max value, next press toggles to infinity
+                        withAnimation(.spring()) {
+                            isInfinite = true
+                        }
+                    } else if isInfinite {
+                        // When infinite, press returns to lowest value
+                        withAnimation(.spring()) {
+                            isInfinite = false
+                            selection = range.lowerBound
+                        }
+                    }
+                }
+            }) {
+                Image(systemName: isInfinite ? "arrow.counterclockwise" : "plus")
+                    .font(.system(size: 16, weight: .bold))
+                    .foregroundColor(.white.opacity(0.8))
+                    .frame(width: 30, height: 30)
+                    .background(
+                        Circle()
+                            .fill(Color.white.opacity(0.1))
+                    )
+            }
+            .buttonStyle(PlainButtonStyle())
+            .disabled(isDisabled)
+            .opacity(isDisabled ? 0.5 : 1)
+        }
+        .padding(.horizontal, 6)
+        .padding(.vertical, 4)
+        .background(
+            RoundedRectangle(cornerRadius: 20)
+                .fill(Color.black.opacity(0.2))
+        )
+        .opacity(isDisabled ? 0.5 : 1)
     }
 }
 

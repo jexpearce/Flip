@@ -47,11 +47,12 @@ struct FlipLogo: View {
                     value: isButtonPressed
                 )
         }
-        .padding(.top, 20)
+        .padding(.top, 0) // Reduced from 20 to 5
         .onAppear { isButtonPressed = true }
     }
 }
 
+// Current Building Indicator component will be embedded within a popup in the new design
 struct CurrentBuildingIndicator: View {
     let buildingName: String
     let action: () -> Void
@@ -155,58 +156,56 @@ struct BeginButton: View {
             }
         }) {
             Text("BEGIN")
-                .font(.system(size: 26, weight: .black))
-                .tracking(6)
-                .foregroundColor(.white)
-                .frame(maxWidth: .infinity)
-                .frame(height: 70)
-                .background(
-                    ZStack {
-                        // Base gradient
-                        RoundedRectangle(cornerRadius: 35)
-                            .fill(
-                                LinearGradient(
-                                    colors: permissionManager.allPermissionsGranted ?
-                                    [
-                                        Theme.vibrantPurple,
-                                        Theme.deepPurple
-                                    ] :
-                                    [
-                                        Color.gray.opacity(0.5),
-                                        Color.gray.opacity(0.3)
-                                    ],
-                                    startPoint: .leading,
-                                    endPoint: .trailing
+                    .font(.system(size: 26, weight: .black))
+                    .tracking(6)
+                    .foregroundColor(.white)
+                    .frame(maxWidth: .infinity)
+                    .frame(height: 70)
+                    .background(
+                        ZStack {
+                            // Change gradient to teal-blue
+                            RoundedRectangle(cornerRadius: 35)
+                                .fill(
+                                    LinearGradient(
+                                        colors: permissionManager.allPermissionsGranted ?
+                                        [
+                                            Color(red: 56/255, green: 189/255, blue: 248/255), // Bright teal
+                                            Color(red: 14/255, green: 165/255, blue: 233/255)  // Deeper blue
+                                        ] :
+                                        [
+                                            Color.gray.opacity(0.5),
+                                            Color.gray.opacity(0.3)
+                                        ],
+                                        startPoint: .leading,
+                                        endPoint: .trailing
+                                    )
                                 )
-                            )
-                        
-                        // Glass effect
-                        RoundedRectangle(cornerRadius: 35)
-                            .fill(Color.white.opacity(0.1))
-                        
-                        // Glowing border
-                        RoundedRectangle(cornerRadius: 35)
-                            .stroke(
-                                LinearGradient(
-                                    colors: [
-                                        Color.white.opacity(0.6),
-                                        Color.white.opacity(0.2)
-                                    ],
-                                    startPoint: .topLeading,
-                                    endPoint: .bottomTrailing
-                                ),
-                                lineWidth: 1.5
-                            )
-                    }
-                )
-                .shadow(
-                    color: Theme.purpleShadow,
-                    radius: isPulsing ? 15 : 8
-                )
-                .scaleEffect(isPressed ? 0.97 : 1.0)
-                .opacity(permissionManager.allPermissionsGranted ? 1.0 : 0.6)
-        }
+                            
+                            // Rest stays the same
+                            RoundedRectangle(cornerRadius: 35)
+                                .fill(Color.white.opacity(0.1))
+                            
+                            RoundedRectangle(cornerRadius: 35)
+                                .stroke(
+                                    LinearGradient(
+                                        colors: [
+                                            Color.white.opacity(0.6),
+                                            Color.white.opacity(0.2)
+                                        ],
+                                        startPoint: .topLeading,
+                                        endPoint: .bottomTrailing
+                                    ),
+                                    lineWidth: 1.5
+                                )
+                        }
+                    )
+                    .shadow(
+                        color: Color(red: 56/255, green: 189/255, blue: 248/255).opacity(0.5),
+                        radius: isPulsing ? 15 : 8
+                    )
+                    .scaleEffect(isPressed ? 0.97 : 1.0)
+                    .opacity(permissionManager.allPermissionsGranted ? 1.0 : 0.6)
+            }
         .padding(.horizontal, 30)
-        .padding(.top, 10)
     }
 }

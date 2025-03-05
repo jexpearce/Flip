@@ -299,25 +299,15 @@ class AppManager: NSObject, ObservableObject {
                 self.remainingPauseSeconds -= 1
                 
                 // Update Live Activity every 5 seconds or at specific thresholds
-                if self.remainingPauseSeconds % 5 == 0 ||
-                   self.remainingPauseSeconds == 60 ||
-                   self.remainingPauseSeconds == 30 ||
-                   self.remainingPauseSeconds == 10 {
-                    if #available(iOS 16.1, *) {
-                        self.updateLiveActivity()
-                    }
-                }
+                if #available(iOS 16.1, *) {
+                                self.updateLiveActivity()
+                            }
                 
                 // Send notifications at key thresholds
                 if self.remainingPauseSeconds == 60 {
                     self.notificationManager.display(
                         title: "Pause Ending Soon",
                         body: "1 minute left in your pause."
-                    )
-                } else if self.remainingPauseSeconds == 30 {
-                    self.notificationManager.display(
-                        title: "Pause Ending Soon",
-                        body: "30 seconds left in your pause."
                     )
                 }
                 
@@ -1326,7 +1316,6 @@ class AppManager: NSObject, ObservableObject {
             )
 
             await activity.update(content)
-            print("Live Activity updated successfully")
         }
     }
     private func updateUserStats(successful: Bool) {

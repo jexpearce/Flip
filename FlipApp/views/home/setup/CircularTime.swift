@@ -154,25 +154,27 @@ private struct TimePicker: View {
     let timeIntervals: [Int]
 
     var body: some View {
-        VStack(spacing: 0) {
+        VStack(spacing: 4) { // Increase spacing from 0 to 4 to create separation
             Picker("", selection: $selectedMinutes) {
                 ForEach(timeIntervals, id: \.self) { minutes in
                     Text("\(minutes)")
-                        .font(.system(size: 42, weight: .bold, design: .default))
+                        .font(.system(size: 46, weight: .bold, design: .default))
                         .foregroundColor(.white)
                         .tag(minutes)
+                        .padding(.vertical, 4) // Add padding to increase space between items
                 }
             }
             .pickerStyle(WheelPickerStyle())
-            .frame(width: 100, height: 80)
+            .frame(width: 130, height: 90) // Increased width slightly from 120 to 130
             .compositingGroup()
             .clipped()
+            .scaleEffect(1.15) // Slightly reduced scale to maintain overall size
 
             Text("minutes")
                 .font(.system(size: 16, weight: .medium))
                 .foregroundColor(Theme.yellow)
-                .padding(.top, -5)
+                .padding(.top, 8) // Increased from 5 to 8 to move it down more
         }
-        .frame(width: 120, height: 120)
+        .frame(width: 140, height: 140) // Maintain the same overall size
     }
 }

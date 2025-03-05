@@ -4,31 +4,31 @@ struct ControlButton<Content: View>: View {
     let title: String
     let content: Content
     var isDisabled: Bool = false
+    var reducedHeight: Bool = false // New parameter
 
-    init(title: String, isDisabled: Bool = false, @ViewBuilder content: () -> Content) {
+    init(title: String, isDisabled: Bool = false, reducedHeight: Bool = false, @ViewBuilder content: () -> Content) {
         self.title = title
         self.isDisabled = isDisabled
+        self.reducedHeight = reducedHeight
         self.content = content()
     }
 
     var body: some View {
-        VStack(spacing: 8) {
-            Text(title)
-                .font(.system(size: 14, weight: .bold))
-                .tracking(2)
-                .foregroundColor(isDisabled ? .white.opacity(0.4) : .white.opacity(0.9))
-            
-            HStack {
-                Spacer()
-                content
-                    .frame(height: 36)
-                    .opacity(isDisabled ? 0.4 : 1.0)
-                Spacer()
+            VStack(spacing: reducedHeight ? 4 : 6) { // Conditional spacing
+                Text(title)
+                    .font(.system(size: 14, weight: .bold))
+                    .tracking(2)
+                    .foregroundColor(isDisabled ? .white.opacity(0.4) : .white.opacity(0.9))
+                
+                HStack {
+                    content
+                        .frame(height: reducedHeight ? 32 : 36) // Reduce height conditionally
+                        .opacity(isDisabled ? 0.4 : 1.0)
+                }
+                .frame(maxWidth: .infinity)
             }
-        }
-        .frame(maxWidth: .infinity)
-        .padding(.vertical, 12)
-        .padding(.horizontal, 16)
+        .padding(.vertical, reducedHeight ? 8 : 10) // Reduce padding conditionally
+        .padding(.horizontal, 14) // Reduced from 16 to 14
         .background(
             ZStack {
                 // Base background
@@ -66,12 +66,11 @@ struct ControlButton<Content: View>: View {
         .shadow(color: Color.black.opacity(0.15), radius: 8, x: 0, y: 4)
     }
 }
+
 struct ModernToggleStyle: ToggleStyle {
     func makeBody(configuration: Configuration) -> some View {
         HStack {
             configuration.label
-            
-            Spacer()
             
             ZStack {
                 // Track
@@ -194,6 +193,7 @@ struct ModernPickerStyle: View {
     }
 }
 
+// This component is no longer needed as its functionality is integrated into NumberPickerWithInfinity
 struct InfinityToggle: View {
     @Binding var isInfinite: Bool
     var isDisabled: Bool = false
@@ -256,6 +256,8 @@ struct InfinityToggle: View {
     }
 }
 
+// This component is kept for backward compatibility but its functionality
+// is now integrated into NumberPickerWithInfinity
 struct NumberPicker: View {
     let range: ClosedRange<Int>
     @Binding var selection: Int
