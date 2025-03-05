@@ -3,7 +3,7 @@ import SwiftUI
 import FirebaseAuth
 import FirebaseCore
 
-struct FriendCard: View {
+struct EnhancedFriendCard: View {
     let friend: FirebaseManager.FlipUser
     @State private var isPressed = false
     @State private var isGlowing = false
@@ -43,17 +43,18 @@ struct FriendCard: View {
                 ZStack(alignment: .topTrailing) {
                     ProfileAvatarView(
                         imageURL: friend.profileImageURL,
-                        size: 50,
+                        size: 56,
                         username: friend.username
                     )
+                    .shadow(color: isLive ? Color.green.opacity(0.6) : Color(red: 56/255, green: 189/255, blue: 248/255).opacity(0.4), radius: 8)
                     
-                    // Live indicator badge
+                    // Live indicator badge with animation
                     if isLive {
                         Circle()
                             .fill(isFull ? Color.gray : Color.green)
-                            .frame(width: 12, height: 12)
+                            .frame(width: 14, height: 14)
                             .shadow(color: Color.green.opacity(0.6), radius: isGlowing ? 4 : 2)
-                            .animation(Animation.easeInOut(duration: 1.5).repeatForever(autoreverses: true), value: isGlowing)
+                            .animation(Animation.easeInOut(duration: 1.2).repeatForever(autoreverses: true), value: isGlowing)
                             .overlay(
                                 Circle()
                                     .stroke(Color.black, lineWidth: 1)
@@ -65,49 +66,68 @@ struct FriendCard: View {
                     }
                 }
                 
-                // User info section
+                // User info section - Enhanced styling
                 VStack(alignment: .leading, spacing: 5) {
                     if isLive {
-                        // When Live: LIVE text
-                        HStack(spacing: 4) {
+                        // When Live: LIVE text with pulse animation
+                        HStack(spacing: 6) {
                             Text("LIVE")
                                 .font(.system(size: 14, weight: .heavy))
                                 .foregroundColor(isFull ? .gray : .green)
                                 .shadow(color: Color.green.opacity(0.6), radius: isGlowing ? 4 : 2)
+                                .scaleEffect(isGlowing ? 1.05 : 1.0)
+                                .animation(Animation.easeInOut(duration: 1.5).repeatForever(autoreverses: true), value: isGlowing)
+                            
+                            Circle()
+                                .fill(Color.green)
+                                .frame(width: 6, height: 6)
+                                .opacity(isGlowing ? 0.8 : 0.4)
+                                .animation(Animation.easeInOut(duration: 0.8).repeatForever(autoreverses: true), value: isGlowing)
                         }
                     }
                     
-                    // Always show username
+                    // Username with enhanced styling
                     Text(friend.username)
-                        .font(.system(size: 18, weight: .bold))
+                        .font(.system(size: 20, weight: .bold))
                         .foregroundColor(.white)
                         .shadow(color: Color(red: 56/255, green: 189/255, blue: 248/255).opacity(0.5), radius: 6)
                     
-                    // Show session count in normal state
+                    // Show session count in normal state or live session info
                     if !isLive {
-                        HStack(spacing: 6) {
+                        HStack(spacing: 8) {
                             Image(systemName: "timer")
                                 .font(.system(size: 12))
-                                .foregroundColor(.white.opacity(0.7))
+                                .foregroundColor(Color(red: 168/255, green: 85/255, blue: 247/255))
                             
                             Text("\(friend.totalSessions) sessions")
                                 .font(.system(size: 14))
-                                .foregroundColor(.white.opacity(0.7))
+                                .foregroundColor(.white.opacity(0.8))
+                        }
+                    } else {
+                        // Show brief session info for live sessions
+                        HStack(spacing: 8) {
+                            Image(systemName: "clock.fill")
+                                .font(.system(size: 12))
+                                .foregroundColor(Color(red: 250/255, green: 204/255, blue: 21/255))
+                            
+                            Text("Target: \(liveSession?.targetDuration ?? 0)min")
+                                .font(.system(size: 14))
+                                .foregroundColor(.white.opacity(0.8))
                         }
                     }
                 }
-                .padding(.leading, 8)
+                .padding(.leading, 10)
 
                 Spacer()
 
-                // RIGHT SIDE: Join button or stats
+                // RIGHT SIDE: Join button or stats with enhanced styling
                 if isLive {
                     // Show join button or full indicator
                     if canJoin {
                         // We'll render this from the parent view
                         Spacer().frame(width: 90, height: 36)
                     } else if isFull {
-                        Text("LIVE (FULL)")
+                        Text("FULL")
                             .font(.system(size: 14, weight: .bold))
                             .tracking(1)
                             .foregroundColor(.gray)
@@ -124,21 +144,21 @@ struct FriendCard: View {
                             )
                     }
                 } else {
-                    // Normal state: Show focus time
+                    // Normal state: Show focus time with enhanced styling
                     VStack(alignment: .trailing, spacing: 5) {
                         Text("\(friend.totalFocusTime) min")
-                            .font(.system(size: 16, weight: .bold))
+                            .font(.system(size: 18, weight: .bold))
                             .foregroundColor(.white)
-                            .shadow(color: Color(red: 56/255, green: 189/255, blue: 248/255).opacity(0.5), radius: 6)
+                            .shadow(color: Color(red: 250/255, green: 204/255, blue: 21/255).opacity(0.5), radius: 6)
 
                         HStack(spacing: 6) {
-                            Text("total focus time")
+                            Text("focus time")
                                 .font(.system(size: 12))
-                                .foregroundColor(.white.opacity(0.7))
+                                .foregroundColor(Color(red: 250/255, green: 204/255, blue: 21/255).opacity(0.8))
                             
                             Image(systemName: "clock.fill")
                                 .font(.system(size: 12))
-                                .foregroundColor(.white.opacity(0.7))
+                                .foregroundColor(Color(red: 250/255, green: 204/255, blue: 21/255).opacity(0.8))
                         }
                     }
                 }
@@ -146,7 +166,7 @@ struct FriendCard: View {
             
             // Session timing information - only shown for live sessions
             if isLive, let session = liveSession {
-                VStack(spacing: 4) {
+                VStack(spacing: 8) {
                     Divider()
                         .background(Color.white.opacity(0.2))
                         .padding(.vertical, 10)
@@ -156,27 +176,51 @@ struct FriendCard: View {
                             Text("TIME")
                                 .font(.system(size: 12, weight: .medium))
                                 .tracking(1)
-                                .foregroundColor(.white.opacity(0.7))
+                                .foregroundColor(Color(red: 56/255, green: 189/255, blue: 248/255).opacity(0.8))
                             
                             // Use our real-time updated timer here instead of the static value
                             Text(formattedElapsedTime)
-                                .font(.system(size: 16, weight: .bold))
+                                .font(.system(size: 18, weight: .bold))
                                 .monospacedDigit()
                                 .foregroundColor(.white)
                                 .id(elapsedSeconds) // Force refresh when counter changes
+                                .shadow(color: Color(red: 56/255, green: 189/255, blue: 248/255).opacity(0.5), radius: 4)
                         }
                         
                         Spacer()
                         
-                        VStack(alignment: .trailing, spacing: 2) {
-                            Text("TARGET")
-                                .font(.system(size: 12, weight: .medium))
-                                .tracking(1)
-                                .foregroundColor(.white.opacity(0.7))
-                            
-                            Text("\(session.targetDuration) min")
-                                .font(.system(size: 16, weight: .bold))
-                                .foregroundColor(.white)
+                        if session.isPaused {
+                            // Show paused status
+                            HStack(spacing: 6) {
+                                Image(systemName: "pause.circle.fill")
+                                    .foregroundColor(Color(red: 239/255, green: 68/255, blue: 68/255))
+                                
+                                Text("PAUSED")
+                                    .font(.system(size: 12, weight: .bold))
+                                    .foregroundColor(Color(red: 239/255, green: 68/255, blue: 68/255))
+                            }
+                            .padding(.horizontal, 10)
+                            .padding(.vertical, 4)
+                            .background(
+                                RoundedRectangle(cornerRadius: 10)
+                                    .fill(Color(red: 239/255, green: 68/255, blue: 68/255).opacity(0.2))
+                                    .overlay(
+                                        RoundedRectangle(cornerRadius: 10)
+                                            .stroke(Color(red: 239/255, green: 68/255, blue: 68/255).opacity(0.3), lineWidth: 1)
+                                    )
+                            )
+                        } else {
+                            VStack(alignment: .trailing, spacing: 2) {
+                                Text("TARGET")
+                                    .font(.system(size: 12, weight: .medium))
+                                    .tracking(1)
+                                    .foregroundColor(Color(red: 250/255, green: 204/255, blue: 21/255).opacity(0.8))
+                                
+                                Text("\(session.targetDuration) min")
+                                    .font(.system(size: 18, weight: .bold))
+                                    .foregroundColor(.white)
+                                    .shadow(color: Color(red: 250/255, green: 204/255, blue: 21/255).opacity(0.5), radius: 4)
+                            }
                         }
                     }
                 }
@@ -186,25 +230,28 @@ struct FriendCard: View {
         .padding()
         .background(
             ZStack {
-                // Base background
-                RoundedRectangle(cornerRadius: 15)
-                            .fill(isLive && !isFull ?
-                                  AnyShapeStyle(LinearGradient(
-                                    colors: [
-                                        Color(red: 0/255, green: 100/255, blue: 0/255).opacity(0.2),
-                                        Color(red: 26/255, green: 14/255, blue: 47/255).opacity(0.6)
+                // Base background with different colors for live vs normal
+                RoundedRectangle(cornerRadius: 16)
+                            .fill(
+                                LinearGradient(
+                                    colors: isLive && !isFull ? [
+                                        Color(red: 21/255, green: 128/255, blue: 61/255).opacity(0.3),
+                                        Color(red: 30/255, green: 58/255, blue: 138/255).opacity(0.2)
+                                    ] : [
+                                        Color(red: 30/255, green: 58/255, blue: 138/255).opacity(0.2),
+                                        Color(red: 88/255, green: 28/255, blue: 135/255).opacity(0.2)
                                     ],
                                     startPoint: .topLeading,
                                     endPoint: .bottomTrailing
-                                  )) :
-                                  AnyShapeStyle(Theme.buttonGradient.opacity(0.1))
+                                )
                             )
+                
                 // Glass effect
-                RoundedRectangle(cornerRadius: 15)
+                RoundedRectangle(cornerRadius: 16)
                     .fill(Color.white.opacity(0.05))
                 
-                // Border
-                RoundedRectangle(cornerRadius: 15)
+                // Border with different colors for live vs normal
+                RoundedRectangle(cornerRadius: 16)
                     .stroke(
                         isLive && !isFull ?
                         LinearGradient(

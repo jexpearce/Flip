@@ -5,119 +5,201 @@ import FirebaseFirestore
 
 struct WeeklyLeaderboard: View {
     @ObservedObject var viewModel: LeaderboardViewModel
-    
-    // Medal colors
-    private let goldColor = LinearGradient(
-        colors: [Color(red: 255/255, green: 215/255, blue: 0/255), Color(red: 212/255, green: 175/255, blue: 55/255)],
-        startPoint: .top,
-        endPoint: .bottom
-    )
-    
-    private let silverColor = LinearGradient(
-        colors: [Color(red: 192/255, green: 192/255, blue: 192/255), Color(red: 169/255, green: 169/255, blue: 169/255)],
-        startPoint: .top,
-        endPoint: .bottom
-    )
-    
-    private let bronzeColor = LinearGradient(
-        colors: [Color(red: 205/255, green: 127/255, blue: 50/255), Color(red: 165/255, green: 113/255, blue: 78/255)],
-        startPoint: .top,
-        endPoint: .bottom
-    )
+    @State private var isShowingAll = false
     
     var body: some View {
-        VStack(spacing: 12) {
-            // Title
+        VStack(spacing: 8) {
+            // Rich golden title with icon
             HStack {
-                Text("WEEKLY LEADERBOARD")
-                    .font(.system(size: 14, weight: .black))
-                    .tracking(3)
-                    .foregroundColor(Color(red: 234/255, green: 179/255, blue: 8/255))
-                    .shadow(color: Color(red: 234/255, green: 179/255, blue: 8/255).opacity(0.5), radius: 6)
-                
                 Image(systemName: "crown.fill")
-                    .font(.system(size: 14))
+                    .font(.system(size: 18))
                     .foregroundStyle(
                         LinearGradient(
                             colors: [
-                                Color(red: 234/255, green: 179/255, blue: 8/255),
-                                Color(red: 253/255, green: 224/255, blue: 71/255)
+                                Color(red: 250/255, green: 204/255, blue: 21/255),
+                                Color(red: 234/255, green: 179/255, blue: 8/255)
                             ],
                             startPoint: .top,
                             endPoint: .bottom
                         )
                     )
-                    .shadow(color: Color(red: 234/255, green: 179/255, blue: 8/255).opacity(0.5), radius: 4)
+                    .shadow(color: Color(red: 234/255, green: 179/255, blue: 8/255).opacity(0.6), radius: 8)
+                
+                Text("WEEKLY CHAMPIONS")
+                    .font(.system(size: 18, weight: .black))
+                    .tracking(2)
+                    .foregroundStyle(
+                        LinearGradient(
+                            colors: [
+                                Color(red: 250/255, green: 204/255, blue: 21/255),
+                                Color(red: 234/255, green: 179/255, blue: 8/255)
+                            ],
+                            startPoint: .top,
+                            endPoint: .bottom
+                        )
+                    )
+                    .shadow(color: Color(red: 234/255, green: 179/255, blue: 8/255).opacity(0.6), radius: 8)
                 
                 Spacer()
                 
-                Text("TOTAL FOCUS TIME")
-                    .font(.system(size: 10, weight: .bold))
-                    .tracking(1)
-                    .foregroundColor(.white.opacity(0.7))
+                // Show more/less toggle
+                Button(action: {
+                    withAnimation(.spring()) {
+                        isShowingAll.toggle()
+                    }
+                }) {
+                    Text(isShowingAll ? "Show Less" : "Show All")
+                        .font(.system(size: 12, weight: .bold))
+                        .foregroundColor(Color(red: 250/255, green: 204/255, blue: 21/255))
+                        .padding(.horizontal, 10)
+                        .padding(.vertical, 4)
+                        .background(
+                            RoundedRectangle(cornerRadius: 12)
+                                .fill(Color(red: 234/255, green: 179/255, blue: 8/255).opacity(0.15))
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 12)
+                                        .stroke(Color(red: 234/255, green: 179/255, blue: 8/255).opacity(0.3), lineWidth: 1)
+                                )
+                        )
+                }
+                .opacity(viewModel.leaderboardEntries.count > 3 ? 1 : 0)
             }
+            .padding(.horizontal, 6)
             
             if viewModel.isLoading {
+                // Loading indicator
                 HStack {
                     Spacer()
                     ProgressView()
-                        .tint(.white)
+                        .tint(Color(red: 250/255, green: 204/255, blue: 21/255))
                         .scaleEffect(1.2)
                         .padding(.vertical, 25)
                     Spacer()
                 }
-            } else if viewModel.leaderboardEntries.isEmpty {
-                Text("No sessions recorded this week")
-                    .font(.system(size: 14))
-                    .foregroundColor(.white.opacity(0.7))
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 15)
             } else {
-                // Leaderboard entries
-                VStack(spacing: 8) {
-                    ForEach(Array(viewModel.leaderboardEntries.prefix(5).enumerated()), id: \.element.id) { index, entry in
-                        HStack {
-                            // Rank with medal indicator
-                            HStack(spacing: 8) {
-                                Text("\(index + 1)")
-                                    .font(.system(size: 16, weight: .black))
-                                    .foregroundColor(.white)
-                                    .frame(width: 24)
-                                
-                                // Medal for top 3
+                // Column Headers
+                HStack {
+                    Text("RANK")
+                        .font(.system(size: 12, weight: .bold))
+                        .tracking(1)
+                        .foregroundColor(Color(red: 250/255, green: 204/255, blue: 21/255))
+                        .frame(width: 50, alignment: .center)
+                    
+                    Text("USER")
+                        .font(.system(size: 12, weight: .bold))
+                        .tracking(1)
+                        .foregroundColor(Color(red: 250/255, green: 204/255, blue: 21/255))
+                        .frame(alignment: .leading)
+                    
+                    Spacer()
+                    
+                    Text("TIME")
+                        .font(.system(size: 12, weight: .bold))
+                        .tracking(1)
+                        .foregroundColor(Color(red: 250/255, green: 204/255, blue: 21/255))
+                        .frame(width: 70, alignment: .trailing)
+                }
+                .padding(.horizontal, 12)
+                .padding(.bottom, 4)
+                
+                if viewModel.leaderboardEntries.isEmpty {
+                    // Empty State
+                    VStack(spacing: 15) {
+                        Image(systemName: "crown")
+                            .font(.system(size: 40))
+                            .foregroundStyle(
+                                LinearGradient(
+                                    colors: [
+                                        Color(red: 250/255, green: 204/255, blue: 21/255),
+                                        Color(red: 234/255, green: 179/255, blue: 8/255)
+                                    ],
+                                    startPoint: .top,
+                                    endPoint: .bottom
+                                )
+                            )
+                            .shadow(color: Color(red: 234/255, green: 179/255, blue: 8/255).opacity(0.6), radius: 8)
+                        
+                        Text("No sessions recorded this week")
+                            .font(.system(size: 16, weight: .medium))
+                            .foregroundColor(.white.opacity(0.7))
+                    }
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 30)
+                } else {
+                    // Users List with rich styling
+                    LazyVStack(spacing: 10) {
+                        let displayEntries = isShowingAll ?
+                                             viewModel.leaderboardEntries :
+                                             Array(viewModel.leaderboardEntries.prefix(3))
+                        
+                        ForEach(Array(displayEntries.enumerated()), id: \.element.id) { index, entry in
+                            HStack {
+                                // Rank with medal for top 3
                                 if index < 3 {
-                                    ZStack {
-                                        Circle()
-                                            .fill(index == 0 ? goldColor : (index == 1 ? silverColor : bronzeColor))
-                                            .frame(width: 22, height: 22)
-                                        
-                                        Image(systemName: "medal.fill")
-                                            .font(.system(size: 12))
-                                            .foregroundColor(.white)
-                                            .shadow(color: Color.black.opacity(0.2), radius: 1)
+                                    medalView(for: index)
+                                        .frame(width: 50, alignment: .center)
+                                } else {
+                                    Text("\(index + 1)")
+                                        .font(.system(size: 16, weight: .bold))
+                                        .foregroundColor(.white)
+                                        .frame(width: 50, alignment: .center)
+                                }
+                                
+                                // Username
+                                Text(entry.username)
+                                    .font(.system(size: 16, weight: .bold))
+                                    .lineLimit(1)
+                                    .foregroundColor(.white)
+                                
+                                Spacer()
+                                
+                                // Focus time
+                                Text("\(entry.totalTime)m")
+                                    .font(.system(size: 16, weight: .bold))
+                                    .foregroundColor(.white)
+                                    .frame(width: 70, alignment: .trailing)
+                            }
+                            .padding(.vertical, 8)
+                            .padding(.horizontal, 12)
+                            .background(
+                                ZStack {
+                                    // Different background for top 3
+                                    RoundedRectangle(cornerRadius: 10)
+                                        .fill(
+                                            LinearGradient(
+                                                colors: index < 3 ? [
+                                                    Color(red: 234/255, green: 179/255, blue: 8/255).opacity(0.3),
+                                                    Color(red: 234/255, green: 179/255, blue: 8/255).opacity(0.1)
+                                                ] : [
+                                                    Color.white.opacity(0.08),
+                                                    Color.white.opacity(0.05)
+                                                ],
+                                                startPoint: .top,
+                                                endPoint: .bottom
+                                            )
+                                        )
+                                    
+                                    // Highlight for current user
+                                    if Auth.auth().currentUser?.uid == entry.id {
+                                        RoundedRectangle(cornerRadius: 10)
+                                            .stroke(
+                                                LinearGradient(
+                                                    colors: [
+                                                        Color(red: 250/255, green: 204/255, blue: 21/255).opacity(0.7),
+                                                        Color(red: 250/255, green: 204/255, blue: 21/255).opacity(0.3)
+                                                    ],
+                                                    startPoint: .topLeading,
+                                                    endPoint: .bottomTrailing
+                                                ),
+                                                lineWidth: 1.5
+                                            )
+                                    } else {
+                                        RoundedRectangle(cornerRadius: 10)
+                                            .stroke(Color.white.opacity(0.1), lineWidth: 1)
                                     }
                                 }
-                            }
-                            
-                            // Username
-                            Text(entry.username)
-                                .font(.system(size: 16, weight: .bold))
-                                .foregroundColor(.white)
-                                .lineLimit(1)
-                                .frame(maxWidth: .infinity, alignment: .leading)
-                            
-                            // Duration - now shows total time
-                            Text("\(entry.totalTime) min")
-                                .font(.system(size: 16, weight: .black))
-                                .foregroundColor(Color(red: 234/255, green: 179/255, blue: 8/255))
-                                .shadow(color: Color(red: 234/255, green: 179/255, blue: 8/255).opacity(0.3), radius: 4)
+                            )
                         }
-                        .padding(.vertical, 8)
-                        .padding(.horizontal, 12)
-                        .background(
-                            RoundedRectangle(cornerRadius: 10)
-                                .fill(Color.white.opacity(0.05))
-                        )
                     }
                 }
             }
@@ -125,42 +207,106 @@ struct WeeklyLeaderboard: View {
         .padding()
         .background(
             ZStack {
-                RoundedRectangle(cornerRadius: 15)
+                // Rich golden gradient background
+                RoundedRectangle(cornerRadius: 16)
                     .fill(
                         LinearGradient(
                             colors: [
-                                Color(red: 161/255, green: 98/255, blue: 7/255).opacity(0.4),
-                                Color(red: 133/255, green: 77/255, blue: 14/255).opacity(0.3)
+                                Color(red: 133/255, green: 77/255, blue: 14/255).opacity(0.3),
+                                Color(red: 113/255, green: 63/255, blue: 18/255).opacity(0.2)
                             ],
                             startPoint: .topLeading,
                             endPoint: .bottomTrailing
                         )
                     )
                 
-                RoundedRectangle(cornerRadius: 15)
+                // Glass effect
+                RoundedRectangle(cornerRadius: 16)
                     .fill(Color.white.opacity(0.05))
                 
-                RoundedRectangle(cornerRadius: 15)
+                // Glowing golden border
+                RoundedRectangle(cornerRadius: 16)
                     .stroke(
                         LinearGradient(
                             colors: [
-                                Color.white.opacity(0.5),
-                                Color.white.opacity(0.1)
+                                Color(red: 250/255, green: 204/255, blue: 21/255).opacity(0.6),
+                                Color(red: 234/255, green: 179/255, blue: 8/255).opacity(0.3)
                             ],
                             startPoint: .topLeading,
                             endPoint: .bottomTrailing
                         ),
-                        lineWidth: 1
+                        lineWidth: 1.5
                     )
             }
         )
-        .shadow(color: Color.black.opacity(0.2), radius: 4, x: 0, y: 2)
+        .shadow(color: Color(red: 234/255, green: 179/255, blue: 8/255).opacity(0.2), radius: 10)
         .onAppear {
             viewModel.loadLeaderboard()
         }
     }
+    
+    // Medal view for top 3
+    private func medalView(for index: Int) -> some View {
+        ZStack {
+            // Medal color based on rank
+            Image(systemName: "medal.fill")
+                .font(.system(size: 22))
+                .foregroundStyle(
+                    medalGradient(for: index)
+                )
+                .shadow(color: medalShadowColor(for: index), radius: 4)
+        }
+    }
+    
+    // Medal gradients
+    private func medalGradient(for index: Int) -> LinearGradient {
+        switch index {
+        case 0: // Gold
+            return LinearGradient(
+                colors: [
+                    Color(red: 253/255, green: 224/255, blue: 71/255),
+                    Color(red: 234/255, green: 179/255, blue: 8/255)
+                ],
+                startPoint: .top,
+                endPoint: .bottom
+            )
+        case 1: // Silver
+            return LinearGradient(
+                colors: [
+                    Color(red: 226/255, green: 232/255, blue: 240/255),
+                    Color(red: 148/255, green: 163/255, blue: 184/255)
+                ],
+                startPoint: .top,
+                endPoint: .bottom
+            )
+        case 2: // Bronze
+            return LinearGradient(
+                colors: [
+                    Color(red: 217/255, green: 119/255, blue: 6/255),
+                    Color(red: 180/255, green: 83/255, blue: 9/255)
+                ],
+                startPoint: .top,
+                endPoint: .bottom
+            )
+        default:
+            return LinearGradient(
+                colors: [Color.gray, Color.gray.opacity(0.7)],
+                startPoint: .top,
+                endPoint: .bottom
+            )
+        }
+    }
+    
+    // Medal shadow colors
+    private func medalShadowColor(for index: Int) -> Color {
+        switch index {
+        case 0: return Color(red: 234/255, green: 179/255, blue: 8/255).opacity(0.6)
+        case 1: return Color(red: 148/255, green: 163/255, blue: 184/255).opacity(0.6)
+        case 2: return Color(red: 180/255, green: 83/255, blue: 9/255).opacity(0.6)
+        default: return Color.gray.opacity(0.6)
+        }
+    }
 }
-
 // Updated data model for leaderboard entries
 struct LeaderboardEntry: Identifiable {
     let id: String

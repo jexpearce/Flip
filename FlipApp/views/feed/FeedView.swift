@@ -6,56 +6,125 @@ struct FeedView: View {
     @EnvironmentObject var sessionManager: SessionManager
     @StateObject private var viewModel = FeedViewModel()
     
+    // Custom green-tinted midnight purple gradient for FeedView
+    private let feedGradient = LinearGradient(
+        colors: [
+            Color(red: 15/255, green: 23/255, blue: 42/255), // Dark blue-green
+            Color(red: 20/255, green: 36/255, blue: 50/255), // Midnight teal
+            Color(red: 10/255, green: 30/255, blue: 45/255), // Deep teal-green
+            Color(red: 12/255, green: 20/255, blue: 40/255)  // Dark purple-blue
+        ],
+        startPoint: .top,
+        endPoint: .bottom
+    )
+    
     var body: some View {
         NavigationView {
-            ScrollView {
-                VStack(spacing: 25) {
-                    // Header
-                    Text("FEED")
-                        .font(.system(size: 28, weight: .black))
-                        .tracking(8)
-                        .foregroundColor(.white)
-                        .shadow(color: Theme.lightTealBlue.opacity(0.5), radius: 8)
-                        .padding(.top, 20)
-
-                    if viewModel.isLoading {
-                        ProgressView()
-                            .tint(.white)
-                            .scaleEffect(1.5)
-                            .padding(.top, 50)
-                    } else if viewModel.feedSessions.isEmpty {
-                        // Empty state view
-                        EmptyFeedView()
-                    } else {
-                        // Session cards
-                        ForEach(viewModel.feedSessions) { session in
-                            FeedSessionCard(
-                                session: session,
-                                viewModel: viewModel
+            ZStack {
+                // Background Gradient
+                feedGradient
+                    .edgesIgnoringSafeArea(.all)
+                
+                // Decorative elements
+                VStack {
+                    // Top circle glow
+                    Circle()
+                        .fill(
+                            RadialGradient(
+                                gradient: Gradient(colors: [
+                                    Color(red: 34/255, green: 197/255, blue: 94/255).opacity(0.15),
+                                    Color(red: 20/255, green: 83/255, blue: 45/255).opacity(0.05)
+                                ]),
+                                center: .center,
+                                startRadius: 10,
+                                endRadius: 300
                             )
+                        )
+                        .frame(width: 300, height: 300)
+                        .offset(x: 150, y: -200)
+                        .blur(radius: 50)
+                    
+                    Spacer()
+                    
+                    // Bottom circle glow
+                    Circle()
+                        .fill(
+                            RadialGradient(
+                                gradient: Gradient(colors: [
+                                    Color(red: 34/255, green: 197/255, blue: 94/255).opacity(0.1),
+                                    Color(red: 20/255, green: 83/255, blue: 45/255).opacity(0.05)
+                                ]),
+                                center: .center,
+                                startRadius: 5,
+                                endRadius: 200
+                            )
+                        )
+                        .frame(width: 250, height: 250)
+                        .offset(x: -120, y: 100)
+                        .blur(radius: 40)
+                }
+                
+                ScrollView {
+                    VStack(spacing: 25) {
+                        // Header
+                        Text("FEED")
+                            .font(.system(size: 32, weight: .black))
+                            .tracking(8)
+                            .foregroundColor(.white)
+                            .shadow(color: Color(red: 34/255, green: 197/255, blue: 94/255).opacity(0.6), radius: 12)
+                            .padding(.top, 20)
+                            .padding(.bottom, 10)
+                        
+                        if viewModel.isLoading {
+                            // Enhanced loading indicator
+                            VStack(spacing: 15) {
+                                ProgressView()
+                                    .scaleEffect(1.8)
+                                    .tint(Color(red: 34/255, green: 197/255, blue: 94/255))
+                                    .padding(.bottom, 5)
+                                
+                                Text("Loading sessions...")
+                                    .font(.system(size: 16, weight: .medium))
+                                    .foregroundColor(.white.opacity(0.8))
+                            }
+                            .frame(maxWidth: .infinity)
+                            .frame(height: 200)
+                            .background(
+                                RoundedRectangle(cornerRadius: 16)
+                                    .fill(Color.black.opacity(0.2))
+                                    .overlay(
+                                        RoundedRectangle(cornerRadius: 16)
+                                            .stroke(Color.white.opacity(0.1), lineWidth: 1)
+                                    )
+                            )
+                            .padding(.horizontal, 20)
+                            .padding(.top, 30)
+                        } else if viewModel.feedSessions.isEmpty {
+                            // Enhanced empty state view
+                            EmptyFeedView()
+                                .padding(.top, 20)
+                        } else {
+                            // Session cards with animation
+                            ForEach(Array(viewModel.feedSessions.enumerated()), id: \.element.id) { index, session in
+                                FeedSessionCard(
+                                    session: session,
+                                    viewModel: viewModel
+                                )
+                                .transition(.scale(scale: 0.95).combined(with: .opacity))
+                                .animation(.spring().delay(Double(index) * 0.05), value: viewModel.isLoading)
+                            }
                         }
                     }
+                    .padding(.horizontal)
+                    .padding(.bottom, 20)
                 }
-                .padding(.horizontal)
+                .refreshable {
+                    print("FeedView refreshed - reloading feed data")
+                    viewModel.loadFeed()
+                }
             }
-            .background(
-                LinearGradient(
-                    colors: [
-                        Color(red: 26/255, green: 14/255, blue: 47/255),
-                        Color(red: 48/255, green: 30/255, blue: 103/255),
-                        Color(red: 26/255, green: 14/255, blue: 47/255)
-                    ],
-                    startPoint: .top,
-                    endPoint: .bottom
-                )
-                .edgesIgnoringSafeArea(.all)
-            )
             .onAppear {
                 print("FeedView appeared - loading feed data")
-                viewModel.loadFeed()
-            }
-            .refreshable {
-                print("FeedView refreshed - reloading feed data")
                 viewModel.loadFeed()
             }
             .onDisappear {
@@ -70,53 +139,60 @@ struct FeedView: View {
                 Text(viewModel.errorMessage)
             }
         }
-        .background(
-            LinearGradient(
-                colors: [
-                    Color(red: 26/255, green: 14/255, blue: 47/255),
-                    Color(red: 48/255, green: 30/255, blue: 103/255),
-                    Color(red: 26/255, green: 14/255, blue: 47/255)
-                ],
-                startPoint: .top,
-                endPoint: .bottom
-            )
-            .edgesIgnoringSafeArea(.all)
-        )
         .navigationViewStyle(StackNavigationViewStyle())
     }
 }
-// Empty state component
+
+// Enhanced empty state component with green accents
 struct EmptyFeedView: View {
     var body: some View {
-        VStack(spacing: 20) {
+        VStack(spacing: 25) {
+            // Animated glowing circle
             ZStack {
                 Circle()
                     .fill(
-                        LinearGradient(
-                            colors: [Theme.pink.opacity(0.3), Theme.purple.opacity(0.3)],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
+                        RadialGradient(
+                            gradient: Gradient(colors: [
+                                Color(red: 34/255, green: 197/255, blue: 94/255).opacity(0.4),
+                                Color(red: 20/255, green: 83/255, blue: 45/255).opacity(0.1)
+                            ]),
+                            center: .center,
+                            startRadius: 10,
+                            endRadius: 100
                         )
                     )
-                    .frame(width: 90, height: 90)
+                    .frame(width: 120, height: 120)
                 
                 Image(systemName: "doc.text.image")
-                    .font(.system(size: 40))
+                    .font(.system(size: 50))
                     .foregroundColor(.white)
-                    .shadow(color: Theme.lightTealBlue.opacity(0.5), radius: 8)
+                    .shadow(color: Color(red: 34/255, green: 197/255, blue: 94/255).opacity(0.8), radius: 10)
+            }
+            .padding(.top, 30)
+
+            // Headline
+            VStack(spacing: 4) {
+                Text("NO SESSIONS YET")
+                    .font(.system(size: 26, weight: .black))
+                    .tracking(6)
+                    .foregroundColor(.white)
+                    .shadow(color: Color(red: 34/255, green: 197/255, blue: 94/255).opacity(0.5), radius: 8)
+                
+                Text("まだセッションはありません")
+                    .font(.system(size: 14))
+                    .tracking(2)
+                    .foregroundColor(.white.opacity(0.7))
             }
 
-            Text("No Sessions Yet")
-                .font(.system(size: 24, weight: .bold))
-                .foregroundColor(.white)
-                .shadow(color: Theme.lightTealBlue.opacity(0.4), radius: 6)
-
+            // Supportive text
             Text("Add friends to see their focus sessions in your feed")
                 .font(.system(size: 16))
                 .foregroundColor(.white.opacity(0.7))
                 .multilineTextAlignment(.center)
-                .padding(.horizontal, 20)
+                .padding(.horizontal, 30)
+                .padding(.top, 5)
             
+            // Enhanced button
             Button(action: {
                 // Navigate to Friends view or show Friend search
                 NotificationCenter.default.post(
@@ -124,25 +200,57 @@ struct EmptyFeedView: View {
                     object: nil
                 )
             }) {
-                Text("Find Friends")
-                    .font(.system(size: 16, weight: .bold))
-                    .foregroundColor(.white)
-                    .padding(.horizontal, 24)
-                    .padding(.vertical, 12)
-                    .background(
-                        RoundedRectangle(cornerRadius: 20)
+                HStack(spacing: 8) {
+                    Image(systemName: "person.badge.plus")
+                        .font(.system(size: 18, weight: .bold))
+                    
+                    Text("FIND FRIENDS")
+                        .font(.system(size: 16, weight: .bold))
+                        .tracking(2)
+                }
+                .foregroundColor(.white)
+                .padding(.horizontal, 30)
+                .padding(.vertical, 16)
+                .background(
+                    ZStack {
+                        RoundedRectangle(cornerRadius: 25)
                             .fill(
                                 LinearGradient(
-                                    colors: [Theme.pink.opacity(0.7), Theme.purple.opacity(0.7)],
+                                    colors: [
+                                        Color(red: 34/255, green: 197/255, blue: 94/255).opacity(0.8),
+                                        Color(red: 20/255, green: 83/255, blue: 45/255).opacity(0.8)
+                                    ],
                                     startPoint: .leading,
                                     endPoint: .trailing
                                 )
                             )
-                    )
-                    .shadow(color: Theme.purple.opacity(0.3), radius: 5)
+                        
+                        // Glass effect overlay
+                        RoundedRectangle(cornerRadius: 25)
+                            .fill(Color.white.opacity(0.1))
+                        
+                        // Subtle glow border
+                        RoundedRectangle(cornerRadius: 25)
+                            .stroke(
+                                LinearGradient(
+                                    colors: [
+                                        Color.white.opacity(0.6),
+                                        Color.white.opacity(0.2)
+                                    ],
+                                    startPoint: .topLeading,
+                                    endPoint: .bottomTrailing
+                                ),
+                                lineWidth: 1
+                            )
+                    }
+                )
+                .shadow(color: Color(red: 34/255, green: 197/255, blue: 94/255).opacity(0.4), radius: 10)
             }
+            .padding(.top, 10)
         }
-        .padding(.top, 50)
+        .padding()
+        .padding(.horizontal, 20)
+        .padding(.bottom, 40)
     }
 }
 

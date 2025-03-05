@@ -2,29 +2,41 @@ import FirebaseAuth
 import FirebaseFirestore
 import SwiftUI
 
-struct FriendRequestCard: View {
+struct EnhancedFriendRequestCard: View {
     let user: FirebaseManager.FlipUser
     let onResponse: (Bool) -> Void
     @State private var isAcceptPressed = false
     @State private var isDeclinePressed = false
-
+    @State private var isGlowing = false
+    
     var body: some View {
         HStack {
-            VStack(alignment: .leading, spacing: 4) {
+            // Profile picture with glow
+            ProfileAvatarView(
+                imageURL: user.profileImageURL,
+                size: 56,
+                username: user.username
+            )
+            .shadow(color: Color(red: 168/255, green: 85/255, blue: 247/255).opacity(0.5), radius: 8)
+            
+            // User info
+            VStack(alignment: .leading, spacing: 5) {
                 Text(user.username)
-                    .font(.system(size: 16, weight: .bold))
+                    .font(.system(size: 18, weight: .bold))
                     .foregroundColor(.white)
-                    .shadow(color: Color(red: 56/255, green: 189/255, blue: 248/255).opacity(0.5), radius: 6)
-
-                Text("\(user.totalSessions) sessions completed")
-                    .font(.system(size: 12))
-                    .foregroundColor(.white.opacity(0.7))
+                    .shadow(color: Color(red: 168/255, green: 85/255, blue: 247/255).opacity(0.5), radius: 6)
+                
+                Text("Wants to add you as a friend")
+                    .font(.system(size: 14))
+                    .foregroundColor(.white.opacity(0.8))
             }
-
+            .padding(.leading, 10)
+            
             Spacer()
-
-            HStack(spacing: 12) {
-                // Decline Button
+            
+            // Buttons with enhanced styling
+            HStack(spacing: 10) {
+                // Decline button
                 Button(action: {
                     withAnimation(.spring()) {
                         isDeclinePressed = true
@@ -35,27 +47,35 @@ struct FriendRequestCard: View {
                     }
                 }) {
                     Image(systemName: "xmark")
+                        .font(.system(size: 14, weight: .bold))
                         .foregroundColor(.white)
-                        .padding(8)
+                        .frame(width: 36, height: 36)
                         .background(
-                            Circle()
-                                .fill(
-                                    LinearGradient(
-                                        colors: [
-                                            Color(red: 239/255, green: 68/255, blue: 68/255),
-                                            Color(red: 185/255, green: 28/255, blue: 28/255)
-                                        ],
-                                        startPoint: .top,
-                                        endPoint: .bottom
+                            ZStack {
+                                Circle()
+                                    .fill(
+                                        LinearGradient(
+                                            colors: [
+                                                Color(red: 239/255, green: 68/255, blue: 68/255).opacity(0.8),
+                                                Color(red: 185/255, green: 28/255, blue: 28/255).opacity(0.8)
+                                            ],
+                                            startPoint: .top,
+                                            endPoint: .bottom
+                                        )
                                     )
-                                )
-                                .opacity(0.8)
+                                
+                                Circle()
+                                    .fill(Color.white.opacity(0.1))
+                                
+                                Circle()
+                                    .stroke(Color.white.opacity(0.3), lineWidth: 1)
+                            }
                         )
-                        .shadow(color: Color.red.opacity(0.3), radius: 4)
+                        .shadow(color: Color.red.opacity(0.4), radius: 4)
                         .scaleEffect(isDeclinePressed ? 0.9 : 1.0)
                 }
-
-                // Accept Button
+                
+                // Accept button with glowing animation
                 Button(action: {
                     withAnimation(.spring()) {
                         isAcceptPressed = true
@@ -66,42 +86,76 @@ struct FriendRequestCard: View {
                     }
                 }) {
                     Image(systemName: "checkmark")
+                        .font(.system(size: 14, weight: .bold))
                         .foregroundColor(.white)
-                        .padding(8)
+                        .frame(width: 36, height: 36)
                         .background(
-                            Circle()
-                                .fill(
-                                    LinearGradient(
-                                        colors: [
-                                            Color(red: 34/255, green: 197/255, blue: 94/255),
-                                            Color(red: 22/255, green: 163/255, blue: 74/255)
-                                        ],
-                                        startPoint: .top,
-                                        endPoint: .bottom
+                            ZStack {
+                                Circle()
+                                    .fill(
+                                        LinearGradient(
+                                            colors: [
+                                                Color(red: 34/255, green: 197/255, blue: 94/255),
+                                                Color(red: 22/255, green: 163/255, blue: 74/255)
+                                            ],
+                                            startPoint: .top,
+                                            endPoint: .bottom
+                                        )
                                     )
-                                )
-                                .opacity(0.8)
+                                
+                                Circle()
+                                    .fill(Color.white.opacity(0.15))
+                                
+                                Circle()
+                                    .stroke(
+                                        LinearGradient(
+                                            colors: [
+                                                Color.white.opacity(isGlowing ? 0.8 : 0.5),
+                                                Color.white.opacity(0.2)
+                                            ],
+                                            startPoint: .topLeading,
+                                            endPoint: .bottomTrailing
+                                        ),
+                                        lineWidth: 1.5
+                                    )
+                            }
                         )
-                        .shadow(color: Color.green.opacity(0.3), radius: 4)
+                        .shadow(color: Color.green.opacity(0.5), radius: isGlowing ? 6 : 4)
                         .scaleEffect(isAcceptPressed ? 0.9 : 1.0)
+                        .onAppear {
+                            withAnimation(Animation.easeInOut(duration: 1.5).repeatForever(autoreverses: true)) {
+                                isGlowing = true
+                            }
+                        }
                 }
             }
         }
         .padding()
         .background(
             ZStack {
-                RoundedRectangle(cornerRadius: 15)
-                    .fill(Theme.buttonGradient)
-                    .opacity(0.1)
+                // Colorful gradient background
+                RoundedRectangle(cornerRadius: 16)
+                    .fill(
+                        LinearGradient(
+                            colors: [
+                                Color(red: 168/255, green: 85/255, blue: 247/255).opacity(0.3),
+                                Color(red: 88/255, green: 28/255, blue: 135/255).opacity(0.2)
+                            ],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        )
+                    )
                 
-                RoundedRectangle(cornerRadius: 15)
+                // Glass effect
+                RoundedRectangle(cornerRadius: 16)
                     .fill(Color.white.opacity(0.05))
                 
-                RoundedRectangle(cornerRadius: 15)
+                // Glowing border
+                RoundedRectangle(cornerRadius: 16)
                     .stroke(
                         LinearGradient(
                             colors: [
-                                Color.white.opacity(0.5),
+                                Color(red: 168/255, green: 85/255, blue: 247/255).opacity(0.6),
                                 Color.white.opacity(0.1)
                             ],
                             startPoint: .topLeading,
@@ -111,6 +165,6 @@ struct FriendRequestCard: View {
                     )
             }
         )
-        .shadow(color: Color.black.opacity(0.2), radius: 4, x: 0, y: 2)
+        .shadow(color: Color(red: 168/255, green: 85/255, blue: 247/255).opacity(0.3), radius: 8)
     }
 }
