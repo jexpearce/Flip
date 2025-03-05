@@ -3,23 +3,26 @@ import SwiftUI
 struct ControlButton<Content: View>: View {
     let title: String
     let content: Content
+    var isDisabled: Bool = false
 
-    init(title: String, @ViewBuilder content: () -> Content) {
+    init(title: String, isDisabled: Bool = false, @ViewBuilder content: () -> Content) {
         self.title = title
+        self.isDisabled = isDisabled
         self.content = content()
     }
 
     var body: some View {
         VStack(spacing: 8) {
             Text(title)
-                .font(.system(size: 14, weight: .heavy))
+                .font(.system(size: 14, weight: .bold))
                 .tracking(2)
-                .foregroundColor(.white.opacity(0.9))
+                .foregroundColor(isDisabled ? .white.opacity(0.4) : .white.opacity(0.9))
             
             HStack {
                 Spacer()
                 content
-                    .frame(height: 32)
+                    .frame(height: 36)
+                    .opacity(isDisabled ? 0.4 : 1.0)
                 Spacer()
             }
         }
@@ -28,36 +31,39 @@ struct ControlButton<Content: View>: View {
         .padding(.horizontal, 16)
         .background(
             ZStack {
-                // Base glass effect
-                RoundedRectangle(cornerRadius: 12)
-                    .fill(Theme.buttonGradient)
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 12)
-                            .fill(Theme.glassEffect)
+                // Base background
+                RoundedRectangle(cornerRadius: 16)
+                    .fill(
+                        LinearGradient(
+                            colors: [
+                                Color(red: 60/255, green: 30/255, blue: 110/255).opacity(0.3),
+                                Color(red: 40/255, green: 20/255, blue: 80/255).opacity(0.2)
+                            ],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        )
                     )
                 
-                // Frosted edge
-                RoundedRectangle(cornerRadius: 12)
+                // Glass effect overlay
+                RoundedRectangle(cornerRadius: 16)
+                    .fill(Color.white.opacity(0.05))
+                
+                // Border
+                RoundedRectangle(cornerRadius: 16)
                     .stroke(
                         LinearGradient(
                             colors: [
-                                .white.opacity(0.5),
-                                .white.opacity(0.1)
+                                Color.white.opacity(isDisabled ? 0.2 : 0.5),
+                                Color.white.opacity(isDisabled ? 0.05 : 0.1)
                             ],
                             startPoint: .topLeading,
                             endPoint: .bottomTrailing
                         ),
                         lineWidth: 1
                     )
-                
-                // Inner glow
-                RoundedRectangle(cornerRadius: 12)
-                    .stroke(Theme.orange.opacity(0.2), lineWidth: 1)
-                    .blur(radius: 2)
-                    .offset(y: 1)
             }
         )
-        .shadow(color: Color.black.opacity(0.2), radius: 4, x: 0, y: 2)
+        .shadow(color: Color.black.opacity(0.15), radius: 8, x: 0, y: 4)
     }
 }
 struct ModernToggleStyle: ToggleStyle {
@@ -70,22 +76,46 @@ struct ModernToggleStyle: ToggleStyle {
             ZStack {
                 // Track
                 Capsule()
-                    .fill(configuration.isOn ? Theme.orange : Theme.darkBlue.opacity(0.3))
+                    .fill(
+                        configuration.isOn
+                        ? Theme.accentGradient
+                        : LinearGradient(
+                            colors: [Theme.darkBlue.opacity(0.3)],
+                            startPoint: .leading,
+                            endPoint: .trailing
+                        )
+                    )
                     .frame(width: 50, height: 28)
                     .overlay(
                         Capsule()
-                            .stroke(Color.white.opacity(0.2), lineWidth: 1)
+                            .stroke(
+                                LinearGradient(
+                                    colors: [
+                                        Color.white.opacity(0.5),
+                                        Color.white.opacity(0.1)
+                                    ],
+                                    startPoint: .top,
+                                    endPoint: .bottom
+                                ),
+                                lineWidth: 1
+                            )
                     )
+                    .shadow(color: configuration.isOn ? Theme.yellowShadow : Color.black.opacity(0.1), radius: 3)
                 
                 // Thumb
                 Circle()
-                    .fill(Color.white)
-                    .shadow(color: Color.black.opacity(0.2), radius: 2, x: 0, y: 1)
-                    .frame(width: 24, height: 24)
-                    .overlay(
-                        Circle()
-                            .stroke(Color.white.opacity(0.5), lineWidth: 1)
+                    .fill(
+                        LinearGradient(
+                            colors: [
+                                Color.white,
+                                Color.white.opacity(0.9)
+                            ],
+                            startPoint: .top,
+                            endPoint: .bottom
+                        )
                     )
+                    .frame(width: 24, height: 24)
+                    .shadow(color: Color.black.opacity(0.2), radius: 2, x: 0, y: 1)
                     .offset(x: configuration.isOn ? 11 : -11)
                     .animation(.spring(response: 0.2, dampingFraction: 0.7), value: configuration.isOn)
             }
@@ -95,5 +125,195 @@ struct ModernToggleStyle: ToggleStyle {
                 configuration.isOn.toggle()
             }
         }
+    }
+}
+
+struct ModernPickerStyle: View {
+    let options: [String]
+    @Binding var selection: Int
+    var isDisabled: Bool = false
+    
+    var body: some View {
+        HStack(spacing: 6) {
+            ForEach(0..<options.count, id: \.self) { index in
+                Button(action: {
+                    if !isDisabled {
+                        withAnimation(.spring()) {
+                            selection = index
+                        }
+                    }
+                }) {
+                    Text(options[index])
+                        .font(.system(size: 15, weight: selection == index ? .bold : .medium))
+                        .foregroundColor(selection == index ? Theme.yellow : .white.opacity(0.7))
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 8)
+                        .background(
+                            ZStack {
+                                if selection == index {
+                                    RoundedRectangle(cornerRadius: 12)
+                                        .fill(
+                                            LinearGradient(
+                                                colors: [
+                                                    Color(red: 60/255, green: 30/255, blue: 110/255).opacity(0.7),
+                                                    Color(red: 40/255, green: 20/255, blue: 80/255).opacity(0.5)
+                                                ],
+                                                startPoint: .topLeading,
+                                                endPoint: .bottomTrailing
+                                            )
+                                        )
+                                        .overlay(
+                                            RoundedRectangle(cornerRadius: 12)
+                                                .stroke(
+                                                    LinearGradient(
+                                                        colors: [
+                                                            Color.white.opacity(0.5),
+                                                            Color.white.opacity(0.1)
+                                                        ],
+                                                        startPoint: .topLeading,
+                                                        endPoint: .bottomTrailing
+                                                    ),
+                                                    lineWidth: 1
+                                                )
+                                        )
+                                        .shadow(color: Theme.purpleShadow.opacity(0.3), radius: 4)
+                                }
+                            }
+                        )
+                }
+                .buttonStyle(PlainButtonStyle())
+                .disabled(isDisabled)
+            }
+        }
+        .padding(4)
+        .background(
+            RoundedRectangle(cornerRadius: 16)
+                .fill(Color.black.opacity(0.2))
+        )
+        .opacity(isDisabled ? 0.5 : 1)
+    }
+}
+
+struct InfinityToggle: View {
+    @Binding var isInfinite: Bool
+    var isDisabled: Bool = false
+    
+    var body: some View {
+        Button(action: {
+            if !isDisabled {
+                withAnimation(.spring()) {
+                    isInfinite.toggle()
+                }
+            }
+        }) {
+            HStack(spacing: 8) {
+                Image(systemName: "infinity")
+                    .font(.system(size: 16, weight: .bold))
+                    .foregroundColor(isInfinite ? Theme.yellow : .white.opacity(0.7))
+                
+                Text("Infinite")
+                    .font(.system(size: 14, weight: isInfinite ? .bold : .medium))
+                    .foregroundColor(isInfinite ? Theme.yellow : .white.opacity(0.7))
+            }
+            .padding(.horizontal, 12)
+            .padding(.vertical, 8)
+            .background(
+                ZStack {
+                    if isInfinite {
+                        RoundedRectangle(cornerRadius: 12)
+                            .fill(
+                                LinearGradient(
+                                    colors: [
+                                        Color(red: 60/255, green: 30/255, blue: 110/255).opacity(0.7),
+                                        Color(red: 40/255, green: 20/255, blue: 80/255).opacity(0.5)
+                                    ],
+                                    startPoint: .topLeading,
+                                    endPoint: .bottomTrailing
+                                )
+                            )
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 12)
+                                    .stroke(
+                                        LinearGradient(
+                                            colors: [
+                                                Color.white.opacity(0.5),
+                                                Color.white.opacity(0.1)
+                                            ],
+                                            startPoint: .topLeading,
+                                            endPoint: .bottomTrailing
+                                        ),
+                                        lineWidth: 1
+                                    )
+                            )
+                            .shadow(color: Theme.purpleShadow.opacity(0.3), radius: 4)
+                    }
+                }
+            )
+        }
+        .buttonStyle(PlainButtonStyle())
+        .disabled(isDisabled)
+        .opacity(isDisabled ? 0.5 : 1)
+    }
+}
+
+struct NumberPicker: View {
+    let range: ClosedRange<Int>
+    @Binding var selection: Int
+    var isDisabled: Bool = false
+    
+    var body: some View {
+        HStack(spacing: 8) {
+            Button(action: {
+                if !isDisabled && selection > range.lowerBound {
+                    withAnimation(.spring()) {
+                        selection -= 1
+                    }
+                }
+            }) {
+                Image(systemName: "minus")
+                    .font(.system(size: 16, weight: .bold))
+                    .foregroundColor(.white.opacity(0.8))
+                    .frame(width: 30, height: 30)
+                    .background(
+                        Circle()
+                            .fill(Color.white.opacity(0.1))
+                    )
+            }
+            .buttonStyle(PlainButtonStyle())
+            .disabled(isDisabled || selection <= range.lowerBound)
+            .opacity((isDisabled || selection <= range.lowerBound) ? 0.5 : 1)
+            
+            Text("\(selection)")
+                .font(.system(size: 20, weight: .bold))
+                .foregroundColor(.white)
+                .frame(minWidth: 40)
+            
+            Button(action: {
+                if !isDisabled && selection < range.upperBound {
+                    withAnimation(.spring()) {
+                        selection += 1
+                    }
+                }
+            }) {
+                Image(systemName: "plus")
+                    .font(.system(size: 16, weight: .bold))
+                    .foregroundColor(.white.opacity(0.8))
+                    .frame(width: 30, height: 30)
+                    .background(
+                        Circle()
+                            .fill(Color.white.opacity(0.1))
+                    )
+            }
+            .buttonStyle(PlainButtonStyle())
+            .disabled(isDisabled || selection >= range.upperBound)
+            .opacity((isDisabled || selection >= range.upperBound) ? 0.5 : 1)
+        }
+        .padding(.horizontal, 6)
+        .padding(.vertical, 4)
+        .background(
+            RoundedRectangle(cornerRadius: 20)
+                .fill(Color.black.opacity(0.2))
+        )
+        .opacity(isDisabled ? 0.5 : 1)
     }
 }

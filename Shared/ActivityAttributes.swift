@@ -8,8 +8,9 @@ struct FlipActivityAttributes: ActivityAttributes {
         var remainingPauses: Int  // Changed from remainingFlips
         var isPaused: Bool
         var isFailed: Bool  // New property
-        var wasSuccessful: Bool = false // Add this new property
+        var wasSuccessful: Bool? // Add this new property
         var flipBackTimeRemaining: Int?
+        var pauseTimeRemaining: String?
         var countdownMessage: String?
         var lastUpdate: Date
     }

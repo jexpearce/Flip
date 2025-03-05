@@ -10,8 +10,8 @@ struct LockView: View {
             // Base gradient background that covers the entire widget
             LinearGradient(
                 colors: [
-                    Color(red: 26/255, green: 14/255, blue: 47/255),
-                    Color(red: 30/255, green: 58/255, blue: 138/255)
+                    Color(red: 20/255, green: 10/255, blue: 40/255),
+                    Color(red: 35/255, green: 20/255, blue: 90/255)
                 ],
                 startPoint: .top,
                 endPoint: .bottom
@@ -20,20 +20,26 @@ struct LockView: View {
             
             // Content with glass effect container
             VStack(spacing: 12) {
-                            // Order matters - check wasSuccessful first, then isFailed
-                            if context.state.wasSuccessful {
-                                SuccessLockView()
-                                    .transition(.opacity.combined(with: .scale))
-                            } else if context.state.isFailed {
-                                FailedLockView()
-                                    .transition(.opacity.combined(with: .scale))
-                            } else {
-                                ActiveLockView(context: context)
-                                    .transition(.opacity.combined(with: .scale))
-                            }
-                        }
+                // Order matters - check wasSuccessful first
+                if let wasSuccessful = context.state.wasSuccessful, wasSuccessful {
+                    SuccessLockView()
+                        .transition(.opacity.combined(with: .scale))
+                        .id("success") // Force view refresh when state changes
+                } else if context.state.isFailed {
+                    FailedLockView()
+                        .transition(.opacity.combined(with: .scale))
+                        .id("failed") // Force view refresh when state changes
+                } else {
+                    ActiveLockView(context: context)
+                        .transition(.opacity.combined(with: .scale))
+                        .id("active") // Force view refresh when state changes
+                }
+            }
             .padding()
-            .background(Color.white.opacity(0.05))  // Glass effect
+            .background(
+                RoundedRectangle(cornerRadius: 15)
+                    .fill(Color.white.opacity(0.05))  // Glass effect
+            )
             .overlay(  // Subtle border
                 RoundedRectangle(cornerRadius: 15)
                     .stroke(

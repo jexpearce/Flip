@@ -299,8 +299,6 @@ class MapViewModel: NSObject, ObservableObject, CLLocationManagerDelegate {
         // Fetch historical sessions from session_locations collection with a time cutoff
         let oneMonthAgo = Calendar.current.date(byAdding: .month, value: -1, to: Date()) ?? Date()
         
-        }
-        
         db.collection("session_locations")
             .whereField("userId", isEqualTo: userId)
             .whereField("sessionEndTime", isGreaterThan: Timestamp(date: oneMonthAgo)) // Only sessions from last month

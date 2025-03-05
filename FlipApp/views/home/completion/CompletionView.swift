@@ -11,173 +11,223 @@ struct CompletionView: View {
     @State private var isGlowing = false
     @State private var isButtonPressed = false
     
-    // New state variables for session notes
+    // Session notes state variables
     @State private var sessionTitle: String = ""
     @State private var sessionNotes: String = ""
     @State private var showSavingIndicator = false
     @State private var keyboardOffset: CGFloat = 0
     
     var body: some View {
-        VStack(spacing: 15) {
-            // Success content - made more compact
-            VStack(spacing: 15) {
-                // Success Icon with animation
-                ZStack {
-                    Circle()
-                        .fill(
-                            LinearGradient(
-                                colors: [
-                                    Color(red: 34/255, green: 197/255, blue: 94/255),
-                                    Color(red: 22/255, green: 163/255, blue: 74/255)
-                                ],
-                                startPoint: .topLeading,
-                                endPoint: .bottomTrailing
-                            )
-                        )
-                        .frame(width: 90, height: 90)
-                        .opacity(0.2)
-                    
-                    Image(systemName: "checkmark.circle.fill")
-                        .font(.system(size: 50))
-                        .foregroundStyle(
-                            LinearGradient(
-                                colors: [
-                                    Color(red: 34/255, green: 197/255, blue: 94/255),
-                                    Color(red: 22/255, green: 163/255, blue: 74/255)
-                                ],
-                                startPoint: .top,
-                                endPoint: .bottom
-                            )
-                        )
-                        .shadow(color: Color.green.opacity(0.5), radius: isGlowing ? 15 : 8)
-                }
-                .scaleEffect(showIcon ? 1 : 0)
-                .rotationEffect(.degrees(showIcon ? 0 : -180))
-                
-                // Title with animation
-                VStack(spacing: 2) {
-                    Text("SESSION COMPLETE")
-                        .font(.system(size: 24, weight: .black))
-                        .tracking(8)
-                        .foregroundColor(.white)
-                        .shadow(color: Color(red: 56/255, green: 189/255, blue: 248/255).opacity(0.5), radius: 8)
-                    
-                    Text("おめでとう")
-                        .font(.system(size: 12))
-                        .tracking(4)
-                        .foregroundColor(.white.opacity(0.7))
-                }
-                .offset(y: showTitle ? 0 : 50)
-                .opacity(showTitle ? 1 : 0)
-                
-                // Stats with animation - more compact
-                VStack(spacing: 5) {
-                    Text("Well done.")
-                        .font(.system(size: 16))
-                        .foregroundColor(.white.opacity(0.7))
-                    
-                    HStack(alignment: .firstTextBaseline, spacing: 5) {
-                        Text("\(appManager.selectedMinutes)")
-                            .font(.system(size: 42, weight: .black))
-                            .foregroundColor(.white)
-                            .shadow(color: Color(red: 56/255, green: 189/255, blue: 248/255).opacity(0.6), radius: 10)
-                        
-                        Text("minutes")
-                            .font(.system(size: 16))
-                            .tracking(2)
-                            .foregroundColor(.white.opacity(0.8))
-                            .padding(.leading, 4)
-                    }
-                    
-                    Text("of pure focused time achieved")
-                        .font(.system(size: 16))
-                        .foregroundColor(.white.opacity(0.7))
-                }
-                .offset(y: showStats ? 0 : 50)
-                .opacity(showStats ? 1 : 0)
-            }
-            
-            // Session Notes section - now more compact
-            if showNotes {
-                SessionNotesView(
-                    sessionTitle: $sessionTitle,
-                    sessionNotes: $sessionNotes
-                )
-                .transition(.scale.combined(with: .opacity))
-                .padding(.top, -5)
-            }
-            
-            // Back Button with animation and notes saving
-            Button(action: {
-                withAnimation(.spring()) {
-                    isButtonPressed = true
-                    showSavingIndicator = true
-                }
-                
-                // Hide keyboard first
-                hideKeyboard()
-                
-                // Save session with notes
-                sessionManager.addSession(
-                    duration: appManager.selectedMinutes,
-                    wasSuccessful: true,
-                    actualDuration: appManager.selectedMinutes,
-                    sessionTitle: sessionTitle.isEmpty ? nil : sessionTitle,
-                    sessionNotes: sessionNotes.isEmpty ? nil : sessionNotes
-                )
-                
-                // Add a small delay to show "Saving..." effect
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) {
-                    appManager.currentState = .initial
-                    isButtonPressed = false
-                    showSavingIndicator = false
-                }
-            }) {
-                HStack {
-                    if showSavingIndicator {
-                        ProgressView()
-                            .tint(.white)
-                            .scaleEffect(0.8)
-                            .padding(.trailing, 8)
-                    }
-                    
-                    Text(showSavingIndicator ? "SAVING..." : "BACK TO HOME")
-                        .font(.system(size: 18, weight: .black))
-                        .tracking(2)
-                        .foregroundColor(.white)
-                }
-                .frame(width: 200, height: 50)
-                .background(
+        ScrollView {
+            VStack(spacing: 30) {
+                // Success content
+                VStack(spacing: 25) {
+                    // Success Icon with animation
                     ZStack {
-                        RoundedRectangle(cornerRadius: 25)
-                            .fill(Theme.buttonGradient)
+                        Circle()
+                            .fill(
+                                LinearGradient(
+                                    colors: [
+                                        Color(red: 34/255, green: 197/255, blue: 94/255).opacity(0.3),
+                                        Color(red: 22/255, green: 163/255, blue: 74/255).opacity(0.2)
+                                    ],
+                                    startPoint: .topLeading,
+                                    endPoint: .bottomTrailing
+                                )
+                            )
+                            .frame(width: 110, height: 110)
                         
-                        RoundedRectangle(cornerRadius: 25)
-                            .fill(Color.white.opacity(0.1))
-                        
-                        RoundedRectangle(cornerRadius: 25)
+                        Circle()
                             .stroke(
                                 LinearGradient(
                                     colors: [
                                         Color.white.opacity(0.6),
-                                        Color.white.opacity(0.2)
+                                        Color.white.opacity(0.1)
                                     ],
                                     startPoint: .topLeading,
                                     endPoint: .bottomTrailing
                                 ),
                                 lineWidth: 1
                             )
+                            .frame(width: 110, height: 110)
+                        
+                        Image(systemName: "checkmark.circle.fill")
+                            .font(.system(size: 60))
+                            .foregroundStyle(
+                                LinearGradient(
+                                    colors: [
+                                        Color(red: 34/255, green: 197/255, blue: 94/255),
+                                        Color(red: 22/255, green: 163/255, blue: 74/255)
+                                    ],
+                                    startPoint: .top,
+                                    endPoint: .bottom
+                                )
+                            )
+                            .shadow(color: Color(red: 34/255, green: 197/255, blue: 94/255).opacity(isGlowing ? 0.6 : 0.3), radius: isGlowing ? 15 : 8)
                     }
-                )
-                .shadow(color: Color(red: 56/255, green: 189/255, blue: 248/255).opacity(0.5), radius: 8)
-                .scaleEffect(isButtonPressed ? 0.95 : 1.0)
+                    .scaleEffect(showIcon ? 1 : 0)
+                    .rotationEffect(.degrees(showIcon ? 0 : -180))
+                    
+                    // Title with animation
+                    Text("SESSION COMPLETE")
+                        .font(.system(size: 28, weight: .black))
+                        .tracking(6)
+                        .foregroundColor(.white)
+                        .shadow(color: Color(red: 34/255, green: 197/255, blue: 94/255).opacity(0.5), radius: 8)
+                        .offset(y: showTitle ? 0 : 50)
+                        .opacity(showTitle ? 1 : 0)
+                    
+                    // Stats card with animation
+                    VStack(spacing: 15) {
+                        Text("Congratulations!")
+                            .font(.system(size: 18, weight: .bold))
+                            .foregroundColor(Color(red: 250/255, green: 204/255, blue: 21/255))
+                        
+                        HStack(alignment: .firstTextBaseline, spacing: 10) {
+                            Text("\(appManager.selectedMinutes)")
+                                .font(.system(size: 50, weight: .black))
+                                .foregroundColor(.white)
+                                .shadow(color: Color(red: 56/255, green: 189/255, blue: 248/255).opacity(0.6), radius: 10)
+                            
+                            Text("minutes")
+                                .font(.system(size: 18, weight: .medium))
+                                .foregroundColor(.white.opacity(0.8))
+                                .padding(.leading, 4)
+                        }
+                        
+                        Text("of focused work completed")
+                            .font(.system(size: 16, weight: .medium))
+                            .foregroundColor(.white.opacity(0.8))
+                    }
+                    .padding(.vertical, 20)
+                    .padding(.horizontal, 25)
+                    .background(
+                        ZStack {
+                            RoundedRectangle(cornerRadius: 20)
+                                .fill(
+                                    LinearGradient(
+                                        colors: [
+                                            Color(red: 60/255, green: 30/255, blue: 110/255).opacity(0.5),
+                                            Color(red: 40/255, green: 20/255, blue: 80/255).opacity(0.3)
+                                        ],
+                                        startPoint: .topLeading,
+                                        endPoint: .bottomTrailing
+                                    )
+                                )
+                            
+                            RoundedRectangle(cornerRadius: 20)
+                                .fill(Color.white.opacity(0.05))
+                            
+                            RoundedRectangle(cornerRadius: 20)
+                                .stroke(
+                                    LinearGradient(
+                                        colors: [
+                                            Color.white.opacity(0.5),
+                                            Color.white.opacity(0.1)
+                                        ],
+                                        startPoint: .topLeading,
+                                        endPoint: .bottomTrailing
+                                    ),
+                                    lineWidth: 1
+                                )
+                        }
+                    )
+                    .shadow(color: Color.black.opacity(0.2), radius: 10)
+                    .offset(y: showStats ? 0 : 50)
+                    .opacity(showStats ? 1 : 0)
+                }
+                
+                // Session Notes section
+                if showNotes {
+                    SessionNotesView(
+                        sessionTitle: $sessionTitle,
+                        sessionNotes: $sessionNotes
+                    )
+                    .transition(.scale.combined(with: .opacity))
+                }
+                
+                // Back Button with animation and notes saving
+                Button(action: {
+                    withAnimation(.spring()) {
+                        isButtonPressed = true
+                        showSavingIndicator = true
+                    }
+                    
+                    // Hide keyboard first
+                    hideKeyboard()
+                    
+                    // Save session with notes
+                    sessionManager.addSession(
+                        duration: appManager.selectedMinutes,
+                        wasSuccessful: true,
+                        actualDuration: appManager.selectedMinutes,
+                        sessionTitle: sessionTitle.isEmpty ? nil : sessionTitle,
+                        sessionNotes: sessionNotes.isEmpty ? nil : sessionNotes
+                    )
+                    
+                    // Add a small delay to show "Saving..." effect
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) {
+                        appManager.currentState = .initial
+                        isButtonPressed = false
+                        showSavingIndicator = false
+                    }
+                }) {
+                    HStack {
+                        if showSavingIndicator {
+                            ProgressView()
+                                .tint(.white)
+                                .scaleEffect(0.8)
+                                .padding(.trailing, 8)
+                        }
+                        
+                        Text(showSavingIndicator ? "SAVING..." : "RETURN HOME")
+                            .font(.system(size: 18, weight: .black))
+                            .tracking(2)
+                            .foregroundColor(.white)
+                    }
+                    .frame(height: 56)
+                    .frame(maxWidth: .infinity)
+                    .background(
+                        ZStack {
+                            RoundedRectangle(cornerRadius: 16)
+                                .fill(
+                                    LinearGradient(
+                                        colors: [
+                                            Color(red: 168/255, green: 85/255, blue: 247/255),
+                                            Color(red: 88/255, green: 28/255, blue: 135/255)
+                                        ],
+                                        startPoint: .topLeading,
+                                        endPoint: .bottomTrailing
+                                    )
+                                )
+                            
+                            RoundedRectangle(cornerRadius: 16)
+                                .fill(Color.white.opacity(0.1))
+                            
+                            RoundedRectangle(cornerRadius: 16)
+                                .stroke(
+                                    LinearGradient(
+                                        colors: [
+                                            Color.white.opacity(0.6),
+                                            Color.white.opacity(0.2)
+                                        ],
+                                        startPoint: .topLeading,
+                                        endPoint: .bottomTrailing
+                                    ),
+                                    lineWidth: 1
+                                )
+                        }
+                    )
+                    .shadow(color: Color(red: 168/255, green: 85/255, blue: 247/255).opacity(0.5), radius: 8)
+                    .scaleEffect(isButtonPressed ? 0.97 : 1.0)
+                }
+                .padding(.horizontal, 30)
+                .offset(y: showButton ? 0 : 50)
+                .opacity(showButton ? 1 : 0)
             }
-            .offset(y: showButton ? 0 : 50)
-            .opacity(showButton ? 1 : 0)
-            .padding(.top, 5)
-            .padding(.bottom, 25)
+            .padding(.horizontal, 25)
+            .padding(.vertical, 40)
         }
-        .padding(.horizontal, 25)
         // Make the screen scrollable only when keyboard is shown
         .offset(y: keyboardOffset)
         .onAppear {

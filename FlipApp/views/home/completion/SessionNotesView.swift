@@ -26,83 +26,76 @@ struct SessionNotesView: View {
     }
     
     var body: some View {
-        VStack(spacing: 5) {
-            // Section header
+        VStack(spacing: 15) {
             Text("SESSION NOTES")
                 .font(.system(size: 16, weight: .bold))
-                .tracking(3)
-                .foregroundColor(.white)
-                .shadow(color: Color(red: 56/255, green: 189/255, blue: 248/255).opacity(0.5), radius: 6)
-                .padding(.bottom, 0)
+                .tracking(2)
+                .foregroundColor(Color(red: 250/255, green: 204/255, blue: 21/255))
+                .frame(maxWidth: .infinity, alignment: .center)
             
             // Title input
-            VStack(alignment: .leading, spacing: 4) {
+            VStack(alignment: .leading, spacing: 8) {
                 HStack {
                     Text("Title")
-                        .font(.system(size: 14, weight: .semibold))
+                        .font(.system(size: 14, weight: .medium))
                         .foregroundColor(.white.opacity(0.8))
                     
                     Spacer()
                     
                     Text("\(titleRemainingWords) words left")
-                        .font(.system(size: 10))
-                        .foregroundColor(titleRemainingWords > 0 ? .white.opacity(0.5) : .red.opacity(0.8))
+                        .font(.system(size: 12))
+                        .foregroundColor(titleRemainingWords > 0 ? .white.opacity(0.5) : Color(red: 239/255, green: 68/255, blue: 68/255))
                 }
                 
-                TextField("", text: $sessionTitle)
-                    .placeholder(when: sessionTitle.isEmpty) {
-                        Text("Add a title (optional)")
-                            .foregroundColor(.white.opacity(0.4))
-                    }
+                TextField("Add a title (optional)", text: $sessionTitle)
                     .font(.system(size: 14, weight: .medium))
                     .foregroundColor(.white)
-                    .padding(10)
+                    .padding(12)
                     .background(
-                        ZStack {
-                            RoundedRectangle(cornerRadius: 10)
-                                .fill(Color.white.opacity(0.1))
-                            
-                            if isTitleFocused {
-                                RoundedRectangle(cornerRadius: 10)
+                        RoundedRectangle(cornerRadius: 12)
+                            .fill(Color.white.opacity(0.1))
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 12)
                                     .stroke(
-                                        LinearGradient(
-                                            colors: [
-                                                Color(red: 56/255, green: 189/255, blue: 248/255).opacity(0.7),
-                                                Color(red: 56/255, green: 189/255, blue: 248/255).opacity(0.3)
-                                            ],
-                                            startPoint: .topLeading,
-                                            endPoint: .bottomTrailing
-                                        ),
-                                        lineWidth: 1.5
+                                        isTitleFocused ?
+                                            Color(red: 250/255, green: 204/255, blue: 21/255).opacity(0.5) :
+                                            Color.white.opacity(0.3),
+                                        lineWidth: isTitleFocused ? 1.5 : 1
                                     )
-                            } else {
-                                RoundedRectangle(cornerRadius: 10)
-                                    .stroke(Color.white.opacity(0.2), lineWidth: 1)
+                            )
+                    )
+                    .onTapGesture {
+                        isTitleFocused = true
+                        isNotesFocused = false
+                    }
+                    .onSubmit {
+                        isTitleFocused = false
+                    }
+                    .onChange(of: sessionTitle) { newValue in
+                        let words = newValue.split(separator: " ")
+                        if words.count > titleLimit && words.count > 0 {
+                            DispatchQueue.main.async {
+                                sessionTitle = words.prefix(titleLimit).joined(separator: " ")
+                                if newValue.hasSuffix(" ") {
+                                    sessionTitle += " "
+                                }
                             }
                         }
-                    )
-                    .onChange(of: sessionTitle) { newValue in
-                        // Limit to titleLimit words
-                        let words = newValue.split(separator: " ")
-                        if words.count > titleLimit {
-                            sessionTitle = words.prefix(titleLimit).joined(separator: " ")
-                        }
                     }
-                    // Use standard onFocus and blur behavior
             }
             
             // Notes input
-            VStack(alignment: .leading, spacing: 4) {
+            VStack(alignment: .leading, spacing: 8) {
                 HStack {
                     Text("Notes")
-                        .font(.system(size: 14, weight: .semibold))
+                        .font(.system(size: 14, weight: .medium))
                         .foregroundColor(.white.opacity(0.8))
                     
                     Spacer()
                     
                     Text("\(notesRemainingWords) words left")
-                        .font(.system(size: 10))
-                        .foregroundColor(notesRemainingWords > 0 ? .white.opacity(0.5) : .red.opacity(0.8))
+                        .font(.system(size: 12))
+                        .foregroundColor(notesRemainingWords > 0 ? .white.opacity(0.5) : Color(red: 239/255, green: 68/255, blue: 68/255))
                 }
                 
                 ZStack(alignment: .topLeading) {
@@ -111,73 +104,71 @@ struct SessionNotesView: View {
                             .font(.system(size: 14))
                             .foregroundColor(.white.opacity(0.4))
                             .padding(.horizontal, 12)
-                            .padding(.vertical, 10)
+                            .padding(.top, 12)
                     }
                     
-                    // Use a standard TextField for better keyboard handling
                     TextEditor(text: $sessionNotes)
                         .font(.system(size: 14))
                         .foregroundColor(.white)
-                        .frame(height: 60)
-                        .scrollContentBackground(.hidden) // iOS 16+ hide default background
-                        .background(Color.clear) // Use clear background
+                        .frame(minHeight: 120, maxHeight: 150)
+                        .padding(3) // TextEditor has internal padding
+                        .background(Color.clear)
+                        .scrollContentBackground(.hidden)
+                        .onTapGesture {
+                            isTitleFocused = false
+                            isNotesFocused = true
+                        }
                         .onChange(of: sessionNotes) { newValue in
-                            // Limit to notesLimit words
                             let words = newValue.split(separator: " ")
-                            if words.count > notesLimit {
-                                sessionNotes = words.prefix(notesLimit).joined(separator: " ")
+                            if words.count > notesLimit && words.count > 0 {
+                                // Use a small delay to not interfere with typing
+                                DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
+                                    sessionNotes = words.prefix(notesLimit).joined(separator: " ")
+                                    if newValue.hasSuffix(" ") {
+                                        sessionNotes += " "
+                                    }
+                                }
                             }
                         }
                 }
                 .background(
-                    ZStack {
-                        RoundedRectangle(cornerRadius: 10)
-                            .fill(Color.white.opacity(0.1))
-                        
-                        if isNotesFocused {
-                            RoundedRectangle(cornerRadius: 10)
+                    RoundedRectangle(cornerRadius: 12)
+                        .fill(Color.white.opacity(0.1))
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 12)
                                 .stroke(
-                                    LinearGradient(
-                                        colors: [
-                                            Color(red: 56/255, green: 189/255, blue: 248/255).opacity(0.7),
-                                            Color(red: 56/255, green: 189/255, blue: 248/255).opacity(0.3)
-                                        ],
-                                        startPoint: .topLeading,
-                                        endPoint: .bottomTrailing
-                                    ),
-                                    lineWidth: 1.5
+                                    isNotesFocused ?
+                                        Color(red: 250/255, green: 204/255, blue: 21/255).opacity(0.5) :
+                                        Color.white.opacity(0.3),
+                                    lineWidth: isNotesFocused ? 1.5 : 1
                                 )
-                        } else {
-                            RoundedRectangle(cornerRadius: 10)
-                                .stroke(Color.white.opacity(0.2), lineWidth: 1)
-                        }
-                    }
+                        )
                 )
             }
         }
-        .padding(10)
+        .padding(20)
         .background(
             ZStack {
-                RoundedRectangle(cornerRadius: 14)
+                RoundedRectangle(cornerRadius: 16)
                     .fill(
                         LinearGradient(
                             colors: [
-                                Color(red: 26/255, green: 14/255, blue: 47/255).opacity(0.6),
-                                Color(red: 16/255, green: 24/255, blue: 57/255).opacity(0.6)
+                                Color(red: 60/255, green: 30/255, blue: 110/255).opacity(0.4),
+                                Color(red: 40/255, green: 20/255, blue: 80/255).opacity(0.2)
                             ],
                             startPoint: .topLeading,
                             endPoint: .bottomTrailing
                         )
                     )
                 
-                RoundedRectangle(cornerRadius: 14)
+                RoundedRectangle(cornerRadius: 16)
                     .fill(Color.white.opacity(0.05))
                 
-                RoundedRectangle(cornerRadius: 14)
+                RoundedRectangle(cornerRadius: 16)
                     .stroke(
                         LinearGradient(
                             colors: [
-                                Color.white.opacity(0.3),
+                                Color.white.opacity(0.4),
                                 Color.white.opacity(0.1)
                             ],
                             startPoint: .topLeading,
@@ -187,41 +178,16 @@ struct SessionNotesView: View {
                     )
             }
         )
-        // Better keyboard dismissal
+        .shadow(color: Color.black.opacity(0.15), radius: 8)
         .onTapGesture {
+            // This will handle taps on the background to dismiss the keyboard
             hideKeyboard()
-        }
-        // Use focus state for better iOS focus handling
-        .onAppear {
-            // Set focus state handlers
-            NotificationCenter.default.addObserver(forName: UITextField.textDidBeginEditingNotification, object: nil, queue: .main) { _ in
-                isTitleFocused = true
-                isNotesFocused = false
-            }
-            NotificationCenter.default.addObserver(forName: UITextView.textDidBeginEditingNotification, object: nil, queue: .main) { _ in
-                isTitleFocused = false
-                isNotesFocused = true
-            }
         }
     }
     
-    // Helper to dismiss keyboard
     private func hideKeyboard() {
         UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
         isTitleFocused = false
         isNotesFocused = false
-    }
-}
-
-// Helper extension for placeholder text
-extension View {
-    func placeholder<Content: View>(
-        when shouldShow: Bool,
-        alignment: Alignment = .leading,
-        @ViewBuilder placeholder: () -> Content) -> some View {
-        ZStack(alignment: alignment) {
-            placeholder().opacity(shouldShow ? 1 : 0)
-            self
-        }
     }
 }

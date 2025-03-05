@@ -5,12 +5,15 @@ import WidgetKit
 struct FailedLockView: View {
     private let gradientBackground = LinearGradient(
         colors: [
-            Color(red: 26/255, green: 14/255, blue: 47/255),
-            Color(red: 30/255, green: 58/255, blue: 138/255)
+            Color(red: 20/255, green: 10/255, blue: 40/255),
+            Color(red: 35/255, green: 20/255, blue: 90/255)
         ],
         startPoint: .top,
         endPoint: .bottom
     )
+    
+    @State private var scale: CGFloat = 0.8
+    @State private var opacity: Double = 0
     
     var body: some View {
         VStack(spacing: 15) {
@@ -30,6 +33,10 @@ struct FailedLockView: View {
                     .frame(width: 60, height: 60)
                     .opacity(0.2)
                 
+                Circle()
+                    .fill(Color.white.opacity(0.1))
+                    .frame(width: 65, height: 65)
+                
                 Image(systemName: "xmark.circle.fill")
                     .font(.system(size: 40, weight: .bold))
                     .foregroundStyle(
@@ -44,23 +51,38 @@ struct FailedLockView: View {
                     )
                     .shadow(color: Color.red.opacity(0.5), radius: 8)
             }
+            .scaleEffect(scale)
+            .opacity(opacity)
 
-            Text("Session Failed")
+            Text("SESSION FAILED")
                 .font(.system(size: 24, weight: .black))
                 .tracking(4)
                 .foregroundStyle(
                     LinearGradient(
-                        colors: [Color.white, Color.white.opacity(0.8)],
+                        colors: [
+                            Color(red: 239/255, green: 68/255, blue: 68/255),
+                            Color(red: 185/255, green: 28/255, blue: 28/255)
+                        ],
                         startPoint: .top,
                         endPoint: .bottom
                     )
                 )
-                .shadow(color: Color(red: 56/255, green: 189/255, blue: 248/255).opacity(0.5), radius: 8)
+                .shadow(color: Color.red.opacity(0.5), radius: 8)
+                .scaleEffect(scale)
+                .opacity(opacity)
 
-            Text("Phone was moved too many times")
+            Text("Phone was flipped during session")
                 .font(.system(size: 16, weight: .medium))
-                .foregroundColor(.white.opacity(0.7))
+                .foregroundColor(.white.opacity(0.9))
                 .multilineTextAlignment(.center)
+                .padding(.horizontal, 10)
+                .padding(.vertical, 8)
+                .background(
+                    RoundedRectangle(cornerRadius: 10)
+                        .fill(Color.white.opacity(0.08))
+                )
+                .scaleEffect(scale)
+                .opacity(opacity)
         }
         .padding()
         .background(
@@ -68,7 +90,7 @@ struct FailedLockView: View {
                 gradientBackground
                 Color.white.opacity(0.05)  // Glass effect
                 
-                // Optional: subtle pattern or texture
+                // Subtle pattern
                 GeometryReader { geometry in
                     Path { path in
                         for i in stride(from: 0, to: geometry.size.width, by: 20) {
@@ -80,5 +102,12 @@ struct FailedLockView: View {
                 }
             }
         )
+        .onAppear {
+            // Simple animation to draw attention
+            withAnimation(.spring(response: 0.6, dampingFraction: 0.7)) {
+                scale = 1.0
+                opacity = 1.0
+            }
+        }
     }
 }

@@ -1,6 +1,6 @@
 import Foundation
 import SwiftUI
-import FirebaseAuth  // Add this import
+import FirebaseAuth
 
 struct MixedOutcomeView: View {
     @EnvironmentObject var appManager: AppManager
@@ -10,6 +10,7 @@ struct MixedOutcomeView: View {
     @State private var showStats = false
     @State private var showButton = false
     @State private var isButtonPressed = false
+    @State private var isGlowing = false
     
     // State variables for participations
     @State private var participantDetails: [ParticipantDetail] = []
@@ -47,170 +48,240 @@ struct MixedOutcomeView: View {
     }
     
     var body: some View {
-        VStack(spacing: 15) {
-            // Status icon
-            ZStack {
-                Circle()
-                    .fill(
-                        LinearGradient(
-                            colors: currentUserSucceeded ?
-                                [
-                                    Color(red: 34/255, green: 197/255, blue: 94/255),
-                                    Color(red: 22/255, green: 163/255, blue: 74/255)
-                                ] :
-                                [
-                                    Color(red: 239/255, green: 68/255, blue: 68/255),
-                                    Color(red: 185/255, green: 28/255, blue: 28/255)
-                                ],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
+        ScrollView {
+            VStack(spacing: 30) {
+                // Status icon
+                ZStack {
+                    Circle()
+                        .fill(
+                            LinearGradient(
+                                colors: currentUserSucceeded ?
+                                    [
+                                        Color(red: 34/255, green: 197/255, blue: 94/255).opacity(0.3),
+                                        Color(red: 22/255, green: 163/255, blue: 74/255).opacity(0.2)
+                                    ] :
+                                    [
+                                        Color(red: 239/255, green: 68/255, blue: 68/255).opacity(0.3),
+                                        Color(red: 185/255, green: 28/255, blue: 28/255).opacity(0.2)
+                                    ],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            )
                         )
-                    )
-                    .frame(width: 90, height: 90)
-                    .opacity(0.2)
+                        .frame(width: 110, height: 110)
+                    
+                    Circle()
+                        .stroke(
+                            LinearGradient(
+                                colors: [
+                                    Color.white.opacity(0.6),
+                                    Color.white.opacity(0.1)
+                                ],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            ),
+                            lineWidth: 1
+                        )
+                        .frame(width: 110, height: 110)
+                    
+                    Image(systemName: currentUserSucceeded ? "checkmark.circle.fill" : "xmark.circle.fill")
+                        .font(.system(size: 60))
+                        .foregroundStyle(
+                            LinearGradient(
+                                colors: currentUserSucceeded ?
+                                    [
+                                        Color(red: 34/255, green: 197/255, blue: 94/255),
+                                        Color(red: 22/255, green: 163/255, blue: 74/255)
+                                    ] :
+                                    [
+                                        Color(red: 239/255, green: 68/255, blue: 68/255),
+                                        Color(red: 185/255, green: 28/255, blue: 28/255)
+                                    ],
+                                startPoint: .top,
+                                endPoint: .bottom
+                            )
+                        )
+                        .shadow(color: currentUserSucceeded ?
+                               Color(red: 34/255, green: 197/255, blue: 94/255).opacity(isGlowing ? 0.6 : 0.3) :
+                               Color(red: 239/255, green: 68/255, blue: 68/255).opacity(isGlowing ? 0.6 : 0.3),
+                               radius: isGlowing ? 15 : 8)
+                }
+                .scaleEffect(showIcon ? 1 : 0)
                 
-                Image(systemName: currentUserSucceeded ? "checkmark.circle.fill" : "xmark.circle.fill")
-                    .font(.system(size: 50))
-                    .foregroundStyle(
-                        LinearGradient(
-                            colors: currentUserSucceeded ?
-                                [
-                                    Color(red: 34/255, green: 197/255, blue: 94/255),
-                                    Color(red: 22/255, green: 163/255, blue: 74/255)
-                                ] :
-                                [
-                                    Color(red: 239/255, green: 68/255, blue: 68/255),
-                                    Color(red: 185/255, green: 28/255, blue: 28/255)
-                                ],
-                            startPoint: .top,
-                            endPoint: .bottom
-                        )
-                    )
-                    .shadow(color: currentUserSucceeded ? Color.green.opacity(0.5) : Color.red.opacity(0.5), radius: 8)
-            }
-            .scaleEffect(showIcon ? 1 : 0)
-            
-            // Title
-            VStack(spacing: 2) {
+                // Title
                 Text(currentUserSucceeded ? "YOU SUCCEEDED" : "SESSION FAILED")
-                    .font(.system(size: 24, weight: .black))
+                    .font(.system(size: 28, weight: .black))
                     .tracking(6)
                     .foregroundColor(.white)
-                    .shadow(color: Color(red: 56/255, green: 189/255, blue: 248/255).opacity(0.5), radius: 8)
+                    .shadow(color: currentUserSucceeded ?
+                           Color(red: 34/255, green: 197/255, blue: 94/255).opacity(0.5) :
+                           Color(red: 239/255, green: 68/255, blue: 68/255).opacity(0.5),
+                           radius: 8)
+                    .offset(y: showTitle ? 0 : 50)
+                    .opacity(showTitle ? 1 : 0)
                 
-                Text(currentUserSucceeded ? "おめでとう" : "セッション失敗")
-                    .font(.system(size: 12))
-                    .tracking(4)
-                    .foregroundColor(.white.opacity(0.7))
-            }
-            .offset(y: showTitle ? 0 : 50)
-            .opacity(showTitle ? 1 : 0)
-            
-            // Results section
-            VStack(spacing: 15) {
-                if loadingParticipants {
-                    ProgressView()
-                        .tint(.white)
-                        .scaleEffect(1.2)
-                        .padding(.vertical, 10)
-                } else {
-                    // Group status message
-                    Text(completionMessage)
-                        .font(.system(size: 16, weight: .medium))
-                        .foregroundColor(.white.opacity(0.9))
-                        .multilineTextAlignment(.center)
-                        .padding(.horizontal)
-                    
-                    // Your outcome info
-                    if currentUserSucceeded {
-                        HStack(alignment: .firstTextBaseline, spacing: 5) {
-                            Text("\(appManager.selectedMinutes)")
-                                .font(.system(size: 42, weight: .black))
-                                .foregroundColor(.white)
-                                .shadow(color: Color(red: 56/255, green: 189/255, blue: 248/255).opacity(0.6), radius: 10)
-                            
-                            Text("minutes")
-                                .font(.system(size: 16))
-                                .tracking(2)
-                                .foregroundColor(.white.opacity(0.8))
-                                .padding(.leading, 4)
-                        }
-                        
-                        Text("of successful focus time")
-                            .font(.system(size: 16))
-                            .foregroundColor(.white.opacity(0.7))
+                // Results section
+                VStack(spacing: 15) {
+                    if loadingParticipants {
+                        ProgressView()
+                            .tint(.white)
+                            .scaleEffect(1.2)
+                            .padding(.vertical, 15)
                     } else {
-                        Text("Your phone was moved during the session")
-                            .font(.system(size: 16, weight: .medium))
-                            .foregroundColor(.white.opacity(0.9))
+                        // Group status message with yellow highlighting
+                        Text(completionMessage)
+                            .font(.system(size: 18, weight: .medium))
+                            .foregroundColor(Color(red: 250/255, green: 204/255, blue: 21/255))
                             .multilineTextAlignment(.center)
-                            
-                        // Calculate actual duration in minutes
-                        let actualDuration = (appManager.selectedMinutes * 60 - appManager.remainingSeconds) / 60
+                            .padding(.horizontal)
                         
-                        if actualDuration > 0 {
-                            Text("You lasted \(actualDuration) minutes")
-                                .font(.system(size: 16))
-                                .foregroundColor(.white.opacity(0.7))
+                        // Your outcome info
+                        if currentUserSucceeded {
+                            HStack(alignment: .firstTextBaseline, spacing: 10) {
+                                Text("\(appManager.selectedMinutes)")
+                                    .font(.system(size: 50, weight: .black))
+                                    .foregroundColor(.white)
+                                    .shadow(color: Color(red: 56/255, green: 189/255, blue: 248/255).opacity(0.6), radius: 10)
+                                
+                                Text("minutes")
+                                    .font(.system(size: 18, weight: .medium))
+                                    .foregroundColor(.white.opacity(0.8))
+                                    .padding(.leading, 4)
+                            }
+                            
+                            Text("of successful focus time")
+                                .font(.system(size: 16, weight: .medium))
+                                .foregroundColor(.white.opacity(0.8))
+                        } else {
+                            Text("Your phone was moved during the session")
+                                .font(.system(size: 18, weight: .medium))
+                                .foregroundColor(.white)
+                                .multilineTextAlignment(.center)
+                                
+                            // Calculate actual duration in minutes
+                            let actualDuration = (appManager.selectedMinutes * 60 - appManager.remainingSeconds) / 60
+                            
+                            if actualDuration > 0 {
+                                HStack(alignment: .firstTextBaseline, spacing: 10) {
+                                    Text("\(actualDuration)")
+                                        .font(.system(size: 42, weight: .black))
+                                        .foregroundColor(.white)
+                                        .shadow(color: Color(red: 56/255, green: 189/255, blue: 248/255).opacity(0.6), radius: 10)
+                                    
+                                    Text(actualDuration == 1 ? "minute" : "minutes")
+                                        .font(.system(size: 18, weight: .medium))
+                                        .foregroundColor(.white.opacity(0.8))
+                                        .padding(.leading, 4)
+                                }
+                                
+                                Text("completed before failure")
+                                    .font(.system(size: 16, weight: .medium))
+                                    .foregroundColor(.white.opacity(0.8))
+                            }
                         }
+                        
+                        // Participant list
+                        if participantDetails.count > 1 {
+                             ParticipantListMixed(participants: participantDetails)
+                                 .padding(.top, 15)
+                        }
+                    }
+                }
+                .padding(.vertical, 20)
+                .padding(.horizontal, 25)
+                .background(
+                    ZStack {
+                        RoundedRectangle(cornerRadius: 20)
+                            .fill(
+                                LinearGradient(
+                                    colors: [
+                                        Color(red: 60/255, green: 30/255, blue: 110/255).opacity(0.5),
+                                        Color(red: 40/255, green: 20/255, blue: 80/255).opacity(0.3)
+                                    ],
+                                    startPoint: .topLeading,
+                                    endPoint: .bottomTrailing
+                                )
+                            )
+                        
+                        RoundedRectangle(cornerRadius: 20)
+                            .fill(Color.white.opacity(0.05))
+                        
+                        RoundedRectangle(cornerRadius: 20)
+                            .stroke(
+                                LinearGradient(
+                                    colors: [
+                                        Color.white.opacity(0.5),
+                                        Color.white.opacity(0.1)
+                                    ],
+                                    startPoint: .topLeading,
+                                    endPoint: .bottomTrailing
+                                ),
+                                lineWidth: 1
+                            )
+                    }
+                )
+                .shadow(color: Color.black.opacity(0.2), radius: 10)
+                .offset(y: showStats ? 0 : 50)
+                .opacity(showStats ? 1 : 0)
+                
+                // Back Button
+                Button(action: {
+                    withAnimation(.spring()) {
+                        isButtonPressed = true
                     }
                     
-                    // Participant list
-                    if participantDetails.count > 1 {
-                         MOParticipantList(participants: participantDetails)
-                             .padding(.top, 10)
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                        appManager.currentState = .initial
+                        isButtonPressed = false
                     }
+                }) {
+                    Text("RETURN HOME")
+                        .font(.system(size: 18, weight: .black))
+                        .tracking(2)
+                        .foregroundColor(.white)
+                        .frame(height: 56)
+                        .frame(maxWidth: .infinity)
+                        .background(
+                            ZStack {
+                                RoundedRectangle(cornerRadius: 16)
+                                    .fill(
+                                        LinearGradient(
+                                            colors: [
+                                                Color(red: 168/255, green: 85/255, blue: 247/255),
+                                                Color(red: 88/255, green: 28/255, blue: 135/255)
+                                            ],
+                                            startPoint: .topLeading,
+                                            endPoint: .bottomTrailing
+                                        )
+                                    )
+                                
+                                RoundedRectangle(cornerRadius: 16)
+                                    .fill(Color.white.opacity(0.1))
+                                
+                                RoundedRectangle(cornerRadius: 16)
+                                    .stroke(
+                                        LinearGradient(
+                                            colors: [
+                                                Color.white.opacity(0.6),
+                                                Color.white.opacity(0.2)
+                                            ],
+                                            startPoint: .topLeading,
+                                            endPoint: .bottomTrailing
+                                        ),
+                                        lineWidth: 1
+                                    )
+                            }
+                        )
+                        .shadow(color: Color(red: 168/255, green: 85/255, blue: 247/255).opacity(0.5), radius: 8)
+                        .scaleEffect(isButtonPressed ? 0.97 : 1.0)
                 }
+                .padding(.horizontal, 30)
+                .offset(y: showButton ? 0 : 50)
+                .opacity(showButton ? 1 : 0)
             }
-            .offset(y: showStats ? 0 : 50)
-            .opacity(showStats ? 1 : 0)
-            
-            // Back Button
-            Button(action: {
-                withAnimation(.spring()) {
-                    isButtonPressed = true
-                }
-                
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-                    appManager.currentState = .initial
-                    isButtonPressed = false
-                }
-            }) {
-                Text("BACK TO HOME")
-                    .font(.system(size: 18, weight: .black))
-                    .tracking(2)
-                    .foregroundColor(.white)
-                    .frame(width: 200, height: 50)
-                    .background(
-                        ZStack {
-                            RoundedRectangle(cornerRadius: 25)
-                                .fill(Theme.buttonGradient)
-                            
-                            RoundedRectangle(cornerRadius: 25)
-                                .fill(Color.white.opacity(0.1))
-                            
-                            RoundedRectangle(cornerRadius: 25)
-                                .stroke(
-                                    LinearGradient(
-                                        colors: [
-                                            Color.white.opacity(0.6),
-                                            Color.white.opacity(0.2)
-                                        ],
-                                        startPoint: .topLeading,
-                                        endPoint: .bottomTrailing
-                                    ),
-                                    lineWidth: 1
-                                )
-                        }
-                    )
-                    .shadow(color: Color(red: 56/255, green: 189/255, blue: 248/255).opacity(0.5), radius: 8)
-                    .scaleEffect(isButtonPressed ? 0.95 : 1.0)
-            }
-            .offset(y: showButton ? 0 : 50)
-            .opacity(showButton ? 1 : 0)
-            .padding(.top, 20)
+            .padding(.horizontal, 25)
+            .padding(.vertical, 40)
         }
-        .padding(.horizontal, 25)
         .onAppear {
             loadParticipantDetails()
             
@@ -230,18 +301,23 @@ struct MixedOutcomeView: View {
             withAnimation(.spring(response: 0.6, dampingFraction: 0.8).delay(0.6)) {
                 showButton = true
             }
+            
+            withAnimation(.easeInOut(duration: 1.5).repeatForever()) {
+                isGlowing = true
+            }
         }
         .background(Theme.mainGradient.edgesIgnoringSafeArea(.all))
     }
-    struct MOParticipantList: View {
+    
+    struct ParticipantListMixed: View {
         let participants: [MixedOutcomeView.ParticipantDetail]
         
         var body: some View {
             VStack(alignment: .leading, spacing: 10) {
                 Text("PARTICIPANTS")
-                    .font(.system(size: 12, weight: .bold))
+                    .font(.system(size: 14, weight: .bold))
                     .tracking(2)
-                    .foregroundColor(.white.opacity(0.7))
+                    .foregroundColor(Color(red: 250/255, green: 204/255, blue: 21/255))
                     .frame(maxWidth: .infinity, alignment: .center)
                 
                 ForEach(participants) { participant in
@@ -252,25 +328,42 @@ struct MixedOutcomeView: View {
                         
                         Spacer()
                         
-                        HStack(spacing: 4) {
+                        HStack(spacing: 6) {
                             Image(systemName: participant.wasSuccessful ? "checkmark.circle.fill" : "xmark.circle.fill")
-                                .foregroundColor(participant.wasSuccessful ? .green : .red)
-                                .font(.system(size: 12))
+                                .foregroundColor(participant.wasSuccessful ?
+                                                Color(red: 34/255, green: 197/255, blue: 94/255) :
+                                                Color(red: 239/255, green: 68/255, blue: 68/255))
+                                .font(.system(size: 14))
                             
                             Text("\(participant.duration) min")
                                 .font(.system(size: 12, weight: .medium))
                                 .foregroundColor(.white.opacity(0.8))
                         }
+                        .padding(.vertical, 5)
+                        .padding(.horizontal, 10)
+                        .background(
+                            RoundedRectangle(cornerRadius: 12)
+                                .fill(Color.white.opacity(0.1))
+                        )
                     }
-                    .padding(.vertical, 6)
-                    .padding(.horizontal, 10)
-                    .background(Color.white.opacity(0.05))
-                    .cornerRadius(6)
+                    .padding(.vertical, 8)
+                    .padding(.horizontal, 12)
+                    .background(
+                        RoundedRectangle(cornerRadius: 10)
+                            .fill(Color.white.opacity(0.05))
+                    )
                 }
             }
-            .padding(10)
-            .background(Color.white.opacity(0.05))
-            .cornerRadius(10)
+            .padding(15)
+            .background(
+                ZStack {
+                    RoundedRectangle(cornerRadius: 16)
+                        .fill(Color.white.opacity(0.05))
+                    
+                    RoundedRectangle(cornerRadius: 16)
+                        .stroke(Color.white.opacity(0.2), lineWidth: 1)
+                }
+            )
         }
     }
     

@@ -1,159 +1,172 @@
 import SwiftUI
+
 struct SetupView: View {
     @EnvironmentObject var appManager: AppManager
-    @State private var isButtonPressed = false
     @State private var showPauseDisabledWarning = false
+    @State private var isInfinitePauses = false
+    @State private var selectedPauseDurationIndex = 1 // Default to 5 minutes (index 1)
     @AppStorage("hasShownPauseWarning") private var hasShownPauseWarning = false
     @ObservedObject private var liveSessionManager = LiveSessionManager.shared
+    @ObservedObject private var regionalViewModel = RegionalViewModel.shared
     @State private var isJoining = false
     @State private var showJoiningIndicator = false
     @ObservedObject private var permissionManager = PermissionManager.shared
+    @State private var viewRouter = ViewRouter()
     
     // Check if we're navigating back from a joined session view
     @State private var joinLiveSessionMode = false
     @State private var sessionToJoin: (id: String, name: String)? = nil
+    
+    // Pause durations in minutes
+    private let pauseDurations = [3, 5, 10, 15, 20]
+    private let pauseDurationLabels = ["3m", "5m", "10m", "15m", "20m"]
 
     var body: some View {
         ZStack {
             // Main View Content
-            VStack(spacing: 25) {
-                // Title Section with logo to the right
-                HStack(spacing: 15) {
-                    Text("FLIP")
-                        .font(.system(size: 80, weight: .black))
-                        .tracking(8)
-                        .foregroundColor(.white)
-                        .retroGlow()
-  
-                    Image(systemName: "arrow.2.squarepath")
-                            .font(.system(size: 55, weight: .bold)) // Bigger & bolder SF Symbol
-                            .foregroundColor(Color.white.opacity(1.0)) // Max brightness
-                            .shadow(color: .white, radius: 5) // Adds a soft glow
-                            .overlay(
-                                Image(systemName: "arrow.2.squarepath")
-                                    .font(.system(size: 55))
-                                    .foregroundColor(.white.opacity(0.25)) // Fake stroke effect
-                                    .offset(x: 1, y: 1)
-                            )
-                            .rotationEffect(.degrees(isButtonPressed ? 360 : 0))
-                            .animation(
-                                .spring(response: 2.0, dampingFraction: 0.6)
-                                    .repeatForever(autoreverses: false),
-                                value: isButtonPressed
-                            )
+            ScrollView {
+                VStack(spacing: 25) {
+                    // FLIP Logo at the top
+                    FlipLogo()
+                    .padding(.horizontal)
+                    
+                    // Current Building Indicator
+                    CurrentBuildingIndicator(
+                        buildingName: regionalViewModel.selectedBuilding?.name ?? "Detecting location..."
+                    ) {
+                        // Switch to Regional tab
+                        viewRouter.selectedTab = 1
+                        NotificationCenter.default.post(name: Notification.Name("SwitchToRegionalTab"), object: nil)
                     }
-                .padding(.top, 50)
-                .onAppear { isButtonPressed = true }
-
-                // Set Time Title
-                VStack(spacing: 4) {
-                    if joinLiveSessionMode, let sessionInfo = sessionToJoin {
-                        Text("JOIN \(sessionInfo.name.uppercased())'S SESSION")
-                            .font(.system(size: 20, weight: .black))
-                            .tracking(6)
-                            .foregroundColor(.white)
-                            .retroGlow()
-                            .multilineTextAlignment(.center)
-                        
-                        Text("友達と一緒に")
-                            .font(.system(size: 12, weight: .medium))
-                            .tracking(3)
-                            .foregroundColor(.white.opacity(0.7))
-                    } else {
-                        Text("SET TIME")
-                            .font(.system(size: 24, weight: .black))
-                            .tracking(8)
-                            .foregroundColor(.white)
-                            .retroGlow()
-                        Text("タイマーの設定")
-                            .font(.system(size: 12, weight: .medium))
-                            .tracking(3)
-                            .foregroundColor(.white.opacity(0.7))
+                    .padding(.horizontal, 24)
+                    .padding(.top, 5)
+                    .padding(.bottom, 10)
+                    
+                    // Set Time Title
+                    VStack(spacing: 4) {
+                        if joinLiveSessionMode, let sessionInfo = sessionToJoin {
+                            Text("JOIN \(sessionInfo.name.uppercased())'S SESSION")
+                                .font(.system(size: 20, weight: .black))
+                                .tracking(6)
+                                .foregroundColor(.white)
+                                .retroGlow()
+                                .multilineTextAlignment(.center)
+                            
+                            Text("友達と一緒に")
+                                .font(.system(size: 12, weight: .medium))
+                                .tracking(3)
+                                .foregroundColor(.white.opacity(0.7))
+                        } else {
+                            Text("SET TIME")
+                                .font(.system(size: 24, weight: .black))
+                                .tracking(8)
+                                .foregroundColor(Theme.yellow)
+                                .retroGlow()
+                                .padding(.top, 5)
+                            
+                            Text("タイマーの設定")
+                                .font(.system(size: 12, weight: .medium))
+                                .tracking(3)
+                                .foregroundColor(.white.opacity(0.7))
+                        }
                     }
-                }
 
-                // Circular Time Picker
-                CircularTime(selectedMinutes: $appManager.selectedMinutes)
-                    .padding(.top, -10)
-                    .disabled(joinLiveSessionMode) // Disable time selection for joined sessions
-                    .opacity(joinLiveSessionMode ? 0.7 : 1)
+                    // Circular Time Picker
+                    CircularTime(selectedMinutes: $appManager.selectedMinutes)
+                        .padding(.top, -10)
+                        .disabled(joinLiveSessionMode) // Disable time selection for joined sessions
+                        .opacity(joinLiveSessionMode ? 0.7 : 1)
+                        .frame(height: 300)
 
-                // Controls
-                HStack(spacing: 20) {
-                    ControlButton(title: "ALLOW PAUSE") {
-                        Spacer()
-                        Toggle("", isOn: $appManager.allowPauses)
-                            .toggleStyle(ModernToggleStyle())
-                            .disabled(joinLiveSessionMode) // Disable in join mode
-                            .onChange(of: appManager.allowPauses) { newValue in
-                                if !newValue {
-                                    // Only show the warning if it hasn't been shown before
-                                    if !hasShownPauseWarning {
-                                        showPauseDisabledWarning = true
-                                        hasShownPauseWarning = true
+                    // Controls Section - redesigned with 3 controls
+                    VStack(spacing: 16) {
+                        // 1. Allow Pause Toggle
+                        ControlButton(title: "ALLOW PAUSE") {
+                            Spacer()
+                            Toggle("", isOn: $appManager.allowPauses)
+                                .toggleStyle(ModernToggleStyle())
+                                .disabled(joinLiveSessionMode) // Disable in join mode
+                                .onChange(of: appManager.allowPauses) { newValue in
+                                    if !newValue {
+                                        // Only show the warning if it hasn't been shown before
+                                        if !hasShownPauseWarning {
+                                            showPauseDisabledWarning = true
+                                            hasShownPauseWarning = true
+                                        }
+                                        appManager.maxPauses = 0
+                                        isInfinitePauses = false
+                                    } else {
+                                        appManager.maxPauses = 3 // Default number of pauses
                                     }
-                                    appManager.maxPauses = 0
-                                } else {
-                                    appManager.maxPauses = 3
+                                }
+                            Spacer()
+                        }
+
+                        // 2. Number of Pauses with Infinite option
+                        ControlButton(title: "# OF PAUSES", isDisabled: !appManager.allowPauses || joinLiveSessionMode) {
+                            HStack {
+                                NumberPicker(
+                                    range: 1...5,
+                                    selection: $appManager.maxPauses,
+                                    isDisabled: !appManager.allowPauses || joinLiveSessionMode || isInfinitePauses
+                                )
+                                
+                                Spacer()
+                                
+                                InfinityToggle(
+                                    isInfinite: $isInfinitePauses,
+                                    isDisabled: !appManager.allowPauses || joinLiveSessionMode
+                                )
+                                .onChange(of: isInfinitePauses) { newValue in
+                                    if newValue {
+                                        // Set to a high number when infinite is selected
+                                        appManager.maxPauses = 999
+                                    } else {
+                                        // Revert to default when turning off infinite
+                                        appManager.maxPauses = 3
+                                    }
                                 }
                             }
-                        Spacer()
+                        }
+                        
+                        // 3. Pause Duration Selector
+                        ControlButton(title: "PAUSE DURATION", isDisabled: !appManager.allowPauses || joinLiveSessionMode) {
+                            ModernPickerStyle(
+                                options: pauseDurationLabels,
+                                selection: $selectedPauseDurationIndex,
+                                isDisabled: !appManager.allowPauses || joinLiveSessionMode
+                            )
+                            .onChange(of: selectedPauseDurationIndex) { newValue in
+                                appManager.pauseDuration = pauseDurations[newValue]
+                            }
+                        }
                     }
+                    .padding(.horizontal, 24)
+                    .padding(.top, 5)
 
-                    ControlButton(title: "# OF PAUSES") {
-                        HStack {
-                            Text("\(appManager.maxPauses)")
-                                .font(.system(size: 24, weight: .black))
-                                .foregroundColor(
-                                    (appManager.allowPauses && !joinLiveSessionMode)
-                                        ? .white : .white.opacity(0.3))
-
-                            Image(systemName: "chevron.down")
-                                .font(.system(size: 12, weight: .bold))
-                                .foregroundColor(
-                                    (appManager.allowPauses && !joinLiveSessionMode)
-                                        ? .white : .white.opacity(0.3)
-                                )
-                                .offset(y: 2)
+                    // Begin Button
+                    BeginButton {
+                        // Only start a regular session here, joining is handled in onAppear
+                        if !joinLiveSessionMode {
+                            appManager.startCountdown()
                         }
                     }
                     .overlay(
-                        Menu {
-                            Picker("", selection: $appManager.maxPauses) {
-                                ForEach(0...10, id: \.self) { number in
-                                    Text("\(number)").tag(number)
-                                }
+                        Group {
+                            if joinLiveSessionMode {
+                                Text("JOINING...")
+                                    .font(.system(size: 36, weight: .black))
+                                    .tracking(8)
+                                    .foregroundColor(.white)
+                                    .shadow(color: Color.green.opacity(0.6), radius: 8)
+                                    .opacity(showJoiningIndicator ? 1 : 0)
                             }
-                        } label: {
-                            Color.clear
                         }
-                        .disabled(!appManager.allowPauses || joinLiveSessionMode)
                     )
+                    .disabled(joinLiveSessionMode) // Disable when joining
+                    .padding(.bottom, 50)
                 }
-                .padding(.horizontal)
-
-                // Begin Button
-                BeginButton {
-                    // Only start a regular session here, joining is handled in onAppear
-                    if !joinLiveSessionMode {
-                        appManager.startCountdown()
-                    }
-                }
-                .overlay(
-                    Group {
-                        if joinLiveSessionMode {
-                            Text("JOINING...")
-                                .font(.system(size: 36, weight: .black))
-                                .tracking(8)
-                                .foregroundColor(.white)
-                                .shadow(color: Color.green.opacity(0.6), radius: 8)
-                                .opacity(showJoiningIndicator ? 1 : 0)
-                        }
-                    }
-                )
-                .disabled(joinLiveSessionMode) // Disable when joining
-
-                Spacer()
+                .padding(.top, 20)
             }
             
             // Join Session Mode Control - shown only during join mode
@@ -220,14 +233,14 @@ struct SetupView: View {
                                 .foregroundStyle(
                                     LinearGradient(
                                         colors: [
-                                            Color(red: 249/255, green: 115/255, blue: 22/255),
-                                            Color(red: 194/255, green: 65/255, blue: 12/255)
+                                            Theme.yellow,
+                                            Theme.orange
                                         ],
                                         startPoint: .top,
                                         endPoint: .bottom
                                     )
                                 )
-                                .shadow(color: Theme.orange.opacity(0.5), radius: 10)
+                                .shadow(color: Theme.yellowShadow, radius: 10)
                                 .padding(.top, 30)
                             
                             // Warning Title
@@ -236,7 +249,7 @@ struct SetupView: View {
                                     .font(.system(size: 28, weight: .black))
                                     .tracking(8)
                                     .foregroundColor(.white)
-                                    .shadow(color: Theme.orange.opacity(0.5), radius: 8)
+                                    .shadow(color: Theme.yellowShadow, radius: 8)
                                 
                                 Text("警告")
                                     .font(.system(size: 14))
@@ -266,7 +279,7 @@ struct SetupView: View {
                                     .background(
                                         ZStack {
                                             RoundedRectangle(cornerRadius: 25)
-                                                .fill(Theme.buttonGradient)
+                                                .fill(Theme.yellowAccentGradient)
                                             
                                             RoundedRectangle(cornerRadius: 25)
                                                 .fill(Color.white.opacity(0.1))
@@ -285,7 +298,7 @@ struct SetupView: View {
                                                 )
                                         }
                                     )
-                                    .shadow(color: Color(red: 56/255, green: 189/255, blue: 248/255).opacity(0.5), radius: 8)
+                                    .shadow(color: Theme.yellowShadow, radius: 8)
                             }
                             .padding(.bottom, 30)
                         }
@@ -317,31 +330,57 @@ struct SetupView: View {
                     )
                     .transition(.opacity)
             }
+            
+            // Permission Required Alert
             if permissionManager.showPermissionRequiredAlert {
-                            PermissionRequiredAlert(isPresented: $permissionManager.showPermissionRequiredAlert)
-                        }
-                        
-                        // Motion Permission Alert
-                        if permissionManager.showMotionAlert {
-                            MotionPermissionAlert(
-                                isPresented: $permissionManager.showMotionAlert,
-                                onContinue: {
-                                    permissionManager.requestMotionPermission()
-                                }
-                            )
-                        }
-                        
-                        // Notification Permission Alert
-                        if permissionManager.showNotificationAlert {
-                            NotificationPermissionAlert(
-                                isPresented: $permissionManager.showNotificationAlert,
-                                onContinue: {
-                                    permissionManager.requestNotificationPermission()
-                                }
-                            )
-                        }
+                PermissionRequiredAlert(isPresented: $permissionManager.showPermissionRequiredAlert)
+            }
+            
+            // Location Permission Alert
+            if permissionManager.showLocationAlert {
+                LocationPermissionAlert(
+                    isPresented: $permissionManager.showLocationAlert,
+                    onContinue: {
+                        permissionManager.requestLocationPermission()
                     }
+                )
+            }
+            
+            // Motion Permission Alert
+            if permissionManager.showMotionAlert {
+                MotionPermissionAlert(
+                    isPresented: $permissionManager.showMotionAlert,
+                    onContinue: {
+                        permissionManager.requestMotionPermission()
+                    }
+                )
+            }
+            
+            // Notification Permission Alert
+            if permissionManager.showNotificationAlert {
+                NotificationPermissionAlert(
+                    isPresented: $permissionManager.showNotificationAlert,
+                    onContinue: {
+                        permissionManager.requestNotificationPermission()
+                    }
+                )
+            }
+        }
         .onAppear {
+            // Initialize selected pause duration from AppManager
+            if appManager.pauseDuration > 0 {
+                if let index = pauseDurations.firstIndex(of: appManager.pauseDuration) {
+                    selectedPauseDurationIndex = index
+                }
+            } else {
+                // Default to 5 minutes (index 1)
+                selectedPauseDurationIndex = 1
+                appManager.pauseDuration = pauseDurations[selectedPauseDurationIndex]
+            }
+            
+            // Check if infinite pauses are set
+            isInfinitePauses = appManager.maxPauses > 10
+            
             // Check if we're being called to join a session
             if let sessionData = SessionJoinCoordinator.shared.getJoinSession() {
                 joinLiveSessionMode = true
@@ -396,6 +435,7 @@ struct SetupView: View {
                 }
             }
         }
+        .environmentObject(viewRouter)
     }
 }
 
@@ -414,19 +454,19 @@ struct PermissionRequiredAlert: View {
                     .font(.system(size: 50))
                     .foregroundStyle(
                         LinearGradient(
-                            colors: [Color.yellow, Color.orange],
+                            colors: [Theme.yellow, Theme.orange],
                             startPoint: .top,
                             endPoint: .bottom
                         )
                     )
-                    .shadow(color: Color.orange.opacity(0.5), radius: 6)
+                    .shadow(color: Theme.yellowShadow, radius: 6)
                 
                 // Title
                 Text("PERMISSIONS REQUIRED")
                     .font(.system(size: 22, weight: .black))
                     .tracking(4)
                     .foregroundColor(.white)
-                    .shadow(color: Color.orange.opacity(0.6), radius: 4)
+                    .shadow(color: Theme.yellowShadow, radius: 4)
                 
                 // Description
                 Text("FLIP needs location and motion access to track when your phone is flipped. Without these permissions, the app cannot function.")
@@ -460,10 +500,28 @@ struct PermissionRequiredAlert: View {
                             .foregroundColor(.white)
                             .frame(width: 120, height: 45)
                             .background(
-                                RoundedRectangle(cornerRadius: 20)
-                                    .fill(Theme.buttonGradient)
+                                ZStack {
+                                    RoundedRectangle(cornerRadius: 20)
+                                        .fill(Theme.buttonGradient)
+                                        
+                                    RoundedRectangle(cornerRadius: 20)
+                                        .fill(Color.white.opacity(0.1))
+                                        
+                                    RoundedRectangle(cornerRadius: 20)
+                                        .stroke(
+                                            LinearGradient(
+                                                colors: [
+                                                    Color.white.opacity(0.6),
+                                                    Color.white.opacity(0.2)
+                                                ],
+                                                startPoint: .topLeading,
+                                                endPoint: .bottomTrailing
+                                            ),
+                                            lineWidth: 1
+                                        )
+                                }
                             )
-                            .shadow(color: Color(red: 56/255, green: 189/255, blue: 248/255).opacity(0.3), radius: 4)
+                            .shadow(color: Theme.purpleShadow, radius: 4)
                     }
                     
                     Button(action: {

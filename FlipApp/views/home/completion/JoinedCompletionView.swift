@@ -1,5 +1,5 @@
 import SwiftUI
-import FirebaseAuth  // Add this import
+import FirebaseAuth
 
 struct JoinedCompletionView: View {
     @EnvironmentObject var appManager: AppManager
@@ -62,200 +62,250 @@ struct JoinedCompletionView: View {
     }
     
     var body: some View {
-        VStack(spacing: 15) {
-            // Success content
-            VStack(spacing: 15) {
-                // Success Icon with animation
-                ZStack {
-                    Circle()
-                        .fill(
-                            LinearGradient(
-                                colors: [
-                                    Color(red: 34/255, green: 197/255, blue: 94/255),
-                                    Color(red: 22/255, green: 163/255, blue: 74/255)
-                                ],
-                                startPoint: .topLeading,
-                                endPoint: .bottomTrailing
-                            )
-                        )
-                        .frame(width: 90, height: 90)
-                        .opacity(0.2)
-                    
-                    Image(systemName: "checkmark.circle.fill")
-                        .font(.system(size: 50))
-                        .foregroundStyle(
-                            LinearGradient(
-                                colors: [
-                                    Color(red: 34/255, green: 197/255, blue: 94/255),
-                                    Color(red: 22/255, green: 163/255, blue: 74/255)
-                                ],
-                                startPoint: .top,
-                                endPoint: .bottom
-                            )
-                        )
-                        .shadow(color: Color.green.opacity(0.5), radius: isGlowing ? 15 : 8)
-                }
-                .scaleEffect(showIcon ? 1 : 0)
-                .rotationEffect(.degrees(showIcon ? 0 : -180))
-                
-                // Title with animation
-                VStack(spacing: 2) {
-                    Text("GROUP SESSION COMPLETE")
-                        .font(.system(size: 20, weight: .black))
-                        .tracking(6)
-                        .foregroundColor(.white)
-                        .shadow(color: Color(red: 56/255, green: 189/255, blue: 248/255).opacity(0.5), radius: 8)
-                    
-                    Text("一緒に成功")
-                        .font(.system(size: 12))
-                        .tracking(4)
-                        .foregroundColor(.white.opacity(0.7))
-                }
-                .offset(y: showTitle ? 0 : 50)
-                .opacity(showTitle ? 1 : 0)
-                
-                // Group stats with animation
-                VStack(spacing: 5) {
-                    if loadingParticipants {
-                        ProgressView()
-                            .tint(.white)
-                            .scaleEffect(1.2)
-                            .padding(.vertical, 10)
-                    } else {
-                        if !otherParticipantNames.isEmpty {
-                            Text("You and \(otherParticipantNames) completed:")
-                                .font(.system(size: 16))
-                                .foregroundColor(.white.opacity(0.9))
-                                .multilineTextAlignment(.center)
-                                .padding(.horizontal)
-                        } else {
-                            Text("You completed:")
-                                .font(.system(size: 16))
-                                .foregroundColor(.white.opacity(0.9))
-                        }
-                        
-                        HStack(alignment: .firstTextBaseline, spacing: 5) {
-                            Text("\(appManager.selectedMinutes)")
-                                .font(.system(size: 42, weight: .black))
-                                .foregroundColor(.white)
-                                .shadow(color: Color(red: 56/255, green: 189/255, blue: 248/255).opacity(0.6), radius: 10)
-                            
-                            Text("minutes")
-                                .font(.system(size: 16))
-                                .tracking(2)
-                                .foregroundColor(.white.opacity(0.8))
-                                .padding(.leading, 4)
-                        }
-                        
-                        Text("of focused work together!")
-                            .font(.system(size: 16))
-                            .foregroundColor(.white.opacity(0.7))
-                        
-                        // Participant list
-                        if participantDetails.count > 1 {
-                            ParticipantList(participants: participantDetails)
-                                .padding(.top, 10)
-                        }
-                    }
-                }
-                .offset(y: showStats ? 0 : 50)
-                .opacity(showStats ? 1 : 0)
-            }
-            
-            // Session Notes section - only original starter can edit
-            if showNotes {
-                if canEditNotes {
-                    // Editable notes for original starter
-                    SessionNotesView(
-                        sessionTitle: $sessionTitle,
-                        sessionNotes: $sessionNotes
-                    )
-                    .transition(.scale.combined(with: .opacity))
-                    .padding(.top, -5)
-                } else if !sessionTitle.isEmpty || !sessionNotes.isEmpty {
-                    // Read-only notes for other participants
-                    ReadOnlyNotesView(
-                        sessionTitle: sessionTitle,
-                        sessionNotes: sessionNotes
-                    )
-                    .transition(.scale.combined(with: .opacity))
-                    .padding(.top, -5)
-                }
-            }
-            
-            // Back Button with animation and notes saving
-            Button(action: {
-                withAnimation(.spring()) {
-                    isButtonPressed = true
-                    showSavingIndicator = true
-                }
-                
-                // Hide keyboard first
-                hideKeyboard()
-                
-                // Save session with notes if we're the original starter
-                if canEditNotes {
-                    sessionManager.addSession(
-                        duration: appManager.selectedMinutes,
-                        wasSuccessful: true,
-                        actualDuration: appManager.selectedMinutes,
-                        sessionTitle: sessionTitle.isEmpty ? nil : sessionTitle,
-                        sessionNotes: sessionNotes.isEmpty ? nil : sessionNotes
-                    )
-                }
-                
-                // Add a small delay to show "Saving..." effect
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) {
-                    appManager.currentState = .initial
-                    isButtonPressed = false
-                    showSavingIndicator = false
-                }
-            }) {
-                HStack {
-                    if showSavingIndicator {
-                        ProgressView()
-                            .tint(.white)
-                            .scaleEffect(0.8)
-                            .padding(.trailing, 8)
-                    }
-                    
-                    Text(showSavingIndicator ? "SAVING..." : "BACK TO HOME")
-                        .font(.system(size: 18, weight: .black))
-                        .tracking(2)
-                        .foregroundColor(.white)
-                }
-                .frame(width: 200, height: 50)
-                .background(
+        ScrollView {
+            VStack(spacing: 30) {
+                // Success content
+                VStack(spacing: 25) {
+                    // Success Icon with animation
                     ZStack {
-                        RoundedRectangle(cornerRadius: 25)
-                            .fill(Theme.buttonGradient)
+                        Circle()
+                            .fill(
+                                LinearGradient(
+                                    colors: [
+                                        Color(red: 34/255, green: 197/255, blue: 94/255).opacity(0.3),
+                                        Color(red: 22/255, green: 163/255, blue: 74/255).opacity(0.2)
+                                    ],
+                                    startPoint: .topLeading,
+                                    endPoint: .bottomTrailing
+                                )
+                            )
+                            .frame(width: 110, height: 110)
                         
-                        RoundedRectangle(cornerRadius: 25)
-                            .fill(Color.white.opacity(0.1))
-                        
-                        RoundedRectangle(cornerRadius: 25)
+                        Circle()
                             .stroke(
                                 LinearGradient(
                                     colors: [
                                         Color.white.opacity(0.6),
-                                        Color.white.opacity(0.2)
+                                        Color.white.opacity(0.1)
                                     ],
                                     startPoint: .topLeading,
                                     endPoint: .bottomTrailing
                                 ),
                                 lineWidth: 1
                             )
+                            .frame(width: 110, height: 110)
+                        
+                        Image(systemName: "checkmark.circle.fill")
+                            .font(.system(size: 60))
+                            .foregroundStyle(
+                                LinearGradient(
+                                    colors: [
+                                        Color(red: 34/255, green: 197/255, blue: 94/255),
+                                        Color(red: 22/255, green: 163/255, blue: 74/255)
+                                    ],
+                                    startPoint: .top,
+                                    endPoint: .bottom
+                                )
+                            )
+                            .shadow(color: Color(red: 34/255, green: 197/255, blue: 94/255).opacity(isGlowing ? 0.6 : 0.3), radius: isGlowing ? 15 : 8)
                     }
-                )
-                .shadow(color: Color(red: 56/255, green: 189/255, blue: 248/255).opacity(0.5), radius: 8)
-                .scaleEffect(isButtonPressed ? 0.95 : 1.0)
+                    .scaleEffect(showIcon ? 1 : 0)
+                    .rotationEffect(.degrees(showIcon ? 0 : -180))
+                    
+                    // Title with animation
+                    Text("GROUP SESSION COMPLETE")
+                        .font(.system(size: 28, weight: .black))
+                        .tracking(4)
+                        .foregroundColor(.white)
+                        .shadow(color: Color(red: 34/255, green: 197/255, blue: 94/255).opacity(0.5), radius: 8)
+                        .multilineTextAlignment(.center)
+                        .offset(y: showTitle ? 0 : 50)
+                        .opacity(showTitle ? 1 : 0)
+                    
+                    // Group stats card
+                    VStack(spacing: 15) {
+                        if loadingParticipants {
+                            ProgressView()
+                                .tint(.white)
+                                .scaleEffect(1.2)
+                                .padding(.vertical, 15)
+                        } else {
+                            if !otherParticipantNames.isEmpty {
+                                Text("You and \(otherParticipantNames) completed:")
+                                    .font(.system(size: 16, weight: .medium))
+                                    .foregroundColor(Color(red: 250/255, green: 204/255, blue: 21/255))
+                                    .multilineTextAlignment(.center)
+                                    .padding(.horizontal)
+                            } else {
+                                Text("You completed:")
+                                    .font(.system(size: 16, weight: .medium))
+                                    .foregroundColor(Color(red: 250/255, green: 204/255, blue: 21/255))
+                            }
+                            
+                            HStack(alignment: .firstTextBaseline, spacing: 10) {
+                                Text("\(appManager.selectedMinutes)")
+                                    .font(.system(size: 50, weight: .black))
+                                    .foregroundColor(.white)
+                                    .shadow(color: Color(red: 56/255, green: 189/255, blue: 248/255).opacity(0.6), radius: 10)
+                                
+                                Text("minutes")
+                                    .font(.system(size: 18, weight: .medium))
+                                    .foregroundColor(.white.opacity(0.8))
+                                    .padding(.leading, 4)
+                            }
+                            
+                            Text("of focused work together!")
+                                .font(.system(size: 16, weight: .medium))
+                                .foregroundColor(.white.opacity(0.8))
+                            
+                            // Participant list
+                            if participantDetails.count > 1 {
+                                ParticipantList(participants: participantDetails)
+                                    .padding(.top, 10)
+                            }
+                        }
+                    }
+                    .padding(.vertical, 20)
+                    .padding(.horizontal, 25)
+                    .background(
+                        ZStack {
+                            RoundedRectangle(cornerRadius: 20)
+                                .fill(
+                                    LinearGradient(
+                                        colors: [
+                                            Color(red: 60/255, green: 30/255, blue: 110/255).opacity(0.5),
+                                            Color(red: 40/255, green: 20/255, blue: 80/255).opacity(0.3)
+                                        ],
+                                        startPoint: .topLeading,
+                                        endPoint: .bottomTrailing
+                                    )
+                                )
+                            
+                            RoundedRectangle(cornerRadius: 20)
+                                .fill(Color.white.opacity(0.05))
+                            
+                            RoundedRectangle(cornerRadius: 20)
+                                .stroke(
+                                    LinearGradient(
+                                        colors: [
+                                            Color.white.opacity(0.5),
+                                            Color.white.opacity(0.1)
+                                        ],
+                                        startPoint: .topLeading,
+                                        endPoint: .bottomTrailing
+                                    ),
+                                    lineWidth: 1
+                                )
+                        }
+                    )
+                    .shadow(color: Color.black.opacity(0.2), radius: 10)
+                    .offset(y: showStats ? 0 : 50)
+                    .opacity(showStats ? 1 : 0)
+                }
+                
+                // Session Notes section - only original starter can edit
+                if showNotes {
+                    if canEditNotes {
+                        // Editable notes for original starter
+                        SessionNotesView(
+                            sessionTitle: $sessionTitle,
+                            sessionNotes: $sessionNotes
+                        )
+                        .transition(.scale.combined(with: .opacity))
+                    } else if !sessionTitle.isEmpty || !sessionNotes.isEmpty {
+                        // Read-only notes for other participants
+                        ReadOnlyNotesView(
+                            sessionTitle: sessionTitle,
+                            sessionNotes: sessionNotes
+                        )
+                        .transition(.scale.combined(with: .opacity))
+                    }
+                }
+                
+                // Back Button with animation and notes saving
+                Button(action: {
+                    withAnimation(.spring()) {
+                        isButtonPressed = true
+                        showSavingIndicator = true
+                    }
+                    
+                    // Hide keyboard first
+                    hideKeyboard()
+                    
+                    // Save session with notes if we're the original starter
+                    if canEditNotes {
+                        sessionManager.addSession(
+                            duration: appManager.selectedMinutes,
+                            wasSuccessful: true,
+                            actualDuration: appManager.selectedMinutes,
+                            sessionTitle: sessionTitle.isEmpty ? nil : sessionTitle,
+                            sessionNotes: sessionNotes.isEmpty ? nil : sessionNotes
+                        )
+                    }
+                    
+                    // Add a small delay to show "Saving..." effect
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) {
+                        appManager.currentState = .initial
+                        isButtonPressed = false
+                        showSavingIndicator = false
+                    }
+                }) {
+                    HStack {
+                        if showSavingIndicator {
+                            ProgressView()
+                                .tint(.white)
+                                .scaleEffect(0.8)
+                                .padding(.trailing, 8)
+                        }
+                        
+                        Text(showSavingIndicator ? "SAVING..." : "RETURN HOME")
+                            .font(.system(size: 18, weight: .black))
+                            .tracking(2)
+                            .foregroundColor(.white)
+                    }
+                    .frame(height: 56)
+                    .frame(maxWidth: .infinity)
+                    .background(
+                        ZStack {
+                            RoundedRectangle(cornerRadius: 16)
+                                .fill(
+                                    LinearGradient(
+                                        colors: [
+                                            Color(red: 168/255, green: 85/255, blue: 247/255),
+                                            Color(red: 88/255, green: 28/255, blue: 135/255)
+                                        ],
+                                        startPoint: .topLeading,
+                                        endPoint: .bottomTrailing
+                                    )
+                                )
+                            
+                            RoundedRectangle(cornerRadius: 16)
+                                .fill(Color.white.opacity(0.1))
+                            
+                            RoundedRectangle(cornerRadius: 16)
+                                .stroke(
+                                    LinearGradient(
+                                        colors: [
+                                            Color.white.opacity(0.6),
+                                            Color.white.opacity(0.2)
+                                        ],
+                                        startPoint: .topLeading,
+                                        endPoint: .bottomTrailing
+                                    ),
+                                    lineWidth: 1
+                                )
+                        }
+                    )
+                    .shadow(color: Color(red: 168/255, green: 85/255, blue: 247/255).opacity(0.5), radius: 8)
+                    .scaleEffect(isButtonPressed ? 0.97 : 1.0)
+                }
+                .padding(.horizontal, 30)
+                .offset(y: showButton ? 0 : 50)
+                .opacity(showButton ? 1 : 0)
             }
-            .offset(y: showButton ? 0 : 50)
-            .opacity(showButton ? 1 : 0)
-            .padding(.top, 5)
-            .padding(.bottom, 25)
+            .padding(.horizontal, 25)
+            .padding(.vertical, 40)
         }
-        .padding(.horizontal, 25)
         // Make the screen scrollable only when keyboard is shown
         .offset(y: keyboardOffset)
         .onAppear {
@@ -388,9 +438,9 @@ struct ParticipantList: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
             Text("PARTICIPANTS")
-                .font(.system(size: 12, weight: .bold))
+                .font(.system(size: 14, weight: .bold))
                 .tracking(2)
-                .foregroundColor(.white.opacity(0.7))
+                .foregroundColor(Color(red: 250/255, green: 204/255, blue: 21/255))
                 .frame(maxWidth: .infinity, alignment: .center)
             
             ForEach(participants) { participant in
@@ -401,25 +451,42 @@ struct ParticipantList: View {
                     
                     Spacer()
                     
-                    HStack(spacing: 4) {
+                    HStack(spacing: 6) {
                         Image(systemName: participant.wasSuccessful ? "checkmark.circle.fill" : "xmark.circle.fill")
-                            .foregroundColor(participant.wasSuccessful ? .green : .red)
-                            .font(.system(size: 12))
+                            .foregroundColor(participant.wasSuccessful ?
+                                            Color(red: 34/255, green: 197/255, blue: 94/255) :
+                                            Color(red: 239/255, green: 68/255, blue: 68/255))
+                            .font(.system(size: 14))
                         
                         Text("\(participant.duration) min")
                             .font(.system(size: 12, weight: .medium))
                             .foregroundColor(.white.opacity(0.8))
                     }
+                    .padding(.vertical, 5)
+                    .padding(.horizontal, 10)
+                    .background(
+                        RoundedRectangle(cornerRadius: 12)
+                            .fill(Color.white.opacity(0.1))
+                    )
                 }
-                .padding(.vertical, 6)
-                .padding(.horizontal, 10)
-                .background(Color.white.opacity(0.05))
-                .cornerRadius(6)
+                .padding(.vertical, 8)
+                .padding(.horizontal, 12)
+                .background(
+                    RoundedRectangle(cornerRadius: 10)
+                        .fill(Color.white.opacity(0.05))
+                )
             }
         }
-        .padding(10)
-        .background(Color.white.opacity(0.05))
-        .cornerRadius(10)
+        .padding(15)
+        .background(
+            ZStack {
+                RoundedRectangle(cornerRadius: 16)
+                    .fill(Color.white.opacity(0.05))
+                
+                RoundedRectangle(cornerRadius: 16)
+                    .stroke(Color.white.opacity(0.2), lineWidth: 1)
+            }
+        )
     }
 }
 
@@ -428,76 +495,80 @@ struct ReadOnlyNotesView: View {
     let sessionNotes: String
     
     var body: some View {
-        VStack(spacing: 5) {
-            // Section header
+        VStack(spacing: 15) {
             Text("SESSION NOTES")
                 .font(.system(size: 16, weight: .bold))
-                .tracking(3)
-                .foregroundColor(.white)
-                .shadow(color: Color(red: 56/255, green: 189/255, blue: 248/255).opacity(0.5), radius: 6)
-                .padding(.bottom, 0)
+                .tracking(2)
+                .foregroundColor(Color(red: 250/255, green: 204/255, blue: 21/255))
+                .frame(maxWidth: .infinity, alignment: .center)
             
             if !sessionTitle.isEmpty {
-                VStack(alignment: .leading, spacing: 4) {
+                VStack(alignment: .leading, spacing: 8) {
                     Text("Title")
-                        .font(.system(size: 14, weight: .semibold))
+                        .font(.system(size: 14, weight: .medium))
                         .foregroundColor(.white.opacity(0.8))
                     
                     Text(sessionTitle)
                         .font(.system(size: 14, weight: .medium))
                         .foregroundColor(.white)
-                        .padding(10)
+                        .padding(12)
                         .frame(maxWidth: .infinity, alignment: .leading)
                         .background(
-                            RoundedRectangle(cornerRadius: 10)
+                            RoundedRectangle(cornerRadius: 12)
                                 .fill(Color.white.opacity(0.1))
-                                .stroke(Color.white.opacity(0.2), lineWidth: 1)
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 12)
+                                        .stroke(Color.white.opacity(0.3), lineWidth: 1)
+                                )
                         )
                 }
             }
             
             if !sessionNotes.isEmpty {
-                VStack(alignment: .leading, spacing: 4) {
+                VStack(alignment: .leading, spacing: 8) {
                     Text("Notes")
-                        .font(.system(size: 14, weight: .semibold))
+                        .font(.system(size: 14, weight: .medium))
                         .foregroundColor(.white.opacity(0.8))
                     
                     Text(sessionNotes)
                         .font(.system(size: 14))
                         .foregroundColor(.white)
-                        .padding(10)
+                        .padding(12)
                         .frame(maxWidth: .infinity, alignment: .leading)
                         .background(
-                            RoundedRectangle(cornerRadius: 10)
+                            RoundedRectangle(cornerRadius: 12)
                                 .fill(Color.white.opacity(0.1))
-                                .stroke(Color.white.opacity(0.2), lineWidth: 1)
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 12)
+                                        .stroke(Color.white.opacity(0.3), lineWidth: 1)
+                                )
                         )
                 }
             }
         }
-        .padding(10)
+        .padding(20)
         .background(
             ZStack {
-                RoundedRectangle(cornerRadius: 14)
+                RoundedRectangle(cornerRadius: 16)
                     .fill(
                         LinearGradient(
                             colors: [
-                                Color(red: 26/255, green: 14/255, blue: 47/255).opacity(0.6),
-                                Color(red: 16/255, green: 24/255, blue: 57/255).opacity(0.6)
+                                Color(red: 60/255, green: 30/255, blue: 110/255).opacity(0.4),
+                                Color(red: 40/255, green: 20/255, blue: 80/255).opacity(0.2)
                             ],
                             startPoint: .topLeading,
                             endPoint: .bottomTrailing
                         )
                     )
                 
-                RoundedRectangle(cornerRadius: 14)
+                RoundedRectangle(cornerRadius: 16)
                     .fill(Color.white.opacity(0.05))
                 
-                RoundedRectangle(cornerRadius: 14)
+                RoundedRectangle(cornerRadius: 16)
                     .stroke(
                         LinearGradient(
                             colors: [
-                                Color.white.opacity(0.3),
+                                Color.white.opacity(0.4),
                                 Color.white.opacity(0.1)
                             ],
                             startPoint: .topLeading,
@@ -507,5 +578,6 @@ struct ReadOnlyNotesView: View {
                     )
             }
         )
+        .shadow(color: Color.black.opacity(0.15), radius: 8)
     }
 }

@@ -16,10 +16,12 @@ class PermissionManager: NSObject, ObservableObject {
     private let motionManager = CMMotionManager()
     @Published var motionPermissionGranted = false
     @Published var showMotionAlert = false
+    private var motionPromptCompleted = false
     
     // Notifications
     @Published var notificationPermissionGranted = false
     @Published var showNotificationAlert = false
+    private var notificationPromptCompleted = false
     
     // Live Activities
     @Published var liveActivitiesEnabled = false
@@ -69,72 +71,137 @@ class PermissionManager: NSObject, ObservableObject {
                                 notificationPermissionGranted
     }
     
-    // Full permission request sequence
+    // MARK: - Permission Flow
+    
+    // Start the permission flow sequence
     func requestAllPermissions() {
-        // Start with location
+        // First, check if we already have all permissions
+        if allPermissionsGranted {
+            return
+        }
+        
+        // Start with the first permission in the flow: location
+        startLocationFlow()
+    }
+    
+    // MARK: - Location Flow
+    
+    // Step 1: Start the location permission flow
+    private func startLocationFlow() {
+        // First check if we already have location permission
+        if locationAuthStatus == .authorizedWhenInUse || locationAuthStatus == .authorizedAlways {
+            // Already authorized, skip to next flow
+            startMotionFlow()
+            return
+        }
+        
+        // Show our custom alert first
         showLocationAlert = true
     }
     
-    // Step 1: Show custom location alert, then request system permission
+    // Step 1b: Called when user taps Continue on location alert
     func requestLocationPermission() {
+        // Request the actual system permission
+        // The delegate will handle the next step after user responds
         locationManager.requestAlwaysAuthorization()
     }
     
-    // Step 2: Request motion permission
-    func requestMotionPermission() {
+    // MARK: - Motion Flow
+    
+    // Step 2: Start the motion permission flow
+    private func startMotionFlow() {
+        // First check if we already have motion permission
         let motionAuthStatus = CMMotionActivityManager.authorizationStatus()
-            if motionAuthStatus == .authorized {
-                // Already authorized, skip to next step
-                self.motionPermissionGranted = true
-                self.requestNotificationPermission()
-                return
-            }
-        showMotionAlert = true
+        if motionAuthStatus == .authorized {
+            // Already authorized, skip to next flow
+            motionPermissionGranted = true
+            startNotificationFlow()
+            return
+        }
         
-        // After user acknowledges, request actual permission
+        // Show our custom alert
+        showMotionAlert = true
+    }
+    
+    // Step 2b: Called when user taps Continue on motion alert
+    func requestMotionPermission() {
+        // Important: mark that we've shown the custom prompt
+        motionPromptCompleted = true
+        
+        // Now prompt for the actual system permission
         let motionManager = CMMotionActivityManager()
         let today = Date()
+        
+        // This will trigger the system prompt
         motionManager.queryActivityStarting(from: today, to: today, to: .main) { _, _ in
             DispatchQueue.main.async {
-                self.motionPermissionGranted = (CMMotionActivityManager.authorizationStatus() == .authorized)
-                self.requestNotificationPermission()
+                // Check if permission was granted
+                let currentStatus = CMMotionActivityManager.authorizationStatus()
+                self.motionPermissionGranted = (currentStatus == .authorized)
+                
+                // Move to next step regardless of result
+                self.startNotificationFlow()
             }
         }
     }
     
-    // Step 3: Request notification permission
-    func requestNotificationPermission() {
-        // First check if we already have permission before showing the alert
+    // MARK: - Notification Flow
+    
+    // Step 3: Start the notification permission flow
+    private func startNotificationFlow() {
+        // First check if we already have notification permission
         UNUserNotificationCenter.current().getNotificationSettings { settings in
             DispatchQueue.main.async {
                 if settings.authorizationStatus == .authorized {
-                    // Already authorized, no need to show alert or request again
+                    // Already authorized, all done!
                     self.notificationPermissionGranted = true
                     self.updatePermissionState()
-                } else {
-                    // Show alert and then request permission
-                    self.showNotificationAlert = true
+                    return
                 }
+                
+                // Show our custom alert
+                self.showNotificationAlert = true
+            }
+        }
+    }
+    
+    // Step 3b: Called when user taps Continue on notification alert
+    func requestNotificationPermission() {
+        // Important: mark that we've shown the custom prompt
+        notificationPromptCompleted = true
+        
+        // Request the actual system permission
+        UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound, .badge]) { granted, _ in
+            DispatchQueue.main.async {
+                self.notificationPermissionGranted = granted
+                self.updatePermissionState()
             }
         }
     }
 }
 
-// Extension for CLLocationManagerDelegate
+// MARK: - CLLocationManagerDelegate
 extension PermissionManager: CLLocationManagerDelegate {
     func locationManagerDidChangeAuthorization(_ manager: CLLocationManager) {
         DispatchQueue.main.async {
             self.locationAuthStatus = manager.authorizationStatus
             
-            // If location permission granted, move to next permission
-            if self.locationAuthStatus == .authorizedWhenInUse || self.locationAuthStatus == .authorizedAlways {
-                self.requestMotionPermission()
+            // Only proceed if the status is definitively resolved
+            // (not .notDetermined or .restricted)
+            if self.locationAuthStatus == .authorizedWhenInUse ||
+               self.locationAuthStatus == .authorizedAlways ||
+               self.locationAuthStatus == .denied {
+                
+                // Update permission state
+                self.updatePermissionState()
+                
+                // Move to the next step in the flow
+                self.startMotionFlow()
             }
-            
-            self.updatePermissionState()
         }
     }
 }
+
 struct MotionPermissionAlert: View {
     @Binding var isPresented: Bool
     let onContinue: () -> Void

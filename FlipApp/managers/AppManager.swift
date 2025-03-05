@@ -33,6 +33,10 @@ class AppManager: NSObject, ObservableObject {
     @Published var isJoinedSession: Bool = false
     @Published var originalSessionStarter: String?
     @Published var sessionParticipants: [String] = []
+    @Published var pauseDuration = 5 // Default pause duration in minutes
+    @Published var remainingPauseSeconds = 0 // Remaining seconds in current pause
+    @Published var isPauseTimerActive = false // Whether pause timer is active
+
 
     private var sessionManager = SessionManager.shared
     private var notificationManager = NotificationManager.shared
@@ -52,6 +56,7 @@ class AppManager: NSObject, ObservableObject {
     private var sessionTimer: Timer?
     private var flipBackTimer: Timer?
     @Published var flipBackTimeRemaining: Int = 10
+    private var pauseTimer: Timer?
 
     // MARK: - ActivityKit Properties
     @available(iOS 16.1, *)
@@ -223,8 +228,15 @@ class AppManager: NSObject, ObservableObject {
         // Update state
         remainingPauses -= 1
         isPaused = true
+        isPauseTimerActive = true
         pausedRemainingSeconds = remainingSeconds
         currentState = .paused
+        
+        // Set the pause countdown
+        remainingPauseSeconds = pauseDuration * 60
+        
+        // Start the pause timer
+        startPauseTimer()
 
         saveSessionState()
 
@@ -245,7 +257,10 @@ class AppManager: NSObject, ObservableObject {
                     remainingPauses: remainingPauses,
                     isPaused: true,
                     isFailed: false,
+                    wasSuccessful: nil,
                     flipBackTimeRemaining: nil,
+                    pauseTimeRemaining: formatPauseTimeRemaining(),
+                    countdownMessage: nil,
                     lastUpdate: Date()
                 )
 
@@ -266,10 +281,88 @@ class AppManager: NSObject, ObservableObject {
         }
 
         // Add debug print
-        print("Session paused. Time remaining: \(remainingTimeString)")
+        print("Session paused. Time remaining: \(remainingTimeString), Pause time: \(formatPauseTimeRemaining())")
+        
+        // Send notification for pause
+        let plural = remainingPauses == 1 ? "" : "s"
+        notificationManager.display(
+            title: "Session Paused",
+            body: "Pause timer started for \(pauseDuration) minutes. \(remainingPauses) pause\(plural) remaining."
+        )
+    }
+    private func startPauseTimer() {
+        pauseTimer?.invalidate()
+        pauseTimer = Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { [weak self] _ in
+            guard let self = self, self.isPauseTimerActive else { return }
+            
+            if self.remainingPauseSeconds > 0 {
+                self.remainingPauseSeconds -= 1
+                
+                // Update Live Activity every 5 seconds or at specific thresholds
+                if self.remainingPauseSeconds % 5 == 0 ||
+                   self.remainingPauseSeconds == 60 ||
+                   self.remainingPauseSeconds == 30 ||
+                   self.remainingPauseSeconds == 10 {
+                    if #available(iOS 16.1, *) {
+                        self.updateLiveActivity()
+                    }
+                }
+                
+                // Send notifications at key thresholds
+                if self.remainingPauseSeconds == 60 {
+                    self.notificationManager.display(
+                        title: "Pause Ending Soon",
+                        body: "1 minute left in your pause."
+                    )
+                } else if self.remainingPauseSeconds == 30 {
+                    self.notificationManager.display(
+                        title: "Pause Ending Soon",
+                        body: "30 seconds left in your pause."
+                    )
+                }
+                
+                self.saveSessionState()
+            } else {
+                // Pause time is up, resume the session
+                self.isPauseTimerActive = false
+                self.pauseTimer?.invalidate()
+                self.pauseTimer = nil
+                
+                // Auto-resume the session
+                self.autoResumeSession()
+            }
+        }
+        
+        // Ensure timer runs even during scrolling
+        if let timer = pauseTimer {
+            RunLoop.current.add(timer, forMode: .common)
+        }
+    }
+    private func autoResumeSession() {
+        // Send notification that pause is over
+        notificationManager.display(
+            title: "Pause Time Ended",
+            body: "Your \(pauseDuration)-minute pause has ended. Session will resume."
+        )
+        
+        // Force resume the session
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
+            self.resumeSession()
+        }
     }
 
+    // Add a helper method to format pause time remaining:
+    func formatPauseTimeRemaining() -> String {
+        let minutes = remainingPauseSeconds / 60
+        let seconds = remainingPauseSeconds % 60
+        return String(format: "%d:%02d", minutes, seconds)
+    }
     @objc func resumeSession() {
+        // Cancel any active pause timer
+        pauseTimer?.invalidate()
+        pauseTimer = nil
+        isPauseTimerActive = false
+        
         // Start motion updates first to get accurate device orientation
         startMotionUpdates()
         
@@ -308,9 +401,10 @@ class AppManager: NSObject, ObservableObject {
                             remainingPauses: self.remainingPauses,
                             isPaused: false,
                             isFailed: false,
+                            wasSuccessful: nil,
                             flipBackTimeRemaining: nil,
-                            countdownMessage:
-                                "\(self.countdownSeconds) seconds to flip phone",
+                            pauseTimeRemaining: nil,
+                            countdownMessage: "\(self.countdownSeconds) seconds to flip phone",
                             lastUpdate: Date()
                         )
 
@@ -408,12 +502,14 @@ class AppManager: NSObject, ObservableObject {
         sessionTimer?.invalidate()
         flipBackTimer?.invalidate()
         backgroundCheckTimer?.invalidate()
+        pauseTimer?.invalidate()
         
         // Set all timers to nil to prevent memory leaks
         countdownTimer = nil
         sessionTimer = nil
         flipBackTimer = nil
         backgroundCheckTimer = nil
+        pauseTimer = nil
         
         print("All timers invalidated and set to nil")
     }
@@ -1215,9 +1311,11 @@ class AppManager: NSObject, ObservableObject {
                 isPaused: currentState == .paused,
                 isFailed: currentState == .failed,
                 wasSuccessful: currentState == .completed,
-                flipBackTimeRemaining: (currentState == .tracking
-                    && !isFaceDown)
-                    ? flipBackTimeRemaining : nil,
+                flipBackTimeRemaining: (currentState == .tracking && !isFaceDown) ?
+                    flipBackTimeRemaining : nil,
+                pauseTimeRemaining: (currentState == .paused && isPauseTimerActive) ?
+                    formatPauseTimeRemaining() : nil,
+                countdownMessage: nil,
                 lastUpdate: Date()
             )
 
@@ -1316,6 +1414,7 @@ class AppManager: NSObject, ObservableObject {
         defaults.set(remainingSeconds, forKey: "remainingSeconds")
         defaults.set(remainingPauses, forKey: "remainingPauses")
         defaults.set(isFaceDown, forKey: "isFaceDown")
+        defaults.set(pauseDuration, forKey: "pauseDuration")
         
         // Save live session info
         defaults.set(liveSessionId, forKey: "liveSessionId")
@@ -1327,9 +1426,11 @@ class AppManager: NSObject, ObservableObject {
             defaults.set(countdownSeconds, forKey: "countdownSeconds")
         }
         
-        // If we're in paused state, save paused remaining seconds
+        // If we're in paused state, save paused remaining seconds and pause timer state
         if currentState == .paused {
             defaults.set(pausedRemainingSeconds, forKey: "pausedRemainingSeconds")
+            defaults.set(remainingPauseSeconds, forKey: "remainingPauseSeconds")
+            defaults.set(isPauseTimerActive, forKey: "isPauseTimerActive")
         }
         
         // Save flip back timer state if active
@@ -1360,6 +1461,12 @@ class AppManager: NSObject, ObservableObject {
         remainingSeconds = defaults.integer(forKey: "remainingSeconds")
         remainingPauses = defaults.integer(forKey: "remainingPauses")
         isFaceDown = defaults.bool(forKey: "isFaceDown")
+        pauseDuration = defaults.integer(forKey: "pauseDuration")
+        
+        // If pauseDuration is 0 (not set previously), set it to default
+        if pauseDuration == 0 {
+            pauseDuration = 5 // Default to 5 minutes
+        }
         
         // Handle different states appropriately
         switch currentState {
@@ -1394,9 +1501,15 @@ class AppManager: NSObject, ObservableObject {
             
         case .paused:
             // If the app was closed while paused, maintain paused state
-            // The user will need to manually resume
             pausedRemainingSeconds = defaults.integer(forKey: "pausedRemainingSeconds")
+            remainingPauseSeconds = defaults.integer(forKey: "remainingPauseSeconds")
+            isPauseTimerActive = defaults.bool(forKey: "isPauseTimerActive")
             isPaused = true
+            
+            // If pause timer was active, restart it
+            if isPauseTimerActive && remainingPauseSeconds > 0 {
+                startPauseTimer()
+            }
             
         default:
             // For any other state (.initial, etc), do nothing special
@@ -1478,6 +1591,8 @@ class AppManager: NSObject, ObservableObject {
         defaults.removeObject(forKey: "countdownSeconds")
         defaults.removeObject(forKey: "pausedRemainingSeconds")
         defaults.removeObject(forKey: "flipBackTimeRemaining")
+        defaults.removeObject(forKey: "remainingPauseSeconds")
+        defaults.removeObject(forKey: "isPauseTimerActive")
         
         // Clear live session info
         defaults.removeObject(forKey: "liveSessionId")
@@ -1489,6 +1604,10 @@ class AppManager: NSObject, ObservableObject {
         isJoinedSession = false
         originalSessionStarter = nil
         sessionParticipants = []
+        
+        // Reset pause timer state
+        isPauseTimerActive = false
+        remainingPauseSeconds = 0
         
         // Add aggressive Live Activity cleanup to ensure widgets don't remain on lock screen
         if #available(iOS 16.1, *) {
