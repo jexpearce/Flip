@@ -405,7 +405,7 @@ struct FriendsView: View {
                         object: nil
                     )
                 } else {
-                    // Try backup method using coordinator if direct join fails
+                    // ONLY try backup method if direct join fails
                     print("Direct join failed, trying via coordinator...")
                     
                     // Use the coordinator to pass session information
@@ -416,10 +416,6 @@ struct FriendsView: View {
                         name: Notification.Name("SwitchToHomeTab"),
                         object: nil
                     )
-                    
-                    // Show error if both methods fail
-                    alertMessage = "Unable to join the session. It may be full or no longer available."
-                    showAlert = true
                 }
             }
         }

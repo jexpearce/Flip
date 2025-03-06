@@ -22,7 +22,7 @@ struct SetupView: View {
     // Pause durations in minutes
     private let pauseDurations = [3, 5, 10, 15, 20]
     private let pauseDurationLabels = ["3m", "5m", "10m", "15m", "20m"]
-
+    
     var body: some View {
         ZStack {
             // Main View Content
@@ -60,7 +60,7 @@ struct SetupView: View {
                             }
                         }
                         .padding(.top, 5)
-
+                        
                         Spacer()
                         
                         // Add Rules Button here
@@ -71,8 +71,8 @@ struct SetupView: View {
                     .padding(.top, 2)
                     // FLIP Logo adjusted slightly higher
                     FlipLogo()
-                    .padding(.horizontal)
-                    .padding(.top, -40) // Negative padding to move up slightly
+                        .padding(.horizontal)
+                        .padding(.top, -40) // Negative padding to move up slightly
                     
                     // Location Popup
                     if showLocationSelector {
@@ -114,14 +114,14 @@ struct SetupView: View {
                         }
                     }
                     .padding(.top, -5)
-
+                    
                     // Circular Time Picker
                     CircularTime(selectedMinutes: $appManager.selectedMinutes)
                         .padding(.top, -15) // Increase negative padding from -15 to -20
                         .disabled(joinLiveSessionMode)
                         .opacity(joinLiveSessionMode ? 0.7 : 1)
                         .frame(height: 280) // Reduce from 290 to 280
-
+                    
                     // Controls Section - Redesigned with horizontal layout
                     VStack(spacing: 12) { // Reduced spacing
                         // Row 1: Allow Pause and # of Pauses in horizontal layout
@@ -182,7 +182,7 @@ struct SetupView: View {
                     }
                     .padding(.horizontal, 20)
                     .padding(.top, 0)  // Reduced padding
-
+                    
                     // Begin Button
                     BeginButton {
                         // Only start a regular session here, joining is handled in onAppear
@@ -344,31 +344,31 @@ struct SetupView: View {
                             }
                             .padding(.bottom, 30)
                         }
-                        .frame(width: 320)
-                        .background(
-                            ZStack {
-                                RoundedRectangle(cornerRadius: 20)
-                                    .fill(Theme.darkGray)
-                                
-                                RoundedRectangle(cornerRadius: 20)
-                                    .fill(Color.black.opacity(0.3))
-                                
-                                RoundedRectangle(cornerRadius: 20)
-                                    .stroke(
-                                        LinearGradient(
-                                            colors: [
-                                                Color.white.opacity(0.5),
-                                                Color.white.opacity(0.1)
-                                            ],
-                                            startPoint: .topLeading,
-                                            endPoint: .bottomTrailing
-                                        ),
-                                        lineWidth: 1
-                                    )
-                            }
-                        )
-                        .shadow(color: Color.black.opacity(0.5), radius: 20)
-                        .transition(.scale(scale: 0.85).combined(with: .opacity))
+                            .frame(width: 320)
+                            .background(
+                                ZStack {
+                                    RoundedRectangle(cornerRadius: 20)
+                                        .fill(Theme.darkGray)
+                                    
+                                    RoundedRectangle(cornerRadius: 20)
+                                        .fill(Color.black.opacity(0.3))
+                                    
+                                    RoundedRectangle(cornerRadius: 20)
+                                        .stroke(
+                                            LinearGradient(
+                                                colors: [
+                                                    Color.white.opacity(0.5),
+                                                    Color.white.opacity(0.1)
+                                                ],
+                                                startPoint: .topLeading,
+                                                endPoint: .bottomTrailing
+                                            ),
+                                            lineWidth: 1
+                                        )
+                                }
+                            )
+                            .shadow(color: Color.black.opacity(0.5), radius: 20)
+                            .transition(.scale(scale: 0.85).combined(with: .opacity))
                     )
                     .transition(.opacity)
             }
@@ -377,7 +377,7 @@ struct SetupView: View {
             if permissionManager.showPermissionRequiredAlert {
                 PermissionRequiredAlert(isPresented: $permissionManager.showPermissionRequiredAlert)
             }
- 
+            
             // Location Permission Alert
             if permissionManager.showLocationAlert {
                 LocationPermissionAlert(
@@ -432,46 +432,51 @@ struct SetupView: View {
                 withAnimation {
                     showJoiningIndicator = true
                 }
-                
-                // Get session details and AUTO-JOIN after verification
                 LiveSessionManager.shared.getSessionDetails(sessionId: sessionData.id) { session in
-                    if let session = session {
+                    guard let session = session else {
+                        // Session doesn't exist, reset join mode and clear coordinator
                         DispatchQueue.main.async {
-                            // Set timer and values first
-                            appManager.selectedMinutes = session.targetDuration
-                            
-                            // Then auto-join the session
-                            LiveSessionManager.shared.joinSession(sessionId: sessionData.id) { success, remainingSeconds, totalDuration in
-                                if success {
-                                    appManager.joinLiveSession(
-                                        sessionId: sessionData.id,
-                                        remainingSeconds: remainingSeconds,
-                                        totalDuration: totalDuration
-                                    )
-                                    SessionJoinCoordinator.shared.clearPendingSession()
-                                    
-                                    // Hide join indicator after short delay
-                                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-                                        withAnimation {
-                                            showJoiningIndicator = false
-                                        }
-                                    }
-                                } else {
-                                    // Handle failure
-                                    print("Failed to join session")
-                                    withAnimation {
-                                        showJoiningIndicator = false
-                                        joinLiveSessionMode = false
-                                    }
-                                }
-                            }
-                        }
-                    } else {
-                        // Session doesn't exist, reset join mode
-                        DispatchQueue.main.async {
+                            SessionJoinCoordinator.shared.clearPendingSession()
                             withAnimation {
                                 showJoiningIndicator = false
                                 joinLiveSessionMode = false
+                            }
+                        }
+                        return
+                    }
+                    DispatchQueue.main.async {
+                        // Pre-set values first
+                        appManager.selectedMinutes = session.targetDuration
+                        
+                        // Now try to join
+                        LiveSessionManager.shared.joinSession(sessionId: sessionData.id) { success, remainingSeconds, totalDuration in
+                            if success {
+                                // Join succeeded
+                                appManager.joinLiveSession(
+                                    sessionId: sessionData.id,
+                                    remainingSeconds: remainingSeconds,
+                                    totalDuration: totalDuration
+                                )
+                                
+                                // Clear coordinator state
+                                SessionJoinCoordinator.shared.clearPendingSession()
+                                
+                                // Hide join indicator after short delay
+                                DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                                    withAnimation {
+                                        showJoiningIndicator = false
+                                    }
+                                }
+                                
+                                
+                            } else {
+                                // Handle failure
+                                print("Failed to join session")
+                                SessionJoinCoordinator.shared.clearPendingSession()
+                                withAnimation {
+                                    showJoiningIndicator = false
+                                    joinLiveSessionMode = false
+                                }
                             }
                         }
                     }
@@ -481,6 +486,7 @@ struct SetupView: View {
         .environmentObject(viewRouter)
     }
 }
+        
 // Full LocationSelectorPopup implementation
 
 struct LocationSelectorPopup: View {

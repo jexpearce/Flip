@@ -1056,13 +1056,7 @@ class AppManager: NSObject, ObservableObject {
             guard let self = self,
                   let document = document,
                   document.exists,
-                  let data = document.data(),
-                  let participants = data["participants"] as? [String],
-                  let joinTimesData = data["joinTimes"] as? [String: Timestamp],
-                  let participantStatusData = data["participantStatus"] as? [String: String],
-                  let starterId = data["starterId"] as? String,
-                  let starterUsername = data["starterUsername"] as? String,
-                  let targetDuration = data["targetDuration"] as? Int else {
+                  let data = document.data() else {
                 
                 // Fallback to regular session recording if data is incomplete
                 self?.sessionManager.addSession(
@@ -1072,6 +1066,14 @@ class AppManager: NSObject, ObservableObject {
                 )
                 return
             }
+            
+            // Get participant data with safe fallbacks for older sessions
+            let participants = data["participants"] as? [String] ?? []
+            let joinTimesData = data["joinTimes"] as? [String: Timestamp] ?? [:]
+            let participantStatusData = data["participantStatus"] as? [String: String] ?? [:]
+            let starterId = data["starterId"] as? String ?? userId
+            let starterUsername = data["starterUsername"] as? String ?? username
+            let targetDuration = data["targetDuration"] as? Int ?? self.selectedMinutes
             
             // Create participant records
             var sessionParticipants: [Session.Participant] = []
@@ -1096,26 +1098,28 @@ class AppManager: NSObject, ObservableObject {
             group.notify(queue: .main) {
                 // Now create all participant records
                 for participantId in participants {
-                    if let joinTime = joinTimesData[participantId]?.dateValue() {
-                        let wasParticipantSuccessful = participantStatusData[participantId] == LiveSessionManager.ParticipantStatus.completed.rawValue
-                        
-                        // Calculate participant's actual duration based on join time
-                        let elapsedSecondsAtJoin = self.selectedMinutes * 60 - (targetDuration * 60)
-                        let participantTimeInSession = wasParticipantSuccessful ? (targetDuration * 60 - elapsedSecondsAtJoin) / 60 : actualDuration
-                        
-                        let participant = Session.Participant(
-                            id: participantId,
-                            username: usernames[participantId] ?? "User",
-                            joinTime: joinTime,
-                            wasSuccessful: wasParticipantSuccessful,
-                            actualDuration: participantTimeInSession
-                        )
-                        
-                        sessionParticipants.append(participant)
-                    }
+                    // Default join time to session start if not available
+                    let startTime = (data["startTime"] as? Timestamp)?.dateValue() ?? Date()
+                    let joinTime = joinTimesData[participantId]?.dateValue() ?? startTime
+                    
+                    let wasParticipantSuccessful = participantStatusData[participantId] == LiveSessionManager.ParticipantStatus.completed.rawValue
+                    
+                    // Calculate participant's actual duration based on join time
+                    let elapsedSecondsAtJoin = self.selectedMinutes * 60 - (targetDuration * 60)
+                    let participantTimeInSession = wasParticipantSuccessful ? (targetDuration * 60 - elapsedSecondsAtJoin) / 60 : actualDuration
+                    
+                    let participant = Session.Participant(
+                        id: participantId,
+                        username: usernames[participantId] ?? "User",
+                        joinTime: joinTime,
+                        wasSuccessful: wasParticipantSuccessful,
+                        actualDuration: participantTimeInSession
+                    )
+                    
+                    sessionParticipants.append(participant)
                 }
                 
-                // Add the session to history
+                // Add the session to history with explicit session ID for linking
                 self.sessionManager.addSession(
                     duration: self.selectedMinutes,
                     wasSuccessful: wasSuccessful,
@@ -1124,7 +1128,8 @@ class AppManager: NSObject, ObservableObject {
                     sessionNotes: nil,
                     participants: sessionParticipants,
                     originalStarterId: starterId,
-                    wasJoinedSession: self.isJoinedSession
+                    wasJoinedSession: self.isJoinedSession,
+                    liveSessionId: sessionId  // Add this parameter to your Session struct
                 )
                 
                 // End the live session in Firestore if this is the original starter

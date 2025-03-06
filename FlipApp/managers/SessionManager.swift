@@ -37,7 +37,8 @@ class SessionManager: ObservableObject {
                 comment: nil,
                 commentorId: nil,
                 commentorName: nil,
-                commentTime: nil
+                commentTime: nil,
+                liveSessionId: nil
             )
 
         sessions.insert(newSession, at: 0)  // Add to beginning of array
@@ -70,7 +71,8 @@ class SessionManager: ObservableObject {
         sessionNotes: String? = nil,
         participants: [Session.Participant]? = nil,
         originalStarterId: String? = nil,
-        wasJoinedSession: Bool? = nil
+        wasJoinedSession: Bool? = nil,
+        liveSessionId: String? = nil  // Add this parameter
     ) {
         guard let userId = Auth.auth().currentUser?.uid else { return }
 
@@ -90,7 +92,8 @@ class SessionManager: ObservableObject {
             comment: nil,
             commentorId: nil,
             commentorName: nil,
-            commentTime: nil
+            commentTime: nil,
+            liveSessionId: liveSessionId
         )
 
         sessions.insert(newSession, at: 0)  // Add to beginning of array
@@ -131,7 +134,8 @@ class SessionManager: ObservableObject {
             sessionNotes: sessionNotes,
             participants: nil,  // Add these missing parameters
             originalStarterId: nil,
-            wasJoinedSession: nil
+            wasJoinedSession: nil,
+            liveSessionId: nil  // Add this with a default value
         )
     }
 

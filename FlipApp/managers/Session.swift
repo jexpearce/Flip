@@ -13,6 +13,7 @@ struct Session: Codable, Identifiable {
     // New fields for custom session notes
     let sessionTitle: String?  // Optional to handle older sessions
     let sessionNotes: String?  // Optional to handle older sessions
+
     
     // New fields for multi-user sessions
     let participants: [Participant]?  // List of session participants
@@ -24,6 +25,7 @@ struct Session: Codable, Identifiable {
     let commentorId: String?          // Who made the comment
     let commentorName: String?        // Username of the commentor
     let commentTime: Date?            // When the comment was made
+    let liveSessionId: String?  // Add this property for linking sessions
     
     var formattedStartTime: String {
         let formatter = DateFormatter()
@@ -58,7 +60,8 @@ struct Session: Codable, Identifiable {
         comment: String? = nil,
         commentorId: String? = nil,
         commentorName: String? = nil,
-        commentTime: Date? = nil
+        commentTime: Date? = nil,
+        liveSessionId: String? = nil  // Add this parameter
     ) -> Session {
         return Session(
             id: id,
@@ -76,7 +79,8 @@ struct Session: Codable, Identifiable {
             comment: comment,
             commentorId: commentorId,
             commentorName: commentorName,
-            commentTime: commentTime
+            commentTime: commentTime,
+            liveSessionId: liveSessionId
         )
     }
     
@@ -98,7 +102,8 @@ struct Session: Codable, Identifiable {
             comment: newComment,
             commentorId: commentorId,
             commentorName: commentorName,
-            commentTime: Date()
+            commentTime: Date(),
+            liveSessionId: liveSessionId
         )
     }
     
@@ -120,7 +125,8 @@ struct Session: Codable, Identifiable {
             comment: newComment,
             commentorId: nil,
             commentorName: nil,
-            commentTime: nil
+            commentTime: nil,
+            liveSessionId: liveSessionId
         )
     }
 }

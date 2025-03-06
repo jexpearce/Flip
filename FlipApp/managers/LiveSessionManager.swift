@@ -241,7 +241,6 @@ class LiveSessionManager: ObservableObject {
                     }
             }
     }
-    
     private func parseLiveSessionDocument(_ document: DocumentSnapshot) -> LiveSessionData? {
         guard document.exists else { return nil }
         
@@ -251,16 +250,21 @@ class LiveSessionManager: ObservableObject {
               let starterUsername = data["starterUsername"] as? String,
               let participants = data["participants"] as? [String],
               let startTimestamp = data["startTime"] as? Timestamp,
-              let targetDuration = data["targetDuration"] as? Int,
-              let remainingSeconds = data["remainingSeconds"] as? Int,
-              let isPaused = data["isPaused"] as? Bool,
-              let allowPauses = data["allowPauses"] as? Bool,
-              let maxPauses = data["maxPauses"] as? Int,
-              let joinTimesData = data["joinTimes"] as? [String: Timestamp],
-              let participantStatusData = data["participantStatus"] as? [String: String],
-              let lastUpdateTimestamp = data["lastUpdateTime"] as? Timestamp else {
+              let targetDuration = data["targetDuration"] as? Int else {
+            print("Missing required fields in session document")
             return nil
         }
+        
+        // For older accounts, use default values with nil coalescing
+        let remainingSeconds = (data["remainingSeconds"] as? Int) ?? (targetDuration * 60)
+        let isPaused = (data["isPaused"] as? Bool) ?? false
+        let allowPauses = (data["allowPauses"] as? Bool) ?? false
+        let maxPauses = (data["maxPauses"] as? Int) ?? 0
+        
+        // Safely handle join times with defaults
+        let joinTimesData = (data["joinTimes"] as? [String: Timestamp]) ?? [starterId: startTimestamp]
+        let participantStatusData = (data["participantStatus"] as? [String: String]) ?? [starterId: ParticipantStatus.active.rawValue]
+        let lastUpdateTimestamp = (data["lastUpdateTime"] as? Timestamp) ?? startTimestamp
         
         // Convert join times
         var joinTimes: [String: Date] = [:]
@@ -273,6 +277,9 @@ class LiveSessionManager: ObservableObject {
         for (userId, status) in participantStatusData {
             if let statusEnum = ParticipantStatus(rawValue: status) {
                 participantStatus[userId] = statusEnum
+            } else {
+                // Default to active if invalid status
+                participantStatus[userId] = .active
             }
         }
         
