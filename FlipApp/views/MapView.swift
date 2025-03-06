@@ -150,7 +150,7 @@ struct MapView: View {
                                     endPoint: .bottom
                                 )
                             )
-                            .frame(height: 120)
+                            .frame(height: 140)
                             .edgesIgnoringSafeArea(.top)
                     )
                 
@@ -690,15 +690,15 @@ struct MapPrivacySettingsView: View {
                         
                         // Radio buttons for privacy settings
                         VStack(spacing: 10) {
-                            privacyOption(title: "Everyone", description: "All users can see your location", isSelected: viewModel.visibilityLevel == .everyone) {
+                            privacyOption(title: "Everyone", description: "All users can see where your past flips were", isSelected: viewModel.visibilityLevel == .everyone) {
                                 viewModel.updateVisibilityLevel(.everyone)
                             }
                             
-                            privacyOption(title: "Friends Only", description: "Only friends can see your location", isSelected: viewModel.visibilityLevel == .friendsOnly) {
+                            privacyOption(title: "Friends Only", description: "Only friends can see your past & live flips", isSelected: viewModel.visibilityLevel == .friendsOnly) {
                                 viewModel.updateVisibilityLevel(.friendsOnly)
                             }
                             
-                            privacyOption(title: "Nobody", description: "Your location is hidden from everyone", isSelected: viewModel.visibilityLevel == .nobody) {
+                            privacyOption(title: "Nobody", description: "Your flips are hidden from everyone", isSelected: viewModel.visibilityLevel == .nobody) {
                                 viewModel.updateVisibilityLevel(.nobody)
                             }
                         }

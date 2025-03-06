@@ -14,6 +14,7 @@ struct ProfileView: View {
     @State private var showSettings = false
     @State private var username = FirebaseManager.shared.currentUser?.username ?? "User"
     @State private var showUploadProgress = false
+    @State private var showSettingsSheet = false
     
     // Cyan-midnight theme colors
     private let cyanBluePurpleGradient = LinearGradient(
@@ -140,7 +141,7 @@ struct ProfileView: View {
                         // Enhanced Settings Button
                         Button(action: {
                             withAnimation(.spring()) {
-                                showSettings = true
+                                showSettingsSheet = true
                             }
                         }) {
                             ZStack {
@@ -548,99 +549,6 @@ struct ProfileView: View {
                 }
                 .padding(.bottom, 30)
             }
-            
-            // Settings popup when activated
-            if showSettings {
-                Color.black.opacity(0.6)
-                    .edgesIgnoringSafeArea(.all)
-                    .onTapGesture {
-                        withAnimation(.spring()) {
-                            showSettings = false
-                        }
-                    }
-                
-                VStack(spacing: 0) {
-                    // Settings header
-                    Text("SETTINGS")
-                        .font(.system(size: 20, weight: .black))
-                        .tracking(4)
-                        .foregroundColor(.white)
-                        .padding(.vertical, 20)
-                        .frame(maxWidth: .infinity)
-                        .background(
-                            LinearGradient(
-                                colors: [
-                                    cyanBlueAccent.opacity(0.6),
-                                    cyanBlueAccent.opacity(0.3)
-                                ],
-                                startPoint: .topLeading,
-                                endPoint: .bottomTrailing
-                            )
-                        )
-                    
-                    // Settings options
-                    ScrollView {
-                        VStack(spacing: 0) {
-                            SettingsRowButton(
-                                icon: "person.fill",
-                                text: "Edit Profile",
-                                action: {
-                                    // Handle edit profile action
-                                    showSettings = false
-                                }
-                            )
-                            
-                            SettingsRowButton(
-                                icon: "bell.fill",
-                                text: "Notifications",
-                                action: {
-                                    // Handle notifications action
-                                    showSettings = false
-                                }
-                            )
-                            
-                            SettingsRowButton(
-                                icon: "lock.fill",
-                                text: "Privacy",
-                                action: {
-                                    // Handle privacy action
-                                    showSettings = false
-                                }
-                            )
-                            
-                            SettingsRowButton(
-                                icon: "questionmark.circle.fill",
-                                text: "Help & Support",
-                                action: {
-                                    // Handle help action
-                                    showSettings = false
-                                }
-                            )
-                            
-                            SettingsRowButton(
-                                icon: "arrow.right.square.fill",
-                                text: "Sign Out",
-                                destructive: true,
-                                action: {
-                                    withAnimation(.spring()) {
-                                        showSettings = false
-                                        isSigningOut = true
-                                    }
-                                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-                                        authManager.signOut()
-                                    }
-                                }
-                            )
-                        }
-                        .padding(.bottom, 20)
-                    }
-                }
-                .frame(width: UIScreen.main.bounds.width * 0.85)
-                .background(Color(red: 30/255, green: 30/255, blue: 46/255))
-                .cornerRadius(16)
-                .shadow(color: Color.black.opacity(0.5), radius: 20)
-                .transition(.scale(scale: 0.85).combined(with: .opacity))
-            }
         }
         .sheet(isPresented: $profileImageManager.isImagePickerPresented) {
             PHPickerRepresentable(
@@ -649,6 +557,9 @@ struct ProfileView: View {
             ) {
                 profileImageManager.isCropperPresented = true
             }
+        }
+        .sheet(isPresented: $showSettingsSheet) {
+            SettingsView()
         }
         .sheet(isPresented: $profileImageManager.isCropperPresented) {
             MovableCircleCropperView(
@@ -669,56 +580,3 @@ struct ProfileView: View {
     }
 }
 
-
-// Settings row button component
-struct SettingsRowButton: View {
-    let icon: String
-    let text: String
-    var destructive: Bool = false
-    let action: () -> Void
-    
-    @State private var pressed = false
-    
-    var body: some View {
-        Button(action: {
-            pressed = true
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-                pressed = false
-                action()
-            }
-        }) {
-            HStack(spacing: 16) {
-                Image(systemName: icon)
-                    .font(.system(size: 20))
-                    .foregroundColor(destructive ? Color.red : Color.white.opacity(0.9))
-                    .frame(width: 26, height: 26)
-                
-                Text(text)
-                    .font(.system(size: 17, weight: .medium))
-                    .foregroundColor(destructive ? Color.red : Color.white.opacity(0.9))
-                
-                Spacer()
-                
-                if !destructive {
-                    Image(systemName: "chevron.right")
-                        .font(.system(size: 14))
-                        .foregroundColor(Color.white.opacity(0.5))
-                }
-            }
-            .padding(.horizontal, 20)
-            .padding(.vertical, 16)
-            .background(
-                Rectangle()
-                    .fill(Color.white.opacity(pressed ? 0.08 : 0.01))
-            )
-        }
-        .buttonStyle(PlainButtonStyle())
-        .overlay(
-            Rectangle()
-                .frame(height: 0.5)
-                .foregroundColor(Color.white.opacity(0.1))
-                .offset(y: 25),
-            alignment: .bottom
-        )
-    }
-}

@@ -1,5 +1,5 @@
-import FirebaseAuth
 import SwiftUI
+import FirebaseAuth
 
 struct AuthView: View {
     @StateObject private var authManager = AuthManager.shared
@@ -15,9 +15,28 @@ struct AuthView: View {
     @State private var showPassword = false
     @State private var showSuccessOverlay = false
     
+    // Animation states
+    @State private var isFlipAnimating = false
+    @State private var logoScale: CGFloat = 1.0
+    
     private enum Field: Hashable {
         case email, password, username
     }
+    
+    // Indigo-purple theme colors to match app style
+    private let indigoPurpleGradient = LinearGradient(
+        colors: [
+            Color(red: 20/255, green: 10/255, blue: 40/255), // Deep midnight purple
+            Color(red: 30/255, green: 18/255, blue: 60/255), // Medium midnight purple
+            Color(red: 79/255, green: 70/255, blue: 229/255).opacity(0.4), // Indigo
+            Color(red: 67/255, green: 56/255, blue: 202/255).opacity(0.3)  // Deeper indigo
+        ],
+        startPoint: .top,
+        endPoint: .bottom
+    )
+    
+    private let indigoAccent = Color(red: 79/255, green: 70/255, blue: 229/255)
+    private let indigoGlow = Color(red: 79/255, green: 70/255, blue: 229/255).opacity(0.5)
 
     var body: some View {
         ZStack {
@@ -25,64 +44,87 @@ struct AuthView: View {
             GeometryReader { geometry in
                 ScrollView {
                     VStack(spacing: 35) {
-                        // Logo Section
-                        VStack(spacing: 4) {
-                            HStack(spacing: 15) {
-                                Text("FLIP")
+                        // Logo section with FL!P logo
+                        VStack(spacing: 0) {
+                            // Stylized FLIP logo with flipped "i"
+                            HStack(spacing: 2) {
+                                Text("F")
                                     .font(.system(size: 80, weight: .black))
-                                    .tracking(8)
+                                    .tracking(2)
                                     .foregroundColor(.white)
-                                    .shadow(
-                                        color: Color(
-                                            red: 56 / 255, green: 189 / 255,
-                                            blue: 248 / 255
-                                        ).opacity(0.6), radius: 10)
-
-                                Image(systemName: "arrow.2.squarepath")
-                                    .font(.system(size: 50))
+                                
+                                Text("L")
+                                    .font(.system(size: 80, weight: .black))
+                                    .tracking(2)
                                     .foregroundColor(.white)
-                                    .shadow(
-                                        color: Color(
-                                            red: 56 / 255, green: 189 / 255,
-                                            blue: 248 / 255
-                                        ).opacity(0.6), radius: 10
-                                    )
-                                    .rotationEffect(.degrees(isSignUp ? 180 : 0))
+                                
+                                // Upside-down "i"
+                                Text("i")
+                                    .font(.system(size: 80, weight: .black))
+                                    .tracking(2)
+                                    .foregroundColor(.white)
+                                    .rotationEffect(.degrees(180))
+                                
+                                Text("P")
+                                    .font(.system(size: 80, weight: .black))
+                                    .tracking(2)
+                                    .foregroundColor(.white)
                             }
-
-                            Text(isSignUp ? "アカウントを作成" : "おかえりなさい")
-                                .font(.system(size: 14))
-                                .tracking(4)
-                                .foregroundColor(.white.opacity(0.7))
-
-                            Text(isSignUp ? "Create Account" : "Welcome Back")
-                                .font(.system(size: 24, weight: .bold))
-                                .foregroundColor(.white.opacity(0.9))
-                                .transition(.opacity)
+                            .shadow(color: indigoGlow, radius: 10)
+                            .scaleEffect(logoScale)
+                            .animation(.spring(response: 0.5, dampingFraction: 0.6), value: logoScale)
+                            
+                            // Animated arrow icon
+                            Image(systemName: "arrow.2.squarepath")
+                                .font(.system(size: 50, weight: .bold))
+                                .foregroundColor(.white)
+                                .shadow(color: indigoGlow, radius: 6)
+                                .rotationEffect(.degrees(isFlipAnimating ? 360 : 0))
+                                .animation(
+                                    .spring(response: 2.0, dampingFraction: 0.6)
+                                        .repeatForever(autoreverses: false),
+                                    value: isFlipAnimating
+                                )
+                            
+                            // Japanese/English subtitle
+                            VStack(spacing: 4) {
+                                Text(isSignUp ? "アカウントを作成" : "おかえりなさい")
+                                    .font(.system(size: 14))
+                                    .tracking(4)
+                                    .foregroundColor(.white.opacity(0.7))
+                                
+                                Text(isSignUp ? "Create Account" : "Welcome Back")
+                                    .font(.system(size: 24, weight: .bold))
+                                    .foregroundColor(.white)
+                                    .shadow(color: indigoGlow, radius: 6)
+                            }
+                            .padding(.top, 8)
+                            .scaleEffect(isKeyboardVisible ? 0.9 : 1.0)
                         }
                         .scaleEffect(isKeyboardVisible ? 0.8 : 1.0)
                         .padding(.top, isKeyboardVisible ? 20 : 60)
 
-                        // Auth Fields
+                        // Auth fields with enhanced styling
                         VStack(spacing: 20) {
                             if isSignUp {
-                                ImprovedAuthField(
+                                EnhancedAuthField(
                                     text: $username,
                                     icon: "person.fill",
                                     placeholder: "Username",
                                     isSelected: selectedField == .username,
+                                    accentColor: indigoAccent,
                                     onTap: { selectedField = .username }
                                 )
-                                .transition(
-                                    .move(edge: .trailing).combined(with: .opacity))
+                                .transition(.move(edge: .trailing).combined(with: .opacity))
                             }
 
-                            ImprovedAuthField(
+                            EnhancedAuthField(
                                 text: $email,
                                 icon: "envelope.fill",
                                 placeholder: "Email",
                                 keyboardType: .emailAddress,
                                 isSelected: selectedField == .email,
+                                accentColor: indigoAccent,
                                 onTap: { selectedField = .email }
                             )
 
@@ -92,10 +134,7 @@ struct AuthView: View {
                                     .foregroundColor(selectedField == .password ? .white : .white.opacity(0.7))
                                     .frame(width: 20)
                                     .scaleEffect(selectedField == .password ? 1.1 : 1.0)
-                                    .shadow(
-                                        color: Color(
-                                            red: 56 / 255, green: 189 / 255, blue: 248 / 255
-                                        ).opacity(0.5), radius: 4)
+                                    .shadow(color: indigoGlow, radius: 4)
                                 
                                 Group {
                                     if showPassword {
@@ -145,9 +184,8 @@ struct AuthView: View {
                                 }
                             )
                             .shadow(
-                                color: selectedField == .password
-                                    ? Color(red: 56 / 255, green: 189 / 255, blue: 248 / 255)
-                                        .opacity(0.2) : .clear, radius: 4
+                                color: selectedField == .password ? indigoGlow : .clear,
+                                radius: 4
                             )
                             .onTapGesture {
                                 selectedField = .password
@@ -156,14 +194,16 @@ struct AuthView: View {
                         }
                         .padding(.horizontal, 30)
 
-                        // Sign In/Up Button
+                        // Enhanced Sign In/Up Button with animations
                         Button(action: {
                             withAnimation(.spring()) {
                                 isButtonPressed = true
+                                logoScale = 1.1
                                 handleAuth()
                             }
                             DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
                                 isButtonPressed = false
+                                logoScale = 1.0
                             }
                         }) {
                             ZStack {
@@ -177,6 +217,7 @@ struct AuthView: View {
                                     ProgressView()
                                         .progressViewStyle(
                                             CircularProgressViewStyle(tint: .white))
+                                        .scaleEffect(1.2)
                                 }
                             }
                             .frame(maxWidth: .infinity)
@@ -184,7 +225,16 @@ struct AuthView: View {
                             .background(
                                 ZStack {
                                     RoundedRectangle(cornerRadius: 30)
-                                        .fill(Theme.buttonGradient)
+                                        .fill(
+                                            LinearGradient(
+                                                colors: [
+                                                    indigoAccent.opacity(0.8),
+                                                    indigoAccent.opacity(0.5)
+                                                ],
+                                                startPoint: .topLeading,
+                                                endPoint: .bottomTrailing
+                                            )
+                                        )
 
                                     RoundedRectangle(cornerRadius: 30)
                                         .fill(Color.white.opacity(0.1))
@@ -193,7 +243,7 @@ struct AuthView: View {
                                         .stroke(
                                             LinearGradient(
                                                 colors: [
-                                                    Color.white.opacity(0.5),
+                                                    Color.white.opacity(0.6),
                                                     Color.white.opacity(0.2),
                                                 ],
                                                 startPoint: .topLeading,
@@ -203,18 +253,13 @@ struct AuthView: View {
                                         )
                                 }
                             )
-                            .shadow(
-                                color: Color(
-                                    red: 56 / 255, green: 189 / 255, blue: 248 / 255
-                                ).opacity(0.3),
-                                radius: isButtonPressed ? 15 : 8
-                            )
+                            .shadow(color: indigoGlow, radius: isButtonPressed ? 15 : 8)
                             .scaleEffect(isButtonPressed || isLoading ? 0.95 : 1.0)
                         }
                         .disabled(isLoading)
                         .padding(.horizontal, 30)
 
-                        // Toggle Sign In/Up
+                        // Toggle Sign In/Up with indigo glow effect
                         Button(action: {
                             withAnimation(.spring()) {
                                 isSignUp.toggle()
@@ -228,11 +273,9 @@ struct AuthView: View {
                             )
                             .font(.system(size: 16, weight: .medium))
                             .foregroundColor(.white.opacity(0.8))
-                            .shadow(
-                                color: Color(
-                                    red: 56 / 255, green: 189 / 255, blue: 248 / 255
-                                ).opacity(0.3), radius: 4)
+                            .shadow(color: indigoGlow, radius: 4)
                         }
+                        .padding(.bottom, 30)
                     }
                     .padding(.horizontal)
                     .frame(minHeight: geometry.size.height)
@@ -270,7 +313,7 @@ struct AuthView: View {
                 )
             }
             
-            // Success Overlay
+            // Enhanced Success Overlay with animations
             if showSuccessOverlay {
                 Color.black.opacity(0.7)
                     .edgesIgnoringSafeArea(.all)
@@ -319,10 +362,10 @@ struct AuthView: View {
                                 withAnimation(.spring()) {
                                     showSuccessOverlay = false
                                     authManager.signUpSuccess = false
-                                    // Show location permission alert after success
-                                    PermissionManager.shared.requestAllPermissions()
-                                    // Auto-switch to sign in
-                                    isSignUp = false
+                                    // Now proceed to sign in automatically instead of requiring manual sign in
+                                    authManager.signIn(email: email, password: password) { _ in
+                                        // This will auto-route to MainView when successful
+                                    }
                                 }
                             }) {
                                 Text("CONTINUE")
@@ -333,7 +376,16 @@ struct AuthView: View {
                                     .background(
                                         ZStack {
                                             RoundedRectangle(cornerRadius: 25)
-                                                .fill(Theme.buttonGradient)
+                                                .fill(
+                                                    LinearGradient(
+                                                        colors: [
+                                                            indigoAccent.opacity(0.8),
+                                                            indigoAccent.opacity(0.5)
+                                                        ],
+                                                        startPoint: .topLeading,
+                                                        endPoint: .bottomTrailing
+                                                    )
+                                                )
                                             
                                             RoundedRectangle(cornerRadius: 25)
                                                 .fill(Color.white.opacity(0.1))
@@ -352,7 +404,7 @@ struct AuthView: View {
                                                 )
                                         }
                                     )
-                                    .shadow(color: Color(red: 56/255, green: 189/255, blue: 248/255).opacity(0.5), radius: 8)
+                                    .shadow(color: indigoGlow, radius: 8)
                             }
                             .padding(.bottom, 30)
                         }
@@ -395,6 +447,51 @@ struct AuthView: View {
                     }
                 )
             }
+            
+            // Background gradient
+            indigoPurpleGradient
+                .edgesIgnoringSafeArea(.all)
+                .zIndex(-1)
+                
+            // Decorative elements - top glow
+            Circle()
+                .fill(
+                    RadialGradient(
+                        gradient: Gradient(colors: [
+                            indigoAccent.opacity(0.2),
+                            indigoAccent.opacity(0.05)
+                        ]),
+                        center: .center,
+                        startRadius: 10,
+                        endRadius: 300
+                    )
+                )
+                .frame(width: 300, height: 300)
+                .offset(x: 150, y: -150)
+                .blur(radius: 50)
+                .zIndex(-1)
+            
+            // Bottom decorative glow
+            Circle()
+                .fill(
+                    RadialGradient(
+                        gradient: Gradient(colors: [
+                            indigoAccent.opacity(0.15),
+                            indigoAccent.opacity(0.03)
+                        ]),
+                        center: .center,
+                        startRadius: 5,
+                        endRadius: 200
+                    )
+                )
+                .frame(width: 250, height: 250)
+                .offset(x: -120, y: 350)
+                .blur(radius: 40)
+                .zIndex(-1)
+        }
+        .onAppear {
+            // Start animation for the flip icon
+            isFlipAnimating = true
         }
         .onReceive(authManager.$signUpSuccess) { success in
             if success {
@@ -431,13 +528,15 @@ struct AuthView: View {
     }
 }
 
-struct ImprovedAuthField: View {
+// Enhanced Auth Field with glow effects and animations
+struct EnhancedAuthField: View {
     @Binding var text: String
     let icon: String
     let placeholder: String
     var isSecure: Bool = false
     var keyboardType: UIKeyboardType = .default
     let isSelected: Bool
+    var accentColor: Color
     let onTap: () -> Void
 
     var body: some View {
@@ -446,10 +545,7 @@ struct ImprovedAuthField: View {
                 .foregroundColor(isSelected ? .white : .white.opacity(0.7))
                 .frame(width: 20)
                 .scaleEffect(isSelected ? 1.1 : 1.0)
-                .shadow(
-                    color: Color(
-                        red: 56 / 255, green: 189 / 255, blue: 248 / 255
-                    ).opacity(0.5), radius: 4)
+                .shadow(color: accentColor.opacity(0.5), radius: isSelected ? 4 : 0)
 
             Group {
                 if isSecure {
@@ -490,9 +586,8 @@ struct ImprovedAuthField: View {
             }
         )
         .shadow(
-            color: isSelected
-                ? Color(red: 56 / 255, green: 189 / 255, blue: 248 / 255)
-                    .opacity(0.2) : .clear, radius: 4
+            color: isSelected ? accentColor.opacity(0.2) : .clear,
+            radius: 4
         )
         .onTapGesture {
             onTap()

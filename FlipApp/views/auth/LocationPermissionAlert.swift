@@ -9,6 +9,47 @@ import Foundation
 import SwiftUI
 import CoreLocation
 
+
+class LocationPermissionManager: NSObject, ObservableObject, CLLocationManagerDelegate {
+    static let shared = LocationPermissionManager()
+    
+    private let locationManager = CLLocationManager()
+    @Published var authorizationStatus: CLAuthorizationStatus = .notDetermined
+    @Published var showCustomAlert = false
+    
+    override init() {
+        super.init()
+        locationManager.delegate = self
+        authorizationStatus = locationManager.authorizationStatus
+    }
+    
+    func requestPermissionWithCustomAlert() {
+        // First show our custom alert
+        showCustomAlert = true
+    }
+    
+    func requestSystemPermission() {
+        // Add a delay to ensure the custom alert is fully dismissed
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) { [weak self] in
+            guard let self = self else { return }
+            
+            print("Requesting system location permission after delay")
+            // Then request the system permission
+            self.locationManager.requestWhenInUseAuthorization()
+        }
+    }
+    
+    // CLLocationManagerDelegate methods
+    func locationManagerDidChangeAuthorization(_ manager: CLLocationManager) {
+        DispatchQueue.main.async {
+            self.authorizationStatus = manager.authorizationStatus
+            print("Location permission status updated: \(self.authorizationStatus.rawValue)")
+        }
+    }
+}
+
+
+
 struct LocationPermissionAlert: View {
     @Binding var isPresented: Bool
     let onContinue: () -> Void
@@ -107,9 +148,12 @@ struct LocationPermissionAlert: View {
                     
                     // Add small delay before closing and requesting permission
                     DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
-                        isPresented = false
-                        onContinue()
-                    }
+                                            isPresented = false
+                                            // Add another delay before continuing to ensure the animation has time to complete
+                                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) {
+                                                onContinue()
+                                            }
+                                        }
                 }) {
                     Text("CONTINUE")
                         .font(.system(size: 18, weight: .bold))
@@ -226,34 +270,4 @@ struct LocationPermissionAlert: View {
     }
 }
 
-// Location Manager to handle requesting permissions
-class LocationPermissionManager: NSObject, ObservableObject, CLLocationManagerDelegate {
-    static let shared = LocationPermissionManager()
-    
-    private let locationManager = CLLocationManager()
-    @Published var authorizationStatus: CLAuthorizationStatus = .notDetermined
-    @Published var showCustomAlert = false
-    
-    override init() {
-        super.init()
-        locationManager.delegate = self
-        authorizationStatus = locationManager.authorizationStatus
-    }
-    
-    func requestPermissionWithCustomAlert() {
-        // First show our custom alert
-        showCustomAlert = true
-    }
-    
-    func requestSystemPermission() {
-        // Then request the system permission
-        locationManager.requestWhenInUseAuthorization()
-    }
-    
-    // CLLocationManagerDelegate methods
-    func locationManagerDidChangeAuthorization(_ manager: CLLocationManager) {
-        DispatchQueue.main.async {
-            self.authorizationStatus = manager.authorizationStatus
-        }
-    }
-}
+

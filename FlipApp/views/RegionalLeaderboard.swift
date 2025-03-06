@@ -79,7 +79,7 @@ struct RegionalLeaderboard: View {
                                 Color(red: 239/255, green: 68/255, blue: 68/255).opacity(0.5), radius: 4)
                     
                     Text(viewModel.isBuildingSpecific ? "LONGEST FLIP OF THE WEEK" : "REGIONAL LEADERBOARD")
-                        .font(.system(size: 16, weight: .black))
+                        .font(.system(size: 13, weight: .black))
                         .tracking(2)
                         .foregroundStyle(
                             viewModel.isBuildingSpecific ?

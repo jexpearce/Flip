@@ -1641,56 +1641,102 @@ class AppManager: NSObject, ObservableObject {
             self.currentState = .initial
         }
     }
+
+    private func notifyFriendsOfFailure() {
+        // Check if notifications are enabled in user settings
+        if !UserSettingsManager.shared.areFriendFailureNotificationsEnabled {
+            print("Friend failure notifications disabled in settings")
+            return
+        }
         
-        private func notifyFriendsOfFailure() {
-            // Check rate limiting
-            let now = Date()
-            if let lastTime = lastFriendNotificationTime {
-                if now.timeIntervalSince(lastTime) < friendNotificationCooldown {
-                    // Still in cooldown period
-                    if friendNotificationCount >= maxFriendNotifications {
-                        return  // Skip if exceeded max notifications
-                    }
-                } else {
-                    // Reset counter after cooldown
-                    friendNotificationCount = 0
+        // Check rate limiting
+        let now = Date()
+        if let lastTime = lastFriendNotificationTime {
+            if now.timeIntervalSince(lastTime) < friendNotificationCooldown {
+                // Still in cooldown period
+                if friendNotificationCount >= maxFriendNotifications {
+                    return  // Skip if exceeded max notifications
                 }
+            } else {
+                // Reset counter after cooldown
+                friendNotificationCount = 0
             }
+        }
 
-            guard let userId = Auth.auth().currentUser?.uid else { return }
+        guard let userId = Auth.auth().currentUser?.uid else { return }
 
-            // Get current user's username and friends
-            FirebaseManager.shared.db.collection("users").document(userId)
-                .getDocument { [weak self] document, error in
-                    guard
-                        let userData = try? document?.data(
-                            as: FirebaseManager.FlipUser.self),
-                        !userData.friends.isEmpty
-                    else { return }
-
+        // Get current user's username and friends
+        FirebaseManager.shared.db.collection("users").document(userId)
+            .getDocument { [weak self] document, error in
+                guard
+                    let userData = try? document?.data(
+                        as: FirebaseManager.FlipUser.self),
+                    !userData.friends.isEmpty
+                else { return }
+                
+                // Filter friends who have notifications enabled
+                let batch = FirebaseManager.shared.db.batch()
+                var notifiedFriendsCount = 0
+                
+                // First, query for friends with notifications enabled
+                let group = DispatchGroup()
+                var friendsToNotify: [String] = []
+                
+                for friendId in userData.friends {
+                    group.enter()
+                    
+                    FirebaseManager.shared.db.collection("user_settings").document(friendId)
+                        .getDocument { document, error in
+                            defer { group.leave() }
+                            
+                            if let data = document?.data(),
+                               let notificationsEnabled = data["friendFailureNotifications"] as? Bool,
+                               notificationsEnabled {
+                                friendsToNotify.append(friendId)
+                            }
+                        }
+                }
+                
+                group.notify(queue: .main) {
                     // Create notification content
                     let notificationData: [String: Any] = [
                         "type": "session_failure",
                         "fromUserId": userId,
                         "fromUsername": userData.username,
-                        "timestamp": Date(),
+                        "timestamp": Timestamp(date: now),
+                        "message": "\(userData.username) just failed a session!",
+                        "read": false,
                         "silent": true,
                     ]
-
-                    // Send to each friend
-                    for friendId in userData.friends {
-                        FirebaseManager.shared.db.collection("users")
+                    
+                    // Send to each friend who has notifications enabled
+                    for friendId in friendsToNotify {
+                        let notificationRef = FirebaseManager.shared.db.collection("users")
                             .document(friendId)
                             .collection("notifications")
-                            .addDocument(data: notificationData)
+                            .document()
+                            
+                        batch.setData(notificationData, forDocument: notificationRef)
+                        notifiedFriendsCount += 1
                     }
-
-                    // Update rate limiting
-                    self?.lastFriendNotificationTime = now
-                    self?.friendNotificationCount += 1
+                    
+                    // Commit the batch if we have friends to notify
+                    if notifiedFriendsCount > 0 {
+                        batch.commit { error in
+                            if let error = error {
+                                print("Error sending friend notifications: \(error.localizedDescription)")
+                            } else {
+                                print("Sent failure notifications to \(notifiedFriendsCount) friends")
+                                
+                                // Update rate limiting
+                                self?.lastFriendNotificationTime = now
+                                self?.friendNotificationCount += 1
+                            }
+                        }
+                    }
                 }
-        }
-
+            }
+    }
 
     @MainActor
     func updateLocationDuringSession() {
