@@ -13,6 +13,7 @@ struct SetupView: View {
     @ObservedObject private var permissionManager = PermissionManager.shared
     @State private var viewRouter = ViewRouter()
     @State private var showLocationSelector = false
+    @State private var showRules = false
     
     // Check if we're navigating back from a joined session view
     @State private var joinLiveSessionMode = false
@@ -26,11 +27,9 @@ struct SetupView: View {
         ZStack {
             // Main View Content
             ScrollView {
-                VStack(spacing: 8) { // Reduced spacing from 25 to 15
-                    // Top Bar with Logo and Buttons
+                VStack(spacing: 8) {
                     HStack {
                         // Location Button
-                        // Modify the location button in the HStack at the top of the SetupView body
                         Button(action: {
                             // Toggle the popup instead of just showing it
                             showLocationSelector.toggle()
@@ -64,10 +63,12 @@ struct SetupView: View {
 
                         Spacer()
                         
+                        // Add Rules Button here
+                        RulesButtonView(showRules: $showRules)
+                            .padding(.top, 5)  // Match the padding on the location button
                     }
                     .padding(.horizontal, 20)
                     .padding(.top, 2)
-                    
                     // FLIP Logo adjusted slightly higher
                     FlipLogo()
                     .padding(.horizontal)
@@ -258,6 +259,9 @@ struct SetupView: View {
                     )
                     .transition(.opacity)
             }
+            if showRules {
+                RulesView(showRules: $showRules)
+            }
             
             // Custom Alert Overlay
             if showPauseDisabledWarning {
@@ -373,7 +377,7 @@ struct SetupView: View {
             if permissionManager.showPermissionRequiredAlert {
                 PermissionRequiredAlert(isPresented: $permissionManager.showPermissionRequiredAlert)
             }
-            
+ 
             // Location Permission Alert
             if permissionManager.showLocationAlert {
                 LocationPermissionAlert(
@@ -444,6 +448,7 @@ struct SetupView: View {
                                         remainingSeconds: remainingSeconds,
                                         totalDuration: totalDuration
                                     )
+                                    SessionJoinCoordinator.shared.clearPendingSession()
                                     
                                     // Hide join indicator after short delay
                                     DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
@@ -668,6 +673,7 @@ struct NumberPickerWithInfinity: View {
         .opacity(isDisabled ? 0.5 : 1)
     }
 }
+
 
 struct PermissionRequiredAlert: View {
     @Binding var isPresented: Bool

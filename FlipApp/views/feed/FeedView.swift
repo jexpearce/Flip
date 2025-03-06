@@ -646,6 +646,7 @@ class FeedViewModel: ObservableObject {
     @Published var showError = false
     @Published var errorMessage = ""
     @Published var sessionComments: [String: [SessionComment]] = [:] // Map session ID to comments array
+    private var sessionListener: ListenerRegistration?
     private var commentsListeners: [String: ListenerRegistration] = [:]
     @Published var sessionLikes: [String: Int] = [:] // Map session ID to like count
     @Published var likedByUser: [String: Bool] = [:] // Map session ID to whether current user liked it
@@ -741,9 +742,12 @@ class FeedViewModel: ObservableObject {
         cleanupLikesListeners()
         cleanupCommentsListeners()
         
+        // Remove existing session listener
+        sessionListener?.remove()
+        
         print("Loading sessions for users: \(userIds)")
         
-        firebaseManager.db.collection("sessions")
+        sessionListener = firebaseManager.db.collection("sessions")
             .whereField("userId", in: userIds)
             .order(by: "startTime", descending: true)
             .limit(to: 50)
@@ -758,9 +762,17 @@ class FeedViewModel: ObservableObject {
                     } else if let documents = snapshot?.documents {
                         print("Loaded \(documents.count) sessions")
                         
-                        self.feedSessions = documents.compactMap { document in
+                        let loadedSessions = documents.compactMap { document in
                             try? document.data(as: Session.self)
                         }
+                        
+                        // Deduplicate sessions based on their ID
+                        let uniqueSessions = Dictionary(grouping: loadedSessions, by: { $0.id.uuidString })
+                            .compactMapValues { $0.first }
+                            .values
+                            .sorted(by: { $0.startTime > $1.startTime })
+                        
+                        self.feedSessions = Array(uniqueSessions)
                         
                         // After loading sessions, load all associated data
                         self.loadAllSessionData()
@@ -776,9 +788,12 @@ class FeedViewModel: ObservableObject {
         cleanupLikesListeners()
         cleanupCommentsListeners()
         
+        // Remove existing session listener
+        sessionListener?.remove()
+        
         print("Loading sessions for user: \(userId)")
         
-        firebaseManager.db.collection("sessions")
+        sessionListener = firebaseManager.db.collection("sessions")
             .whereField("userId", isEqualTo: userId)
             .order(by: "startTime", descending: true)
             .limit(to: 50)
@@ -793,9 +808,17 @@ class FeedViewModel: ObservableObject {
                     } else if let documents = snapshot?.documents {
                         print("Loaded \(documents.count) sessions")
                         
-                        self.feedSessions = documents.compactMap { document in
+                        let loadedSessions = documents.compactMap { document in
                             try? document.data(as: Session.self)
                         }
+                        
+                        // Deduplicate sessions based on their ID
+                        let uniqueSessions = Dictionary(grouping: loadedSessions, by: { $0.id.uuidString })
+                            .compactMapValues { $0.first }
+                            .values
+                            .sorted(by: { $0.startTime > $1.startTime })
+                        
+                        self.feedSessions = Array(uniqueSessions)
                         
                         // After loading sessions, load all associated data
                         self.loadAllSessionData()
@@ -1172,6 +1195,7 @@ class FeedViewModel: ObservableObject {
     }
     
     deinit {
+        sessionListener?.remove()
         cleanupLikesListeners()
         cleanupCommentsListeners()
     }

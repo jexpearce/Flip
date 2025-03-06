@@ -31,18 +31,6 @@ struct HomeView: View {
                 }
             }
             
-            // Rules button (only shown on initial screen)
-            if appManager.currentState == .initial {
-                VStack {
-                    HStack {
-                        Spacer()
-                        RulesButtonView(showRules: $showRules)
-                            .padding(.top, 10)
-                            .padding(.trailing, 16)
-                    }
-                    Spacer()
-                }
-            }
             
             // Rules overlay
             if showRules {

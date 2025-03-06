@@ -428,16 +428,6 @@ struct FeedSessionCard: View {
                     )
                 
                 // Subtle indicator at the top (not a thick line anymore)
-                HStack {
-                    Rectangle()
-                        .fill(statusColor)
-                        .frame(width: 40, height: 3)
-                        .cornerRadius(1.5)
-                        .padding(.top, 6)
-                        .padding(.leading, 16)
-                    
-                    Spacer()
-                }
             }
         )
         .shadow(color: Color.black.opacity(0.2), radius: 10, x: 0, y: 5)
