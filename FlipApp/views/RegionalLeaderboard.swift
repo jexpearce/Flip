@@ -9,6 +9,25 @@ struct RegionalLeaderboard: View {
     @State private var selectedUserId: String?
     @State private var showUserProfile = false
     
+    // Silver-red theme colors
+    private let silverRedGradient = LinearGradient(
+        colors: [
+            Color(red: 226/255, green: 232/255, blue: 240/255), // Light silver
+            Color(red: 185/255, green: 28/255, blue: 28/255)    // Deep red
+        ],
+        startPoint: .top,
+        endPoint: .bottom
+    )
+    
+    private let silverRedBackgroundGradient = LinearGradient(
+        colors: [
+            Color(red: 153/255, green: 27/255, blue: 27/255).opacity(0.4),
+            Color(red: 127/255, green: 29/255, blue: 29/255).opacity(0.3)
+        ],
+        startPoint: .topLeading,
+        endPoint: .bottomTrailing
+    )
+    
     // Medal colors
     private let goldColor = LinearGradient(
         colors: [Color(red: 255/255, green: 215/255, blue: 0/255), Color(red: 212/255, green: 175/255, blue: 55/255)],
@@ -17,7 +36,7 @@ struct RegionalLeaderboard: View {
     )
     
     private let silverColor = LinearGradient(
-        colors: [Color(red: 192/255, green: 192/255, blue: 192/255), Color(red: 169/255, green: 169/255, blue: 169/255)],
+        colors: [Color(red: 226/255, green: 232/255, blue: 240/255), Color(red: 148/255, green: 163/255, blue: 184/255)],
         startPoint: .top,
         endPoint: .bottom
     )
@@ -30,19 +49,64 @@ struct RegionalLeaderboard: View {
     
     var body: some View {
         VStack(spacing: 12) {
-            // Title section
+            // Title section with enhanced visual style
             VStack(spacing: 4) {
-                // Main title
-                Text(viewModel.isBuildingSpecific ? "LONGEST FLIP OF THE WEEK" : "REGIONAL LEADERBOARD")
-                    .font(.system(size: 16, weight: .black))
-                    .tracking(2)
-                    .foregroundColor(.white)
-                    .shadow(color: viewModel.isBuildingSpecific ?
-                            Color(red: 234/255, green: 179/255, blue: 8/255).opacity(0.5) :
-                            Color(red: 239/255, green: 68/255, blue: 68/255).opacity(0.5), radius: 4)
-                    .frame(maxWidth: .infinity, alignment: .center)
+                // Main title with icon
+                HStack {
+                    Image(systemName: viewModel.isBuildingSpecific ? "building.2.fill" : "map.fill")
+                        .font(.system(size: 20))
+                        .foregroundStyle(
+                            viewModel.isBuildingSpecific ?
+                            LinearGradient(
+                                colors: [
+                                    Color(red: 234/255, green: 179/255, blue: 8/255),
+                                    Color(red: 202/255, green: 138/255, blue: 4/255)
+                                ],
+                                startPoint: .top,
+                                endPoint: .bottom
+                            ) :
+                            LinearGradient(
+                                colors: [
+                                    Color(red: 239/255, green: 68/255, blue: 68/255),
+                                    Color(red: 185/255, green: 28/255, blue: 28/255)
+                                ],
+                                startPoint: .top,
+                                endPoint: .bottom
+                            )
+                        )
+                        .shadow(color: viewModel.isBuildingSpecific ?
+                                Color(red: 234/255, green: 179/255, blue: 8/255).opacity(0.5) :
+                                Color(red: 239/255, green: 68/255, blue: 68/255).opacity(0.5), radius: 4)
+                    
+                    Text(viewModel.isBuildingSpecific ? "LONGEST FLIP OF THE WEEK" : "REGIONAL LEADERBOARD")
+                        .font(.system(size: 16, weight: .black))
+                        .tracking(2)
+                        .foregroundStyle(
+                            viewModel.isBuildingSpecific ?
+                            LinearGradient(
+                                colors: [
+                                    Color(red: 234/255, green: 179/255, blue: 8/255),
+                                    Color(red: 202/255, green: 138/255, blue: 4/255)
+                                ],
+                                startPoint: .top,
+                                endPoint: .bottom
+                            ) :
+                            LinearGradient(
+                                colors: [
+                                    Color(red: 239/255, green: 68/255, blue: 68/255),
+                                    Color(red: 185/255, green: 28/255, blue: 28/255)
+                                ],
+                                startPoint: .top,
+                                endPoint: .bottom
+                            )
+                        )
+                        .shadow(color: viewModel.isBuildingSpecific ?
+                                Color(red: 234/255, green: 179/255, blue: 8/255).opacity(0.5) :
+                                Color(red: 239/255, green: 68/255, blue: 68/255).opacity(0.5), radius: 4)
+                        .frame(maxWidth: .infinity, alignment: .center)
+                }
                 
-                // Subtitle with location
+                // Subtitle with location name
                 if let locationName = viewModel.locationName {
                     Text("in \(locationName)")
                         .font(.system(size: 14, weight: .medium))
@@ -58,20 +122,34 @@ struct RegionalLeaderboard: View {
                     .fill(viewModel.isBuildingSpecific ?
                         LinearGradient(
                             colors: [
-                                Color(red: 234/255, green: 179/255, blue: 8/255).opacity(0.6),
-                                Color(red: 250/255, green: 204/255, blue: 21/255).opacity(0.4)
+                                Color(red: 234/255, green: 179/255, blue: 8/255).opacity(0.3),
+                                Color(red: 202/255, green: 138/255, blue: 4/255).opacity(0.2)
                             ],
                             startPoint: .leading,
                             endPoint: .trailing
                         ) :
                         LinearGradient(
                             colors: [
-                                Color(red: 239/255, green: 68/255, blue: 68/255).opacity(0.6),
-                                Color(red: 248/255, green: 113/255, blue: 113/255).opacity(0.4)
+                                Color(red: 239/255, green: 68/255, blue: 68/255).opacity(0.3),
+                                Color(red: 185/255, green: 28/255, blue: 28/255).opacity(0.2)
                             ],
                             startPoint: .leading,
                             endPoint: .trailing
                         )
+                    )
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 12)
+                            .stroke(
+                                LinearGradient(
+                                    colors: [
+                                        Color.white.opacity(0.5),
+                                        Color.white.opacity(0.2)
+                                    ],
+                                    startPoint: .topLeading,
+                                    endPoint: .bottomTrailing
+                                ),
+                                lineWidth: 1
+                            )
                     )
             )
             
@@ -105,6 +183,38 @@ struct RegionalLeaderboard: View {
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 30)
             } else {
+                // Column headers for clarity
+                HStack {
+                    Text("RANK")
+                        .font(.system(size: 12, weight: .bold))
+                        .tracking(1)
+                        .foregroundColor(viewModel.isBuildingSpecific ?
+                                         Color(red: 234/255, green: 179/255, blue: 8/255).opacity(0.9) :
+                                         Color(red: 239/255, green: 68/255, blue: 68/255).opacity(0.9))
+                        .frame(width: 50, alignment: .center)
+                    
+                    Text("USER")
+                        .font(.system(size: 12, weight: .bold))
+                        .tracking(1)
+                        .foregroundColor(viewModel.isBuildingSpecific ?
+                                         Color(red: 234/255, green: 179/255, blue: 8/255).opacity(0.9) :
+                                         Color(red: 239/255, green: 68/255, blue: 68/255).opacity(0.9))
+                        .frame(alignment: .leading)
+                    
+                    Spacer()
+                    
+                    Text("DURATION")
+                        .font(.system(size: 12, weight: .bold))
+                        .tracking(1)
+                        .foregroundColor(viewModel.isBuildingSpecific ?
+                                         Color(red: 234/255, green: 179/255, blue: 8/255).opacity(0.9) :
+                                         Color(red: 239/255, green: 68/255, blue: 68/255).opacity(0.9))
+                        .frame(width: 80, alignment: .trailing)
+                }
+                .padding(.horizontal, 16)
+                .padding(.top, 4)
+                .padding(.bottom, 8)
+                
                 // Leaderboard entries
                 VStack(spacing: 8) {
                     ForEach(Array(viewModel.leaderboardEntries.prefix(10).enumerated()), id: \.element.id) { index, entry in
@@ -112,14 +222,8 @@ struct RegionalLeaderboard: View {
                             self.selectedUserId = entry.userId
                             self.showUserProfile = true
                         }) {
-                            HStack(spacing: 12) {
-                                // Rank number
-                                Text("\(index + 1)")
-                                    .font(.system(size: 18, weight: .black))
-                                    .foregroundColor(.white)
-                                    .frame(width: 24)
-                                
-                                // Medal for top 3
+                            HStack {
+                                // Rank with medal for top 3
                                 if index < 3 {
                                     ZStack {
                                         Circle()
@@ -131,6 +235,12 @@ struct RegionalLeaderboard: View {
                                             .foregroundColor(.white)
                                             .shadow(color: Color.black.opacity(0.2), radius: 1)
                                     }
+                                    .frame(width: 50, alignment: .center)
+                                } else {
+                                    Text("\(index + 1)")
+                                        .font(.system(size: 16, weight: .bold))
+                                        .foregroundColor(.white)
+                                        .frame(width: 50, alignment: .center)
                                 }
                                 
                                 // Profile picture
@@ -153,12 +263,49 @@ struct RegionalLeaderboard: View {
                                     .shadow(color: viewModel.isBuildingSpecific ?
                                             Color(red: 234/255, green: 179/255, blue: 8/255).opacity(0.3) :
                                                 Color(red: 239/255, green: 68/255, blue: 68/255).opacity(0.3), radius: 4)
+                                    .frame(width: 80, alignment: .trailing)
                             }
                             .padding(.vertical, 10)
                             .padding(.horizontal, 16)
                             .background(
                                 RoundedRectangle(cornerRadius: 12)
-                                    .fill(Color.white.opacity(0.08))
+                                    .fill(
+                                        viewModel.isBuildingSpecific ?
+                                        LinearGradient(
+                                            colors: index < 3 ? [
+                                                Color(red: 234/255, green: 179/255, blue: 8/255).opacity(0.2),
+                                                Color(red: 234/255, green: 179/255, blue: 8/255).opacity(0.1)
+                                            ] : [
+                                                Color.white.opacity(0.08),
+                                                Color.white.opacity(0.05)
+                                            ],
+                                            startPoint: .top,
+                                            endPoint: .bottom
+                                        ) :
+                                        LinearGradient(
+                                            colors: index < 3 ? [
+                                                Color(red: 239/255, green: 68/255, blue: 68/255).opacity(0.2),
+                                                Color(red: 239/255, green: 68/255, blue: 68/255).opacity(0.1)
+                                            ] : [
+                                                Color.white.opacity(0.08),
+                                                Color.white.opacity(0.05)
+                                            ],
+                                            startPoint: .top,
+                                            endPoint: .bottom
+                                        )
+                                    )
+                                    .overlay(
+                                        RoundedRectangle(cornerRadius: 12)
+                                            .stroke(
+                                                // Highlight current user
+                                                Auth.auth().currentUser?.uid == entry.userId ?
+                                                (viewModel.isBuildingSpecific ?
+                                                 Color(red: 234/255, green: 179/255, blue: 8/255).opacity(0.5) :
+                                                 Color(red: 239/255, green: 68/255, blue: 68/255).opacity(0.5)) :
+                                                Color.white.opacity(0.2),
+                                                lineWidth: Auth.auth().currentUser?.uid == entry.userId ? 1.5 : 1
+                                            )
+                                    )
                             )
                         }
                         .buttonStyle(PlainButtonStyle())
@@ -197,40 +344,54 @@ struct RegionalLeaderboard: View {
                             
                             Spacer()
                         }
-                        .padding(.top, 8)
+                        .padding(.top, 10)
                     }
                 }
             }
         }
+        .padding(.vertical, 16)
         .padding(.horizontal, 18)
         .background(
             ZStack {
                 RoundedRectangle(cornerRadius: 18)
                     .fill(
+                        viewModel.isBuildingSpecific ?
                         LinearGradient(
-                            colors: viewModel.isBuildingSpecific ?
-                            [
-                                Color(red: 146/255, green: 123/255, blue: 21/255).opacity(0.4),
-                                Color(red: 133/255, green: 109/255, blue: 7/255).opacity(0.3)
-                            ] :
-                                [
-                                    Color(red: 153/255, green: 27/255, blue: 27/255).opacity(0.4),
-                                    Color(red: 127/255, green: 29/255, blue: 29/255).opacity(0.3)
-                                ],
+                            colors: [
+                                Color(red: 146/255, green: 123/255, blue: 21/255).opacity(0.3),
+                                Color(red: 133/255, green: 109/255, blue: 7/255).opacity(0.2)
+                            ],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        ) :
+                        LinearGradient(
+                            colors: [
+                                Color(red: 153/255, green: 27/255, blue: 27/255).opacity(0.3),
+                                Color(red: 127/255, green: 29/255, blue: 29/255).opacity(0.2)
+                            ],
                             startPoint: .topLeading,
                             endPoint: .bottomTrailing
                         )
                     )
                 
                 RoundedRectangle(cornerRadius: 18)
-                    .fill(Color.white.opacity(0.07))
+                    .fill(Color.white.opacity(0.05))
                 
                 RoundedRectangle(cornerRadius: 18)
                     .stroke(
+                        viewModel.isBuildingSpecific ?
                         LinearGradient(
                             colors: [
-                                Color.white.opacity(0.6),
-                                Color.white.opacity(0.1)
+                                Color(red: 234/255, green: 179/255, blue: 8/255).opacity(0.5),
+                                Color(red: 234/255, green: 179/255, blue: 8/255).opacity(0.2)
+                            ],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        ) :
+                        LinearGradient(
+                            colors: [
+                                Color(red: 239/255, green: 68/255, blue: 68/255).opacity(0.5),
+                                Color(red: 185/255, green: 28/255, blue: 28/255).opacity(0.2)
                             ],
                             startPoint: .topLeading,
                             endPoint: .bottomTrailing
@@ -367,7 +528,6 @@ struct DefaultProfileImage: View {
         .frame(width: size, height: size)
     }
 }
-
 
 // STRUCTURE 2: RegionalLeaderboardViewModel class - moved outside struct
 class RegionalLeaderboardViewModel: ObservableObject {

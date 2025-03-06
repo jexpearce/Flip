@@ -4,7 +4,6 @@ import FirebaseFirestore
 import CoreLocation
 import MapKit
 
-
 struct BuildingSelectorButton: View {
     let buildingName: String?
     let action: () -> Void
@@ -70,29 +69,79 @@ struct BuildingSelectorButton: View {
     }
 }
 
-
-// Update the RegionalView struct body to use the new BuildingSelectorButton
 struct RegionalView: View {
     @StateObject private var viewModel = RegionalViewModel.shared
     @EnvironmentObject var viewRouter: ViewRouter
     @State private var showMap = false
     @StateObject private var locationPermissionManager = LocationPermissionManager.shared
     
+    // Regional view deep midnight purple gradient with subtle red
+    private let regionalGradient = LinearGradient(
+        colors: [
+            Color(red: 20/255, green: 10/255, blue: 38/255), // Deep midnight purple
+            Color(red: 28/255, green: 14/255, blue: 45/255), // Midnight purple
+            Color(red: 35/255, green: 14/255, blue: 40/255), // Purple with slight red
+            Color(red: 30/255, green: 12/255, blue: 36/255)  // Back to purple
+        ],
+        startPoint: .top,
+        endPoint: .bottom
+    )
+    
+    // Red glow effect for accents
+    private let redGlow = Color(red: 220/255, green: 38/255, blue: 38/255).opacity(0.5)
+    
     var body: some View {
         NavigationStack {
             ZStack {
-                // Background
-                Theme.mainGradient
-                    .edgesIgnoringSafeArea(.all)
+                // Background with decorative elements
+                ZStack {
+                    // Main gradient background
+                    regionalGradient
+                        .edgesIgnoringSafeArea(.all)
+                    
+                    // Top decorative glow
+                    Circle()
+                        .fill(
+                            RadialGradient(
+                                gradient: Gradient(colors: [
+                                    Color(red: 220/255, green: 38/255, blue: 38/255).opacity(0.15),
+                                    Color(red: 127/255, green: 29/255, blue: 29/255).opacity(0.05)
+                                ]),
+                                center: .center,
+                                startRadius: 10,
+                                endRadius: 300
+                            )
+                        )
+                        .frame(width: 300, height: 300)
+                        .offset(x: 150, y: -150)
+                        .blur(radius: 50)
+                    
+                    // Bottom decorative glow
+                    Circle()
+                        .fill(
+                            RadialGradient(
+                                gradient: Gradient(colors: [
+                                    Color(red: 220/255, green: 38/255, blue: 38/255).opacity(0.1),
+                                    Color(red: 127/255, green: 29/255, blue: 29/255).opacity(0.05)
+                                ]),
+                                center: .center,
+                                startRadius: 5,
+                                endRadius: 200
+                            )
+                        )
+                        .frame(width: 250, height: 250)
+                        .offset(x: -120, y: 350)
+                        .blur(radius: 40)
+                }
                 
                 VStack(spacing: 20) {
-                    // Title
+                    // Title with enhanced visual style
                     HStack {
                         Text("REGIONAL")
-                            .font(.system(size: 24, weight: .black))
+                            .font(.system(size: 28, weight: .black))
                             .tracking(8)
                             .foregroundColor(.white)
-                            .shadow(color: Color(red: 56/255, green: 189/255, blue: 248/255).opacity(0.5), radius: 8)
+                            .shadow(color: redGlow, radius: 8)
                             .padding(.leading)
                         
                         Spacer()
@@ -128,8 +177,8 @@ struct RegionalView: View {
                                 .fill(
                                     LinearGradient(
                                         colors: [
-                                            Color(red: 56/255, green: 189/255, blue: 248/255).opacity(0.9),
-                                            Color(red: 14/255, green: 165/255, blue: 233/255).opacity(0.9)
+                                            Color(red: 220/255, green: 38/255, blue: 38/255).opacity(0.8),
+                                            Color(red: 185/255, green: 28/255, blue: 28/255).opacity(0.8)
                                         ],
                                         startPoint: .topLeading,
                                         endPoint: .bottomTrailing
@@ -150,7 +199,7 @@ struct RegionalView: View {
                                         )
                                 )
                                 .shadow(
-                                    color: Color(red: 56/255, green: 189/255, blue: 248/255).opacity(0.7),
+                                    color: Color(red: 220/255, green: 38/255, blue: 38/255).opacity(0.5),
                                     radius: 15,
                                     x: 0,
                                     y: 0
@@ -176,7 +225,7 @@ struct RegionalView: View {
                                         .foregroundColor(.white)
                                         .shadow(color: Color.black.opacity(0.3), radius: 1)
                                     
-                                    Text("See where your friends are flipping")
+                                    Text("See past and live flip session locations!")
                                         .font(.system(size: 12, weight: .medium))
                                         .foregroundColor(.white.opacity(0.9))
                                 }
@@ -223,6 +272,7 @@ struct RegionalView: View {
         }
     }
 }
+
 class RegionalViewModel: NSObject, ObservableObject, CLLocationManagerDelegate {
     static let shared = RegionalViewModel()
     
@@ -258,44 +308,45 @@ class RegionalViewModel: NSObject, ObservableObject, CLLocationManagerDelegate {
             }
         }
     }
+    
     @MainActor func refreshCurrentBuilding() {
-            isRefreshing = true
-            
-            // Request a high accuracy location update
-            locationManager.desiredAccuracy = kCLLocationAccuracyBest
-            locationManager.requestLocation()
-            
-            // Get current location
-            let location = LocationHandler.shared.lastLocation
-            
-            // Skip if location is invalid
-            guard location.horizontalAccuracy > 0 else {
-                isRefreshing = false
-                return
-            }
-            
-            // If we have a selected building, check if user has moved far from it
-            if let building = selectedBuilding {
-                let buildingLocation = CLLocation(
-                    latitude: building.coordinate.latitude,
-                    longitude: building.coordinate.longitude
-                )
-                
-                let distance = location.distance(from: buildingLocation)
-                
-                // If user has moved more than threshold, suggest a building change
-                if distance > 100 { // 100 meters away from current building
-                    print("User has moved \(Int(distance))m from current building, checking for new buildings...")
-                    startBuildingIdentification()
-                } else {
-                    // Still in the same building
-                    isRefreshing = false
-                }
-            } else {
-                // No building selected, try to find one
-                startBuildingIdentification()
-            }
+        isRefreshing = true
+        
+        // Request a high accuracy location update
+        locationManager.desiredAccuracy = kCLLocationAccuracyBest
+        locationManager.requestLocation()
+        
+        // Get current location
+        let location = LocationHandler.shared.lastLocation
+        
+        // Skip if location is invalid
+        guard location.horizontalAccuracy > 0 else {
+            isRefreshing = false
+            return
         }
+        
+        // If we have a selected building, check if user has moved far from it
+        if let building = selectedBuilding {
+            let buildingLocation = CLLocation(
+                latitude: building.coordinate.latitude,
+                longitude: building.coordinate.longitude
+            )
+            
+            let distance = location.distance(from: buildingLocation)
+            
+            // If user has moved more than threshold, suggest a building change
+            if distance > 100 { // 100 meters away from current building
+                print("User has moved \(Int(distance))m from current building, checking for new buildings...")
+                startBuildingIdentification()
+            } else {
+                // Still in the same building
+                isRefreshing = false
+            }
+        } else {
+            // No building selected, try to find one
+            startBuildingIdentification()
+        }
+    }
     
     // MARK: - CLLocationManagerDelegate Methods
     
@@ -328,50 +379,47 @@ class RegionalViewModel: NSObject, ObservableObject, CLLocationManagerDelegate {
     
     @MainActor
     func startBuildingIdentification() {
-            // Request high-accuracy location for building identification
-            locationManager.desiredAccuracy = kCLLocationAccuracyBest
-            locationManager.requestLocation()
+        // Request high-accuracy location for building identification
+        locationManager.desiredAccuracy = kCLLocationAccuracyBest
+        locationManager.requestLocation()
+        
+        var location: CLLocation
+        
+        // Get the most accurate location available
+        let lastLocation = LocationHandler.shared.lastLocation
+        
+        if lastLocation.horizontalAccuracy > 0 && lastLocation.horizontalAccuracy < 50 {
+            location = lastLocation
+        } else if let managerLocation = currentLocation,
+                  managerLocation.horizontalAccuracy > 0 && managerLocation.horizontalAccuracy < 50 {
+            location = managerLocation
+        } else {
+            // If we don't have an accurate location, use the last known location
+            location = lastLocation
+        }
+        
+        BuildingIdentificationService.shared.identifyNearbyBuildings(at: location) { [weak self] buildings, error in
+            guard let self = self else { return }
             
-            var location: CLLocation
+            self.isRefreshing = false
             
-            // Get the most accurate location available
-            let lastLocation = LocationHandler.shared.lastLocation
-            
-            if lastLocation.horizontalAccuracy > 0 && lastLocation.horizontalAccuracy < 50 {
-                location = lastLocation
-            } else if let managerLocation = currentLocation,
-                      managerLocation.horizontalAccuracy > 0 && managerLocation.horizontalAccuracy < 50 {
-                location = managerLocation
-            } else {
-                // If we don't have an accurate location, use the last known location
-                location = lastLocation
+            if let error = error {
+                print("Error identifying buildings: \(error.localizedDescription)")
+                return
             }
             
-            BuildingIdentificationService.shared.identifyNearbyBuildings(at: location) { [weak self] buildings, error in
-                guard let self = self else { return }
-                
-                self.isRefreshing = false
-                
-                if let error = error {
-                    print("Error identifying buildings: \(error.localizedDescription)")
-                    return
-                }
-                
-                DispatchQueue.main.async {
-                    if let buildings = buildings, !buildings.isEmpty {
-                        self.suggestedBuildings = buildings
-                        self.showBuildingSelection = true
-                    } else {
-                        // No buildings found - show a custom popup
-                        self.showNoNearbyBuildingsAlert()
-                    }
+            DispatchQueue.main.async {
+                if let buildings = buildings, !buildings.isEmpty {
+                    self.suggestedBuildings = buildings
+                    self.showBuildingSelection = true
+                } else {
+                    // No buildings found - show a custom popup
+                    self.showNoNearbyBuildingsAlert()
                 }
             }
         }
+    }
     
-    // In RegionalViewModel.swift
-    // Update the selectBuilding method
-
     func selectBuilding(_ building: BuildingInfo) {
         self.selectedBuilding = building
         
@@ -408,7 +456,6 @@ class RegionalViewModel: NSObject, ObservableObject, CLLocationManagerDelegate {
         }
     }
     
-    
     func loadCurrentBuilding() {
         guard let userId = Auth.auth().currentUser?.uid else { return }
         
@@ -436,28 +483,28 @@ class RegionalViewModel: NSObject, ObservableObject, CLLocationManagerDelegate {
                 }
             }
     }
+    
     private func showNoNearbyBuildingsAlert() {
-            // Create custom alert if needed
-            // For simplicity, let's use a standard alert
-            let alert = UIAlertController(
-                title: "No Buildings Nearby",
-                message: "You don't appear to be near any recognizable buildings. You can create a custom location instead.",
-                preferredStyle: .alert
-            )
-            
-            alert.addAction(UIAlertAction(title: "Create Custom Location", style: .default) { _ in
-                // Show custom location creation screen
-                // This would typically navigate to a custom location creation screen
-                self.showCustomLocationCreation = true
-            })
-            
-            alert.addAction(UIAlertAction(title: "Cancel", style: .cancel))
-            
-            // Find the current UIWindow and present the alert
-            if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
-               let rootViewController = windowScene.windows.first?.rootViewController {
-                rootViewController.present(alert, animated: true)
-            }
+        // Create custom alert if needed
+        // For simplicity, let's use a standard alert
+        let alert = UIAlertController(
+            title: "No Buildings Nearby",
+            message: "You don't appear to be near any recognizable buildings. You can create a custom location instead.",
+            preferredStyle: .alert
+        )
+        
+        alert.addAction(UIAlertAction(title: "Create Custom Location", style: .default) { _ in
+            // Show custom location creation screen
+            // This would typically navigate to a custom location creation screen
+            self.showCustomLocationCreation = true
+        })
+        
+        alert.addAction(UIAlertAction(title: "Cancel", style: .cancel))
+        
+        // Find the current UIWindow and present the alert
+        if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
+           let rootViewController = windowScene.windows.first?.rootViewController {
+            rootViewController.present(alert, animated: true)
         }
     }
-
+}

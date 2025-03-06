@@ -410,36 +410,38 @@ struct FeedSessionCard: View {
                 RoundedRectangle(cornerRadius: 18)
                     .fill(Color.white.opacity(0.05))
                 
-                // Glowing border based on session status
+                // Glowing border based on session status - subtler now
                 RoundedRectangle(cornerRadius: 18)
                     .stroke(
                         LinearGradient(
                             colors: [
                                 Color.white.opacity(0.6),
                                 session.wasSuccessful ?
-                                    Color(red: 34/255, green: 197/255, blue: 94/255).opacity(0.3) :
-                                    Color(red: 239/255, green: 68/255, blue: 68/255).opacity(0.3),
+                                    Color(red: 34/255, green: 197/255, blue: 94/255).opacity(0.2) :
+                                    Color(red: 239/255, green: 68/255, blue: 68/255).opacity(0.2),
                                 Color.white.opacity(0.1)
                             ],
                             startPoint: .topLeading,
                             endPoint: .bottomTrailing
                         ),
-                        lineWidth: 1.5
+                        lineWidth: 1.2
                     )
                 
-                // Status indicator accent line at the top
-                Rectangle()
-                    .fill(statusColor)
-                    .frame(height: 4)
-                    .cornerRadius(2)
-                    .padding(.top, -9)
-                    .padding(.horizontal, 16)
-                    .opacity(0.9)
-                    .blur(radius: 0.5)
+                // Subtle indicator at the top (not a thick line anymore)
+                HStack {
+                    Rectangle()
+                        .fill(statusColor)
+                        .frame(width: 40, height: 3)
+                        .cornerRadius(1.5)
+                        .padding(.top, 6)
+                        .padding(.leading, 16)
+                    
+                    Spacer()
+                }
             }
         )
         .shadow(color: Color.black.opacity(0.2), radius: 10, x: 0, y: 5)
-        .shadow(color: statusGlow.opacity(0.3), radius: 15, x: 0, y: 5)
+        .shadow(color: statusGlow.opacity(0.2), radius: 15, x: 0, y: 5)
         .contentShape(Rectangle())
         .onTapGesture {
             // Dismiss keyboard when tapping on the card

@@ -443,6 +443,7 @@ struct FriendMapMarker: View {
             }
     }
 }
+
 struct FriendPreviewCard: View {
     let friend: FriendLocation
     let onDismiss: () -> Void
@@ -572,26 +573,8 @@ struct FriendPreviewCard: View {
             .padding(.horizontal, 15)
             .padding(.top, 12)
             .padding(.bottom, 10)
-            
-            Divider()
-                .background(Color.white.opacity(0.2))
-                .padding(.horizontal, 15)
-            
-            // Action button
-            Button(action: onViewProfile) {
-                HStack {
-                    Image(systemName: "person.fill")
-                        .font(.system(size: 14))
-                    
-                    Text("View Profile")
-                        .font(.system(size: 15, weight: .medium))
-                }
-                .foregroundColor(.white)
-                .frame(maxWidth: .infinity)
-                .padding(.vertical, 10)
-            }
         }
-        .frame(width: 280, height: 175) // Slightly increased height for new content
+        .frame(width: 280, height: 140) // Reduced height since removing profile button
         .background(
             ZStack {
                 RoundedRectangle(cornerRadius: 14)
@@ -639,25 +622,25 @@ struct FriendPreviewCard: View {
             // Historical sessions - use gray shades
             return friend.lastFlipWasSuccessful ?
                 Color.gray.opacity(0.8) :
-                Color(red: 180/255, green: 180/255, blue: 180/255).opacity(0.6) // Slightly lighter gray for failed
+                Color(red: 239/255, green: 68/255, blue: 68/255).opacity(0.6) // Red for failed
         } else if friend.isCurrentlyFlipped {
-            // Active session - green
-            return Color.green
+            // Active session - blue
+            return Color(red: 59/255, green: 130/255, blue: 246/255)
         } else {
             // Completed or failed session
-            if friend.lastFlipWasSuccessful {
+            if !friend.lastFlipWasSuccessful {
+                // Failed - red (explicit check)
+                return Color(red: 239/255, green: 68/255, blue: 68/255)
+            } else {
                 // Success - green
                 return Color(red: 34/255, green: 197/255, blue: 94/255)
-            } else {
-                // Failed - red (ensure this condition is properly evaluated)
-                return Color(red: 239/255, green: 68/255, blue: 68/255)
             }
         }
     }
     
     private var statusIcon: String {
         if friend.isHistorical {
-            return friend.lastFlipWasSuccessful ? "clock.arrow.circlepath" : "clock.arrow.circlepath"
+            return friend.lastFlipWasSuccessful ? "clock.arrow.circlepath" : "xmark.circle.fill"
         } else if friend.isCurrentlyFlipped {
             return "iphone.gen3"
         } else if friend.lastFlipWasSuccessful {
@@ -681,6 +664,7 @@ struct FriendPreviewCard: View {
         }
     }
 }
+
 
 struct MapPrivacySettingsView: View {
     @Environment(\.presentationMode) var presentationMode
