@@ -3,16 +3,40 @@ import FirebaseFirestore
 import Foundation
 import SwiftUI
 
+
 struct UserProfileView: View {
     let user: FirebaseManager.FlipUser
     @State private var showStats = false
     @State private var showDetailedStats = false
     @State private var showRemoveFriendAlert = false
+    @State private var showCancelRequestAlert = false
+    @State private var showAddFriendConfirmation = false
+    @State private var showFriendsList = false
+    @State private var friendRequestSent = false
     @StateObject private var weeklyViewModel = WeeklySessionListViewModel()
     @StateObject private var scoreManager = ScoreManager.shared
     @StateObject private var friendManager = FriendManager()
+    @StateObject private var searchManager = SearchManager()
     @Environment(\.presentationMode) var presentationMode
     @State private var userScore: Double = 3.0 // Default starting score
+    @State private var userFriends: [FirebaseManager.FlipUser] = []
+    @State private var mutualFriends: [FirebaseManager.FlipUser] = []
+    @State private var loadingFriends = false
+    
+    // Cyan-midnight theme colors
+    private let cyanBluePurpleGradient = LinearGradient(
+        colors: [
+            Color(red: 20/255, green: 10/255, blue: 40/255), // Deep midnight purple
+            Color(red: 30/255, green: 18/255, blue: 60/255), // Medium midnight purple
+            Color(red: 14/255, green: 101/255, blue: 151/255).opacity(0.7), // Dark cyan blue
+            Color(red: 12/255, green: 74/255, blue: 110/255).opacity(0.6)  // Deeper cyan blue
+        ],
+        startPoint: .top,
+        endPoint: .bottom
+    )
+    
+    private let cyanBlueAccent = Color(red: 56/255, green: 189/255, blue: 248/255)
+    private let cyanBlueGlow = Color(red: 56/255, green: 189/255, blue: 248/255).opacity(0.5)
     
     // Check if this is the current user's profile
     private var isCurrentUser: Bool {
@@ -26,221 +50,106 @@ struct UserProfileView: View {
         return user.friends.contains(currentUserId)
     }
     
+    // Check if we've sent a friend request to this user
+    private var hasSentFriendRequest: Bool {
+        guard let currentUserId = Auth.auth().currentUser?.uid else { return false }
+        // Check both local state and user data
+        return friendRequestSent || FirebaseManager.shared.currentUser?.sentRequests.contains(user.id) ?? false
+    }
+    
     private var weeksLongestSession: Int? {
         return weeklyViewModel.weeksLongestSession > 0 ? weeklyViewModel.weeksLongestSession : nil
     }
     
     var body: some View {
-        ScrollView {
-            VStack(spacing: 20) {
-                // Profile Header with enhanced styling and rank wheel
-                HStack(alignment: .top, spacing: 15) {
-                    // Profile Picture
-                    ZoomableProfileAvatar(
-                            imageURL: user.profileImageURL,
-                            size: 80,
-                            username: user.username
-                        )
+        ZStack {
+            // Main background with decorative elements
+            ProfileBackgroundView(
+                cyanBluePurpleGradient: cyanBluePurpleGradient,
+                cyanBlueAccent: cyanBlueAccent
+            )
+            
+            ScrollView {
+                VStack(spacing: 20) {
+                    // Profile Header
+                    ProfileHeaderView(
+                        user: user,
+                        userScore: userScore,
+                        cyanBlueGlow: cyanBlueGlow,
+                        cyanBlueAccent: cyanBlueAccent,
+                        isCurrentUser: isCurrentUser,
+                        isFriend: isFriend,
+                        hasSentFriendRequest: hasSentFriendRequest,
+                        showRemoveFriendAlert: $showRemoveFriendAlert,
+                        showCancelRequestAlert: $showCancelRequestAlert,
+                        showAddFriendConfirmation: $showAddFriendConfirmation
+                    )
                     
-                    VStack(alignment: .leading, spacing: 12) {
-                        Text(user.username)
-                            .font(.system(size: 28, weight: .black))
-                            .foregroundColor(.white)
-                            .shadow(color: Color(red: 56/255, green: 189/255, blue: 248/255).opacity(0.5), radius: 8)
-                        
-                        // Display rank name
-                        let rank = getRank(for: userScore)
-                        Text(rank.name)
-                            .font(.system(size: 18, weight: .bold))
-                            .foregroundColor(rank.color)
-                            .shadow(color: rank.color.opacity(0.5), radius: 4)
-                    }
-                    
-                    Spacer()
-                    
-                    // Rank Circle
-                    RankCircle(score: userScore)
-                        .frame(width: 60, height: 60)
-                    
-                    // Only show remove friend button if this is not the current user's profile
-                    // and if they are a friend
-                    if !isCurrentUser && isFriend {
-                        Button(action: {
-                            showRemoveFriendAlert = true
-                        }) {
-                            Image(systemName: "person.fill.badge.minus")
-                                .font(.system(size: 22))
-                                .foregroundColor(.white.opacity(0.7))
-                                .padding(8)
-                                .background(
-                                    Circle()
-                                        .fill(Color.red.opacity(0.2))
-                                )
-                                .overlay(
-                                    Circle()
-                                        .stroke(Color.white.opacity(0.3), lineWidth: 1)
-                                )
-                        }
-                    }
-                }
-                .padding(.horizontal)
-                .padding(.top, 20)
-                
-                // Stats Summary Card with button to detailed view
-                VStack(spacing: 15) {
-                    // Quick Stats overview
-                    HStack(spacing: 30) {
-                        StatBox(
-                            title: "SESSIONS",
-                            value: "\(user.totalSessions)",
-                            icon: "timer"
-                        )
-                        StatBox(
-                            title: "FOCUS TIME",
-                            value: "\(user.totalFocusTime)m",
-                            icon: "clock.fill"
+                    // Friend status badge
+                    if !isCurrentUser {
+                        FriendStatusBadgeView(
+                            isFriend: isFriend,
+                            hasSentFriendRequest: hasSentFriendRequest
                         )
                     }
-                    .padding(.vertical, 5)
                     
-                    // View detailed stats button
-                    Button(action: {
-                        showDetailedStats = true
-                    }) {
-                        Text("VIEW DETAILED STATS")
-                            .font(.system(size: 14, weight: .bold))
-                            .tracking(1)
-                            .foregroundColor(.white.opacity(0.9))
-                            .padding(.vertical, 8)
-                            .frame(maxWidth: .infinity)
-                            .background(
-                                ZStack {
-                                    RoundedRectangle(cornerRadius: 10)
-                                        .fill(Color.white.opacity(0.1))
-                                    
-                                    RoundedRectangle(cornerRadius: 10)
-                                        .stroke(Color.white.opacity(0.2), lineWidth: 1)
-                                }
-                            )
-                    }
-                }
-                .padding()
-                .background(
-                    ZStack {
-                        RoundedRectangle(cornerRadius: 15)
-                            .fill(
-                                LinearGradient(
-                                    colors: [
-                                        Color(red: 79/255, green: 70/255, blue: 229/255).opacity(0.6),
-                                        Color(red: 79/255, green: 70/255, blue: 229/255).opacity(0.3)
-                                    ],
-                                    startPoint: .topLeading,
-                                    endPoint: .bottomTrailing
-                                )
-                            )
-                        
-                        RoundedRectangle(cornerRadius: 15)
-                            .fill(Color.white.opacity(0.05))
-                        
-                        RoundedRectangle(cornerRadius: 15)
-                            .stroke(
-                                LinearGradient(
-                                    colors: [
-                                        Color.white.opacity(0.5),
-                                        Color.white.opacity(0.1)
-                                    ],
-                                    startPoint: .topLeading,
-                                    endPoint: .bottomTrailing
-                                ),
-                                lineWidth: 1
-                            )
-                    }
-                )
-                .shadow(color: Color.black.opacity(0.2), radius: 4, x: 0, y: 2)
-                .padding(.horizontal)
-                .sheet(isPresented: $showDetailedStats) {
-                    FriendStatsView(user: user)
-                }
+                    // Friends count button - leads to friends list
+                    FriendsCountButton(
+                        user: user,
+                        isCurrentUser: isCurrentUser,
+                        cyanBlueAccent: cyanBlueAccent,
+                        showFriendsList: $showFriendsList,
+                        loadUserFriends: loadUserFriends
+                    )
+                    
+                    // Stats Summary Card with button to detailed view
+                    StatsCardView(
+                        user: user,
+                        cyanBlueAccent: cyanBlueAccent,
+                        showDetailedStats: $showDetailedStats
+                    )
 
-                // Enhanced Longest Session Card - Weekly Stats
-                HStack {
-                    VStack(alignment: .leading, spacing: 6) {
-                        HStack(alignment: .center, spacing: 8) {
-                            Text("\(user.username)'s LONGEST FLIP OF THE WEEK")
-                                .font(.system(size: 12, weight: .black))
-                                .tracking(3)
-                                .foregroundColor(.white)
-                            
-                            Image(systemName: "crown.fill")
-                                .font(.system(size: 12))
-                                .foregroundStyle(
-                                    LinearGradient(
-                                        colors: [
-                                            Color(red: 234/255, green: 179/255, blue: 8/255),
-                                            Color(red: 253/255, green: 224/255, blue: 71/255)
-                                        ],
-                                        startPoint: .top,
-                                        endPoint: .bottom
-                                    )
-                                )
-                                .shadow(color: Color(red: 234/255, green: 179/255, blue: 8/255).opacity(0.5), radius: 4)
-                        }
+                    // Enhanced Longest Session Card - Weekly Stats
+                    WeeklyStatsView(
+                        user: user,
+                        weeksLongestSession: weeksLongestSession,
+                        cyanBlueAccent: cyanBlueAccent,
+                        cyanBlueGlow: cyanBlueGlow
+                    )
 
-                        Text(weeksLongestSession != nil ? "\(weeksLongestSession!) min" : "No sessions yet this week")
-                            .font(.system(size: 22, weight: .black))
-                            .foregroundColor(.white)
-                            .shadow(color: Color(red: 56/255, green: 189/255, blue: 248/255).opacity(0.5), radius: 8)
-                    }
-                    Spacer()
+                    // Recent Sessions
+                    RecentSessionsView(
+                        user: user,
+                        weeklyViewModel: weeklyViewModel,
+                        cyanBlueGlow: cyanBlueGlow
+                    )
                 }
-                .padding(16)
-                .background(
-                    ZStack {
-                        RoundedRectangle(cornerRadius: 15)
-                            .fill(
-                                LinearGradient(
-                                    colors: [
-                                        Color(red: 239/255, green: 68/255, blue: 68/255).opacity(0.4),
-                                        Color(red: 236/255, green: 72/255, blue: 153/255).opacity(0.3)
-                                    ],
-                                    startPoint: .topLeading,
-                                    endPoint: .bottomTrailing
-                                )
-                            )
-                        
-                        RoundedRectangle(cornerRadius: 15)
-                            .fill(Color.white.opacity(0.05))
-                        
-                        RoundedRectangle(cornerRadius: 15)
-                            .stroke(
-                                LinearGradient(
-                                    colors: [
-                                        Color.white.opacity(0.5),
-                                        Color.white.opacity(0.1)
-                                    ],
-                                    startPoint: .topLeading,
-                                    endPoint: .bottomTrailing
-                                ),
-                                lineWidth: 1
-                            )
-                    }
-                )
-                .shadow(color: Color.black.opacity(0.2), radius: 4, x: 0, y: 2)
-                .padding(.horizontal)
-
-                // Recent Sessions
-                VStack(alignment: .leading, spacing: 15) {
-                    Text("RECENT SESSIONS")
-                        .font(.system(size: 16, weight: .black))
-                        .tracking(5)
-                        .foregroundColor(.white)
-                        .shadow(color: Color(red: 56/255, green: 189/255, blue: 248/255).opacity(0.4), radius: 6)
-                        .padding(.horizontal)
-
-                    // Using the WeeklySessionList component
-                    WeeklySessionList(userId: user.id, viewModel: weeklyViewModel)
-                }
+                .padding(.bottom, 30)
             }
+            
+            // Friends List overlay when activated
+            if showFriendsList {
+                UserFriendsListView(
+                    user: user,
+                    isPresented: $showFriendsList,
+                    mutualFriends: mutualFriends,
+                    userFriends: userFriends,
+                    loadingFriends: loadingFriends
+                )
+            }
+            
+            // Alert Overlays
+            AlertOverlays(
+                showRemoveFriendAlert: $showRemoveFriendAlert,
+                showCancelRequestAlert: $showCancelRequestAlert,
+                showAddFriendConfirmation: $showAddFriendConfirmation,
+                user: user,
+                friendManager: friendManager,
+                searchManager: searchManager,
+                friendRequestSent: $friendRequestSent,
+                cancelFriendRequest: cancelFriendRequest,
+                presentationMode: presentationMode
+            )
         }
         .navigationBarTitleDisplayMode(.inline)
         .onAppear {
@@ -253,23 +162,9 @@ struct UserProfileView: View {
             // Load user's score
             loadUserScore()
         }
-        .overlay(
-            Group {
-                if showRemoveFriendAlert {
-                    RemoveFriendAlert(
-                        isPresented: $showRemoveFriendAlert,
-                        username: user.username
-                    ) {
-                        // Handle friend removal
-                        friendManager.removeFriend(friendId: user.id)
-                        // Navigate back after removing
-                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-                            presentationMode.wrappedValue.dismiss()
-                        }
-                    }
-                }
-            }
-        )
+        .sheet(isPresented: $showDetailedStats) {
+            FriendStatsView(user: user)
+        }
     }
     
     // Function to load user's score from Firebase
@@ -282,6 +177,163 @@ struct UserProfileView: View {
             }
         }
     }
+    
+    // Function to load a user's friends with mutual friends highlighted
+    private func loadUserFriends() {
+        guard let currentUserId = Auth.auth().currentUser?.uid else { return }
+        
+        loadingFriends = true
+        userFriends = []
+        mutualFriends = []
+        
+        // Only continue if not viewing own profile (to avoid redundant work)
+        if user.id != currentUserId {
+            // First, get the current user's friends for comparison
+            FirebaseManager.shared.db.collection("users").document(currentUserId)
+                .getDocument { document, error in
+                    guard let userData = try? document?.data(as: FirebaseManager.FlipUser.self) else {
+                        return
+                    }
+                    
+                    let currentUserFriends = Set(userData.friends)
+                    
+                    // Now load all this user's friends
+                    self.loadFriendsDetails(friendIds: user.friends) { loadedFriends in
+                        DispatchQueue.main.async {
+                            // Separate mutual friends from other friends
+                            for friend in loadedFriends {
+                                if currentUserFriends.contains(friend.id) || friend.id == currentUserId {
+                                    self.mutualFriends.append(friend)
+                                } else {
+                                    self.userFriends.append(friend)
+                                }
+                            }
+                            
+                            // Sort both lists alphabetically
+                            self.mutualFriends.sort { $0.username < $1.username }
+                            self.userFriends.sort { $0.username < $1.username }
+                            
+                            self.loadingFriends = false
+                        }
+                    }
+                }
+        } else {
+            // If viewing own profile, just load all friends
+            loadFriendsDetails(friendIds: user.friends) { loadedFriends in
+                DispatchQueue.main.async {
+                    self.userFriends = loadedFriends.sorted { $0.username < $1.username }
+                    self.loadingFriends = false
+                }
+            }
+        }
+    }
+    
+    // Helper function to load friend details
+    private func loadFriendsDetails(friendIds: [String], completion: @escaping ([FirebaseManager.FlipUser]) -> Void) {
+        guard !friendIds.isEmpty else {
+            completion([])
+            return
+        }
+        
+        let db = FirebaseManager.shared.db
+        var loadedFriends: [FirebaseManager.FlipUser] = []
+        let dispatchGroup = DispatchGroup()
+        
+        for friendId in friendIds {
+            dispatchGroup.enter()
+            
+            db.collection("users").document(friendId).getDocument { document, error in
+                defer { dispatchGroup.leave() }
+                
+                if let userData = try? document?.data(as: FirebaseManager.FlipUser.self) {
+                    loadedFriends.append(userData)
+                }
+            }
+        }
+        
+        dispatchGroup.notify(queue: .main) {
+            completion(loadedFriends)
+        }
+    }
+    
+    // Function to cancel a friend request (using the mechanism from SearchManager)
+    private func cancelFriendRequest(to userId: String) {
+        guard let currentUserId = Auth.auth().currentUser?.uid else { return }
+        
+        let db = FirebaseManager.shared.db
+        
+        // Remove from recipient's friend requests
+        db.collection("users").document(userId)
+            .updateData([
+                "friendRequests": FieldValue.arrayRemove([currentUserId])
+            ])
+        
+        // Remove from sender's sent requests
+        db.collection("users").document(currentUserId)
+            .updateData([
+                "sentRequests": FieldValue.arrayRemove([userId])
+            ])
+    }
+}
+
+// MARK: - Background View Component
+struct ProfileBackgroundView: View {
+    let cyanBluePurpleGradient: LinearGradient
+    let cyanBlueAccent: Color
+    
+    var body: some View {
+        // Main background
+        cyanBluePurpleGradient
+            .edgesIgnoringSafeArea(.all)
+        
+        // Top decorative glow
+        Circle()
+            .fill(
+                RadialGradient(
+                    gradient: Gradient(colors: [
+                        cyanBlueAccent.opacity(0.2),
+                        cyanBlueAccent.opacity(0.05)
+                    ]),
+                    center: .center,
+                    startRadius: 10,
+                    endRadius: 300
+                )
+            )
+            .frame(width: 300, height: 300)
+            .offset(x: 150, y: -150)
+            .blur(radius: 50)
+        
+        // Bottom decorative glow
+        Circle()
+            .fill(
+                RadialGradient(
+                    gradient: Gradient(colors: [
+                        cyanBlueAccent.opacity(0.15),
+                        cyanBlueAccent.opacity(0.03)
+                    ]),
+                    center: .center,
+                    startRadius: 5,
+                    endRadius: 200
+                )
+            )
+            .frame(width: 250, height: 250)
+            .offset(x: -120, y: 350)
+            .blur(radius: 40)
+    }
+}
+
+// MARK: - Profile Header Component
+struct ProfileHeaderView: View {
+    let user: FirebaseManager.FlipUser
+    let userScore: Double
+    let cyanBlueGlow: Color
+    let cyanBlueAccent: Color
+    let isCurrentUser: Bool
+    let isFriend: Bool
+    let hasSentFriendRequest: Bool
+    @Binding var showRemoveFriendAlert: Bool
+    @Binding var showCancelRequestAlert: Bool
+    @Binding var showAddFriendConfirmation: Bool
     
     // Helper function to get rank
     private func getRank(for score: Double) -> (name: String, color: Color) {
@@ -310,12 +362,991 @@ struct UserProfileView: View {
                 return ("Unranked", Color.gray)
         }
     }
+    
+    var body: some View {
+        HStack(alignment: .top, spacing: 15) {
+            // Profile Picture
+            ZoomableProfileAvatar(
+                imageURL: user.profileImageURL,
+                size: 80,
+                username: user.username
+            )
+            
+            VStack(alignment: .leading, spacing: 12) {
+                Text(user.username)
+                    .font(.system(size: 28, weight: .black))
+                    .foregroundColor(.white)
+                    .shadow(color: cyanBlueGlow, radius: 8)
+                
+                // Display rank name
+                let rank = getRank(for: userScore)
+                Text(rank.name)
+                    .font(.system(size: 18, weight: .bold))
+                    .foregroundColor(rank.color)
+                    .shadow(color: rank.color.opacity(0.5), radius: 4)
+            }
+            
+            Spacer()
+            
+            // Rank Circle
+            RankCircle(score: userScore)
+                .frame(width: 60, height: 60)
+            
+            // Only show friend action buttons if this is not the current user's profile
+            if !isCurrentUser {
+                if isFriend {
+                    // Remove friend button
+                    Button(action: {
+                        showRemoveFriendAlert = true
+                    }) {
+                        ZStack {
+                            Circle()
+                                .fill(Color.red.opacity(0.2))
+                                .frame(width: 44, height: 44)
+                            
+                            Image(systemName: "person.fill.badge.minus")
+                                .font(.system(size: 18))
+                                .foregroundColor(.white.opacity(0.9))
+                        }
+                        .overlay(
+                            Circle()
+                                .stroke(Color.white.opacity(0.3), lineWidth: 1)
+                        )
+                        .shadow(color: Color.red.opacity(0.3), radius: 4)
+                    }
+                } else if hasSentFriendRequest {
+                    // Pending request indicator
+                    Button(action: {
+                        showCancelRequestAlert = true
+                    }) {
+                        ZStack {
+                            Circle()
+                                .fill(Color.orange.opacity(0.2))
+                                .frame(width: 44, height: 44)
+                            
+                            Image(systemName: "clock.fill")
+                                .font(.system(size: 18))
+                                .foregroundColor(.white.opacity(0.9))
+                        }
+                        .overlay(
+                            Circle()
+                                .stroke(Color.white.opacity(0.3), lineWidth: 1)
+                        )
+                        .shadow(color: Color.orange.opacity(0.3), radius: 4)
+                    }
+                } else {
+                    // Add friend button
+                    Button(action: {
+                        showAddFriendConfirmation = true
+                    }) {
+                        ZStack {
+                            Circle()
+                                .fill(
+                                    LinearGradient(
+                                        colors: [
+                                            cyanBlueAccent.opacity(0.7),
+                                            cyanBlueAccent.opacity(0.4)
+                                        ],
+                                        startPoint: .topLeading,
+                                        endPoint: .bottomTrailing
+                                    )
+                                )
+                                .frame(width: 44, height: 44)
+                            
+                            Image(systemName: "person.fill.badge.plus")
+                                .font(.system(size: 18))
+                                .foregroundColor(.white)
+                        }
+                        .overlay(
+                            Circle()
+                                .stroke(
+                                    LinearGradient(
+                                        colors: [
+                                            Color.white.opacity(0.6),
+                                            Color.white.opacity(0.2)
+                                        ],
+                                        startPoint: .topLeading,
+                                        endPoint: .bottomTrailing
+                                    ),
+                                    lineWidth: 1
+                                )
+                        )
+                        .shadow(color: cyanBlueGlow, radius: 4)
+                    }
+                }
+            }
+        }
+        .padding(.horizontal)
+        .padding(.top, 20)
+    }
 }
+
+// MARK: - Friend Status Badge Component
+struct FriendStatusBadgeView: View {
+    let isFriend: Bool
+    let hasSentFriendRequest: Bool
+    
+    var body: some View {
+        if isFriend {
+            FriendStatusBadge(
+                text: "Friends",
+                icon: "person.2.fill",
+                color: Color.green
+            )
+        } else if hasSentFriendRequest {
+            FriendStatusBadge(
+                text: "Friend Request Sent",
+                icon: "clock.fill",
+                color: Color.orange
+            )
+        }
+    }
+}
+
+// MARK: - Friends Count Button Component
+struct FriendsCountButton: View {
+    let user: FirebaseManager.FlipUser
+    let isCurrentUser: Bool
+    let cyanBlueAccent: Color
+    @Binding var showFriendsList: Bool
+    let loadUserFriends: () -> Void
+    
+    var body: some View {
+        Button(action: {
+            loadUserFriends()
+            showFriendsList = true
+        }) {
+            HStack {
+                VStack(alignment: .leading, spacing: 6) {
+                    // The title shows appropriate text based on whose profile it is
+                    Text(isCurrentUser ? "YOUR FRIENDS" : "\(user.username.uppercased())'S FRIENDS")
+                        .font(.system(size: 14, weight: .bold))
+                        .tracking(1)
+                        .foregroundColor(.white.opacity(0.8))
+                    
+                    HStack(spacing: 8) {
+                        Image(systemName: "person.2.fill")
+                            .font(.system(size: 18))
+                            .foregroundColor(cyanBlueAccent)
+                        
+                        Text("\(user.friends.count) friends")
+                            .font(.system(size: 18, weight: .bold))
+                            .foregroundColor(.white)
+                    }
+                }
+                
+                Spacer()
+                
+                Image(systemName: "chevron.right")
+                    .font(.system(size: 16, weight: .bold))
+                    .foregroundColor(.white.opacity(0.6))
+            }
+            .padding(.vertical, 14)
+            .padding(.horizontal, 18)
+            .background(
+                ZStack {
+                    RoundedRectangle(cornerRadius: 15)
+                        .fill(
+                            LinearGradient(
+                                colors: [
+                                    cyanBlueAccent.opacity(0.4),
+                                    cyanBlueAccent.opacity(0.1)
+                                ],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            )
+                        )
+                    
+                    RoundedRectangle(cornerRadius: 15)
+                        .fill(Color.white.opacity(0.05))
+                    
+                    RoundedRectangle(cornerRadius: 15)
+                        .stroke(
+                            LinearGradient(
+                                colors: [
+                                    Color.white.opacity(0.5),
+                                    Color.white.opacity(0.1)
+                                ],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            ),
+                            lineWidth: 1
+                        )
+                }
+            )
+            .shadow(color: Color.black.opacity(0.2), radius: 4, x: 0, y: 2)
+            .padding(.horizontal)
+        }
+    }
+}
+
+// MARK: - Stats Card Component
+struct StatsCardView: View {
+    let user: FirebaseManager.FlipUser
+    let cyanBlueAccent: Color
+    @Binding var showDetailedStats: Bool
+    
+    var body: some View {
+        VStack(spacing: 15) {
+            // Quick Stats overview
+            HStack(spacing: 30) {
+                StatBox(
+                    title: "SESSIONS",
+                    value: "\(user.totalSessions)",
+                    icon: "timer",
+                    accentColor: cyanBlueAccent
+                )
+                StatBox(
+                    title: "FOCUS TIME",
+                    value: "\(user.totalFocusTime)m",
+                    icon: "clock.fill",
+                    accentColor: cyanBlueAccent
+                )
+            }
+            .padding(.vertical, 5)
+            
+            // View detailed stats button
+            Button(action: {
+                showDetailedStats = true
+            }) {
+                Text("VIEW DETAILED STATS")
+                    .font(.system(size: 14, weight: .bold))
+                    .tracking(1)
+                    .foregroundColor(.white.opacity(0.9))
+                    .padding(.vertical, 8)
+                    .frame(maxWidth: .infinity)
+                    .background(
+                        ZStack {
+                            RoundedRectangle(cornerRadius: 10)
+                                .fill(
+                                    LinearGradient(
+                                        colors: [
+                                            cyanBlueAccent.opacity(0.3),
+                                            cyanBlueAccent.opacity(0.1)
+                                        ],
+                                        startPoint: .topLeading,
+                                        endPoint: .bottomTrailing
+                                    )
+                                )
+                            
+                            RoundedRectangle(cornerRadius: 10)
+                                .fill(Color.white.opacity(0.1))
+                            
+                            RoundedRectangle(cornerRadius: 10)
+                                .stroke(Color.white.opacity(0.2), lineWidth: 1)
+                        }
+                    )
+            }
+        }
+        .padding()
+        .background(
+            ZStack {
+                RoundedRectangle(cornerRadius: 15)
+                    .fill(
+                        LinearGradient(
+                            colors: [
+                                cyanBlueAccent.opacity(0.5),
+                                cyanBlueAccent.opacity(0.2)
+                            ],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        )
+                    )
+                
+                RoundedRectangle(cornerRadius: 15)
+                    .fill(Color.white.opacity(0.05))
+                
+                RoundedRectangle(cornerRadius: 15)
+                    .stroke(
+                        LinearGradient(
+                            colors: [
+                                Color.white.opacity(0.5),
+                                Color.white.opacity(0.1)
+                            ],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        ),
+                        lineWidth: 1
+                    )
+            }
+        )
+        .shadow(color: Color.black.opacity(0.2), radius: 4, x: 0, y: 2)
+        .padding(.horizontal)
+    }
+}
+
+// MARK: - Weekly Stats Component
+struct WeeklyStatsView: View {
+    let user: FirebaseManager.FlipUser
+    let weeksLongestSession: Int?
+    let cyanBlueAccent: Color
+    let cyanBlueGlow: Color
+    
+    var body: some View {
+        HStack {
+            VStack(alignment: .leading, spacing: 6) {
+                HStack(alignment: .center, spacing: 8) {
+                    Text("\(user.username)'s LONGEST FLIP OF THE WEEK")
+                        .font(.system(size: 12, weight: .black))
+                        .tracking(3)
+                        .foregroundColor(.white)
+                    
+                    Image(systemName: "crown.fill")
+                        .font(.system(size: 12))
+                        .foregroundStyle(
+                            LinearGradient(
+                                colors: [
+                                    cyanBlueAccent,
+                                    Color(red: 125/255, green: 211/255, blue: 252/255)
+                                ],
+                                startPoint: .top,
+                                endPoint: .bottom
+                            )
+                        )
+                        .shadow(color: cyanBlueGlow, radius: 4)
+                }
+
+                Text(weeksLongestSession != nil ? "\(weeksLongestSession!) min" : "No sessions yet this week")
+                    .font(.system(size: 22, weight: .black))
+                    .foregroundColor(.white)
+                    .shadow(color: cyanBlueGlow, radius: 8)
+            }
+            Spacer()
+        }
+        .padding(16)
+        .background(
+            ZStack {
+                RoundedRectangle(cornerRadius: 15)
+                    .fill(
+                        LinearGradient(
+                            colors: [
+                                cyanBlueAccent.opacity(0.3),
+                                cyanBlueAccent.opacity(0.1)
+                            ],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        )
+                    )
+                
+                RoundedRectangle(cornerRadius: 15)
+                    .fill(Color.white.opacity(0.05))
+                
+                RoundedRectangle(cornerRadius: 15)
+                    .stroke(
+                        LinearGradient(
+                            colors: [
+                                Color.white.opacity(0.5),
+                                Color.white.opacity(0.1)
+                            ],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        ),
+                        lineWidth: 1
+                    )
+            }
+        )
+        .shadow(color: Color.black.opacity(0.2), radius: 4, x: 0, y: 2)
+        .padding(.horizontal)
+    }
+}
+
+// MARK: - Recent Sessions Component
+struct RecentSessionsView: View {
+    let user: FirebaseManager.FlipUser
+    let weeklyViewModel: WeeklySessionListViewModel
+    let cyanBlueGlow: Color
+    
+    var body: some View {
+        VStack(alignment: .leading, spacing: 15) {
+            Text("RECENT SESSIONS")
+                .font(.system(size: 16, weight: .black))
+                .tracking(5)
+                .foregroundColor(.white)
+                .shadow(color: cyanBlueGlow, radius: 6)
+                .padding(.horizontal)
+
+            // Using the WeeklySessionList component
+            WeeklySessionList(userId: user.id, viewModel: weeklyViewModel)
+        }
+    }
+}
+
+// MARK: - Alert Overlays Component
+struct AlertOverlays: View {
+    @Binding var showRemoveFriendAlert: Bool
+    @Binding var showCancelRequestAlert: Bool
+    @Binding var showAddFriendConfirmation: Bool
+    let user: FirebaseManager.FlipUser
+    let friendManager: FriendManager
+    let searchManager: SearchManager
+    @Binding var friendRequestSent: Bool
+    let cancelFriendRequest: (String) -> Void
+    let presentationMode: Binding<PresentationMode>
+    
+    var body: some View {
+        ZStack {
+            if showRemoveFriendAlert {
+                RemoveFriendAlert(
+                    isPresented: $showRemoveFriendAlert,
+                    username: user.username
+                ) {
+                    // Handle friend removal
+                    friendManager.removeFriend(friendId: user.id)
+                    // Navigate back after removing
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                        presentationMode.wrappedValue.dismiss()
+                    }
+                }
+            }
+            
+            if showCancelRequestAlert {
+                CancelFriendRequestAlert(
+                    isPresented: $showCancelRequestAlert,
+                    username: user.username
+                ) {
+                    // Handle canceling the friend request
+                    cancelFriendRequest(user.id)
+                    
+                    // Update local state
+                    friendRequestSent = false
+                }
+            }
+            
+            if showAddFriendConfirmation {
+                AddFriendConfirmation(
+                    isPresented: $showAddFriendConfirmation,
+                    username: user.username
+                ) {
+                    // Send friend request
+                    searchManager.sendFriendRequest(to: user.id)
+                    friendRequestSent = true
+                }
+            }
+        }
+    }
+}
+
+// Friends list popup view component
+struct UserFriendsListView: View {
+    let user: FirebaseManager.FlipUser
+    @Binding var isPresented: Bool
+    let mutualFriends: [FirebaseManager.FlipUser]
+    let userFriends: [FirebaseManager.FlipUser]
+    let loadingFriends: Bool
+    
+    // Colors
+    private let cyanBlueAccent = Color(red: 56/255, green: 189/255, blue: 248/255)
+    private let cyanBlueGlow = Color(red: 56/255, green: 189/255, blue: 248/255).opacity(0.5)
+    
+    var body: some View {
+        ZStack {
+            // Dimmed background
+            Color.black.opacity(0.8)
+                .edgesIgnoringSafeArea(.all)
+                .onTapGesture {
+                    withAnimation(.spring()) {
+                        isPresented = false
+                    }
+                }
+            
+            // Content
+            VStack(spacing: 0) {
+                // Header
+                HStack {
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("\(user.username)'s FRIENDS")
+                            .font(.system(size: 22, weight: .black))
+                            .tracking(3)
+                            .foregroundColor(.white)
+                            .shadow(color: cyanBlueGlow, radius: 8)
+                        
+                        Text("\(user.friends.count) total friends")
+                            .font(.system(size: 14))
+                            .foregroundColor(.white.opacity(0.7))
+                    }
+                    
+                    Spacer()
+                    
+                    // Close button
+                    Button(action: {
+                        withAnimation(.spring()) {
+                            isPresented = false
+                        }
+                    }) {
+                        ZStack {
+                            Circle()
+                                .fill(Color.white.opacity(0.1))
+                                .frame(width: 36, height: 36)
+                            
+                            Image(systemName: "xmark")
+                                .font(.system(size: 14, weight: .bold))
+                                .foregroundColor(.white)
+                        }
+                    }
+                }
+                .padding(.horizontal, 20)
+                .padding(.top, 20)
+                .padding(.bottom, 16)
+                
+                if loadingFriends {
+                    // Loading indicator
+                    Spacer()
+                    
+                    VStack(spacing: 12) {
+                        ProgressView()
+                            .tint(cyanBlueAccent)
+                            .scaleEffect(1.5)
+                        
+                        Text("Loading friends...")
+                            .font(.system(size: 16))
+                            .foregroundColor(.white.opacity(0.7))
+                    }
+                    
+                    Spacer()
+                } else {
+                    ScrollView {
+                        VStack(alignment: .leading, spacing: 20) {
+                            // Mutual friends section
+                            if !mutualFriends.isEmpty {
+                                VStack(alignment: .leading, spacing: 12) {
+                                    Text("MUTUAL FRIENDS")
+                                        .font(.system(size: 16, weight: .bold))
+                                        .tracking(2)
+                                        .foregroundColor(cyanBlueAccent)
+                                        .padding(.horizontal, 20)
+                                    
+                                    ForEach(mutualFriends) { friend in
+                                        FriendRow(friend: friend, isMutual: true)
+                                    }
+                                }
+                                
+                                Divider()
+                                    .background(Color.white.opacity(0.2))
+                                    .padding(.vertical, 10)
+                            }
+                            
+                            // Other friends section
+                            if !userFriends.isEmpty {
+                                VStack(alignment: .leading, spacing: 12) {
+                                    Text(mutualFriends.isEmpty ? "FRIENDS" : "OTHER FRIENDS")
+                                        .font(.system(size: 16, weight: .bold))
+                                        .tracking(2)
+                                        .foregroundColor(.white.opacity(0.7))
+                                        .padding(.horizontal, 20)
+                                    
+                                    ForEach(userFriends) { friend in
+                                        FriendRow(friend: friend, isMutual: false)
+                                    }
+                                }
+                            }
+                            
+                            // Empty state
+                            if mutualFriends.isEmpty && userFriends.isEmpty {
+                                VStack(spacing: 12) {
+                                    Image(systemName: "person.2.slash")
+                                        .font(.system(size: 50))
+                                        .foregroundColor(.white.opacity(0.6))
+                                        .padding(.top, 30)
+                                    
+                                    Text("No friends yet")
+                                        .font(.system(size: 20, weight: .bold))
+                                        .foregroundColor(.white)
+                                    
+                                    Text("This user hasn't added any friends yet")
+                                        .font(.system(size: 16))
+                                        .foregroundColor(.white.opacity(0.7))
+                                        .multilineTextAlignment(.center)
+                                }
+                                .frame(maxWidth: .infinity)
+                                .padding(.top, 40)
+                            }
+                        }
+                        .padding(.bottom, 20)
+                    }
+                }
+            }
+            .frame(maxWidth: UIScreen.main.bounds.width * 0.9, maxHeight: UIScreen.main.bounds.height * 0.8)
+            .background(
+                ZStack {
+                    // Background gradient
+                    RoundedRectangle(cornerRadius: 20)
+                        .fill(
+                            LinearGradient(
+                                colors: [
+                                    Color(red: 30/255, green: 14/255, blue: 60/255),
+                                    Color(red: 14/255, green: 30/255, blue: 60/255)
+                                ],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            )
+                        )
+                    
+                    // Glass effect
+                    RoundedRectangle(cornerRadius: 20)
+                        .fill(Color.white.opacity(0.05))
+                    
+                    // Border
+                    RoundedRectangle(cornerRadius: 20)
+                        .stroke(
+                            LinearGradient(
+                                colors: [
+                                    Color.white.opacity(0.6),
+                                    Color.white.opacity(0.1)
+                                ],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            ),
+                            lineWidth: 1
+                        )
+                }
+            )
+            .shadow(color: Color.black.opacity(0.5), radius: 20)
+            .transition(.scale(scale: 0.9).combined(with: .opacity))
+        }
+        .transition(.opacity)
+    }
+}
+
+// Friend row component for the friends list
+struct FriendRow: View {
+    let friend: FirebaseManager.FlipUser
+    let isMutual: Bool
+    
+    // Colors
+    private let cyanBlueAccent = Color(red: 56/255, green: 189/255, blue: 248/255)
+    @State private var isPressed = false
+    
+    var body: some View {
+        NavigationLink(destination: UserProfileView(user: friend)) {
+            HStack(spacing: 12) {
+                // Profile picture
+                ProfileAvatarView(
+                    imageURL: friend.profileImageURL,
+                    size: 50,
+                    username: friend.username
+                )
+                
+                // Friend info
+                VStack(alignment: .leading, spacing: 4) {
+                    HStack(spacing: 6) {
+                        Text(friend.username)
+                            .font(.system(size: 16, weight: .bold))
+                            .foregroundColor(.white)
+                            .shadow(color: isMutual ? cyanBlueAccent.opacity(0.6) : Color.white.opacity(0.3), radius: 4)
+                        
+                        if isMutual {
+                            // Mutual friend badge
+                            Text("Mutual")
+                                .font(.system(size: 10, weight: .bold))
+                                .foregroundColor(.white)
+                                .padding(.horizontal, 8)
+                                .padding(.vertical, 2)
+                                .background(
+                                    Capsule()
+                                        .fill(cyanBlueAccent.opacity(0.3))
+                                        .overlay(
+                                            Capsule()
+                                                .stroke(cyanBlueAccent.opacity(0.5), lineWidth: 1)
+                                        )
+                                )
+                        }
+                    }
+                    
+                    // Stats
+                    HStack(spacing: 12) {
+                        Label("\(friend.totalSessions) sessions", systemImage: "timer")
+                            .font(.system(size: 12))
+                            .foregroundColor(.white.opacity(0.7))
+                        
+                        Label("\(friend.totalFocusTime)m focus", systemImage: "clock")
+                            .font(.system(size: 12))
+                            .foregroundColor(.white.opacity(0.7))
+                    }
+                }
+                
+                Spacer()
+                
+                Image(systemName: "chevron.right")
+                    .font(.system(size: 14))
+                    .foregroundColor(.white.opacity(0.5))
+                    .padding(.trailing, 4)
+            }
+            .padding(.vertical, 12)
+            .padding(.horizontal, 20)
+            .background(
+                ZStack {
+                    // Different background for mutual friends
+                    RoundedRectangle(cornerRadius: 12)
+                        .fill(isMutual ? cyanBlueAccent.opacity(0.15) : Color.white.opacity(0.05))
+                    
+                    // Border
+                    RoundedRectangle(cornerRadius: 12)
+                        .stroke(
+                            isMutual ?
+                            LinearGradient(
+                                colors: [
+                                    cyanBlueAccent.opacity(0.5),
+                                    cyanBlueAccent.opacity(0.2)
+                                ],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            ) :
+                            LinearGradient(
+                                colors: [
+                                    Color.white.opacity(0.3),
+                                    Color.white.opacity(0.1)
+                                ],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            ),
+                            lineWidth: 1
+                        )
+                }
+            )
+            .scaleEffect(isPressed ? 0.98 : 1.0)
+            .animation(.spring(response: 0.3, dampingFraction: 0.6), value: isPressed)
+            .simultaneousGesture(
+                DragGesture(minimumDistance: 0)
+                    .onChanged { _ in
+                        isPressed = true
+                    }
+                    .onEnded { _ in
+                        isPressed = false
+                    }
+            )
+        }
+        .buttonStyle(PlainButtonStyle())
+    }
+}
+
+// Friend status badge component
+struct FriendStatusBadge: View {
+    let text: String
+    let icon: String
+    let color: Color
+    
+    var body: some View {
+        HStack(spacing: 8) {
+            Image(systemName: icon)
+                .font(.system(size: 14))
+                .foregroundColor(color)
+            
+            Text(text)
+                .font(.system(size: 14, weight: .medium))
+                .foregroundColor(color)
+        }
+        .padding(.horizontal, 14)
+        .padding(.vertical, 6)
+        .background(
+            Capsule()
+                .fill(color.opacity(0.15))
+                .overlay(
+                    Capsule()
+                        .stroke(color.opacity(0.3), lineWidth: 1)
+                )
+        )
+        .padding(.top, -5)
+    }
+}
+
+// Add friend confirmation overlay
+struct AddFriendConfirmation: View {
+    @Binding var isPresented: Bool
+    let username: String
+    let onConfirm: () -> Void
+    @State private var isConfirmPressed = false
+    @State private var isCancelPressed = false
+    
+    var body: some View {
+        ZStack {
+            // Dimmed background
+            Color.black.opacity(0.7)
+                .edgesIgnoringSafeArea(.all)
+                .onTapGesture {
+                    withAnimation(.spring()) {
+                        isPresented = false
+                    }
+                }
+            
+            // Alert card
+            VStack(spacing: 20) {
+                // Icon
+                ZStack {
+                    Circle()
+                        .fill(
+                            LinearGradient(
+                                colors: [
+                                    Color(red: 56/255, green: 189/255, blue: 248/255),
+                                    Color(red: 14/255, green: 165/255, blue: 233/255)
+                                ],
+                                startPoint: .top,
+                                endPoint: .bottom
+                            )
+                        )
+                        .frame(width: 70, height: 70)
+                        .opacity(0.2)
+                    
+                    Image(systemName: "person.fill.badge.plus")
+                        .font(.system(size: 36))
+                        .foregroundStyle(
+                            LinearGradient(
+                                colors: [
+                                    Color(red: 56/255, green: 189/255, blue: 248/255),
+                                    Color(red: 14/255, green: 165/255, blue: 233/255)
+                                ],
+                                startPoint: .top,
+                                endPoint: .bottom
+                            )
+                        )
+                        .shadow(color: Color(red: 56/255, green: 189/255, blue: 248/255).opacity(0.5), radius: 8)
+                }
+                .padding(.top, 20)
+                
+                // Title
+                VStack(spacing: 4) {
+                    Text("ADD FRIEND?")
+                        .font(.system(size: 22, weight: .black))
+                        .tracking(2)
+                        .foregroundColor(.white)
+                        .shadow(color: Color(red: 56/255, green: 189/255, blue: 248/255).opacity(0.5), radius: 6)
+                    
+                    Text("友達を追加")
+                        .font(.system(size: 12))
+                        .tracking(2)
+                        .foregroundColor(.white.opacity(0.7))
+                }
+                
+                // Message
+                Text("Send a friend request to \(username)?")
+                    .font(.system(size: 16, weight: .medium))
+                    .multilineTextAlignment(.center)
+                    .foregroundColor(.white)
+                    .padding(.horizontal, 20)
+                    .padding(.top, 10)
+                
+                // Buttons
+                HStack(spacing: 15) {
+                    // Cancel button
+                    Button(action: {
+                        withAnimation(.spring()) {
+                            isCancelPressed = true
+                        }
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                            isCancelPressed = false
+                            isPresented = false
+                        }
+                    }) {
+                        Text("CANCEL")
+                            .font(.system(size: 16, weight: .bold))
+                            .foregroundColor(.white)
+                            .frame(height: 44)
+                            .frame(maxWidth: .infinity)
+                            .background(
+                                ZStack {
+                                    RoundedRectangle(cornerRadius: 22)
+                                        .fill(Color.white.opacity(0.1))
+                                    
+                                    RoundedRectangle(cornerRadius: 22)
+                                        .stroke(Color.white.opacity(0.3), lineWidth: 1)
+                                }
+                            )
+                            .scaleEffect(isCancelPressed ? 0.95 : 1.0)
+                    }
+                    
+                    // Add friend button
+                    Button(action: {
+                        withAnimation(.spring()) {
+                            isConfirmPressed = true
+                        }
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                            isConfirmPressed = false
+                            isPresented = false
+                            onConfirm()
+                        }
+                    }) {
+                        Text("SEND REQUEST")
+                            .font(.system(size: 16, weight: .bold))
+                            .foregroundColor(.white)
+                            .frame(height: 44)
+                            .frame(maxWidth: .infinity)
+                            .background(
+                                ZStack {
+                                    RoundedRectangle(cornerRadius: 22)
+                                        .fill(
+                                            LinearGradient(
+                                                colors: [
+                                                    Color(red: 56/255, green: 189/255, blue: 248/255),
+                                                    Color(red: 14/255, green: 165/255, blue: 233/255)
+                                                ],
+                                                startPoint: .top,
+                                                endPoint: .bottom
+                                            )
+                                        )
+                                        .opacity(0.8)
+                                    
+                                    RoundedRectangle(cornerRadius: 22)
+                                        .fill(Color.white.opacity(0.1))
+                                    
+                                    RoundedRectangle(cornerRadius: 22)
+                                        .stroke(
+                                            LinearGradient(
+                                                colors: [
+                                                    Color.white.opacity(0.5),
+                                                    Color.white.opacity(0.2)
+                                                ],
+                                                startPoint: .top,
+                                                endPoint: .bottom
+                                            ),
+                                            lineWidth: 1
+                                        )
+                                }
+                            )
+                            .scaleEffect(isConfirmPressed ? 0.95 : 1.0)
+                    }
+                }
+                .padding(.top, 10)
+                .padding(.horizontal, 20)
+                .padding(.bottom, 25)
+            }
+            .frame(width: 320)
+            .background(
+                ZStack {
+                    RoundedRectangle(cornerRadius: 20)
+                        .fill(Theme.darkGray)
+                    
+                    RoundedRectangle(cornerRadius: 20)
+                        .fill(Color.black.opacity(0.3))
+                    
+                    RoundedRectangle(cornerRadius: 20)
+                        .stroke(
+                            LinearGradient(
+                                colors: [
+                                    Color.white.opacity(0.5),
+                                    Color.white.opacity(0.1)
+                                ],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            ),
+                            lineWidth: 1
+                        )
+                }
+            )
+            .shadow(color: Color.black.opacity(0.5), radius: 20)
+            .transition(.scale(scale: 0.85).combined(with: .opacity))
+        }
+        .transition(.opacity)
+    }
+}
+
 // Detailed stats view popup
 struct FriendStatsView: View {
     @Environment(\.presentationMode) var presentationMode
     let user: FirebaseManager.FlipUser
     @State private var animateStats = false
+    
+    // Cyan-midnight theme colors
+    private let cyanBlueAccent = Color(red: 56/255, green: 189/255, blue: 248/255)
+    private let cyanBlueGlow = Color(red: 56/255, green: 189/255, blue: 248/255).opacity(0.5)
     
     var averageSessionLength: Int {
         if user.totalSessions == 0 {
@@ -328,14 +1359,34 @@ struct FriendStatsView: View {
         ZStack {
             // Background gradient
             LinearGradient(
-                gradient: Gradient(colors: [
-                    Color(red: 26/255, green: 14/255, blue: 47/255),
-                    Color(red: 16/255, green: 24/255, blue: 57/255)
-                ]),
+                colors: [
+                    Color(red: 20/255, green: 10/255, blue: 40/255), // Deep midnight purple
+                    Color(red: 30/255, green: 18/255, blue: 60/255), // Medium midnight purple
+                    Color(red: 14/255, green: 101/255, blue: 151/255).opacity(0.7), // Dark cyan blue
+                    Color(red: 12/255, green: 74/255, blue: 110/255).opacity(0.6)  // Deeper cyan blue
+                ],
                 startPoint: .top,
                 endPoint: .bottom
             )
             .edgesIgnoringSafeArea(.all)
+            
+            // Decorative glow
+            Circle()
+                .fill(
+                    RadialGradient(
+                        gradient: Gradient(colors: [
+                            cyanBlueAccent.opacity(0.2),
+                            cyanBlueAccent.opacity(0.05)
+                        ]),
+                        center: .center,
+                        startRadius: 10,
+                        endRadius: 300
+                    )
+                )
+                .frame(width: 300, height: 300)
+                .offset(x: 150, y: -150)
+                .blur(radius: 50)
+                .edgesIgnoringSafeArea(.all)
             
             VStack(spacing: 25) {
                 // Header
@@ -347,7 +1398,7 @@ struct FriendStatsView: View {
                             .font(.system(size: 24, weight: .black))
                             .tracking(6)
                             .foregroundColor(.white)
-                            .shadow(color: Color(red: 56/255, green: 189/255, blue: 248/255).opacity(0.5), radius: 8)
+                            .shadow(color: cyanBlueGlow, radius: 8)
                         
                         Text("スタッツ")
                             .font(.system(size: 12))
@@ -361,9 +1412,15 @@ struct FriendStatsView: View {
                     Button(action: {
                         presentationMode.wrappedValue.dismiss()
                     }) {
-                        Image(systemName: "xmark.circle.fill")
-                            .font(.system(size: 28))
-                            .foregroundColor(.white.opacity(0.7))
+                        ZStack {
+                            Circle()
+                                .fill(Color.white.opacity(0.1))
+                                .frame(width: 36, height: 36)
+                            
+                            Image(systemName: "xmark.circle.fill")
+                                .font(.system(size: 24))
+                                .foregroundColor(.white.opacity(0.8))
+                        }
                     }
                     .padding(.trailing, 20)
                 }
@@ -377,7 +1434,7 @@ struct FriendStatsView: View {
                         value: "\(user.totalFocusTime)",
                         unit: "minutes",
                         icon: "clock.fill",
-                        color: Color(red: 59/255, green: 130/255, blue: 246/255),
+                        color: cyanBlueAccent,
                         delay: 0
                     )
                     .scaleEffect(animateStats ? 1 : 0.8)
@@ -435,7 +1492,16 @@ struct FriendStatsView: View {
                         .background(
                             ZStack {
                                 RoundedRectangle(cornerRadius: 15)
-                                    .fill(Theme.buttonGradient)
+                                    .fill(
+                                        LinearGradient(
+                                            colors: [
+                                                cyanBlueAccent.opacity(0.7),
+                                                cyanBlueAccent.opacity(0.4)
+                                            ],
+                                            startPoint: .topLeading,
+                                            endPoint: .bottomTrailing
+                                        )
+                                    )
                                 
                                 RoundedRectangle(cornerRadius: 15)
                                     .fill(Color.white.opacity(0.1))
@@ -454,7 +1520,7 @@ struct FriendStatsView: View {
                                     )
                             }
                         )
-                        .shadow(color: Color(red: 56/255, green: 189/255, blue: 248/255).opacity(0.5), radius: 8)
+                        .shadow(color: cyanBlueGlow, radius: 8)
                 }
                 .padding(.horizontal, 30)
                 .padding(.bottom, 40)
@@ -548,10 +1614,12 @@ struct FriendStatCard: View {
         }
     }
 }
+
 struct StatBox: View {
     let title: String
     let value: String
     let icon: String
+    let accentColor: Color
     
     var body: some View {
         VStack(spacing: 5) {
@@ -669,6 +1737,7 @@ struct WeeklySessionList: View {
     }
 }
 
+
 class WeeklySessionListViewModel: ObservableObject {
     @Published var sessions: [Session] = []
     @Published var weeksLongestSession: Int = 0
@@ -693,7 +1762,7 @@ class WeeklySessionListViewModel: ObservableObject {
                     
                     let thisWeeksSessions = self?.sessions.filter { session in
                         // Only include successful sessions from this week
-                        session.wasSuccessful && calendar.isDate(session.startTime, inSameWeekAs: weekStart)
+                        session.wasSuccessful && calendar.isDate(session.startTime, equalTo: weekStart, toGranularity: .weekOfYear)
                     } ?? []
                     
                     self?.weeksLongestSession = thisWeeksSessions.max(by: { $0.actualDuration < $1.actualDuration })?.actualDuration ?? 0
