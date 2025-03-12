@@ -216,8 +216,9 @@ struct RegionalLeaderboard: View {
                 .padding(.top, 4)
                 .padding(.bottom, 8)
                 
-                // Leaderboard entries
+                // Leaderboard entries - LIMIT TO 10 ENTRIES
                 VStack(spacing: 8) {
+                    // Only show first 10 entries without any "Show more" button
                     ForEach(Array(viewModel.leaderboardEntries.prefix(10).enumerated()), id: \.element.id) { index, entry in
                         Button(action: {
                             self.selectedUserId = entry.userId
@@ -257,6 +258,9 @@ struct RegionalLeaderboard: View {
                                 
                                 // Duration
                                 Text("\(entry.duration) min")
+                                    .onAppear {
+                                        print("⏱️ Displaying duration for \(entry.username): \(entry.duration)")
+                                    }
                                     .font(.system(size: 18, weight: .black))
                                     .foregroundColor(viewModel.isBuildingSpecific ?
                                                      Color(red: 234/255, green: 179/255, blue: 8/255) :
@@ -409,7 +413,6 @@ struct RegionalLeaderboard: View {
         })
     }
 }
-
 // This component fetches and displays user profiles
 struct UserProfileSheet: View {
     let userId: String
@@ -813,7 +816,8 @@ class RegionalLeaderboardViewModel: ObservableObject {
                           let geoPoint = data["location"] as? GeoPoint,
                           let actualDuration = data["actualDuration"] as? Int,
                           let wasSuccessful = data["lastFlipWasSuccessful"] as? Bool,
-                          let sessionStartTime = (data["sessionStartTime"] as? Timestamp)?.dateValue() else {
+                          let _ = (data["sessionStartTime"] as? Timestamp)?
+                        .dateValue() else {
                         continue
                     }
                     
@@ -885,6 +889,7 @@ class RegionalLeaderboardViewModel: ObservableObject {
 // Extension for RegionalLeaderboardViewModel to handle buildings
 extension RegionalLeaderboardViewModel {
     
+    // Update in RegionalLeaderboardViewModel
     func loadBuildingLeaderboard(building: BuildingInfo) {
         guard let currentUserId = Auth.auth().currentUser?.uid else { return }
         isBuildingSpecific = true
@@ -905,11 +910,12 @@ extension RegionalLeaderboardViewModel {
                 
                 let friendIds = userData.friends
                 
-                // Fetch all sessions in this building
+                // Now call fetchBuildingTopSessions with the friends list
                 self.fetchBuildingTopSessions(building: building, friendIds: friendIds)
             }
     }
-    private func fetchBuildingTopSessions(building: BuildingInfo, friendIds: [String]) {
+    
+    func fetchBuildingTopSessions(building: BuildingInfo, friendIds: [String]) {
         guard let currentUserId = Auth.auth().currentUser?.uid else { return }
         
         let db = Firestore.firestore()
@@ -924,18 +930,12 @@ extension RegionalLeaderboardViewModel {
         components.second = 0
         
         guard let weekStart = calendar.date(from: components) else {
-            print("❌ Error calculating week start")
             self.isLoading = false
             return
         }
         
-        print("🗓️ Current week starts at: \(weekStart)")
-        
         // Use the standardized building ID that's already stored in the BuildingInfo struct
         let buildingId = building.id
-        
-        print("🔍 Querying sessions for building ID: \(buildingId) from week starting \(weekStart)")
-        print("🏢 Building coordinates: \(building.coordinate.latitude), \(building.coordinate.longitude)")
         
         // Get the building's location as a CLLocation
         let buildingLocation = CLLocation(latitude: building.coordinate.latitude, longitude: building.coordinate.longitude)
@@ -968,43 +968,28 @@ extension RegionalLeaderboardViewModel {
         }
         
         userGroup.notify(queue: .main) {
-            // Add more debug logging to trace the exact building ID being used
-            print("🔍 Searching for sessions with building ID: \(buildingId) from current week starting \(weekStart)")
-            
-            // Use exact building ID match first with more explicit debug logging
+            // Use exact building ID match first
             db.collection("session_locations")
                 .whereField("buildingId", isEqualTo: buildingId)
                 .whereField("lastFlipWasSuccessful", isEqualTo: true)
-                .whereField("sessionStartTime", isGreaterThan: Timestamp(date: weekStart)) // This is the key change!
-                .order(by: "sessionStartTime")
-                .order(by: "actualDuration", descending: true)
-                .limit(to: 50)
+                .whereField("sessionStartTime", isGreaterThan: Timestamp(date: weekStart))
                 .getDocuments { [weak self] snapshot, error in
                     guard let self = self else { return }
                     
                     if let error = error {
-                        print("❌ Error in building ID search: \(error.localizedDescription)")
                         self.tryProximitySearch(
                             buildingLocation: buildingLocation,
                             radius: radius,
                             usernames: usernames,
                             friendIds: friendIds,
                             currentUserId: currentUserId,
-                            weekStart: weekStart  // Pass the week start date
+                            weekStart: weekStart
                         )
                         return
                     }
                     
                     if let documents = snapshot?.documents, !documents.isEmpty {
-                        print("📊 Found \(documents.count) sessions with exact building ID match this week")
-                        
-                        // Debug log some of the documents to see what they contain
-                        if !documents.isEmpty {
-                            let sample = documents[0].data()
-                            print("📋 Sample session data: actualDuration=\(sample["actualDuration"] ?? "missing"), username=\(sample["username"] ?? "missing"), startTime=\(sample["sessionStartTime"] ?? "missing")")
-                        }
-                        
-                        self.processSessionDocuments(
+                        self.processSessionDocumentsWithImprovedDuration(
                             documents,
                             buildingLocation,
                             friendIds,
@@ -1012,7 +997,6 @@ extension RegionalLeaderboardViewModel {
                             usernames: usernames
                         )
                     } else {
-                        print("⚠️ No sessions found with exact building ID this week, trying proximity search")
                         // If no exact matches, try proximity search
                         self.tryProximitySearch(
                             buildingLocation: buildingLocation,
@@ -1020,7 +1004,7 @@ extension RegionalLeaderboardViewModel {
                             usernames: usernames,
                             friendIds: friendIds,
                             currentUserId: currentUserId,
-                            weekStart: weekStart  // Pass the week start date
+                            weekStart: weekStart
                         )
                     }
                 }
@@ -1036,30 +1020,21 @@ extension RegionalLeaderboardViewModel {
         currentUserId: String,
         weekStart: Date
     ) {
-        print("🔍 Trying proximity search for sessions since \(weekStart)")
-        
         firebaseManager.db.collection("session_locations")
             .whereField("lastFlipWasSuccessful", isEqualTo: true)
-            .whereField("sessionStartTime", isGreaterThan: Timestamp(date: weekStart)) // Weekly filter
-            .order(by: "sessionStartTime")
-            .order(by: "actualDuration", descending: true)
-            .limit(to: 100)
+            .whereField("sessionStartTime", isGreaterThan: Timestamp(date: weekStart))
             .getDocuments { [weak self] snapshot, error in
                 guard let self = self else { return }
                 
                 if let error = error {
-                    print("❌ Error in proximity search: \(error.localizedDescription)")
                     self.isLoading = false
                     return
                 }
                 
                 guard let documents = snapshot?.documents else {
-                    print("❌ No documents found in proximity search")
                     self.isLoading = false
                     return
                 }
-                
-                print("🔍 Filtering \(documents.count) sessions by proximity")
                 
                 // Filter by proximity to building
                 var nearbyDocuments: [QueryDocumentSnapshot] = []
@@ -1075,8 +1050,7 @@ extension RegionalLeaderboardViewModel {
                     }
                 }
                 
-                print("📊 Found \(nearbyDocuments.count) sessions within \(Int(radius))m of building this week")
-                self.processSessionDocuments(
+                self.processSessionDocumentsWithImprovedDuration(
                     nearbyDocuments,
                     buildingLocation,
                     friendIds,
@@ -1085,7 +1059,8 @@ extension RegionalLeaderboardViewModel {
                 )
             }
     }
-    private func processSessionDocuments(
+    
+    private func processSessionDocumentsWithImprovedDuration(
         _ documents: [QueryDocumentSnapshot],
         _ buildingLocation: CLLocation,
         _ friendIds: [String],
@@ -1093,17 +1068,6 @@ extension RegionalLeaderboardViewModel {
         usernames: [String: String]
     ) {
         var matchingSessions: [SessionWithLocation] = []
-        
-        print("Processing \(documents.count) session documents")
-        
-        // Debug - show first few documents' duration values
-        for (index, document) in documents.prefix(3).enumerated() {
-            let data = document.data()
-            let actualDuration = data["actualDuration"] as? Int ?? 0
-            let sessionDuration = data["sessionDuration"] as? Int ?? 0
-            let username = data["username"] as? String ?? "Unknown"
-            print("📊 Sample \(index): actualDuration=\(actualDuration), sessionDuration=\(sessionDuration), user=\(username)")
-        }
         
         // First gather all unique user IDs to fetch usernames in batch
         var userIds = Set<String>()
@@ -1136,7 +1100,6 @@ extension RegionalLeaderboardViewModel {
                 defer { group.leave() }
                 
                 if let document = document, let username = document.data()?["username"] as? String, !username.isEmpty {
-                    print("✅ Fetched username for \(userId): \(username)")
                     fetchedUsernames[userId] = username
                     
                     // Also cache for future use
@@ -1147,7 +1110,6 @@ extension RegionalLeaderboardViewModel {
                     )
                     self.userCache[userId] = cacheItem
                 } else {
-                    print("⚠️ Could not fetch username for \(userId)")
                     fetchedUsernames[userId] = "User \(userId.prefix(4))"
                 }
             }
@@ -1161,7 +1123,6 @@ extension RegionalLeaderboardViewModel {
                 
                 // Extract session info with better error handling
                 guard let userId = data["userId"] as? String else {
-                    print("⚠️ Missing userId in session document")
                     continue
                 }
                 
@@ -1172,27 +1133,38 @@ extension RegionalLeaderboardViewModel {
                 
                 // Skip invalid locations
                 if sessionLocation.coordinate.latitude == 0 && sessionLocation.coordinate.longitude == 0 {
-                    print("⚠️ Invalid location in session document")
                     continue
                 }
                 
-                // Get actual duration with proper error handling
-                let actualDuration: Int
+                // ***CRITICAL FIX*** - Extract duration with careful type handling
+                var actualDuration = 0
+
+                // Check for actual duration with correct type handling
                 if let duration = data["actualDuration"] as? Int {
                     actualDuration = duration
-                    print("✅ Found actualDuration: \(duration)m for session \(document.documentID)")
-                } else if let duration = data["sessionDuration"] as? Int {
+                } else if let duration = data["actualDuration"] as? Double {
+                    actualDuration = Int(duration)
+                } else if let duration = data["actualDuration"] as? NSNumber {
+                    actualDuration = duration.intValue
+                } else if let durationString = data["actualDuration"] as? String, let duration = Int(durationString) {
+                    // Also handle string values just in case
                     actualDuration = duration
-                    print("⚠️ Using sessionDuration fallback: \(duration)m for session \(document.documentID)")
-                } else {
-                    print("❌ Missing duration in session document \(document.documentID)")
-                    actualDuration = 1 // Fallback to 1 min
                 }
-                
-                // Skip sessions with suspiciously low durations (likely data errors) unless they're actually 1-min sessions
-                if actualDuration <= 1 && (data["sessionDuration"] as? Int ?? 0) > 5 {
-                    print("⚠️ Skipping session with suspicious duration: \(actualDuration)m vs target \(data["sessionDuration"] as? Int ?? 0)m")
-                    continue
+                // Then try sessionDuration if actualDuration wasn't found
+                else if let duration = data["sessionDuration"] as? Int {
+                    actualDuration = duration
+                } else if let duration = data["sessionDuration"] as? Double {
+                    actualDuration = Int(duration)
+                } else if let duration = data["sessionDuration"] as? NSNumber {
+                    actualDuration = duration.intValue
+                } else if let durationString = data["sessionDuration"] as? String, let duration = Int(durationString) {
+                    actualDuration = duration
+                }
+                // If we still don't have a duration, calculate it from timestamps
+                else if let startTime = (data["sessionStartTime"] as? Timestamp)?.dateValue(),
+                         let endTime = (data["sessionEndTime"] as? Timestamp)?.dateValue() {
+                    let seconds = endTime.timeIntervalSince(startTime)
+                    actualDuration = Int(seconds / 60) // Convert to minutes
                 }
                 
                 // Get username with better resolution
@@ -1249,14 +1221,11 @@ extension RegionalLeaderboardViewModel {
                 )
             }.sorted { $0.duration > $1.duration }
             
-            // Log final number of entries
-            print("📊 Final regional leaderboard entries: \(entries.count)")
-            for (i, entry) in entries.prefix(5).enumerated() {
-                print("  \(i+1). \(entry.username): \(entry.duration) minutes")
-            }
+            // Take top 10 only
+            let limitedEntries = entries.prefix(10).map { $0 }
             
             DispatchQueue.main.async {
-                self.leaderboardEntries = entries
+                self.leaderboardEntries = limitedEntries
                 self.isLoading = false
             }
         }

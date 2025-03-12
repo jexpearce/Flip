@@ -91,170 +91,174 @@ struct RegionalView: View {
     
     var body: some View {
         NavigationStack {
-            ZStack {
-                // Background with decorative elements
+            // MAJOR FIX: Wrap the whole content in a ScrollView
+            ScrollView {
                 ZStack {
-                    // Main gradient background
-                    regionalGradient
-                        .edgesIgnoringSafeArea(.all)
-                    
-                    // Top decorative glow
-                    Circle()
-                        .fill(
-                            RadialGradient(
-                                gradient: Gradient(colors: [
-                                    Color(red: 220/255, green: 38/255, blue: 38/255).opacity(0.15),
-                                    Color(red: 127/255, green: 29/255, blue: 29/255).opacity(0.05)
-                                ]),
-                                center: .center,
-                                startRadius: 10,
-                                endRadius: 300
-                            )
-                        )
-                        .frame(width: 300, height: 300)
-                        .offset(x: 150, y: -150)
-                        .blur(radius: 50)
-                    
-                    // Bottom decorative glow
-                    Circle()
-                        .fill(
-                            RadialGradient(
-                                gradient: Gradient(colors: [
-                                    Color(red: 220/255, green: 38/255, blue: 38/255).opacity(0.1),
-                                    Color(red: 127/255, green: 29/255, blue: 29/255).opacity(0.05)
-                                ]),
-                                center: .center,
-                                startRadius: 5,
-                                endRadius: 200
-                            )
-                        )
-                        .frame(width: 250, height: 250)
-                        .offset(x: -120, y: 350)
-                        .blur(radius: 40)
-                }
-                
-                VStack(spacing: 20) {
-                    // Title with enhanced visual style
-                    HStack {
-                        Text("REGIONAL")
-                            .font(.system(size: 28, weight: .black))
-                            .tracking(8)
-                            .foregroundColor(.white)
-                            .shadow(color: redGlow, radius: 8)
-                            .padding(.leading)
+                    // Background with decorative elements
+                    ZStack {
+                        // Main gradient background
+                        regionalGradient
+                            .edgesIgnoringSafeArea(.all)
                         
-                        Spacer()
+                        // Top decorative glow
+                        Circle()
+                            .fill(
+                                RadialGradient(
+                                    gradient: Gradient(colors: [
+                                        Color(red: 220/255, green: 38/255, blue: 38/255).opacity(0.15),
+                                        Color(red: 127/255, green: 29/255, blue: 29/255).opacity(0.05)
+                                    ]),
+                                    center: .center,
+                                    startRadius: 10,
+                                    endRadius: 300
+                                )
+                            )
+                            .frame(width: 300, height: 300)
+                            .offset(x: 150, y: -150)
+                            .blur(radius: 50)
+                        
+                        // Bottom decorative glow
+                        Circle()
+                            .fill(
+                                RadialGradient(
+                                    gradient: Gradient(colors: [
+                                        Color(red: 220/255, green: 38/255, blue: 38/255).opacity(0.1),
+                                        Color(red: 127/255, green: 29/255, blue: 29/255).opacity(0.05)
+                                    ]),
+                                    center: .center,
+                                    startRadius: 5,
+                                    endRadius: 200
+                                )
+                            )
+                            .frame(width: 250, height: 250)
+                            .offset(x: -120, y: 350)
+                            .blur(radius: 40)
                     }
-                    .padding(.top, 50)
-                    .padding(.bottom, 10)
                     
-                    // Building selection button - Improved version
-                    BuildingSelectorButton(
-                        buildingName: viewModel.selectedBuilding?.name,
-                        action: {
-                            // Check location permissions before allowing building selection
-                            locationPermissionManager.checkRegionalAvailability { hasPermission in
-                                if hasPermission {
-                                    viewModel.startBuildingIdentification()
-                                }
-                            }
-                        },
-                        refreshAction: {
-                            // Check location permissions before refreshing
-                            locationPermissionManager.checkRegionalAvailability { hasPermission in
-                                if hasPermission {
-                                    viewModel.refreshCurrentBuilding()
-                                }
-                            }
-                        },
-                        isRefreshing: $viewModel.isRefreshing
-                    )
-                    
-                    // Regional Leaderboard with improved layout
-                    RegionalLeaderboard(viewModel: viewModel.leaderboardViewModel)
-                        .padding(.horizontal)
-                    
-                    Spacer()
-                    
-                    // Map Button - Fixed at bottom with a glowing effect
-                    Button(action: {
-                        // Check for map consent and location permissions
-                        showMapView()
-                    }) {
-                        ZStack {
-                            // Button background
-                            RoundedRectangle(cornerRadius: 18)
-                                .fill(
-                                    LinearGradient(
-                                        colors: [
-                                            Color(red: 220/255, green: 38/255, blue: 38/255).opacity(0.8),
-                                            Color(red: 185/255, green: 28/255, blue: 28/255).opacity(0.8)
-                                        ],
-                                        startPoint: .topLeading,
-                                        endPoint: .bottomTrailing
-                                    )
-                                )
-                                .overlay(
-                                    RoundedRectangle(cornerRadius: 18)
-                                        .stroke(
-                                            LinearGradient(
-                                                colors: [
-                                                    Color.white.opacity(0.8),
-                                                    Color.white.opacity(0.2)
-                                                ],
-                                                startPoint: .topLeading,
-                                                endPoint: .bottomTrailing
-                                            ),
-                                            lineWidth: 1.5
-                                        )
-                                )
-                                .shadow(
-                                    color: Color(red: 220/255, green: 38/255, blue: 38/255).opacity(0.5),
-                                    radius: 15,
-                                    x: 0,
-                                    y: 0
-                                )
+                    VStack(spacing: 20) {
+                        // Title with enhanced visual style
+                        HStack {
+                            Text("REGIONAL")
+                                .font(.system(size: 28, weight: .black))
+                                .tracking(8)
+                                .foregroundColor(.white)
+                                .shadow(color: redGlow, radius: 8)
+                                .padding(.leading)
                             
-                            HStack(spacing: 14) {
-                                // Map icon with glowing effect
-                                ZStack {
-                                    Circle()
-                                        .fill(Color.white.opacity(0.15))
-                                        .frame(width: 42, height: 42)
-                                    
-                                    Image(systemName: "map.fill")
-                                        .font(.system(size: 22, weight: .bold))
-                                        .foregroundColor(.white)
-                                        .shadow(color: Color.white.opacity(0.8), radius: 2)
-                                }
-                                
-                                VStack(alignment: .leading, spacing: 2) {
-                                    Text("FRIENDS MAP")
-                                        .font(.system(size: 20, weight: .black))
-                                        .tracking(3)
-                                        .foregroundColor(.white)
-                                        .shadow(color: Color.black.opacity(0.3), radius: 1)
-                                    
-                                    Text("See past and live flip session locations!")
-                                        .font(.system(size: 12, weight: .medium))
-                                        .foregroundColor(.white.opacity(0.9))
-                                }
-                                
-                                Spacer()
-                                
-                                // Arrow indicator
-                                Image(systemName: "chevron.right")
-                                    .font(.system(size: 18, weight: .bold))
-                                    .foregroundColor(.white.opacity(0.7))
-                            }
-                            .padding(.horizontal, 20)
+                            Spacer()
                         }
-                        .frame(height: 80)
+                        .padding(.top, 50)
+                        .padding(.bottom, 10)
+                        
+                        // Building selection button - Improved version
+                        BuildingSelectorButton(
+                            buildingName: viewModel.selectedBuilding?.name,
+                            action: {
+                                // Check location permissions before allowing building selection
+                                locationPermissionManager.checkRegionalAvailability { hasPermission in
+                                    if hasPermission {
+                                        viewModel.startBuildingIdentification()
+                                    }
+                                }
+                            },
+                            refreshAction: {
+                                // Check location permissions before refreshing
+                                locationPermissionManager.checkRegionalAvailability { hasPermission in
+                                    if hasPermission {
+                                        viewModel.refreshCurrentBuilding()
+                                    }
+                                }
+                            },
+                            isRefreshing: $viewModel.isRefreshing
+                        )
+                        
+                        // Regional Leaderboard with improved layout
+                        RegionalLeaderboard(viewModel: viewModel.leaderboardViewModel)
+                            .padding(.horizontal)
+                        
+                        Spacer(minLength: 20) // Add minimum spacing
+                        
+                        // Map Button - Fixed at bottom with a glowing effect
+                        Button(action: {
+                            // Check for map consent and location permissions
+                            showMapView()
+                        }) {
+                            ZStack {
+                                // Button background
+                                RoundedRectangle(cornerRadius: 18)
+                                    .fill(
+                                        LinearGradient(
+                                            colors: [
+                                                Color(red: 220/255, green: 38/255, blue: 38/255).opacity(0.8),
+                                                Color(red: 185/255, green: 28/255, blue: 28/255).opacity(0.8)
+                                            ],
+                                            startPoint: .topLeading,
+                                            endPoint: .bottomTrailing
+                                        )
+                                    )
+                                    .overlay(
+                                        RoundedRectangle(cornerRadius: 18)
+                                            .stroke(
+                                                LinearGradient(
+                                                    colors: [
+                                                        Color.white.opacity(0.8),
+                                                        Color.white.opacity(0.2)
+                                                    ],
+                                                    startPoint: .topLeading,
+                                                    endPoint: .bottomTrailing
+                                                ),
+                                                lineWidth: 1.5
+                                            )
+                                    )
+                                    .shadow(
+                                        color: Color(red: 220/255, green: 38/255, blue: 38/255).opacity(0.5),
+                                        radius: 15,
+                                        x: 0,
+                                        y: 0
+                                    )
+                                
+                                HStack(spacing: 14) {
+                                    // Map icon with glowing effect
+                                    ZStack {
+                                        Circle()
+                                            .fill(Color.white.opacity(0.15))
+                                            .frame(width: 42, height: 42)
+                                        
+                                        Image(systemName: "map.fill")
+                                            .font(.system(size: 22, weight: .bold))
+                                            .foregroundColor(.white)
+                                            .shadow(color: Color.white.opacity(0.8), radius: 2)
+                                    }
+                                    
+                                    VStack(alignment: .leading, spacing: 2) {
+                                        Text("FRIENDS MAP")
+                                            .font(.system(size: 20, weight: .black))
+                                            .tracking(3)
+                                            .foregroundColor(.white)
+                                            .shadow(color: Color.black.opacity(0.3), radius: 1)
+                                        
+                                        Text("See past and live flip session locations!")
+                                            .font(.system(size: 12, weight: .medium))
+                                            .foregroundColor(.white.opacity(0.9))
+                                    }
+                                    
+                                    Spacer()
+                                    
+                                    // Arrow indicator
+                                    Image(systemName: "chevron.right")
+                                        .font(.system(size: 18, weight: .bold))
+                                        .foregroundColor(.white.opacity(0.7))
+                                }
+                                .padding(.horizontal, 20)
+                            }
+                            .frame(height: 80)
+                        }
+                        .padding(.horizontal, 20)
+                        .padding(.bottom, 30)
                     }
-                    .padding(.horizontal, 20)
-                    .padding(.bottom, 30)
+                    .padding(.bottom, 20) // Add padding to ensure content is not cut off
                 }
-            }
+            } // End of ScrollView
             .sheet(isPresented: $viewModel.showBuildingSelection) {
                 BuildingSelectionView(
                     isPresented: $viewModel.showBuildingSelection,
@@ -284,21 +288,29 @@ struct RegionalView: View {
                 secondaryButton: .cancel()
             )
         }
+        .background(regionalGradient.edgesIgnoringSafeArea(.all))
     }
     
     // Show map with permission checks and privacy alert if needed
     func showMapView() {
+        print("Map button tapped, starting map view process")
+        
         // First check location permissions
         locationPermissionManager.checkRegionalAvailability { hasPermission in
+            print("Location permission check result: \(hasPermission)")
+            
             if hasPermission {
-                // Skip the consent check
-                DispatchQueue.main.async {
-                    // Force accept map privacy for existing users
-                    // This is a workaround to get the map working again
-                    MapConsentManager.shared.acceptMapPrivacy()
+                // Then check map consent
+                MapConsentManager.shared.checkAndRequestConsent { consentGranted in
+                    print("Map consent check result: \(consentGranted)")
                     
-                    // Open the map
-                    self.showMap = true
+                    if consentGranted {
+                        // Explicitly set on main thread
+                        DispatchQueue.main.async {
+                            print("Opening map view")
+                            self.showMap = true
+                        }
+                    }
                 }
             }
         }

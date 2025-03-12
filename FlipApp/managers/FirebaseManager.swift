@@ -304,21 +304,12 @@ extension FirebaseManager {
                 }
             }
     }
-
-    
     func saveSessionLocation(session: CompletedSession) {
         let sessionId = "\(session.userId)_\(Int(Date().timeIntervalSince1970))"
         
-        // Debug logging for duration
-        print("💾 Saving session duration: \(session.duration) minutes, actual duration: \(session.actualDuration) minutes")
-        
-        // Ensure we have a valid actual duration - but don't cap it unnecessarily
-        let validActualDuration = max(1, session.actualDuration) // Ensure at least 1 minute
-        
-        // Add warning if duration calculation seems wrong
-        if validActualDuration <= 1 && session.duration > 5 {
-            print("⚠️ WARNING: Duration calculation may be incorrect! Target: \(session.duration)m, Actual: \(validActualDuration)m")
-        }
+        // CRITICAL FIX: Make sure actualDuration is calculated properly
+        // Only apply a minimum if it makes sense
+        let validActualDuration = session.actualDuration
         
         var sessionData: [String: Any] = [
             "userId": session.userId,
@@ -328,7 +319,7 @@ extension FirebaseManager {
             "lastFlipTime": Timestamp(date: Date()),
             "lastFlipWasSuccessful": session.wasSuccessful,
             "sessionDuration": session.duration,
-            "actualDuration": validActualDuration, // Ensure we have a valid value
+            "actualDuration": NSNumber(value: validActualDuration),
             "sessionStartTime": Timestamp(date: session.startTime),
             "sessionEndTime": Timestamp(date: Date()),
             "createdAt": FieldValue.serverTimestamp()
@@ -340,14 +331,6 @@ extension FirebaseManager {
             sessionData["buildingName"] = building.name
             sessionData["buildingLatitude"] = building.coordinate.latitude
             sessionData["buildingLongitude"] = building.coordinate.longitude
-        }
-        
-        print("💾 Saving session: \(sessionId)")
-        print("📍 Location: \(session.location.latitude), \(session.location.longitude)")
-        print("⏱️ Duration: \(session.duration)m / Actual: \(validActualDuration)m")
-        
-        if let building = session.building {
-            print("🏢 Building: \(building.name) [ID: \(building.id)]")
         }
         
         // Save to Firestore
