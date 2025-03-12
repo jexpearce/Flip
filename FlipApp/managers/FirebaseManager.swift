@@ -306,9 +306,19 @@ extension FirebaseManager {
     }
 
     
-    // Add this version of updateLocationDuringSession to use in AppManager
     func saveSessionLocation(session: CompletedSession) {
         let sessionId = "\(session.userId)_\(Int(Date().timeIntervalSince1970))"
+        
+        // Debug logging for duration
+        print("💾 Saving session duration: \(session.duration) minutes, actual duration: \(session.actualDuration) minutes")
+        
+        // Ensure we have a valid actual duration - but don't cap it unnecessarily
+        let validActualDuration = max(1, session.actualDuration) // Ensure at least 1 minute
+        
+        // Add warning if duration calculation seems wrong
+        if validActualDuration <= 1 && session.duration > 5 {
+            print("⚠️ WARNING: Duration calculation may be incorrect! Target: \(session.duration)m, Actual: \(validActualDuration)m")
+        }
         
         var sessionData: [String: Any] = [
             "userId": session.userId,
@@ -318,7 +328,7 @@ extension FirebaseManager {
             "lastFlipTime": Timestamp(date: Date()),
             "lastFlipWasSuccessful": session.wasSuccessful,
             "sessionDuration": session.duration,
-            "actualDuration": session.actualDuration,
+            "actualDuration": validActualDuration, // Ensure we have a valid value
             "sessionStartTime": Timestamp(date: session.startTime),
             "sessionEndTime": Timestamp(date: Date()),
             "createdAt": FieldValue.serverTimestamp()
@@ -334,6 +344,8 @@ extension FirebaseManager {
         
         print("💾 Saving session: \(sessionId)")
         print("📍 Location: \(session.location.latitude), \(session.location.longitude)")
+        print("⏱️ Duration: \(session.duration)m / Actual: \(validActualDuration)m")
+        
         if let building = session.building {
             print("🏢 Building: \(building.name) [ID: \(building.id)]")
         }
@@ -343,7 +355,7 @@ extension FirebaseManager {
             if let error = error {
                 print("❌ SAVE ERROR: \(error.localizedDescription)")
             } else {
-                print("✅ SESSION SAVED SUCCESSFULLY: \(sessionId)")
+                print("✅ SESSION SAVED SUCCESSFULLY: \(sessionId) with duration \(validActualDuration) minutes")
                 
                 // Prune old sessions to keep the map clean
                 self?.pruneOldSessions(forUserId: session.userId)

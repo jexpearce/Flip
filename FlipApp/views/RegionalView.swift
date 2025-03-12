@@ -68,7 +68,6 @@ struct BuildingSelectorButton: View {
         .padding(.horizontal)
     }
 }
-
 struct RegionalView: View {
     @StateObject private var viewModel = RegionalViewModel.shared
     @EnvironmentObject var viewRouter: ViewRouter
@@ -153,10 +152,20 @@ struct RegionalView: View {
                     BuildingSelectorButton(
                         buildingName: viewModel.selectedBuilding?.name,
                         action: {
-                            viewModel.startBuildingIdentification()
+                            // Check location permissions before allowing building selection
+                            locationPermissionManager.checkRegionalAvailability { hasPermission in
+                                if hasPermission {
+                                    viewModel.startBuildingIdentification()
+                                }
+                            }
                         },
                         refreshAction: {
-                            viewModel.refreshCurrentBuilding()
+                            // Check location permissions before refreshing
+                            locationPermissionManager.checkRegionalAvailability { hasPermission in
+                                if hasPermission {
+                                    viewModel.refreshCurrentBuilding()
+                                }
+                            }
                         },
                         isRefreshing: $viewModel.isRefreshing
                     )
@@ -169,7 +178,8 @@ struct RegionalView: View {
                     
                     // Map Button - Fixed at bottom with a glowing effect
                     Button(action: {
-                        showMap = true
+                        // Check for map consent and location permissions
+                        showMapView()
                     }) {
                         ZStack {
                             // Button background
@@ -262,6 +272,35 @@ struct RegionalView: View {
         .onAppear {
             checkLocationPermission()
             viewModel.loadCurrentBuilding()
+        }
+        // Show "Open Settings" alert when location permission is denied
+        .alert(isPresented: $locationPermissionManager.showSettingsAlert) {
+            Alert(
+                title: Text("Location Permission Required"),
+                message: Text("Regional features need location access. Please go to Settings and enable location for Flip."),
+                primaryButton: .default(Text("Open Settings")) {
+                    LocationPermissionManager.shared.openSettings()
+                },
+                secondaryButton: .cancel()
+            )
+        }
+    }
+    
+    // Show map with permission checks and privacy alert if needed
+    func showMapView() {
+        // First check location permissions
+        locationPermissionManager.checkRegionalAvailability { hasPermission in
+            if hasPermission {
+                // Skip the consent check
+                DispatchQueue.main.async {
+                    // Force accept map privacy for existing users
+                    // This is a workaround to get the map working again
+                    MapConsentManager.shared.acceptMapPrivacy()
+                    
+                    // Open the map
+                    self.showMap = true
+                }
+            }
         }
     }
     

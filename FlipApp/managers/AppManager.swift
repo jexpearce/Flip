@@ -1756,7 +1756,15 @@ class AppManager: NSObject, ObservableObject {
             print("⚠️ No building selected for this session")
         }
         
-        // Create common location data
+        // Calculate elapsed time and accurate duration
+        let elapsedSeconds = selectedMinutes * 60 - remainingSeconds
+        let actualDuration = max(1, elapsedSeconds / 60) // Convert to minutes, minimum 1
+        
+        // Debug logs for duration calculation
+        print("🕙 Duration calculation: selectedMinutes=\(selectedMinutes), remainingSeconds=\(remainingSeconds)")
+        print("🕙 Elapsed seconds: \(elapsedSeconds), actual duration in minutes: \(actualDuration)")
+        
+        // Create common location data with more accurate duration info
         var locationData: [String: Any] = [
             "userId": userId,
             "username": username,
@@ -1768,7 +1776,8 @@ class AppManager: NSObject, ObservableObject {
             "lastFlipTime": Timestamp(date: Date()),
             "lastFlipWasSuccessful": currentState != .failed,
             "sessionDuration": selectedMinutes,
-            "sessionStartTime": Timestamp(date: Date().addingTimeInterval(-Double(remainingSeconds))),
+            "actualDuration": actualDuration, // This is critical - ensure actual time is recorded
+            "sessionStartTime": Timestamp(date: Date().addingTimeInterval(-Double(elapsedSeconds))),
             "locationUpdatedAt": Timestamp(date: Date())
         ]
         
@@ -1781,17 +1790,27 @@ class AppManager: NSObject, ObservableObject {
         }
         
         // Update location data for current session
-        FirebaseManager.shared.db.collection("locations").document(userId).setData(locationData, merge: true)
+        FirebaseManager.shared.db.collection("locations").document(userId).setData(locationData, merge: true) { error in
+            if let error = error {
+                print("❌ Error updating location data: \(error.localizedDescription)")
+            } else {
+                print("✅ Updated location data with duration: \(actualDuration) minutes")
+            }
+        }
         
         // Only save session data if session completed or failed
         if currentState == .completed || currentState == .failed {
+            // Calculate accurate actual duration - this is critical
+            let actualDurationMinutes = max(1, (selectedMinutes * 60 - remainingSeconds) / 60)
+            print("🕰️ Session completed with actual duration: \(actualDurationMinutes) minutes")
+            
             // Create completed session data
             let completedSession = CompletedSession(
                 userId: userId,
                 username: username,
                 location: location.coordinate,
                 duration: selectedMinutes,
-                actualDuration: (selectedMinutes * 60 - remainingSeconds) / 60,
+                actualDuration: actualDurationMinutes,
                 wasSuccessful: currentState == .completed,
                 startTime: Date().addingTimeInterval(-Double(selectedMinutes * 60 - remainingSeconds)),
                 building: currentBuilding
