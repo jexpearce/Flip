@@ -80,6 +80,173 @@ extension FirebaseManager {
         }
     }
     // Add this to FirebaseManager.swift
+    func inspectUserData() {
+        guard let currentUserId = Auth.auth().currentUser?.uid else {
+            print("⚠️ USER INSPECTION: No current user")
+            return
+        }
+        
+        print("🔍 STARTING USER DATA INSPECTION")
+        
+        // First check current user data
+        db.collection("users").document(currentUserId).getDocument { document, error in
+            if let error = error {
+                print("❌ USER INSPECTION ERROR: \(error.localizedDescription)")
+                return
+            }
+            
+            if let data = document?.data() {
+                print("👤 CURRENT USER (\(currentUserId)) RAW DATA: \(data)")
+                
+                // Check username field specifically
+                if let username = data["username"] as? String {
+                    print("✅ Current user username exists: '\(username)'")
+                    
+                    // Check if username is empty
+                    if username.isEmpty {
+                        print("⚠️ Current user username is EMPTY")
+                    }
+                    
+                    // Try to update current user's username in FirebaseManager
+                    if self.currentUser?.username.isEmpty ?? true {
+                        print("⚠️ Current user object has empty username, updating it to: \(username)")
+                        
+                        // Create a new FlipUser with the correct username
+                        let updatedUser = FirebaseManager.FlipUser(
+                            id: currentUserId,
+                            username: username,
+                            totalFocusTime: self.currentUser?.totalFocusTime ?? 0,
+                            totalSessions: self.currentUser?.totalSessions ?? 0,
+                            longestSession: self.currentUser?.longestSession ?? 0,
+                            friends: self.currentUser?.friends ?? [],
+                            friendRequests: self.currentUser?.friendRequests ?? [],
+                            sentRequests: self.currentUser?.sentRequests ?? [],
+                            profileImageURL: self.currentUser?.profileImageURL
+                        )
+                        
+                        // Update the current user
+                        DispatchQueue.main.async {
+                            self.currentUser = updatedUser
+                        }
+                    }
+                } else {
+                    print("❌ Current user is missing username field!")
+                    
+                    // Check if there's a displayName in Auth that we can use
+                    if let displayName = Auth.auth().currentUser?.displayName, !displayName.isEmpty {
+                        print("🔄 Found displayName in Auth: \(displayName), updating Firestore...")
+                        
+                        // Update Firestore with the displayName as username
+                        self.db.collection("users").document(currentUserId).updateData([
+                            "username": displayName
+                        ]) { error in
+                            if let error = error {
+                                print("❌ Failed to update missing username: \(error.localizedDescription)")
+                            } else {
+                                print("✅ Successfully repaired missing username field")
+                                
+                                // Also update local user object
+                                if let currentUser = self.currentUser {
+                                    let updatedUser = FirebaseManager.FlipUser(
+                                        id: currentUser.id,
+                                        username: displayName,
+                                        totalFocusTime: currentUser.totalFocusTime,
+                                        totalSessions: currentUser.totalSessions,
+                                        longestSession: currentUser.longestSession,
+                                        friends: currentUser.friends,
+                                        friendRequests: currentUser.friendRequests,
+                                        sentRequests: currentUser.sentRequests,
+                                        profileImageURL: currentUser.profileImageURL
+                                    )
+                                    
+                                    DispatchQueue.main.async {
+                                        self.currentUser = updatedUser
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            } else {
+                print("❌ No user document found for current user!")
+            }
+            
+            // Then check friend data
+            self.db.collection("users").document(currentUserId).getDocument { document, error in
+                if let userData = try? document?.data(as: FirebaseManager.FlipUser.self) {
+                    print("👥 Checking \(userData.friends.count) friends...")
+                    
+                    for friendId in userData.friends {
+                        self.db.collection("users").document(friendId).getDocument { friendDoc, friendError in
+                            if let friendError = friendError {
+                                print("❌ Error getting friend data for \(friendId): \(friendError.localizedDescription)")
+                                return
+                            }
+                            
+                            if let friendData = friendDoc?.data() {
+                                if let friendUsername = friendData["username"] as? String {
+                                    print("👤 Friend \(friendId): username = '\(friendUsername)'")
+                                    
+                                    if friendUsername.isEmpty {
+                                        print("⚠️ Friend \(friendId) has EMPTY username")
+                                    }
+                                } else {
+                                    print("❌ Friend \(friendId) is MISSING username field")
+                                }
+                            } else {
+                                print("❌ No document found for friend \(friendId)")
+                            }
+                        }
+                    }
+                }
+            }
+            
+            // Check recent sessions to ensure they have usernames
+            self.db.collection("sessions")
+                .whereField("userId", isEqualTo: currentUserId)
+                .order(by: "startTime", descending: true)
+                .limit(to: 5)
+                .getDocuments { snapshot, error in
+                    guard let documents = snapshot?.documents else {
+                        print("❌ No recent sessions found")
+                        return
+                    }
+                    
+                    print("📋 Checking \(documents.count) recent sessions...")
+                    
+                    for document in documents {
+                        let data = document.data()
+                        let sessionId = document.documentID
+                        
+                        if let username = data["username"] as? String {
+                            print("📝 Session \(sessionId): username = '\(username)'")
+                            
+                            if username.isEmpty {
+                                print("⚠️ Session \(sessionId) has EMPTY username")
+                                
+                                // Try to repair this session
+                                if let currentUsername = self.currentUser?.username, !currentUsername.isEmpty {
+                                    print("🔄 Repairing session \(sessionId) with username: \(currentUsername)")
+                                    
+                                    self.db.collection("sessions").document(sessionId).updateData([
+                                        "username": currentUsername
+                                    ]) { error in
+                                        if let error = error {
+                                            print("❌ Failed to repair session: \(error.localizedDescription)")
+                                        } else {
+                                            print("✅ Successfully repaired session \(sessionId)")
+                                        }
+                                    }
+                                }
+                            }
+                        } else {
+                            print("❌ Session \(sessionId) is MISSING username field")
+                        }
+                    }
+                }
+        }
+    }
+    // Add this to FirebaseManager.swift
     func pruneOldSessions(forUserId userId: String) {
         // Get a timestamp for 30 days ago
         let calendar = Calendar.current

@@ -500,65 +500,157 @@ struct ProfileImage: View {
     private func loadUserData() {
         isLoading = true
         
-        // First check if we already have a cached username
+        print("🖼️ ProfileImage loading data for user: \(userId)")
+        
+        // First check if we already have a cached username from the ViewModel
         if let cachedUser = RegionalViewModel.shared.leaderboardViewModel.userCache[userId] {
-            self.username = cachedUser.username
-            self.imageURL = cachedUser.profileImageURL
-            isLoading = false
-            return
+            if !cachedUser.username.isEmpty {
+                print("✅ Using cached username: \(cachedUser.username)")
+                self.username = cachedUser.username
+                self.imageURL = cachedUser.profileImageURL
+                isLoading = false
+                return
+            } else {
+                print("⚠️ Cached username is empty, fetching fresh data")
+            }
         }
         
-        print("Loading profile data for user ID: \(userId)")
+        // Next check if the user is already in the leaderboard entries
+        for entry in RegionalViewModel.shared.leaderboardViewModel.leaderboardEntries {
+            if entry.userId == userId && !entry.username.isEmpty {
+                print("✅ Found username in leaderboard entries: \(entry.username)")
+                self.username = entry.username
+                
+                // Also cache this for future use
+                let cacheItem = UserCacheItem(
+                    userId: userId,
+                    username: entry.username,
+                    profileImageURL: nil // We don't have the URL yet
+                )
+                RegionalViewModel.shared.leaderboardViewModel.userCache[userId] = cacheItem
+                
+                // Still fetch the profile image
+                fetchProfileImage()
+                return
+            }
+        }
         
-        FirebaseManager.shared.db.collection("users").document(userId).getDocument { snapshot, error in
+        // If not found in cache, fetch from Firestore
+        fetchCompleteUserData()
+    }
+    private func fetchProfileImage() {
+        // Only fetch the profile image URL
+        FirebaseManager.shared.db.collection("users").document(userId).getDocument {  snapshot, error in
             if let error = error {
-                print("❌ Error loading user profile: \(error.localizedDescription)")
-                DispatchQueue.main.async {
-                    self.isLoading = false
-                    self.username = "User \(self.userId.prefix(4))"
-                }
+                print("❌ Error fetching profile image: \(error.localizedDescription)")
+                self.isLoading = false
                 return
             }
             
-            if let data = snapshot?.data() {
-                // Extract profile image URL
-                let profileURL = data["profileImageURL"] as? String
-                
-                // Important: Make sure we have a fallback username
-                if let fetchedUsername = data["username"] as? String, !fetchedUsername.isEmpty {
-                    print("✅ Loaded username: \(fetchedUsername) for user ID: \(userId)")
+            if let data = snapshot?.data(), let profileURL = data["profileImageURL"] as? String {
+                DispatchQueue.main.async {
+                    self.imageURL = profileURL
+                    self.isLoading = false
                     
-                    // Cache this result
-                    let userCache = UserCacheItem(
-                        userId: userId,
-                        username: fetchedUsername,
-                        profileImageURL: profileURL
-                    )
-                    RegionalViewModel.shared.leaderboardViewModel.userCache[userId] = userCache
-                    
-                    DispatchQueue.main.async {
-                        self.isLoading = false
-                        self.imageURL = profileURL
-                        self.username = fetchedUsername
-                    }
-                } else {
-                    print("⚠️ No username found in data for user ID: \(userId)")
-                    DispatchQueue.main.async {
-                        self.isLoading = false
-                        self.imageURL = profileURL
-                        self.username = "User \(self.userId.prefix(4))"
+                    // Update cache with profile URL
+                    if var cachedUser = RegionalViewModel.shared.leaderboardViewModel.userCache[userId] {
+                        cachedUser.profileImageURL = profileURL
+                        RegionalViewModel.shared.leaderboardViewModel.userCache[userId] = cachedUser
                     }
                 }
             } else {
-                print("❌ No user data found for ID: \(userId)")
                 DispatchQueue.main.async {
                     self.isLoading = false
-                    self.username = "User \(self.userId.prefix(4))"
                 }
             }
         }
     }
+
+    private func fetchCompleteUserData() {
+        print("🔍 Fetching complete user data for: \(userId)")
+        
+        // First try with dispatch group and multiple retry strategy
+        var retryCount = 0
+        let maxRetries = 2
+        
+        func attemptFetch() {
+            FirebaseManager.shared.db.collection("users").document(userId).getDocument { snapshot, error in
+                if let error = error {
+                    print("❌ Error loading user data (attempt \(retryCount+1)): \(error.localizedDescription)")
+                    
+                    if retryCount < maxRetries {
+                        retryCount += 1
+                        print("🔄 Retrying fetch...")
+                        attemptFetch()
+                    } else {
+                        print("⚠️ All retries failed, using fallback name")
+                        DispatchQueue.main.async {
+                            self.username = "User \(userId.prefix(4))"
+                            self.isLoading = false
+                        }
+                    }
+                    return
+                }
+                
+                if let data = snapshot?.data() {
+                    // Try to get username directly
+                    if let fetchedUsername = data["username"] as? String, !fetchedUsername.isEmpty {
+                        print("✅ Successfully loaded username: \(fetchedUsername)")
+                        
+                        // Cache this result
+                        let userCache = UserCacheItem(
+                            userId: userId,
+                            username: fetchedUsername,
+                            profileImageURL: data["profileImageURL"] as? String
+                        )
+                        RegionalViewModel.shared.leaderboardViewModel.userCache[userId] = userCache
+                        
+                        DispatchQueue.main.async {
+                            self.username = fetchedUsername
+                            self.imageURL = data["profileImageURL"] as? String
+                            self.isLoading = false
+                        }
+                    } else {
+                        // Try alternative methods to get a name
+                        print("⚠️ Username field is empty or missing")
+                        
+                        // Check if user's document has any other identifying fields
+                        if let email = data["email"] as? String, !email.isEmpty {
+                            let username = email.components(separatedBy: "@").first ?? "User"
+                            print("🔤 Using email-derived username: \(username)")
+                            
+                            DispatchQueue.main.async {
+                                self.username = username
+                                self.imageURL = data["profileImageURL"] as? String
+                                self.isLoading = false
+                            }
+                            
+                            // Cache this result
+                            let userCache = UserCacheItem(
+                                userId: userId,
+                                username: username,
+                                profileImageURL: data["profileImageURL"] as? String
+                            )
+                            RegionalViewModel.shared.leaderboardViewModel.userCache[userId] = userCache
+                        }
+                    }
+                } else {
+                    print("❌ No user data found for ID: \(userId)")
+                    DispatchQueue.main.async {
+                        self.username = "User \(self.userId.prefix(4))"
+                        self.isLoading = false
+                    }
+                }
+            }
+        }
+        
+        // Start the first attempt
+        attemptFetch()
+    }
 }
+
+
+
 // Default profile image to use when user has no profile picture
 struct DefaultProfileImage: View {
     let username: String
@@ -589,7 +681,7 @@ struct DefaultProfileImage: View {
 struct UserCacheItem {
     let userId: String
     let username: String
-    let profileImageURL: String?
+    var profileImageURL: String?
 }
 
 // STRUCTURE 2: RegionalLeaderboardViewModel class - moved outside struct

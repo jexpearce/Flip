@@ -657,6 +657,7 @@ class FeedViewModel: ObservableObject {
 
     func loadFeed() {
         guard let userId = Auth.auth().currentUser?.uid else { return }
+        print("🔄 Loading feed for user: \(userId)")
         isLoading = true
         cleanupLikesListeners()
         cleanupCommentsListeners()
@@ -664,6 +665,7 @@ class FeedViewModel: ObservableObject {
         firebaseManager.db.collection("users").document(userId)
             .getDocument { [weak self] document, error in
                 if let error = error {
+                    print("❌ Error fetching user data: \(error.localizedDescription)")
                     DispatchQueue.main.async {
                         self?.showError = true
                         self?.errorMessage = error.localizedDescription
@@ -672,14 +674,19 @@ class FeedViewModel: ObservableObject {
                     return
                 }
 
-                guard
-                    let userData = try? document?.data(
-                        as: FirebaseManager.FlipUser.self)
-                else {
+                guard let userData = try? document?.data(as: FirebaseManager.FlipUser.self) else {
+                    print("❌ Failed to decode user data")
                     DispatchQueue.main.async {
                         self?.isLoading = false
                     }
                     return
+                }
+
+                // Proactively check current user data
+                if !userData.username.isEmpty {
+                    print("✅ Current user username: \(userData.username)")
+                } else {
+                    print("⚠️ Current user has EMPTY username!")
                 }
 
                 // Load your own user data - make sure we have the most current data
@@ -689,28 +696,61 @@ class FeedViewModel: ObservableObject {
                 var allUserIds = userData.friends
                 allUserIds.append(userId) // Add your own userId to the query
                 
-                // Load latest user data for all friends - this ensures we have up-to-date stats
-                for friendId in userData.friends {
-                    self?.loadUserData(userId: friendId)
+                // NEW: Load all user data FIRST using a DispatchGroup before proceeding
+                let group = DispatchGroup()
+                var usernames: [String: String] = [:]
+                
+                for friendId in allUserIds {
+                    group.enter()
+                    
+                    self?.firebaseManager.db.collection("users").document(friendId).getDocument { document, error in
+                        defer { group.leave() }
+                        
+                        if let error = error {
+                            print("❌ Error loading user \(friendId): \(error.localizedDescription)")
+                            return
+                        }
+                        
+                        // Try to get username
+                        if let userData = document?.data(), let username = userData["username"] as? String, !username.isEmpty {
+                            print("✅ Loaded username for \(friendId): \(username)")
+                            usernames[friendId] = username
+                            
+                            // Also cache in the users dictionary
+                            if let userData = try? document?.data(as: FirebaseManager.FlipUser.self) {
+                                DispatchQueue.main.async {
+                                    self?.users[friendId] = userData
+                                }
+                            }
+                        } else {
+                            print("⚠️ Failed to load username for \(friendId)")
+                        }
+                    }
                 }
                 
-                if allUserIds.isEmpty {
-                    // If you have no friends, just load your own sessions
-                    self?.loadCurrentUserSessions(userId: userId)
-                } else {
-                    // Load sessions from both you and your friends
-                    self?.loadFriendSessions(userIds: allUserIds)
+                // Continue loading sessions only after all user data is fetched
+                group.notify(queue: .main) {
+                    print("👥 Loaded \(usernames.count) usernames")
+                    
+                    if allUserIds.isEmpty {
+                        // If you have no friends, just load your own sessions
+                        self?.loadCurrentUserSessions(userId: userId)
+                    } else {
+                        // Load sessions from both you and your friends
+                        self?.loadFriendSessions(userIds: allUserIds)
+                    }
                 }
             }
     }
     func loadUserData(userId: String, completion: (() -> Void)? = nil) {
         // Skip if we already have this user's data and it has a valid username
         if let existingUser = users[userId], !existingUser.username.isEmpty && existingUser.username != "User" {
+            print("📋 Using cached user data for \(userId): \(existingUser.username)")
             completion?()
             return
         }
         
-        print("Loading user data for ID: \(userId)")
+        print("🔍 Loading user data for ID: \(userId)")
         
         firebaseManager.db.collection("users").document(userId)
             .getDocument { [weak self] document, error in
@@ -721,26 +761,45 @@ class FeedViewModel: ObservableObject {
                 }
                 
                 if let document = document, document.exists {
-                    if let userData = try? document.data(as: FirebaseManager.FlipUser.self) {
-                        DispatchQueue.main.async {
-                            // Only update if we got valid username
+                    // First try to get raw username data directly
+                    let rawData = document.data()
+                    
+                    if let rawUsername = rawData?["username"] as? String, !rawUsername.isEmpty {
+                        print("✅ Found raw username for \(userId): \(rawUsername)")
+                        
+                        // Try to decode full user data
+                        if let userData = try? document.data(as: FirebaseManager.FlipUser.self) {
+                            // Verify username isn't empty in decoded data
                             if !userData.username.isEmpty {
-                                self?.users[userId] = userData
-                                print("✅ Loaded user data for: \(userData.username)")
+                                DispatchQueue.main.async {
+                                    self?.users[userId] = userData
+                                    print("✅ Stored full user data for: \(userData.username)")
+                                }
                             } else {
-                                print("⚠️ User exists but has empty username: \(userId)")
+                                // Username is empty in decoded data, create a fixed version
+                                print("⚠️ Username empty in decoded data, creating fixed version")
+                                let fixedUser = FirebaseManager.FlipUser(
+                                    id: userId,
+                                    username: rawUsername,
+                                    totalFocusTime: userData.totalFocusTime,
+                                    totalSessions: userData.totalSessions,
+                                    longestSession: userData.longestSession,
+                                    friends: userData.friends,
+                                    friendRequests: userData.friendRequests,
+                                    sentRequests: userData.sentRequests,
+                                    profileImageURL: userData.profileImageURL
+                                )
+                                
+                                DispatchQueue.main.async {
+                                    self?.users[userId] = fixedUser
+                                }
                             }
-                        }
-                    } else {
-                        // Document exists but couldn't be parsed as FlipUser
-                        // Try to manually extract the username as fallback
-                        if let userData = document.data(), let username = userData["username"] as? String, !username.isEmpty {
-                            print("⚠️ Fallback: Manually extracted username for \(userId): \(username)")
-                            
-                            // Create a minimal user object with the username
+                        } else {
+                            // Couldn't decode full user, create minimal version with username
+                            print("⚠️ Couldn't decode full user, creating minimal version")
                             let fallbackUser = FirebaseManager.FlipUser(
                                 id: userId,
-                                username: username,
+                                username: rawUsername,
                                 totalFocusTime: 0,
                                 totalSessions: 0,
                                 longestSession: 0,
@@ -752,9 +811,9 @@ class FeedViewModel: ObservableObject {
                             DispatchQueue.main.async {
                                 self?.users[userId] = fallbackUser
                             }
-                        } else {
-                            print("❌ Could not parse user data for \(userId) and no fallback available")
                         }
+                    } else {
+                        print("❌ No valid username for \(userId) in document data")
                     }
                 } else {
                     print("❌ No user document found for ID: \(userId)")
