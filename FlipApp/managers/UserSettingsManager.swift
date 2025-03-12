@@ -104,6 +104,9 @@ class UserSettingsManager {
     var areFriendFailureNotificationsEnabled: Bool {
         return getSetting(key: "friendFailureNotifications", defaultValue: true)
     }
+    var areCommentNotificationsEnabled: Bool {
+        return getSetting(key: "commentNotifications", defaultValue: true)
+    }
     
     // Get visibility level
     var visibilityLevel: String {

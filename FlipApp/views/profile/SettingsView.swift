@@ -6,6 +6,7 @@ class SettingsViewModel: ObservableObject {
     @Published var friendFailureNotifications = true
     @Published var visibilityLevel: LocationVisibilityLevel = .friendsOnly
     @Published var showSessionHistory = true
+    @Published var commentNotifications = true
     
     private let db = Firestore.firestore()
     
@@ -24,6 +25,9 @@ class SettingsViewModel: ObservableObject {
                 // Load friend failure notification setting (default to ON if not set)
                 self.friendFailureNotifications = data["friendFailureNotifications"] as? Bool ?? true
                 
+                // Load comment notifications setting (default to ON if not set)
+                self.commentNotifications = data["commentNotifications"] as? Bool ?? true
+                
                 // Load visibility level (default to friendsOnly if not set)
                 if let visibilityString = data["visibilityLevel"] as? String,
                    let visibility = LocationVisibilityLevel(rawValue: visibilityString) {
@@ -35,6 +39,7 @@ class SettingsViewModel: ObservableObject {
             } else {
                 // Set defaults and save them
                 self.friendFailureNotifications = true
+                self.commentNotifications = true
                 self.visibilityLevel = .friendsOnly
                 self.showSessionHistory = true
                 self.saveSettings()
@@ -47,6 +52,7 @@ class SettingsViewModel: ObservableObject {
         
         let settings: [String: Any] = [
             "friendFailureNotifications": friendFailureNotifications,
+            "commentNotifications": commentNotifications,
             "visibilityLevel": visibilityLevel.rawValue,
             "showSessionHistory": showSessionHistory,
             "updatedAt": FieldValue.serverTimestamp()
@@ -57,6 +63,10 @@ class SettingsViewModel: ObservableObject {
                 print("Error saving settings: \(error.localizedDescription)")
             }
         }
+    }
+    func toggleCommentNotifications() {
+        commentNotifications.toggle()
+        saveSettings()
     }
     
     func updateVisibilityLevel(_ level: LocationVisibilityLevel) {
@@ -136,6 +146,13 @@ struct SettingsView: View {
                                     isOn: $viewModel.friendFailureNotifications,
                                     action: viewModel.toggleFriendFailureNotifications
                                 )
+                                ToggleSettingRow(
+                                    title: "Comment Notifications",
+                                    subtitle: "Get notified when someone comments on your focus sessions",
+                                    isOn: $viewModel.commentNotifications,
+                                    action: viewModel.toggleCommentNotifications
+                                )
+                                .padding(.top, 10)
                             }
                         }
                         .offset(x: animateSettings ? 0 : -300)

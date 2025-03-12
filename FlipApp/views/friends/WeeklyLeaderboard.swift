@@ -307,6 +307,8 @@ struct WeeklyLeaderboard: View {
         }
     }
 }
+
+
 // Updated data model for leaderboard entries
 struct LeaderboardEntry: Identifiable {
     let id: String
@@ -314,7 +316,7 @@ struct LeaderboardEntry: Identifiable {
     let totalTime: Int
 }
 
-// ViewModel for Leaderboard
+// Fixed ViewModel for Leaderboard
 class LeaderboardViewModel: ObservableObject {
     @Published var leaderboardEntries: [LeaderboardEntry] = []
     @Published var isLoading = false
@@ -325,13 +327,22 @@ class LeaderboardViewModel: ObservableObject {
         guard let currentUserId = Auth.auth().currentUser?.uid else { return }
         isLoading = true
         
+        print("Loading weekly leaderboard for user: \(currentUserId)")
+        
         // First get the user's friends list
         firebaseManager.db.collection("users").document(currentUserId)
             .getDocument { [weak self] document, error in
-                guard let self = self,
-                      let userData = try? document?.data(as: FirebaseManager.FlipUser.self)
-                else {
-                    self?.isLoading = false
+                guard let self = self else { return }
+                
+                if let error = error {
+                    print("Error fetching user data: \(error.localizedDescription)")
+                    self.isLoading = false
+                    return
+                }
+                
+                guard let userData = try? document?.data(as: FirebaseManager.FlipUser.self) else {
+                    print("Failed to decode user data")
+                    self.isLoading = false
                     return
                 }
                 
@@ -339,6 +350,7 @@ class LeaderboardViewModel: ObservableObject {
                 var userIds = userData.friends
                 userIds.append(currentUserId)
                 
+                print("Fetching data for \(userIds.count) users (self + friends)")
                 self.fetchWeeklyTotalFocusTime(for: userIds)
             }
     }
@@ -346,57 +358,140 @@ class LeaderboardViewModel: ObservableObject {
     private func fetchWeeklyTotalFocusTime(for userIds: [String]) {
         let calendar = Calendar.current
         let currentDate = Date()
-        let weekStart = calendar.date(from: calendar.dateComponents([.yearForWeekOfYear, .weekOfYear], from: currentDate))!
         
-        // Fetch all sessions from this week for these users
-        firebaseManager.db.collection("sessions")
-            .whereField("userId", in: userIds)
-            .whereField("wasSuccessful", isEqualTo: true)
-            .order(by: "startTime", descending: true)
-            .getDocuments { [weak self] snapshot, error in
-                guard let self = self,
-                      let documents = snapshot?.documents
-                else {
-                    self?.isLoading = false
-                    return
-                }
+        // Calculate week start - more robust method
+        var components = calendar.dateComponents([.yearForWeekOfYear, .weekOfYear], from: currentDate)
+        components.weekday = 1  // Sunday
+        components.hour = 0
+        components.minute = 0
+        components.second = 0
+        
+        guard let weekStart = calendar.date(from: components) else {
+            print("Error calculating week start")
+            self.isLoading = false
+            return
+        }
+        
+        // For debugging
+        print("Current date: \(currentDate)")
+        print("Week start: \(weekStart)")
+        
+        // First fetch all users to make sure we have usernames
+        var usernames: [String: String] = [:]
+        let group = DispatchGroup()
+        
+        for userId in userIds {
+            group.enter()
+            
+            firebaseManager.db.collection("users").document(userId).getDocument { document, error in
+                defer { group.leave() }
                 
-                // Process sessions
-                let allSessions = documents.compactMap { document -> Session? in
-                    try? document.data(as: Session.self)
-                }
-                
-                // Filter for this week's sessions
-                let thisWeeksSessions = allSessions.filter { session in
-                    calendar.isDate(session.startTime, inSameWeekAs: weekStart)
-                }
-                
-                // Group by user, sum up total time for each
-                var userTotalTimes: [String: (username: String, totalTime: Int)] = [:]
-                
-                for session in thisWeeksSessions {
-                    let userId = session.userId
-                    let username = session.username
-                    let sessionTime = session.actualDuration
-                    
-                    if let existingData = userTotalTimes[userId] {
-                        // Add to existing total
-                        userTotalTimes[userId] = (username, existingData.totalTime + sessionTime)
-                    } else {
-                        // Create new entry
-                        userTotalTimes[userId] = (username, sessionTime)
-                    }
-                }
-                
-                // Convert to leaderboard entries and sort
-                let entries = userTotalTimes.map { userId, details in
-                    LeaderboardEntry(id: userId, username: details.username, totalTime: details.totalTime)
-                }.sorted { $0.totalTime > $1.totalTime }
-                
-                DispatchQueue.main.async {
-                    self.leaderboardEntries = entries
-                    self.isLoading = false
+                if let document = document, let username = document.data()?["username"] as? String {
+                    usernames[userId] = username
+                    print("Fetched username for \(userId): \(username)")
+                } else {
+                    print("Failed to fetch username for \(userId)")
                 }
             }
+        }
+        
+        group.notify(queue: .main) {
+            // Fetch all sessions from this week for these users
+            self.firebaseManager.db.collection("sessions")
+                .whereField("userId", in: userIds)
+                .whereField("wasSuccessful", isEqualTo: true)
+                .order(by: "startTime", descending: true)
+                .getDocuments { [weak self] snapshot, error in
+                    guard let self = self else { return }
+                    
+                    if let error = error {
+                        print("Error fetching sessions: \(error.localizedDescription)")
+                        self.isLoading = false
+                        return
+                    }
+                    
+                    guard let documents = snapshot?.documents else {
+                        print("No documents found")
+                        self.isLoading = false
+                        return
+                    }
+                    
+                    print("Fetched \(documents.count) total sessions")
+                    
+                    // Process sessions with better error handling
+                    var allSessions: [Session] = []
+                    for document in documents {
+                        do {
+                            if let session = try? document.data(as: Session.self) {
+                                allSessions.append(session)
+                            } else {
+                                print("Failed to decode session: \(document.documentID)")
+                            }
+                        } catch {
+                            print("Error decoding session: \(error.localizedDescription)")
+                        }
+                    }
+                    
+                    print("Successfully decoded \(allSessions.count) sessions")
+                    
+                    // Filter for this week's sessions with more debugging
+                    let thisWeeksSessions = allSessions.filter { session in
+                        let isThisWeek = calendar.isDate(session.startTime, inSameWeekAs: weekStart)
+                        if isThisWeek {
+                            print("Session \(session.id) from \(session.startTime) is in this week")
+                        }
+                        return isThisWeek
+                    }
+                    
+                    print("Found \(thisWeeksSessions.count) sessions from this week")
+                    
+                    // Group by user, sum up total time for each
+                    var userTotalTimes: [String: Int] = [:]
+                    
+                    for session in thisWeeksSessions {
+                        let userId = session.userId
+                        let sessionTime = session.actualDuration
+                        
+                        if let existingTime = userTotalTimes[userId] {
+                            // Add to existing total
+                            userTotalTimes[userId] = existingTime + sessionTime
+                        } else {
+                            // Create new entry
+                            userTotalTimes[userId] = sessionTime
+                        }
+                    }
+                    
+                    // Even if no sessions this week, include all users with zero time
+                    for userId in userIds {
+                        if userTotalTimes[userId] == nil {
+                            userTotalTimes[userId] = 0
+                        }
+                    }
+                    
+                    // Convert to leaderboard entries and sort
+                    var entries: [LeaderboardEntry] = []
+                    
+                    for (userId, totalTime) in userTotalTimes {
+                        // Use username from our cache, or fallback to user ID
+                        let username = usernames[userId] ?? "User \(userId.prefix(5))"
+                        
+                        entries.append(LeaderboardEntry(
+                            id: userId,
+                            username: username,
+                            totalTime: totalTime
+                        ))
+                    }
+                    
+                    // Sort by total time (descending)
+                    entries.sort { $0.totalTime > $1.totalTime }
+                    
+                    print("Final leaderboard entries: \(entries.count)")
+                    
+                    DispatchQueue.main.async {
+                        self.leaderboardEntries = entries
+                        self.isLoading = false
+                    }
+                }
+        }
     }
 }

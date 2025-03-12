@@ -266,9 +266,16 @@ struct RegionalView: View {
     }
     
     private func checkLocationPermission() {
-        let status = CLLocationManager().authorizationStatus
-        if status == .denied || status == .restricted || status == .notDetermined {
-            locationPermissionManager.requestPermissionWithCustomAlert()
+        // Move the potentially blocking operation to a background thread
+        DispatchQueue.global(qos: .userInitiated).async {
+            let status = CLLocationManager().authorizationStatus
+            
+            // If we need to show UI, dispatch back to the main thread
+            if status == .denied || status == .restricted || status == .notDetermined {
+                DispatchQueue.main.async {
+                    self.locationPermissionManager.requestPermissionWithCustomAlert()
+                }
+            }
         }
     }
 }

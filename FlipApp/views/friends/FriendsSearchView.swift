@@ -3,6 +3,8 @@ import FirebaseFirestore
 import Foundation
 import SwiftUI
 
+
+// MARK: - FriendsSearchView
 struct FriendsSearchView: View {
     @Environment(\.dismiss) var dismiss
     @StateObject private var viewModel = SearchManager()
@@ -32,6 +34,44 @@ struct FriendsSearchView: View {
             orangePurpleGradient
                 .edgesIgnoringSafeArea(.all)
             
+            // Decorative elements
+            BackgroundDecorationView(
+                orangeAccent: orangeAccent,
+                purpleAccent: purpleAccent
+            )
+            
+            // Main content view
+            FriendsSearchContentView(
+                viewModel: viewModel,
+                searchText: $searchText,
+                orangeAccent: orangeAccent,
+                orangeGlow: orangeGlow,
+                orangePurpleGradient: orangePurpleGradient,
+                selectedUser: $selectedUser,
+                showUserProfile: $showUserProfile,
+                dismiss: dismiss
+            )
+        }
+        .fullScreenCover(isPresented: $showUserProfile) {
+            if let user = selectedUser {
+                NavigationView {
+                    UserProfileView(user: user)
+                        .navigationBarItems(leading: Button("Back") {
+                            showUserProfile = false
+                        })
+                }
+            }
+        }
+    }
+}
+
+// MARK: - Background Decoration View
+struct BackgroundDecorationView: View {
+    let orangeAccent: Color
+    let purpleAccent: Color
+    
+    var body: some View {
+        ZStack {
             // Top decorative glow
             Circle()
                 .fill(
@@ -67,158 +107,61 @@ struct FriendsSearchView: View {
                 .offset(x: -120, y: 350)
                 .blur(radius: 40)
                 .edgesIgnoringSafeArea(.all)
-            
-            NavigationView {
-                VStack(spacing: 0) {
-                    // Enhanced search bar
-                    HStack {
-                        Image(systemName: "magnifyingglass")
-                            .foregroundColor(orangeAccent)
-                            .font(.system(size: 20))
-                            .shadow(color: orangeGlow, radius: 4)
-                            .padding(.leading, 6)
+        }
+    }
+}
 
-                        TextField("Search by username", text: $searchText)
-                            .font(.system(size: 16))
-                            .foregroundColor(.white)
-                            .accentColor(orangeAccent)
-                            .padding(.vertical, 12)
-                            .onChange(of: searchText) {
-                                viewModel.searchUsers(query: searchText)
-                            }
-                            .autocapitalization(.none)
-                            .disableAutocorrection(true)
+// MARK: - Main Content View
+struct FriendsSearchContentView: View {
+    @ObservedObject var viewModel: SearchManager
+    @Binding var searchText: String
+    let orangeAccent: Color
+    let orangeGlow: Color
+    let orangePurpleGradient: LinearGradient
+    @Binding var selectedUser: FirebaseManager.FlipUser?
+    @Binding var showUserProfile: Bool
+    var dismiss: DismissAction
+    
+    var body: some View {
+        NavigationView {
+            VStack(spacing: 0) {
+                // Enhanced search bar
+                SearchBarView(
+                    searchText: $searchText,
+                    orangeAccent: orangeAccent,
+                    orangeGlow: orangeGlow,
+                    onSearchTextChanged: { newText in
+                        viewModel.searchUsers(query: newText)
                     }
-                    .padding(.horizontal, 16)
-                    .background(
-                        RoundedRectangle(cornerRadius: 12)
-                            .fill(Color.white.opacity(0.1))
-                            .overlay(
-                                RoundedRectangle(cornerRadius: 12)
-                                    .stroke(
-                                        LinearGradient(
-                                            colors: [
-                                                Color.white.opacity(0.4),
-                                                Color.white.opacity(0.1)
-                                            ],
-                                            startPoint: .topLeading,
-                                            endPoint: .bottomTrailing
-                                        ),
-                                        lineWidth: 1
-                                    )
-                            )
-                    )
+                )
+                
+                Divider()
+                    .background(Color.white.opacity(0.1))
                     .padding(.horizontal)
-                    .padding(.top, 16)
-                    .padding(.bottom, 12)
-
-                    Divider()
-                        .background(Color.white.opacity(0.1))
-                        .padding(.horizontal)
-
-                    ScrollView {
-                        VStack(alignment: .leading, spacing: 20) {
-                            if searchText.isEmpty {
-                                // Recommendations section with enhanced styling
-                                if !viewModel.recommendations.isEmpty {
-                                    HStack {
-                                        Text("RECOMMENDED")
-                                            .font(.system(size: 16, weight: .black))
-                                            .tracking(5)
-                                            .foregroundColor(.white)
-                                            .shadow(color: orangeGlow, radius: 6)
-                                        
-                                        Spacer()
-                                        
-                                        Text("\(viewModel.filteredRecommendations.count) users")
-                                            .font(.system(size: 14))
-                                            .foregroundColor(.white.opacity(0.7))
-                                    }
-                                    .padding(.horizontal)
-                                    .padding(.top, 10)
-
-                                    ForEach(viewModel.filteredRecommendations) { user in
-                                        EnhancedUserSearchCard(
-                                            user: user,
-                                            requestStatus: viewModel.requestStatus(for: user.id),
-                                            onSendRequest: {
-                                                viewModel.sendFriendRequest(to: user.id)
-                                            },
-                                            onCancelRequest: {
-                                                viewModel.promptCancelRequest(for: user)
-                                            },
-                                            onViewProfile: {
-                                                selectedUser = user
-                                                showUserProfile = true
-                                            }
-                                        )
-                                    }
-                                    
-                                    if viewModel.filteredRecommendations.isEmpty {
-                                        // Show "no users" state if filtered list is empty
-                                        NoUsersFoundView(
-                                            message: "All recommended users are already your friends",
-                                            icon: "person.2.fill"
-                                        )
-                                    }
-                                }
-                            } else {
-                                if viewModel.isSearching {
-                                    // Enhanced loading state
-                                    VStack(spacing: 16) {
-                                        ProgressView()
-                                            .tint(orangeAccent)
-                                            .scaleEffect(1.5)
-                                            .frame(maxWidth: .infinity)
-                                            .padding(.top, 30)
-                                        
-                                        Text("Searching for users...")
-                                            .font(.system(size: 16))
-                                            .foregroundColor(.white.opacity(0.7))
-                                    }
-                                    .padding(.top, 40)
-                                } else if viewModel.filteredSearchResults.isEmpty && !searchText.isEmpty {
-                                    // No search results state
-                                    NoUsersFoundView(
-                                        message: "No users found matching '\(searchText)'",
-                                        icon: "magnifyingglass"
-                                    )
-                                } else {
-                                    // Search results with enhanced styling
-                                    ForEach(viewModel.filteredSearchResults) { user in
-                                        EnhancedUserSearchCard(
-                                            user: user,
-                                            requestStatus: viewModel.requestStatus(for: user.id),
-                                            onSendRequest: {
-                                                viewModel.sendFriendRequest(to: user.id)
-                                            },
-                                            onCancelRequest: {
-                                                viewModel.promptCancelRequest(for: user)
-                                            },
-                                            onViewProfile: {
-                                                selectedUser = user
-                                                showUserProfile = true
-                                            }
-                                        )
-                                    }
-                                }
-                            }
-                        }
-                        .padding(.vertical)
+                
+                // Main scrollable content
+                ScrollableContentView(
+                    viewModel: viewModel,
+                    searchText: searchText,
+                    orangeAccent: orangeAccent,
+                    orangeGlow: orangeGlow,
+                    onViewProfile: { user in
+                        selectedUser = user
+                        showUserProfile = true
                     }
-                }
-                .background(orangePurpleGradient.edgesIgnoringSafeArea(.all))
-                .navigationTitle("FIND FRIENDS")
-                .navigationBarTitleDisplayMode(.inline)
-                .toolbar {
-                    ToolbarItem(placement: .navigationBarLeading) {
-                        Button("Cancel") {
-                            dismiss()
-                        }
-                        .foregroundColor(.white)
-                        .shadow(color: orangeGlow, radius: 4)
-                        .font(.system(size: 16, weight: .semibold))
+                )
+            }
+            .background(orangePurpleGradient.edgesIgnoringSafeArea(.all))
+            .navigationTitle("FIND FRIENDS")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarLeading) {
+                    Button("Cancel") {
+                        dismiss()
                     }
+                    .foregroundColor(.white)
+                    .shadow(color: orangeGlow, radius: 4)
+                    .font(.system(size: 16, weight: .semibold))
                 }
             }
             .overlay(
@@ -233,22 +176,197 @@ struct FriendsSearchView: View {
                     }
                 }
             )
-            .navigationViewStyle(StackNavigationViewStyle()) // Ensure proper navigation style
+            .navigationViewStyle(StackNavigationViewStyle())
         }
-        .fullScreenCover(isPresented: $showUserProfile) {
-            if let user = selectedUser {
-                NavigationView {
-                    UserProfileView(user: user)
-                        .navigationBarItems(leading: Button("Back") {
-                            showUserProfile = false
-                        })
+    }
+}
+
+// MARK: - Search Bar View
+struct SearchBarView: View {
+    @Binding var searchText: String
+    let orangeAccent: Color
+    let orangeGlow: Color
+    var onSearchTextChanged: (String) -> Void
+    
+    var body: some View {
+        HStack {
+            Image(systemName: "magnifyingglass")
+                .foregroundColor(orangeAccent)
+                .font(.system(size: 20))
+                .shadow(color: orangeGlow, radius: 4)
+                .padding(.leading, 6)
+
+            TextField("Search by username", text: $searchText)
+                .font(.system(size: 16))
+                .foregroundColor(.white)
+                .accentColor(orangeAccent)
+                .padding(.vertical, 12)
+                .onChange(of: searchText) { newValue in
+                    onSearchTextChanged(newValue)
                 }
+                .autocapitalization(.none)
+                .disableAutocorrection(true)
+        }
+        .padding(.horizontal, 16)
+        .background(
+            RoundedRectangle(cornerRadius: 12)
+                .fill(Color.white.opacity(0.1))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 12)
+                        .stroke(
+                            LinearGradient(
+                                colors: [
+                                    Color.white.opacity(0.4),
+                                    Color.white.opacity(0.1)
+                                ],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            ),
+                            lineWidth: 1
+                        )
+                )
+        )
+        .padding(.horizontal)
+        .padding(.top, 16)
+        .padding(.bottom, 12)
+    }
+}
+
+// MARK: - Scrollable Content View
+struct ScrollableContentView: View {
+    @ObservedObject var viewModel: SearchManager
+    let searchText: String
+    let orangeAccent: Color
+    let orangeGlow: Color
+    var onViewProfile: (FirebaseManager.FlipUser) -> Void
+    
+    var body: some View {
+        ScrollView {
+            VStack(alignment: .leading, spacing: 20) {
+                if searchText.isEmpty {
+                    // Recommendations section
+                    RecommendationsSection(
+                        viewModel: viewModel,
+                        orangeGlow: orangeGlow,
+                        onViewProfile: onViewProfile
+                    )
+                } else {
+                    // Search results
+                    SearchResultsSection(
+                        viewModel: viewModel,
+                        searchText: searchText,
+                        orangeAccent: orangeAccent,
+                        onViewProfile: onViewProfile
+                    )
+                }
+            }
+            .padding(.vertical)
+        }
+    }
+}
+
+// MARK: - Recommendations Section
+struct RecommendationsSection: View {
+    // Using StateObject instead of ObservedObject to ensure proper state management
+    @ObservedObject var viewModel: SearchManager
+    let orangeGlow: Color
+    var onViewProfile: (FirebaseManager.FlipUser) -> Void
+    
+    var body: some View {
+        if !viewModel.recommendations.isEmpty {
+            HStack {
+                Text("RECOMMENDED")
+                    .font(.system(size: 16, weight: .black))
+                    .tracking(5)
+                    .foregroundColor(.white)
+                    .shadow(color: orangeGlow, radius: 6)
+                
+                Spacer()
+                
+                Text("\(viewModel.filteredRecommendations.count) users")
+                    .font(.system(size: 14))
+                    .foregroundColor(.white.opacity(0.7))
+            }
+            .padding(.horizontal)
+            .padding(.top, 10)
+
+            ForEach(viewModel.filteredRecommendations) { user in
+                EnhancedUserSearchCard(
+                    user: user,
+                    requestStatus: viewModel.requestStatus(for: user.id),
+                    onSendRequest: {
+                        viewModel.sendFriendRequest(to: user.id)
+                    },
+                                            onCancelRequest: {
+                        viewModel.promptCancelRequest(for: user)
+                    },
+                    onViewProfile: {
+                        onViewProfile(user)
+                    }
+                )
+            }
+            
+            if viewModel.filteredRecommendations.isEmpty {
+                // Show "no users" state if filtered list is empty
+                NoUsersFoundView(
+                    message: "All recommended users are already your friends",
+                    icon: "person.2.fill"
+                )
             }
         }
     }
 }
 
-// Empty state component
+// MARK: - Search Results Section
+struct SearchResultsSection: View {
+    @ObservedObject var viewModel: SearchManager
+    let searchText: String
+    let orangeAccent: Color
+    var onViewProfile: (FirebaseManager.FlipUser) -> Void
+    
+    var body: some View {
+        if viewModel.isSearching {
+            // Enhanced loading state
+            VStack(spacing: 16) {
+                ProgressView()
+                    .tint(orangeAccent)
+                    .scaleEffect(1.5)
+                    .frame(maxWidth: .infinity)
+                    .padding(.top, 30)
+                
+                Text("Searching for users...")
+                    .font(.system(size: 16))
+                    .foregroundColor(.white.opacity(0.7))
+            }
+            .padding(.top, 40)
+        } else if viewModel.filteredSearchResults.isEmpty && !searchText.isEmpty {
+            // No search results state
+            NoUsersFoundView(
+                message: "No users found matching '\(searchText)'",
+                icon: "magnifyingglass"
+            )
+        } else {
+            // Search results with enhanced styling
+            ForEach(viewModel.filteredSearchResults) { user in
+                EnhancedUserSearchCard(
+                    user: user,
+                    requestStatus: viewModel.requestStatus(for: user.id),
+                    onSendRequest: {
+                        viewModel.sendFriendRequest(to: user.id)
+                    },
+                    onCancelRequest: {
+                        viewModel.promptCancelRequest(for: user)
+                    },
+                    onViewProfile: {
+                        onViewProfile(user)
+                    }
+                )
+            }
+        }
+    }
+}
+
+// MARK: - No Users Found View
 struct NoUsersFoundView: View {
     let message: String
     let icon: String
@@ -272,6 +390,59 @@ struct NoUsersFoundView: View {
         .padding(.vertical, 40)
     }
 }
+
+// MARK: - Cancel Friend Request Alert
+struct CancelFriendRequestAlert: View {
+    @Binding var isPresented: Bool
+    let username: String
+    let onConfirm: () -> Void
+    
+    var body: some View {
+        ZStack {
+            Color.black.opacity(0.4)
+                .edgesIgnoringSafeArea(.all)
+            
+            VStack(spacing: 20) {
+                Text("Cancel Request")
+                    .font(.system(size: 20, weight: .bold))
+                    .foregroundColor(.white)
+                
+                Text("Cancel friend request to \(username)?")
+                    .font(.system(size: 16))
+                    .foregroundColor(.white.opacity(0.9))
+                    .multilineTextAlignment(.center)
+                
+                HStack(spacing: 15) {
+                    Button("No") {
+                        isPresented = false
+                    }
+                    .foregroundColor(.white)
+                    .padding(.vertical, 10)
+                    .padding(.horizontal, 25)
+                    .background(Color.gray.opacity(0.3))
+                    .cornerRadius(10)
+                    
+                    Button("Yes") {
+                        onConfirm()
+                        isPresented = false
+                    }
+                    .foregroundColor(.white)
+                    .padding(.vertical, 10)
+                    .padding(.horizontal, 25)
+                    .background(Color.red.opacity(0.7))
+                    .cornerRadius(10)
+                }
+            }
+            .padding(25)
+            .background(Color(red: 30/255, green: 30/255, blue: 46/255))
+            .cornerRadius(15)
+            .shadow(radius: 10)
+            .padding(30)
+        }
+    }
+}
+
+// Keep these original enum and structs unchanged
 enum RequestStatus {
     case none
     case sent
@@ -508,7 +679,6 @@ struct EnhancedUserSearchCard: View {
 }
 
 // MARK: - SearchManager Extension for filtering friends
-
 extension SearchManager {
     // Filter out users who are already friends from recommendations
     var filteredRecommendations: [FirebaseManager.FlipUser] {

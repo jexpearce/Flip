@@ -4,6 +4,7 @@ import FirebaseAuth
 import FirebaseFirestore
 import CoreLocation
 
+
 struct RegionalLeaderboard: View {
     @ObservedObject var viewModel: RegionalLeaderboardViewModel
     @State private var selectedUserId: String?
@@ -460,6 +461,7 @@ struct ProfileImage: View {
     let size: CGFloat
     @State private var imageURL: String?
     @State private var username: String = ""
+    @State private var isLoading = true
     
     var body: some View {
         Group {
@@ -467,8 +469,12 @@ struct ProfileImage: View {
                 AsyncImage(url: URL(string: imageURL)) { phase in
                     switch phase {
                     case .empty:
-                        ProgressView()
-                            .frame(width: size, height: size)
+                        if isLoading {
+                            ProgressView()
+                                .frame(width: size, height: size)
+                        } else {
+                            DefaultProfileImage(username: username, size: size)
+                        }
                     case .success(let image):
                         image
                             .resizable()
@@ -492,15 +498,67 @@ struct ProfileImage: View {
     }
     
     private func loadUserData() {
+        isLoading = true
+        
+        // First check if we already have a cached username
+        if let cachedUser = RegionalViewModel.shared.leaderboardViewModel.userCache[userId] {
+            self.username = cachedUser.username
+            self.imageURL = cachedUser.profileImageURL
+            isLoading = false
+            return
+        }
+        
+        print("Loading profile data for user ID: \(userId)")
+        
         FirebaseManager.shared.db.collection("users").document(userId).getDocument { snapshot, error in
+            if let error = error {
+                print("❌ Error loading user profile: \(error.localizedDescription)")
+                DispatchQueue.main.async {
+                    self.isLoading = false
+                    self.username = "User \(self.userId.prefix(4))"
+                }
+                return
+            }
+            
             if let data = snapshot?.data() {
-                self.imageURL = data["profileImageURL"] as? String
-                self.username = data["username"] as? String ?? ""
+                // Extract profile image URL
+                let profileURL = data["profileImageURL"] as? String
+                
+                // Important: Make sure we have a fallback username
+                if let fetchedUsername = data["username"] as? String, !fetchedUsername.isEmpty {
+                    print("✅ Loaded username: \(fetchedUsername) for user ID: \(userId)")
+                    
+                    // Cache this result
+                    let userCache = UserCacheItem(
+                        userId: userId,
+                        username: fetchedUsername,
+                        profileImageURL: profileURL
+                    )
+                    RegionalViewModel.shared.leaderboardViewModel.userCache[userId] = userCache
+                    
+                    DispatchQueue.main.async {
+                        self.isLoading = false
+                        self.imageURL = profileURL
+                        self.username = fetchedUsername
+                    }
+                } else {
+                    print("⚠️ No username found in data for user ID: \(userId)")
+                    DispatchQueue.main.async {
+                        self.isLoading = false
+                        self.imageURL = profileURL
+                        self.username = "User \(self.userId.prefix(4))"
+                    }
+                }
+            } else {
+                print("❌ No user data found for ID: \(userId)")
+                DispatchQueue.main.async {
+                    self.isLoading = false
+                    self.username = "User \(self.userId.prefix(4))"
+                }
             }
         }
     }
 }
-
 // Default profile image to use when user has no profile picture
 struct DefaultProfileImage: View {
     let username: String
@@ -528,6 +586,11 @@ struct DefaultProfileImage: View {
         .frame(width: size, height: size)
     }
 }
+struct UserCacheItem {
+    let userId: String
+    let username: String
+    let profileImageURL: String?
+}
 
 // STRUCTURE 2: RegionalLeaderboardViewModel class - moved outside struct
 class RegionalLeaderboardViewModel: ObservableObject {
@@ -536,6 +599,8 @@ class RegionalLeaderboardViewModel: ObservableObject {
     @Published var radius: Int = 5 // Default radius in miles
     @Published var locationName: String?
     @Published var isBuildingSpecific: Bool = false // Add this property here
+    
+    var userCache: [String: UserCacheItem] = [:]
     
     private var currentLocation: CLLocation?
     private let firebaseManager = FirebaseManager.shared
@@ -702,12 +767,17 @@ class RegionalLeaderboardViewModel: ObservableObject {
 }
     
 // STRUCTURE 3: Extension for RegionalLeaderboardViewModel - moved outside class
+
+// Extension for RegionalLeaderboardViewModel to handle buildings
 extension RegionalLeaderboardViewModel {
     
     func loadBuildingLeaderboard(building: BuildingInfo) {
-        isBuildingSpecific = true
         guard let currentUserId = Auth.auth().currentUser?.uid else { return }
+        isBuildingSpecific = true
         isLoading = true
+        
+        // Set the building name for display
+        self.locationName = building.name
         
         // First get the user's friends list to mark friends in leaderboard
         firebaseManager.db.collection("users").document(currentUserId)
@@ -721,28 +791,215 @@ extension RegionalLeaderboardViewModel {
                 
                 let friendIds = userData.friends
                 
-                // Set the building name for display
-                self.locationName = building.name
-                
                 // Fetch all sessions in this building
                 self.fetchBuildingTopSessions(building: building, friendIds: friendIds)
             }
     }
-    private func processSessionDocuments(_ documents: [QueryDocumentSnapshot], _ buildingLocation: CLLocation, _ friendIds: [String], _ currentUserId: String) {
+    
+    // Improved fetchBuildingTopSessions method with better error handling and debugging
+    func fetchBuildingTopSessions(building: BuildingInfo, friendIds: [String]) {
+        guard let currentUserId = Auth.auth().currentUser?.uid else { return }
+        
+        let db = Firestore.firestore()
+        
+        // Use the standardized building ID that's already stored in the BuildingInfo struct
+        let buildingId = building.id
+        
+        print("🔍 Querying sessions for building ID: \(buildingId)")
+        print("🏢 Building coordinates: \(building.coordinate.latitude), \(building.coordinate.longitude)")
+        
+        // Get the building's location as a CLLocation
+        let buildingLocation = CLLocation(latitude: building.coordinate.latitude, longitude: building.coordinate.longitude)
+        let radius = 100.0 // Search within 100 meters of the building
+        
+        // First, fetch all users to ensure we have usernames
+        var usernames: [String: String] = [:]
+        let userGroup = DispatchGroup()
+        
+        // Always include current user
+        userGroup.enter()
+        db.collection("users").document(currentUserId).getDocument { document, error in
+            defer { userGroup.leave() }
+            
+            if let document = document, let username = document.data()?["username"] as? String {
+                usernames[currentUserId] = username
+            }
+        }
+        
+        // Fetch friend usernames
+        for friendId in friendIds {
+            userGroup.enter()
+            db.collection("users").document(friendId).getDocument { document, error in
+                defer { userGroup.leave() }
+                
+                if let document = document, let username = document.data()?["username"] as? String {
+                    usernames[friendId] = username
+                }
+            }
+        }
+        
+        userGroup.notify(queue: .main) {
+            // Use exact building ID match first
+            db.collection("session_locations")
+                .whereField("buildingId", isEqualTo: buildingId)
+                .whereField("lastFlipWasSuccessful", isEqualTo: true)
+                .order(by: "actualDuration", descending: true)
+                .limit(to: 50)
+                .getDocuments { [weak self] snapshot, error in
+                    guard let self = self else { return }
+                    
+                    if let error = error {
+                        print("❌ Error in building ID search: \(error.localizedDescription)")
+                        self.tryProximitySearch(
+                            buildingLocation: buildingLocation,
+                            radius: radius,
+                            usernames: usernames,
+                            friendIds: friendIds,
+                            currentUserId: currentUserId
+                        )
+                        return
+                    }
+                    
+                    if let documents = snapshot?.documents, !documents.isEmpty {
+                        print("📊 Found \(documents.count) sessions with exact building ID match")
+                        self.processSessionDocuments(
+                            documents,
+                            buildingLocation,
+                            friendIds,
+                            currentUserId,
+                            usernames: usernames
+                        )
+                    } else {
+                        // If no exact matches, try proximity search
+                        self.tryProximitySearch(
+                            buildingLocation: buildingLocation,
+                            radius: radius,
+                            usernames: usernames,
+                            friendIds: friendIds,
+                            currentUserId: currentUserId
+                        )
+                    }
+                }
+        }
+    }
+    
+    // Helper method for proximity search
+    private func tryProximitySearch(
+        buildingLocation: CLLocation,
+        radius: Double,
+        usernames: [String: String],
+        friendIds: [String],
+        currentUserId: String
+    ) {
+        print("🔍 Trying proximity search")
+        
+        firebaseManager.db.collection("session_locations")
+            .whereField("lastFlipWasSuccessful", isEqualTo: true)
+            .order(by: "actualDuration", descending: true)
+            .limit(to: 100)
+            .getDocuments { [weak self] snapshot, error in
+                guard let self = self else { return }
+                
+                if let error = error {
+                    print("❌ Error in proximity search: \(error.localizedDescription)")
+                    self.isLoading = false
+                    return
+                }
+                
+                guard let documents = snapshot?.documents else {
+                    print("❌ No documents found in proximity search")
+                    self.isLoading = false
+                    return
+                }
+                
+                print("🔍 Filtering \(documents.count) sessions by proximity")
+                
+                // Filter by proximity to building
+                var nearbyDocuments: [QueryDocumentSnapshot] = []
+                
+                for document in documents {
+                    if let geoPoint = document.data()["location"] as? GeoPoint {
+                        let sessionLocation = CLLocation(latitude: geoPoint.latitude, longitude: geoPoint.longitude)
+                        let distance = sessionLocation.distance(from: buildingLocation)
+                        
+                        if distance <= radius {
+                            nearbyDocuments.append(document)
+                        }
+                    }
+                }
+                
+                print("📊 Found \(nearbyDocuments.count) sessions within \(Int(radius))m of building")
+                self.processSessionDocuments(
+                    nearbyDocuments,
+                    buildingLocation,
+                    friendIds,
+                    currentUserId,
+                    usernames: usernames
+                )
+            }
+    }
+    
+    // Improved processSessionDocuments method with username cache
+    private func processSessionDocuments(
+        _ documents: [QueryDocumentSnapshot],
+        _ buildingLocation: CLLocation,
+        _ friendIds: [String],
+        _ currentUserId: String,
+        usernames: [String: String]
+    ) {
         var matchingSessions: [SessionWithLocation] = []
         
         for document in documents {
-            let data = document.data()
-            
-            // Extract session info
-            guard let userId = data["userId"] as? String,
-                  let username = data["username"] as? String,
-                  let geoPoint = data["location"] as? GeoPoint,
-                  let actualDuration = data["actualDuration"] as? Int,
-                  let wasSuccessful = data["lastFlipWasSuccessful"] as? Bool else {
-                continue
-            }
-            
+                let data = document.data()
+                
+                // Extract session info
+                guard let userId = data["userId"] as? String,
+                      let actualDuration = data["actualDuration"] as? Int,
+                      let wasSuccessful = data["lastFlipWasSuccessful"] as? Bool,
+                      let geoPoint = data["location"] as? GeoPoint else {
+                    print("⚠️ Skipping session - missing required fields")
+                    continue
+                }
+                
+                // Prioritize different username sources with multiple fallbacks
+                var username: String
+                
+                // 1. First try to get from document (most reliable source)
+                if let docUsername = data["username"] as? String, !docUsername.isEmpty {
+                    username = docUsername
+                }
+                // 2. Next try to get from our cached user data
+                else if let cachedUserData = userCache[userId] {
+                    username = cachedUserData.username
+                }
+                // 3. Then try to get from the username parameter (passed from earlier query)
+                else if let passedUsername = usernames[userId], !passedUsername.isEmpty {
+                    username = passedUsername
+                }
+                // 4. Final fallback - uses user prefix
+                else {
+                    username = "User \(userId.prefix(4))"
+                    
+                    // Start a background load to try to get the real username for next time
+                    DispatchQueue.global(qos: .background).async {
+                        FirebaseManager.shared.db.collection("users").document(userId).getDocument { document, error in
+                            if let userData = document?.data(), let realUsername = userData["username"] as? String, !realUsername.isEmpty {
+                                print("✅ Background loaded username for \(userId): \(realUsername)")
+                                
+                                // Add to cache
+                                let cacheItem = UserCacheItem(
+                                    userId: userId,
+                                    username: realUsername,
+                                    profileImageURL: userData["profileImageURL"] as? String
+                                )
+                                
+                                DispatchQueue.main.async {
+                                    self.userCache[userId] = cacheItem
+                                }
+                            }
+                        }
+                    }
+                }
             // Create session data structure
             let sessionLocation = CLLocation(latitude: geoPoint.latitude, longitude: geoPoint.longitude)
             let distance = sessionLocation.distance(from: buildingLocation)
@@ -790,85 +1047,12 @@ extension RegionalLeaderboardViewModel {
         }.sorted { $0.duration > $1.duration }
         
         // Log final number of entries
-        print("📊 Final leaderboard entries: \(entries.count)")
+        print("📊 Final regional leaderboard entries: \(entries.count)")
         
         DispatchQueue.main.async {
             self.leaderboardEntries = entries
             self.isLoading = false
         }
-    }
-    private func fetchBuildingTopSessions(building: BuildingInfo, friendIds: [String]) {
-        guard let currentUserId = Auth.auth().currentUser?.uid else { return }
-        
-        let db = Firestore.firestore()
-        
-        // Use the standardized building ID that's already stored in the BuildingInfo struct
-        let buildingId = building.id
-        
-        print("🔍 Querying sessions for building ID: \(buildingId)")
-        print("🏢 Building coordinates: \(building.coordinate.latitude), \(building.coordinate.longitude)")
-        
-        // Get the building's location as a CLLocation
-        let buildingLocation = CLLocation(latitude: building.coordinate.latitude, longitude: building.coordinate.longitude)
-        let radius = 100.0 // Search within 100 meters of the building
-        
-        // Use exact building ID match only - no proximity-based fallback
-        // This ensures sessions only appear in their own building's leaderboard
-        db.collection("session_locations")
-            .whereField("buildingId", isEqualTo: buildingId)
-            .whereField("lastFlipWasSuccessful", isEqualTo: true)
-            .order(by: "actualDuration", descending: true)
-            .limit(to: 50)
-            .getDocuments { [weak self] snapshot, error in
-                guard let self = self else { return }
-                
-                if let documents = snapshot?.documents, !documents.isEmpty {
-                                    print("📊 Found \(documents.count) sessions with exact building ID match")
-                                    self.processSessionDocuments(documents, buildingLocation, friendIds, currentUserId)
-                                    return
-                                }
-                // If no exact matches, try proximity search
-                                db.collection("session_locations")
-                                    .whereField("lastFlipWasSuccessful", isEqualTo: true)
-                                    .order(by: "actualDuration", descending: true)
-                                    .limit(to: 100)
-                                    .getDocuments { [weak self] snapshot, error in
-                                        guard let self = self else { return }
-                                        
-                                        if let error = error {
-                                            print("❌ Error in proximity search: \(error.localizedDescription)")
-                                            self.isLoading = false
-                                            return
-                                        }
-                                        
-                                        guard let documents = snapshot?.documents else {
-                                            print("❌ No documents found in proximity search")
-                                            self.isLoading = false
-                                            return
-                                        }
-                                        
-                                        print("🔍 Filtering \(documents.count) sessions by proximity")
-                                        
-                                        // Filter by proximity to building
-                                        var nearbyDocuments: [QueryDocumentSnapshot] = []
-                                        
-                                        for document in documents {
-                                            if let geoPoint = document.data()["location"] as? GeoPoint {
-                                                let sessionLocation = CLLocation(latitude: geoPoint.latitude, longitude: geoPoint.longitude)
-                                                let distance = sessionLocation.distance(from: buildingLocation)
-                                                
-                                                if distance <= radius {
-                                                    nearbyDocuments.append(document)
-                                                }
-                                            }
-                                        }
-                                        
-                                        print("📊 Found \(nearbyDocuments.count) sessions within \(Int(radius))m of building")
-                                        self.processSessionDocuments(nearbyDocuments, buildingLocation, friendIds, currentUserId)
-                                    }
-                
-
-            }
     }
 }
 

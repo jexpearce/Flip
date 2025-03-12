@@ -97,68 +97,126 @@ class SearchManager: ObservableObject {
     }
 
     func sendFriendRequest(to userId: String) {
-        guard let currentUserId = Auth.auth().currentUser?.uid else { return }
+            guard let currentUserId = Auth.auth().currentUser?.uid,
+                  let currentUsername = FirebaseManager.shared.currentUser?.username else { return }
+            
+            print("Sending friend request from \(currentUsername) to \(userId)")
+            
+            // Update current user's "sentRequests" array
+            FirebaseManager.shared.db.collection("users").document(currentUserId)
+                .updateData([
+                    "sentRequests": FieldValue.arrayUnion([userId])
+                ])
+            
+            // Update target user's "friendRequests" array
+            FirebaseManager.shared.db.collection("users").document(userId)
+                .updateData([
+                    "friendRequests": FieldValue.arrayUnion([currentUserId])
+                ])
+            
+            // Create a notification document for the friend request
+            let notificationData: [String: Any] = [
+                "type": "friend_request",
+                "fromUserId": currentUserId,
+                "fromUsername": currentUsername,
+                "timestamp": FieldValue.serverTimestamp(),
+                "message": "\(currentUsername) wants to add you as a friend",
+                "read": false,
+                "silent": false
+            ]
+            
+            // Add to the target user's notifications collection
+            FirebaseManager.shared.db.collection("users").document(userId)
+                .collection("notifications")
+                .document()
+                .setData(notificationData) { error in
+                    if let error = error {
+                        print("Error creating friend request notification: \(error.localizedDescription)")
+                    } else {
+                        print("Friend request notification created successfully")
+                    }
+                }
+            
+            // Update local state
+            DispatchQueue.main.async {
+                self.updateRequestStatus(for: userId, to: .sent)
+            }
+        }
+    // Add this method to your SearchManager class:
 
-        // Add to recipient's friend requests
-        firebaseManager.db.collection("users").document(userId)
-            .updateData([
-                "friendRequests": FieldValue.arrayUnion([currentUserId])
-            ])
-
-        // Add to sender's sent requests
-        firebaseManager.db.collection("users").document(currentUserId)
-            .updateData([
-                "sentRequests": FieldValue.arrayUnion([userId])
-            ])
-
-        // Update local state
+    func updateRequestStatus(for userId: String, to status: RequestStatus) {
+        // This updates our local cache to reflect the new status
+        // without requiring a server round-trip
         loadCurrentUser()
-
-        // Send notification
-        sendFriendRequestNotification(to: userId)
+        
+        // Force UI update
+        DispatchQueue.main.async {
+            // If we have search results, update the status in those
+            if let index = self.searchResults.firstIndex(where: { $0.id == userId }) {
+                self.objectWillChange.send()
+            }
+            
+            // If we have recommendations, update the status in those
+            if let index = self.recommendations.firstIndex(where: { $0.id == userId }) {
+                self.objectWillChange.send()
+            }
+        }
+        
+        // Prompt to cancel the request if needed
+        if status == .sent {
+            print("Request sent to user \(userId)")
+        }
     }
+    func promptCancelRequest(for user: FirebaseManager.FlipUser) {
+            userToCancelRequest = user
+            showCancelRequestAlert = true
+        }
     
     func cancelFriendRequest(to userId: String) {
         guard let currentUserId = Auth.auth().currentUser?.uid else { return }
         
-        // Remove from recipient's friend requests
-        firebaseManager.db.collection("users").document(userId)
-            .updateData([
-                "friendRequests": FieldValue.arrayRemove([currentUserId])
-            ])
-        
-        // Remove from sender's sent requests
-        firebaseManager.db.collection("users").document(currentUserId)
+        // Update current user's "sentRequests" array
+        FirebaseManager.shared.db.collection("users").document(currentUserId)
             .updateData([
                 "sentRequests": FieldValue.arrayRemove([userId])
             ])
         
-        // Update local state
-        if var updatedUser = currentUserData {
-            updatedUser.sentRequests.removeAll { $0 == userId }
-            currentUserData = updatedUser
-        }
+        // Update target user's "friendRequests" array
+        FirebaseManager.shared.db.collection("users").document(userId)
+            .updateData([
+                "friendRequests": FieldValue.arrayRemove([currentUserId])
+            ])
         
-        // Refresh UI after cancellation
-        loadCurrentUser()
-    }
-    
-    func promptCancelRequest(for user: FirebaseManager.FlipUser) {
-        userToCancelRequest = user
-        showCancelRequestAlert = true
-    }
-
-    private func sendFriendRequestNotification(to userId: String) {
-        guard let currentUser = currentUserData else { return }
-
-        let notification =
-            [
-                "title": "New Friend Request",
-                "body": "\(currentUser.username) sent you a friend request!",
-                "userId": userId,
-            ] as [String: Any]
-
-        firebaseManager.db.collection("notifications").addDocument(
-            data: notification)
+        // Remove any pending friend request notifications
+        FirebaseManager.shared.db.collection("users").document(userId)
+            .collection("notifications")
+            .whereField("type", isEqualTo: "friend_request")
+            .whereField("fromUserId", isEqualTo: currentUserId)
+            .getDocuments { snapshot, error in
+                if let documents = snapshot?.documents {
+                    let batch = FirebaseManager.shared.db.batch()
+                    
+                    for document in documents {
+                        batch.deleteDocument(document.reference)
+                    }
+                    
+                    batch.commit { error in
+                        if let error = error {
+                            print("Error removing friend request notifications: \(error.localizedDescription)")
+                        } else {
+                            print("Friend request notifications removed successfully")
+                        }
+                    }
+                }
+            }
+        
+        // Update local state
+        DispatchQueue.main.async {
+            self.updateRequestStatus(for: userId, to: .none)
+            // Clear any UI state
+            self.showCancelRequestAlert = false
+            self.userToCancelRequest = nil
+        }
     }
 }
+

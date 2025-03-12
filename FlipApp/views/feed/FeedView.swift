@@ -703,31 +703,86 @@ class FeedViewModel: ObservableObject {
                 }
             }
     }
-    func loadUserData(userId: String) {
+    func loadUserData(userId: String, completion: (() -> Void)? = nil) {
+        // Skip if we already have this user's data and it has a valid username
+        if let existingUser = users[userId], !existingUser.username.isEmpty && existingUser.username != "User" {
+            completion?()
+            return
+        }
+        
+        print("Loading user data for ID: \(userId)")
+        
         firebaseManager.db.collection("users").document(userId)
             .getDocument { [weak self] document, error in
-                if let userData = try? document?.data(as: FirebaseManager.FlipUser.self) {
-                    DispatchQueue.main.async {
-                        self?.users[userId] = userData
-                    }
+                if let error = error {
+                    print("❌ Error loading user data for \(userId): \(error.localizedDescription)")
+                    completion?()
+                    return
                 }
+                
+                if let document = document, document.exists {
+                    if let userData = try? document.data(as: FirebaseManager.FlipUser.self) {
+                        DispatchQueue.main.async {
+                            // Only update if we got valid username
+                            if !userData.username.isEmpty {
+                                self?.users[userId] = userData
+                                print("✅ Loaded user data for: \(userData.username)")
+                            } else {
+                                print("⚠️ User exists but has empty username: \(userId)")
+                            }
+                        }
+                    } else {
+                        // Document exists but couldn't be parsed as FlipUser
+                        // Try to manually extract the username as fallback
+                        if let userData = document.data(), let username = userData["username"] as? String, !username.isEmpty {
+                            print("⚠️ Fallback: Manually extracted username for \(userId): \(username)")
+                            
+                            // Create a minimal user object with the username
+                            let fallbackUser = FirebaseManager.FlipUser(
+                                id: userId,
+                                username: username,
+                                totalFocusTime: 0,
+                                totalSessions: 0,
+                                longestSession: 0,
+                                friends: [],
+                                friendRequests: [],
+                                sentRequests: []
+                            )
+                            
+                            DispatchQueue.main.async {
+                                self?.users[userId] = fallbackUser
+                            }
+                        } else {
+                            print("❌ Could not parse user data for \(userId) and no fallback available")
+                        }
+                    }
+                } else {
+                    print("❌ No user document found for ID: \(userId)")
+                }
+                
+                completion?()
             }
     }
     
     func getUser(for userId: String) -> FirebaseManager.FlipUser {
         // Return the user if we have it, otherwise return a default user
         // We attempt to get the cached data first
-        if let cachedUser = users[userId] {
+        if let cachedUser = users[userId], !cachedUser.username.isEmpty && cachedUser.username != "User" {
             return cachedUser
         }
         
         // If we don't have it cached, make sure we load it for next time
-        loadUserData(userId: userId)
+        // Use a higher priority for this immediate request
+        DispatchQueue.global(qos: .userInitiated).async {
+            self.loadUserData(userId: userId)
+        }
         
         // Return a placeholder user until the data loads
+        // Use userId prefix as fallback for better identification
+        let userIdPrefix = String(userId.prefix(4))
         return FirebaseManager.FlipUser(
             id: userId,
-            username: "User",
+            username: "User \(userIdPrefix)",
             totalFocusTime: 0,
             totalSessions: 0,
             longestSession: 0,
@@ -736,7 +791,44 @@ class FeedViewModel: ObservableObject {
             sentRequests: []
         )
     }
-    
+    func preloadUserData(for sessions: [Session]) {
+        print("Preloading user data for \(sessions.count) sessions")
+        let dispatchGroup = DispatchGroup()
+        
+        // Create a set of all user IDs needed (to avoid duplicates)
+        var userIds = Set<String>()
+        
+        for session in sessions {
+            userIds.insert(session.userId)
+            
+            if let commentorId = session.commentorId {
+                userIds.insert(commentorId)
+            }
+            
+            // Include participants from group sessions
+            if let participants = session.participants {
+                for participant in participants {
+                    userIds.insert(participant.id)
+                }
+            }
+        }
+        
+        print("Need to load \(userIds.count) unique users")
+        
+        // Load each user in parallel but track with dispatch group
+        for userId in userIds {
+            dispatchGroup.enter()
+            loadUserData(userId: userId) {
+                dispatchGroup.leave()
+            }
+        }
+        
+        // After all users are loaded, refresh the UI
+        dispatchGroup.notify(queue: .main) { [weak self] in
+            print("✅ Completed preloading user data")
+            self?.objectWillChange.send()
+        }
+    }
     private func loadFriendSessions(userIds: [String]) {
         // Remove any existing listeners
         cleanupLikesListeners()
@@ -773,9 +865,12 @@ class FeedViewModel: ObservableObject {
                             .sorted(by: { $0.startTime > $1.startTime })
                         
                         self.feedSessions = Array(uniqueSessions)
-                        
-                        // After loading sessions, load all associated data
-                        self.loadAllSessionData()
+                                            
+                                            // Preload all user data before loading other session data
+                                            self.preloadUserData(for: self.feedSessions)
+                                            
+                                            // After loading sessions, load all associated data
+                                            self.loadAllSessionData()
                     }
                     self.isLoading = false
                 }
@@ -874,35 +969,87 @@ class FeedViewModel: ObservableObject {
     func addComment(sessionId: String, comment: String, userId: String, username: String) {
         guard !comment.isEmpty else { return }
         
-        // Create comment data
-        let commentData: [String: Any] = [
-            "userId": userId,
-            "username": username,
-            "comment": comment,
-            "timestamp": Timestamp(date: Date())
-        ]
-        
-        // Add to the comments subcollection
+        // First, get the session details to find the session owner
         firebaseManager.db.collection("sessions")
-                .document(sessionId)
-                .collection("comments")
-                .addDocument(data: commentData) { [weak self] error in
-                    if let error = error {
-                        DispatchQueue.main.async {
-                            self?.showError = true
-                            self?.errorMessage = "Failed to save comment: \(error.localizedDescription)"
-                            print("Error saving comment: \(error.localizedDescription)")
-                        }
-                    } else {
-                        print("Comment saved successfully")
-                        
-                        // Explicitly reload the comments for this session
-                        DispatchQueue.main.async {
-                            self?.loadCommentsForSession(sessionId)
+            .document(sessionId)
+            .getDocument { [weak self] document, error in
+                guard let self = self else { return }
+                
+                if let error = error {
+                    print("Error getting session for comment: \(error.localizedDescription)")
+                    return
+                }
+                
+                guard let sessionData = document?.data(),
+                      let sessionOwnerId = sessionData["userId"] as? String else {
+                    print("Invalid session data for comment")
+                    return
+                }
+                
+                // Create comment data
+                let commentData: [String: Any] = [
+                    "userId": userId,
+                    "username": username,
+                    "comment": comment,
+                    "timestamp": Timestamp(date: Date())
+                ]
+                
+                // Add to the comments subcollection
+                self.firebaseManager.db.collection("sessions")
+                    .document(sessionId)
+                    .collection("comments")
+                    .addDocument(data: commentData) { error in
+                        if let error = error {
+                            DispatchQueue.main.async {
+                                self.showError = true
+                                self.errorMessage = "Failed to save comment: \(error.localizedDescription)"
+                                print("Error saving comment: \(error.localizedDescription)")
+                            }
+                        } else {
+                            print("Comment saved successfully")
+                            
+                            // Send notification to session owner if it's not the current user
+                            if sessionOwnerId != userId {
+                                self.sendCommentNotification(
+                                    to: sessionOwnerId,
+                                    from: userId,
+                                    fromUsername: username,
+                                    comment: comment
+                                )
+                            }
+                            
+                            // Explicitly reload the comments for this session
+                            DispatchQueue.main.async {
+                                self.loadCommentsForSession(sessionId)
+                            }
                         }
                     }
+            }
+    }
+    private func sendCommentNotification(to recipientId: String, from senderId: String, fromUsername: String, comment: String) {
+        // Create notification data
+        let notificationData: [String: Any] = [
+            "type": "comment",
+            "fromUserId": senderId,
+            "fromUsername": fromUsername,
+            "timestamp": Timestamp(date: Date()),
+            "comment": comment,
+            "read": false,
+            "silent": true // This makes it not vibrate/sound but still show badge & banner
+        ]
+        
+        // Add to the recipient's notifications collection
+        firebaseManager.db.collection("users")
+            .document(recipientId)
+            .collection("notifications")
+            .addDocument(data: notificationData) { error in
+                if let error = error {
+                    print("Error creating comment notification: \(error.localizedDescription)")
+                } else {
+                    print("Comment notification sent to user: \(recipientId)")
                 }
-        }
+            }
+    }
     func deleteComment(sessionId: String, commentId: String) {
         firebaseManager.db.collection("sessions")
             .document(sessionId)
@@ -981,15 +1128,47 @@ class FeedViewModel: ObservableObject {
         cleanupCommentsListeners()
         cleanupLikesListeners()
         
-        // Then load likes and comments for each visible session
+        // IMPROVED: Load user data for all visible sessions first
+        var userIds = Set(feedSessions.map { $0.userId })
+        
+        // Add commentor IDs if they exist
         for session in feedSessions {
-            let sessionId = session.id.uuidString
+            if let commentorId = session.commentorId {
+                userIds.insert(commentorId)
+            }
             
-            // Load likes
-            loadLikesForSession(sessionId)
-            
-            // Load comments
-            loadCommentsForSession(sessionId)
+            // Also include participants from group sessions
+            if let participants = session.participants {
+                for participant in participants {
+                    userIds.insert(participant.id)
+                }
+            }
+        }
+        
+        print("Preloading user data for \(userIds.count) users")
+        
+        // Load all user data first
+        let dispatchGroup = DispatchGroup()
+        
+        for userId in userIds {
+            dispatchGroup.enter()
+            loadUserData(userId: userId) {
+                dispatchGroup.leave()
+            }
+        }
+        
+        // Then load likes and comments for each visible session
+        dispatchGroup.notify(queue: .main) {
+            print("User data preloading complete, loading session data")
+            for session in self.feedSessions {
+                let sessionId = session.id.uuidString
+                
+                // Load likes
+                self.loadLikesForSession(sessionId)
+                
+                // Load comments
+                self.loadCommentsForSession(sessionId)
+            }
         }
     }
     
