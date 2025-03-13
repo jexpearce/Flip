@@ -1,0 +1,263 @@
+[debug] [2025-03-13T17:40:37.186Z] ----------------------------------------------------------------------
+[debug] [2025-03-13T17:40:37.188Z] Command:       /Users/jexpearce/.nvm/versions/node/v18.20.7/bin/node /Users/jexpearce/.nvm/versions/node/v18.20.7/bin/firebase deploy --only functions
+[debug] [2025-03-13T17:40:37.189Z] CLI Version:   13.34.0
+[debug] [2025-03-13T17:40:37.189Z] Platform:      darwin
+[debug] [2025-03-13T17:40:37.189Z] Node Version:  v18.20.7
+[debug] [2025-03-13T17:40:37.190Z] Time:          Thu Mar 13 2025 17:40:37 GMT+0000 (Greenwich Mean Time)
+[debug] [2025-03-13T17:40:37.191Z] ----------------------------------------------------------------------
+[debug] 
+[debug] [2025-03-13T17:40:37.570Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2025-03-13T17:40:37.570Z] > authorizing via signed-in user (jex@jajajeev.com)
+[debug] [2025-03-13T17:40:37.571Z] [iam] checking project flipapp-c5a4d for permissions ["cloudfunctions.functions.create","cloudfunctions.functions.delete","cloudfunctions.functions.get","cloudfunctions.functions.list","cloudfunctions.functions.update","cloudfunctions.operations.get","firebase.projects.get"]
+[debug] [2025-03-13T17:40:37.573Z] Checked if tokens are valid: true, expires at: 1741888828905
+[debug] [2025-03-13T17:40:37.573Z] Checked if tokens are valid: true, expires at: 1741888828905
+[debug] [2025-03-13T17:40:37.576Z] >>> [apiv2][query] POST https://cloudresourcemanager.googleapis.com/v1/projects/flipapp-c5a4d:testIamPermissions [none]
+[debug] [2025-03-13T17:40:37.576Z] >>> [apiv2][(partial)header] POST https://cloudresourcemanager.googleapis.com/v1/projects/flipapp-c5a4d:testIamPermissions x-goog-quota-user=projects/flipapp-c5a4d
+[debug] [2025-03-13T17:40:37.576Z] >>> [apiv2][body] POST https://cloudresourcemanager.googleapis.com/v1/projects/flipapp-c5a4d:testIamPermissions {"permissions":["cloudfunctions.functions.create","cloudfunctions.functions.delete","cloudfunctions.functions.get","cloudfunctions.functions.list","cloudfunctions.functions.update","cloudfunctions.operations.get","firebase.projects.get"]}
+[debug] [2025-03-13T17:40:37.851Z] <<< [apiv2][status] POST https://cloudresourcemanager.googleapis.com/v1/projects/flipapp-c5a4d:testIamPermissions 200
+[debug] [2025-03-13T17:40:37.851Z] <<< [apiv2][body] POST https://cloudresourcemanager.googleapis.com/v1/projects/flipapp-c5a4d:testIamPermissions {"permissions":["cloudfunctions.functions.create","cloudfunctions.functions.delete","cloudfunctions.functions.get","cloudfunctions.functions.list","cloudfunctions.functions.update","cloudfunctions.operations.get","firebase.projects.get"]}
+[debug] [2025-03-13T17:40:37.852Z] Checked if tokens are valid: true, expires at: 1741888828905
+[debug] [2025-03-13T17:40:37.852Z] Checked if tokens are valid: true, expires at: 1741888828905
+[debug] [2025-03-13T17:40:37.852Z] >>> [apiv2][query] POST https://iam.googleapis.com/v1/projects/flipapp-c5a4d/serviceAccounts/flipapp-c5a4d@appspot.gserviceaccount.com:testIamPermissions [none]
+[debug] [2025-03-13T17:40:37.852Z] >>> [apiv2][body] POST https://iam.googleapis.com/v1/projects/flipapp-c5a4d/serviceAccounts/flipapp-c5a4d@appspot.gserviceaccount.com:testIamPermissions {"permissions":["iam.serviceAccounts.actAs"]}
+[debug] [2025-03-13T17:40:38.502Z] <<< [apiv2][status] POST https://iam.googleapis.com/v1/projects/flipapp-c5a4d/serviceAccounts/flipapp-c5a4d@appspot.gserviceaccount.com:testIamPermissions 200
+[debug] [2025-03-13T17:40:38.502Z] <<< [apiv2][body] POST https://iam.googleapis.com/v1/projects/flipapp-c5a4d/serviceAccounts/flipapp-c5a4d@appspot.gserviceaccount.com:testIamPermissions {"permissions":["iam.serviceAccounts.actAs"]}
+[info] 
+[info] === Deploying to 'flipapp-c5a4d'...
+[info] 
+[info] i  deploying functions 
+[debug] [2025-03-13T17:40:38.507Z] Checked if tokens are valid: true, expires at: 1741888828905
+[debug] [2025-03-13T17:40:38.507Z] Checked if tokens are valid: true, expires at: 1741888828905
+[debug] [2025-03-13T17:40:38.508Z] >>> [apiv2][query] GET https://cloudresourcemanager.googleapis.com/v1/projects/flipapp-c5a4d [none]
+[debug] [2025-03-13T17:40:39.303Z] <<< [apiv2][status] GET https://cloudresourcemanager.googleapis.com/v1/projects/flipapp-c5a4d 200
+[debug] [2025-03-13T17:40:39.303Z] <<< [apiv2][body] GET https://cloudresourcemanager.googleapis.com/v1/projects/flipapp-c5a4d {"projectNumber":"195757800963","projectId":"flipapp-c5a4d","lifecycleState":"ACTIVE","name":"FlipApp","labels":{"firebase":"enabled","firebase-core":"disabled"},"createTime":"2025-02-09T18:38:16.141980Z","parent":{"type":"organization","id":"286169348205"}}
+[info] i  functions: preparing codebase default for deployment 
+[info] i  functions: ensuring required API cloudfunctions.googleapis.com is enabled... 
+[debug] [2025-03-13T17:40:39.307Z] Checked if tokens are valid: true, expires at: 1741888828905
+[debug] [2025-03-13T17:40:39.307Z] Checked if tokens are valid: true, expires at: 1741888828905
+[debug] [2025-03-13T17:40:39.307Z] Checked if tokens are valid: true, expires at: 1741888828905
+[debug] [2025-03-13T17:40:39.307Z] Checked if tokens are valid: true, expires at: 1741888828905
+[info] i  functions: ensuring required API cloudbuild.googleapis.com is enabled... 
+[debug] [2025-03-13T17:40:39.308Z] Checked if tokens are valid: true, expires at: 1741888828905
+[debug] [2025-03-13T17:40:39.308Z] Checked if tokens are valid: true, expires at: 1741888828905
+[info] i  artifactregistry: ensuring required API artifactregistry.googleapis.com is enabled... 
+[debug] [2025-03-13T17:40:39.308Z] Checked if tokens are valid: true, expires at: 1741888828905
+[debug] [2025-03-13T17:40:39.308Z] Checked if tokens are valid: true, expires at: 1741888828905
+[debug] [2025-03-13T17:40:39.309Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/flipapp-c5a4d/services/cloudfunctions.googleapis.com [none]
+[debug] [2025-03-13T17:40:39.309Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/flipapp-c5a4d/services/cloudfunctions.googleapis.com x-goog-quota-user=projects/flipapp-c5a4d
+[debug] [2025-03-13T17:40:39.310Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/flipapp-c5a4d/services/runtimeconfig.googleapis.com [none]
+[debug] [2025-03-13T17:40:39.311Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/flipapp-c5a4d/services/runtimeconfig.googleapis.com x-goog-quota-user=projects/flipapp-c5a4d
+[debug] [2025-03-13T17:40:39.312Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/flipapp-c5a4d/services/cloudbuild.googleapis.com [none]
+[debug] [2025-03-13T17:40:39.313Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/flipapp-c5a4d/services/cloudbuild.googleapis.com x-goog-quota-user=projects/flipapp-c5a4d
+[debug] [2025-03-13T17:40:39.315Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/flipapp-c5a4d/services/artifactregistry.googleapis.com [none]
+[debug] [2025-03-13T17:40:39.315Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/flipapp-c5a4d/services/artifactregistry.googleapis.com x-goog-quota-user=projects/flipapp-c5a4d
+[debug] [2025-03-13T17:40:40.138Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects/flipapp-c5a4d/services/cloudbuild.googleapis.com 200
+[debug] [2025-03-13T17:40:40.138Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects/flipapp-c5a4d/services/cloudbuild.googleapis.com [omitted]
+[info] ✔  functions: required API cloudbuild.googleapis.com is enabled 
+[debug] [2025-03-13T17:40:40.140Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects/flipapp-c5a4d/services/artifactregistry.googleapis.com 200
+[debug] [2025-03-13T17:40:40.140Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects/flipapp-c5a4d/services/artifactregistry.googleapis.com [omitted]
+[info] ✔  artifactregistry: required API artifactregistry.googleapis.com is enabled 
+[debug] [2025-03-13T17:40:40.141Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects/flipapp-c5a4d/services/runtimeconfig.googleapis.com 200
+[debug] [2025-03-13T17:40:40.141Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects/flipapp-c5a4d/services/runtimeconfig.googleapis.com [omitted]
+[debug] [2025-03-13T17:40:40.561Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects/flipapp-c5a4d/services/cloudfunctions.googleapis.com 200
+[debug] [2025-03-13T17:40:40.562Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects/flipapp-c5a4d/services/cloudfunctions.googleapis.com [omitted]
+[info] ✔  functions: required API cloudfunctions.googleapis.com is enabled 
+[debug] [2025-03-13T17:40:40.562Z] Checked if tokens are valid: true, expires at: 1741888828905
+[debug] [2025-03-13T17:40:40.562Z] Checked if tokens are valid: true, expires at: 1741888828905
+[debug] [2025-03-13T17:40:40.562Z] >>> [apiv2][query] GET https://firebase.googleapis.com/v1beta1/projects/flipapp-c5a4d/adminSdkConfig [none]
+[debug] [2025-03-13T17:40:40.860Z] <<< [apiv2][status] GET https://firebase.googleapis.com/v1beta1/projects/flipapp-c5a4d/adminSdkConfig 200
+[debug] [2025-03-13T17:40:40.860Z] <<< [apiv2][body] GET https://firebase.googleapis.com/v1beta1/projects/flipapp-c5a4d/adminSdkConfig {"projectId":"flipapp-c5a4d","databaseURL":"https://flipapp-c5a4d-default-rtdb.firebaseio.com","storageBucket":"flipapp-c5a4d.firebasestorage.app"}
+[debug] [2025-03-13T17:40:40.861Z] Checked if tokens are valid: true, expires at: 1741888828905
+[debug] [2025-03-13T17:40:40.861Z] Checked if tokens are valid: true, expires at: 1741888828905
+[debug] [2025-03-13T17:40:40.861Z] >>> [apiv2][query] GET https://runtimeconfig.googleapis.com/v1beta1/projects/flipapp-c5a4d/configs [none]
+[debug] [2025-03-13T17:40:41.185Z] <<< [apiv2][status] GET https://runtimeconfig.googleapis.com/v1beta1/projects/flipapp-c5a4d/configs 200
+[debug] [2025-03-13T17:40:41.186Z] <<< [apiv2][body] GET https://runtimeconfig.googleapis.com/v1beta1/projects/flipapp-c5a4d/configs {}
+[debug] [2025-03-13T17:40:41.188Z] Validating nodejs source
+[warn] ⚠  functions: Runtime Node.js 18 will be deprecated on 2025-04-30 and will be decommissioned on 2025-10-31, after which you will not be able to deploy without upgrading. Consider upgrading now to avoid disruption. See https://cloud.google.com/functions/docs/runtime-support for full details on the lifecycle policy 
+[warn] ⚠  functions: package.json indicates an outdated version of firebase-functions. Please upgrade using npm install --save firebase-functions@latest in your functions directory. 
+[warn] ⚠  functions: Please note that there will be breaking changes when you upgrade. 
+[debug] [2025-03-13T17:40:42.828Z] > [functions] package.json contents: {
+  "name": "functions",
+  "description": "Cloud Functions for Firebase",
+  "scripts": {
+    "serve": "firebase emulators:start --only functions",
+    "shell": "firebase functions:shell",
+    "start": "npm run shell",
+    "deploy": "firebase deploy --only functions",
+    "logs": "firebase functions:log"
+  },
+  "engines": {
+    "node": "18"
+  },
+  "main": "index.js",
+  "dependencies": {
+    "firebase-admin": "^12.6.0",
+    "firebase-functions": "^5.0.0"
+  },
+  "devDependencies": {
+    "firebase-functions-test": "^3.1.0"
+  },
+  "private": true
+}
+[debug] [2025-03-13T17:40:42.828Z] Building nodejs source
+[info] i  functions: Loading and analyzing source code for codebase default to determine what to deploy 
+[info] i  functions: You are using a version of firebase-functions SDK (5.0.0) that does not have support for the newest Firebase Extensions features. Please update firebase-functions SDK to >=5.1.0 to use them correctly 
+[debug] [2025-03-13T17:40:42.830Z] Could not find functions.yaml. Must use http discovery
+[debug] [2025-03-13T17:40:42.842Z] Found firebase-functions binary at '/Users/jexpearce/Documents/GitHub/jex/Flip/functions/node_modules/.bin/firebase-functions'
+[info] Serving at port 8220
+
+[debug] [2025-03-13T17:40:44.035Z] Got response from /__/functions.yaml {"endpoints":{"helloWorld":{"platform":"gcfv1","availableMemoryMb":null,"timeoutSeconds":null,"minInstances":null,"maxInstances":null,"ingressSettings":null,"serviceAccountEmail":null,"vpc":null,"region":["us-central1"],"httpsTrigger":{},"entryPoint":"helloWorld"}},"specVersion":"v1alpha1","requiredAPIs":[]}
+[info] i  functions: preparing functions directory for uploading... 
+[info] i  functions: packaged /Users/jexpearce/Documents/GitHub/jex/Flip/functions (62.68 KB) for uploading 
+[debug] [2025-03-13T17:40:44.154Z] Checked if tokens are valid: true, expires at: 1741888828905
+[debug] [2025-03-13T17:40:44.154Z] Checked if tokens are valid: true, expires at: 1741888828905
+[debug] [2025-03-13T17:40:44.154Z] >>> [apiv2][query] GET https://cloudfunctions.googleapis.com/v1/projects/flipapp-c5a4d/locations/-/functions [none]
+[debug] [2025-03-13T17:40:44.722Z] <<< [apiv2][status] GET https://cloudfunctions.googleapis.com/v1/projects/flipapp-c5a4d/locations/-/functions 200
+[debug] [2025-03-13T17:40:44.722Z] <<< [apiv2][body] GET https://cloudfunctions.googleapis.com/v1/projects/flipapp-c5a4d/locations/-/functions {}
+[debug] [2025-03-13T17:40:44.723Z] Checked if tokens are valid: true, expires at: 1741888828905
+[debug] [2025-03-13T17:40:44.723Z] Checked if tokens are valid: true, expires at: 1741888828905
+[debug] [2025-03-13T17:40:44.723Z] >>> [apiv2][query] GET https://cloudfunctions.googleapis.com/v2/projects/flipapp-c5a4d/locations/-/functions filter=environment%3D%22GEN_2%22
+[debug] [2025-03-13T17:40:45.710Z] <<< [apiv2][status] GET https://cloudfunctions.googleapis.com/v2/projects/flipapp-c5a4d/locations/-/functions 200
+[debug] [2025-03-13T17:40:45.710Z] <<< [apiv2][body] GET https://cloudfunctions.googleapis.com/v2/projects/flipapp-c5a4d/locations/-/functions {}
+[debug] [2025-03-13T17:40:45.716Z] Checked if tokens are valid: true, expires at: 1741888828905
+[debug] [2025-03-13T17:40:45.716Z] Checked if tokens are valid: true, expires at: 1741888828905
+[debug] [2025-03-13T17:40:45.716Z] >>> [apiv2][query] GET https://cloudresourcemanager.googleapis.com/v1/projects/flipapp-c5a4d [none]
+[debug] [2025-03-13T17:40:46.566Z] <<< [apiv2][status] GET https://cloudresourcemanager.googleapis.com/v1/projects/flipapp-c5a4d 200
+[debug] [2025-03-13T17:40:46.566Z] <<< [apiv2][body] GET https://cloudresourcemanager.googleapis.com/v1/projects/flipapp-c5a4d {"projectNumber":"195757800963","projectId":"flipapp-c5a4d","lifecycleState":"ACTIVE","name":"FlipApp","labels":{"firebase":"enabled","firebase-core":"disabled"},"createTime":"2025-02-09T18:38:16.141980Z","parent":{"type":"organization","id":"286169348205"}}
+[debug] [2025-03-13T17:40:46.569Z] [functions] found 1 new HTTP functions, testing setIamPolicy permission...
+[debug] [2025-03-13T17:40:46.569Z] Checked if tokens are valid: true, expires at: 1741888828905
+[debug] [2025-03-13T17:40:46.570Z] Checked if tokens are valid: true, expires at: 1741888828905
+[debug] [2025-03-13T17:40:46.570Z] >>> [apiv2][query] POST https://cloudresourcemanager.googleapis.com/v1/projects/flipapp-c5a4d:testIamPermissions [none]
+[debug] [2025-03-13T17:40:46.570Z] >>> [apiv2][(partial)header] POST https://cloudresourcemanager.googleapis.com/v1/projects/flipapp-c5a4d:testIamPermissions x-goog-quota-user=projects/flipapp-c5a4d
+[debug] [2025-03-13T17:40:46.570Z] >>> [apiv2][body] POST https://cloudresourcemanager.googleapis.com/v1/projects/flipapp-c5a4d:testIamPermissions {"permissions":["cloudfunctions.functions.setIamPolicy"]}
+[debug] [2025-03-13T17:40:47.194Z] <<< [apiv2][status] POST https://cloudresourcemanager.googleapis.com/v1/projects/flipapp-c5a4d:testIamPermissions 200
+[debug] [2025-03-13T17:40:47.195Z] <<< [apiv2][body] POST https://cloudresourcemanager.googleapis.com/v1/projects/flipapp-c5a4d:testIamPermissions {"permissions":["cloudfunctions.functions.setIamPolicy"]}
+[debug] [2025-03-13T17:40:47.195Z] [functions] found setIamPolicy permission, proceeding with deploy
+[debug] [2025-03-13T17:40:47.196Z] Checked if tokens are valid: true, expires at: 1741888828905
+[debug] [2025-03-13T17:40:47.196Z] Checked if tokens are valid: true, expires at: 1741888828905
+[debug] [2025-03-13T17:40:47.197Z] >>> [apiv2][query] POST https://cloudfunctions.googleapis.com/v1/projects/flipapp-c5a4d/locations/us-central1/functions:generateUploadUrl [none]
+[debug] [2025-03-13T17:40:47.197Z] >>> [apiv2][body] POST https://cloudfunctions.googleapis.com/v1/projects/flipapp-c5a4d/locations/us-central1/functions:generateUploadUrl {}
+[debug] [2025-03-13T17:40:47.868Z] <<< [apiv2][status] POST https://cloudfunctions.googleapis.com/v1/projects/flipapp-c5a4d/locations/us-central1/functions:generateUploadUrl 200
+[debug] [2025-03-13T17:40:47.868Z] <<< [apiv2][body] POST https://cloudfunctions.googleapis.com/v1/projects/flipapp-c5a4d/locations/us-central1/functions:generateUploadUrl {"uploadUrl":"https://storage.googleapis.com/uploads-460899583114.us-central1.cloudfunctions.appspot.com/c8699a60-c481-44b6-b2ba-e258c18f7bea.zip?GoogleAccessId=service-195757800963@gcf-admin-robot.iam.gserviceaccount.com&Expires=1741889447&Signature=iaIF1KsMUiTiuo6Q01fO563tZDRGOHE7kAor6tbkY87lh0bsuTw0iysXZ%2BnC0Mqd511FYENigjv8aqVY0mj7Wfqx36%2FOeO7VGvXdJlH%2FFpx3J95IUJ0bcAr%2Fo1SZgb54k6XLuzAPBoAKgPmlgD%2FYbne%2F45NN5QMVrkQnto2CzPd9qDlhJkHxnHaKg5FStkFl4%2FCUbW%2BeHPSPQkCId3FBf89y4Gp%2FdhVKXHW%2BleAVQkoLi9dJuwc1d9fQpTY4XggIJB3IS3IICoX2DXyhfU5kLFL9TSqJ69bXnVKXBNolZKbBBcJhiyuVH4MkPx29b0xGc%2Btpvery54QJGiDOmIzzvg%3D%3D"}
+[debug] [2025-03-13T17:40:47.871Z] >>> [apiv2][query] PUT https://storage.googleapis.com/uploads-460899583114.us-central1.cloudfunctions.appspot.com/c8699a60-c481-44b6-b2ba-e258c18f7bea.zip GoogleAccessId=service-195757800963%40gcf-admin-robot.iam.gserviceaccount.com&Expires=1741889447&Signature=iaIF1KsMUiTiuo6Q01fO563tZDRGOHE7kAor6tbkY87lh0bsuTw0iysXZ%2BnC0Mqd511FYENigjv8aqVY0mj7Wfqx36%2FOeO7VGvXdJlH%2FFpx3J95IUJ0bcAr%2Fo1SZgb54k6XLuzAPBoAKgPmlgD%2FYbne%2F45NN5QMVrkQnto2CzPd9qDlhJkHxnHaKg5FStkFl4%2FCUbW%2BeHPSPQkCId3FBf89y4Gp%2FdhVKXHW%2BleAVQkoLi9dJuwc1d9fQpTY4XggIJB3IS3IICoX2DXyhfU5kLFL9TSqJ69bXnVKXBNolZKbBBcJhiyuVH4MkPx29b0xGc%2Btpvery54QJGiDOmIzzvg%3D%3D
+[debug] [2025-03-13T17:40:47.871Z] >>> [apiv2][body] PUT https://storage.googleapis.com/uploads-460899583114.us-central1.cloudfunctions.appspot.com/c8699a60-c481-44b6-b2ba-e258c18f7bea.zip [stream]
+[debug] [2025-03-13T17:40:48.318Z] <<< [apiv2][status] PUT https://storage.googleapis.com/uploads-460899583114.us-central1.cloudfunctions.appspot.com/c8699a60-c481-44b6-b2ba-e258c18f7bea.zip 200
+[debug] [2025-03-13T17:40:48.318Z] <<< [apiv2][body] PUT https://storage.googleapis.com/uploads-460899583114.us-central1.cloudfunctions.appspot.com/c8699a60-c481-44b6-b2ba-e258c18f7bea.zip [omitted]
+[info] ✔  functions: functions folder uploaded successfully 
+[info] i  functions: creating Node.js 18 (1st Gen) function helloWorld(us-central1)... 
+[debug] [2025-03-13T17:40:48.325Z] Checked if tokens are valid: true, expires at: 1741888828905
+[debug] [2025-03-13T17:40:48.325Z] Checked if tokens are valid: true, expires at: 1741888828905
+[debug] [2025-03-13T17:40:48.325Z] >>> [apiv2][query] POST https://cloudfunctions.googleapis.com/v1/projects/flipapp-c5a4d/locations/us-central1/functions [none]
+[debug] [2025-03-13T17:40:48.325Z] >>> [apiv2][body] POST https://cloudfunctions.googleapis.com/v1/projects/flipapp-c5a4d/locations/us-central1/functions {"name":"projects/flipapp-c5a4d/locations/us-central1/functions/helloWorld","sourceUploadUrl":"https://storage.googleapis.com/uploads-460899583114.us-central1.cloudfunctions.appspot.com/c8699a60-c481-44b6-b2ba-e258c18f7bea.zip?GoogleAccessId=service-195757800963@gcf-admin-robot.iam.gserviceaccount.com&Expires=1741889447&Signature=iaIF1KsMUiTiuo6Q01fO563tZDRGOHE7kAor6tbkY87lh0bsuTw0iysXZ%2BnC0Mqd511FYENigjv8aqVY0mj7Wfqx36%2FOeO7VGvXdJlH%2FFpx3J95IUJ0bcAr%2Fo1SZgb54k6XLuzAPBoAKgPmlgD%2FYbne%2F45NN5QMVrkQnto2CzPd9qDlhJkHxnHaKg5FStkFl4%2FCUbW%2BeHPSPQkCId3FBf89y4Gp%2FdhVKXHW%2BleAVQkoLi9dJuwc1d9fQpTY4XggIJB3IS3IICoX2DXyhfU5kLFL9TSqJ69bXnVKXBNolZKbBBcJhiyuVH4MkPx29b0xGc%2Btpvery54QJGiDOmIzzvg%3D%3D","entryPoint":"helloWorld","runtime":"nodejs18","dockerRegistry":"ARTIFACT_REGISTRY","labels":{"deployment-tool":"cli-firebase","firebase-functions-hash":"193471d06cfff55d4235eca84a34d637c224b98e"},"httpsTrigger":{"securityLevel":"SECURE_ALWAYS"},"minInstances":null,"maxInstances":null,"ingressSettings":null,"environmentVariables":{"FIREBASE_CONFIG":"{\"projectId\":\"flipapp-c5a4d\",\"databaseURL\":\"https://flipapp-c5a4d-default-rtdb.firebaseio.com\",\"storageBucket\":\"flipapp-c5a4d.firebasestorage.app\"}","GCLOUD_PROJECT":"flipapp-c5a4d","EVENTARC_CLOUD_EVENT_SOURCE":"projects/flipapp-c5a4d/locations/us-central1/functions/helloWorld"},"serviceAccountEmail":null,"availableMemoryMb":null,"timeout":null,"vpcConnector":null,"vpcConnectorEgressSettings":null,"buildEnvironmentVariables":{"GOOGLE_NODE_RUN_SCRIPTS":""}}
+[debug] [2025-03-13T17:40:49.073Z] <<< [apiv2][status] POST https://cloudfunctions.googleapis.com/v1/projects/flipapp-c5a4d/locations/us-central1/functions 200
+[debug] [2025-03-13T17:40:49.074Z] <<< [apiv2][body] POST https://cloudfunctions.googleapis.com/v1/projects/flipapp-c5a4d/locations/us-central1/functions {"name":"operations/cHJvamVjdHMvZmxpcGFwcC1jNWE0ZC9sb2NhdGlvbnMvdXMtY2VudHJhbDEvb3BlcmF0aW9ucy9vcGVyYXRpb24tMTc0MTg4NzY0ODYyNC02MzAzY2QyODhmMGNlLWZlYWViMjIxLWI5MDZhZGEx","metadata":{"@type":"type.googleapis.com/google.cloud.functions.v1.OperationMetadataV1","target":"projects/flipapp-c5a4d/locations/us-central1/functions/helloWorld","updateTime":"2025-03-13T17:40:49.089743189Z"}}
+[debug] [2025-03-13T17:40:49.074Z] Checked if tokens are valid: true, expires at: 1741888828905
+[debug] [2025-03-13T17:40:49.075Z] Checked if tokens are valid: true, expires at: 1741888828905
+[debug] [2025-03-13T17:40:49.075Z] >>> [apiv2][query] GET https://cloudfunctions.googleapis.com/v1/operations/cHJvamVjdHMvZmxpcGFwcC1jNWE0ZC9sb2NhdGlvbnMvdXMtY2VudHJhbDEvb3BlcmF0aW9ucy9vcGVyYXRpb24tMTc0MTg4NzY0ODYyNC02MzAzY2QyODhmMGNlLWZlYWViMjIxLWI5MDZhZGEx [none]
+[debug] [2025-03-13T17:40:49.401Z] <<< [apiv2][status] GET https://cloudfunctions.googleapis.com/v1/operations/cHJvamVjdHMvZmxpcGFwcC1jNWE0ZC9sb2NhdGlvbnMvdXMtY2VudHJhbDEvb3BlcmF0aW9ucy9vcGVyYXRpb24tMTc0MTg4NzY0ODYyNC02MzAzY2QyODhmMGNlLWZlYWViMjIxLWI5MDZhZGEx 200
+[debug] [2025-03-13T17:40:49.401Z] <<< [apiv2][body] GET https://cloudfunctions.googleapis.com/v1/operations/cHJvamVjdHMvZmxpcGFwcC1jNWE0ZC9sb2NhdGlvbnMvdXMtY2VudHJhbDEvb3BlcmF0aW9ucy9vcGVyYXRpb24tMTc0MTg4NzY0ODYyNC02MzAzY2QyODhmMGNlLWZlYWViMjIxLWI5MDZhZGEx {"name":"operations/cHJvamVjdHMvZmxpcGFwcC1jNWE0ZC9sb2NhdGlvbnMvdXMtY2VudHJhbDEvb3BlcmF0aW9ucy9vcGVyYXRpb24tMTc0MTg4NzY0ODYyNC02MzAzY2QyODhmMGNlLWZlYWViMjIxLWI5MDZhZGEx","metadata":{"@type":"type.googleapis.com/google.cloud.functions.v1.OperationMetadataV1","target":"projects/flipapp-c5a4d/locations/us-central1/functions/helloWorld","updateTime":"2025-03-13T17:40:49.089743189Z"}}
+[debug] [2025-03-13T17:40:49.902Z] [create-default-us-central1-helloWorld] Retrying task index 0
+[debug] [2025-03-13T17:40:49.903Z] Checked if tokens are valid: true, expires at: 1741888828905
+[debug] [2025-03-13T17:40:49.903Z] Checked if tokens are valid: true, expires at: 1741888828905
+[debug] [2025-03-13T17:40:49.903Z] >>> [apiv2][query] GET https://cloudfunctions.googleapis.com/v1/operations/cHJvamVjdHMvZmxpcGFwcC1jNWE0ZC9sb2NhdGlvbnMvdXMtY2VudHJhbDEvb3BlcmF0aW9ucy9vcGVyYXRpb24tMTc0MTg4NzY0ODYyNC02MzAzY2QyODhmMGNlLWZlYWViMjIxLWI5MDZhZGEx [none]
+[debug] [2025-03-13T17:40:50.134Z] <<< [apiv2][status] GET https://cloudfunctions.googleapis.com/v1/operations/cHJvamVjdHMvZmxpcGFwcC1jNWE0ZC9sb2NhdGlvbnMvdXMtY2VudHJhbDEvb3BlcmF0aW9ucy9vcGVyYXRpb24tMTc0MTg4NzY0ODYyNC02MzAzY2QyODhmMGNlLWZlYWViMjIxLWI5MDZhZGEx 200
+[debug] [2025-03-13T17:40:50.134Z] <<< [apiv2][body] GET https://cloudfunctions.googleapis.com/v1/operations/cHJvamVjdHMvZmxpcGFwcC1jNWE0ZC9sb2NhdGlvbnMvdXMtY2VudHJhbDEvb3BlcmF0aW9ucy9vcGVyYXRpb24tMTc0MTg4NzY0ODYyNC02MzAzY2QyODhmMGNlLWZlYWViMjIxLWI5MDZhZGEx {"name":"operations/cHJvamVjdHMvZmxpcGFwcC1jNWE0ZC9sb2NhdGlvbnMvdXMtY2VudHJhbDEvb3BlcmF0aW9ucy9vcGVyYXRpb24tMTc0MTg4NzY0ODYyNC02MzAzY2QyODhmMGNlLWZlYWViMjIxLWI5MDZhZGEx","metadata":{"@type":"type.googleapis.com/google.cloud.functions.v1.OperationMetadataV1","target":"projects/flipapp-c5a4d/locations/us-central1/functions/helloWorld","type":"CREATE_FUNCTION","request":{"@type":"type.googleapis.com/google.cloud.functions.v1.CloudFunction","name":"projects/flipapp-c5a4d/locations/us-central1/functions/helloWorld","httpsTrigger":{"securityLevel":"SECURE_ALWAYS"},"entryPoint":"helloWorld","updateTime":"1970-01-01T00:00:00Z","labels":{"deployment-tool":"cli-firebase","firebase-functions-hash":"193471d06cfff55d4235eca84a34d637c224b98e"},"sourceUploadUrl":"https://storage.googleapis.com/uploads-460899583114.us-central1.cloudfunctions.appspot.com/c8699a60-c481-44b6-b2ba-e258c18f7bea.zip?GoogleAccessId=service-195757800963@gcf-admin-robot.iam.gserviceaccount.com&Expires=1741889447&Signature=iaIF1KsMUiTiuo6Q01fO563tZDRGOHE7kAor6tbkY87lh0bsuTw0iysXZ%2BnC0Mqd511FYENigjv8aqVY0mj7Wfqx36%2FOeO7VGvXdJlH%2FFpx3J95IUJ0bcAr%2Fo1SZgb54k6XLuzAPBoAKgPmlgD%2FYbne%2F45NN5QMVrkQnto2CzPd9qDlhJkHxnHaKg5FStkFl4%2FCUbW%2BeHPSPQkCId3FBf89y4Gp%2FdhVKXHW%2BleAVQkoLi9dJuwc1d9fQpTY4XggIJB3IS3IICoX2DXyhfU5kLFL9TSqJ69bXnVKXBNolZKbBBcJhiyuVH4MkPx29b0xGc%2Btpvery54QJGiDOmIzzvg%3D%3D","environmentVariables":{"FIREBASE_CONFIG":"{\"projectId\":\"flipapp-c5a4d\",\"databaseURL\":\"https://flipapp-c5a4d-default-rtdb.firebaseio.com\",\"storageBucket\":\"flipapp-c5a4d.firebasestorage.app\"}","GCLOUD_PROJECT":"flipapp-c5a4d","EVENTARC_CLOUD_EVENT_SOURCE":"projects/flipapp-c5a4d/locations/us-central1/functions/helloWorld"},"runtime":"nodejs18","buildEnvironmentVariables":{"GOOGLE_NODE_RUN_SCRIPTS":""},"dockerRegistry":"ARTIFACT_REGISTRY"},"versionId":"1","updateTime":"2025-03-13T17:40:49.089743189Z"}}
+[debug] [2025-03-13T17:40:51.136Z] [create-default-us-central1-helloWorld] Retrying task index 0
+[debug] [2025-03-13T17:40:51.136Z] Checked if tokens are valid: true, expires at: 1741888828905
+[debug] [2025-03-13T17:40:51.137Z] Checked if tokens are valid: true, expires at: 1741888828905
+[debug] [2025-03-13T17:40:51.137Z] >>> [apiv2][query] GET https://cloudfunctions.googleapis.com/v1/operations/cHJvamVjdHMvZmxpcGFwcC1jNWE0ZC9sb2NhdGlvbnMvdXMtY2VudHJhbDEvb3BlcmF0aW9ucy9vcGVyYXRpb24tMTc0MTg4NzY0ODYyNC02MzAzY2QyODhmMGNlLWZlYWViMjIxLWI5MDZhZGEx [none]
+[debug] [2025-03-13T17:40:51.362Z] <<< [apiv2][status] GET https://cloudfunctions.googleapis.com/v1/operations/cHJvamVjdHMvZmxpcGFwcC1jNWE0ZC9sb2NhdGlvbnMvdXMtY2VudHJhbDEvb3BlcmF0aW9ucy9vcGVyYXRpb24tMTc0MTg4NzY0ODYyNC02MzAzY2QyODhmMGNlLWZlYWViMjIxLWI5MDZhZGEx 200
+[debug] [2025-03-13T17:40:51.362Z] <<< [apiv2][body] GET https://cloudfunctions.googleapis.com/v1/operations/cHJvamVjdHMvZmxpcGFwcC1jNWE0ZC9sb2NhdGlvbnMvdXMtY2VudHJhbDEvb3BlcmF0aW9ucy9vcGVyYXRpb24tMTc0MTg4NzY0ODYyNC02MzAzY2QyODhmMGNlLWZlYWViMjIxLWI5MDZhZGEx {"name":"operations/cHJvamVjdHMvZmxpcGFwcC1jNWE0ZC9sb2NhdGlvbnMvdXMtY2VudHJhbDEvb3BlcmF0aW9ucy9vcGVyYXRpb24tMTc0MTg4NzY0ODYyNC02MzAzY2QyODhmMGNlLWZlYWViMjIxLWI5MDZhZGEx","metadata":{"@type":"type.googleapis.com/google.cloud.functions.v1.OperationMetadataV1","target":"projects/flipapp-c5a4d/locations/us-central1/functions/helloWorld","type":"CREATE_FUNCTION","request":{"@type":"type.googleapis.com/google.cloud.functions.v1.CloudFunction","name":"projects/flipapp-c5a4d/locations/us-central1/functions/helloWorld","httpsTrigger":{"securityLevel":"SECURE_ALWAYS"},"entryPoint":"helloWorld","updateTime":"1970-01-01T00:00:00Z","labels":{"deployment-tool":"cli-firebase","firebase-functions-hash":"193471d06cfff55d4235eca84a34d637c224b98e"},"sourceUploadUrl":"https://storage.googleapis.com/uploads-460899583114.us-central1.cloudfunctions.appspot.com/c8699a60-c481-44b6-b2ba-e258c18f7bea.zip?GoogleAccessId=service-195757800963@gcf-admin-robot.iam.gserviceaccount.com&Expires=1741889447&Signature=iaIF1KsMUiTiuo6Q01fO563tZDRGOHE7kAor6tbkY87lh0bsuTw0iysXZ%2BnC0Mqd511FYENigjv8aqVY0mj7Wfqx36%2FOeO7VGvXdJlH%2FFpx3J95IUJ0bcAr%2Fo1SZgb54k6XLuzAPBoAKgPmlgD%2FYbne%2F45NN5QMVrkQnto2CzPd9qDlhJkHxnHaKg5FStkFl4%2FCUbW%2BeHPSPQkCId3FBf89y4Gp%2FdhVKXHW%2BleAVQkoLi9dJuwc1d9fQpTY4XggIJB3IS3IICoX2DXyhfU5kLFL9TSqJ69bXnVKXBNolZKbBBcJhiyuVH4MkPx29b0xGc%2Btpvery54QJGiDOmIzzvg%3D%3D","environmentVariables":{"FIREBASE_CONFIG":"{\"projectId\":\"flipapp-c5a4d\",\"databaseURL\":\"https://flipapp-c5a4d-default-rtdb.firebaseio.com\",\"storageBucket\":\"flipapp-c5a4d.firebasestorage.app\"}","GCLOUD_PROJECT":"flipapp-c5a4d","EVENTARC_CLOUD_EVENT_SOURCE":"projects/flipapp-c5a4d/locations/us-central1/functions/helloWorld"},"runtime":"nodejs18","buildEnvironmentVariables":{"GOOGLE_NODE_RUN_SCRIPTS":""},"dockerRegistry":"ARTIFACT_REGISTRY"},"versionId":"1","updateTime":"2025-03-13T17:40:49.089743189Z"}}
+[debug] [2025-03-13T17:40:53.362Z] [create-default-us-central1-helloWorld] Retrying task index 0
+[debug] [2025-03-13T17:40:53.363Z] Checked if tokens are valid: true, expires at: 1741888828905
+[debug] [2025-03-13T17:40:53.363Z] Checked if tokens are valid: true, expires at: 1741888828905
+[debug] [2025-03-13T17:40:53.363Z] >>> [apiv2][query] GET https://cloudfunctions.googleapis.com/v1/operations/cHJvamVjdHMvZmxpcGFwcC1jNWE0ZC9sb2NhdGlvbnMvdXMtY2VudHJhbDEvb3BlcmF0aW9ucy9vcGVyYXRpb24tMTc0MTg4NzY0ODYyNC02MzAzY2QyODhmMGNlLWZlYWViMjIxLWI5MDZhZGEx [none]
+[debug] [2025-03-13T17:40:53.560Z] <<< [apiv2][status] GET https://cloudfunctions.googleapis.com/v1/operations/cHJvamVjdHMvZmxpcGFwcC1jNWE0ZC9sb2NhdGlvbnMvdXMtY2VudHJhbDEvb3BlcmF0aW9ucy9vcGVyYXRpb24tMTc0MTg4NzY0ODYyNC02MzAzY2QyODhmMGNlLWZlYWViMjIxLWI5MDZhZGEx 200
+[debug] [2025-03-13T17:40:53.560Z] <<< [apiv2][body] GET https://cloudfunctions.googleapis.com/v1/operations/cHJvamVjdHMvZmxpcGFwcC1jNWE0ZC9sb2NhdGlvbnMvdXMtY2VudHJhbDEvb3BlcmF0aW9ucy9vcGVyYXRpb24tMTc0MTg4NzY0ODYyNC02MzAzY2QyODhmMGNlLWZlYWViMjIxLWI5MDZhZGEx {"name":"operations/cHJvamVjdHMvZmxpcGFwcC1jNWE0ZC9sb2NhdGlvbnMvdXMtY2VudHJhbDEvb3BlcmF0aW9ucy9vcGVyYXRpb24tMTc0MTg4NzY0ODYyNC02MzAzY2QyODhmMGNlLWZlYWViMjIxLWI5MDZhZGEx","metadata":{"@type":"type.googleapis.com/google.cloud.functions.v1.OperationMetadataV1","target":"projects/flipapp-c5a4d/locations/us-central1/functions/helloWorld","type":"CREATE_FUNCTION","request":{"@type":"type.googleapis.com/google.cloud.functions.v1.CloudFunction","name":"projects/flipapp-c5a4d/locations/us-central1/functions/helloWorld","httpsTrigger":{"securityLevel":"SECURE_ALWAYS"},"entryPoint":"helloWorld","updateTime":"1970-01-01T00:00:00Z","labels":{"deployment-tool":"cli-firebase","firebase-functions-hash":"193471d06cfff55d4235eca84a34d637c224b98e"},"sourceUploadUrl":"https://storage.googleapis.com/uploads-460899583114.us-central1.cloudfunctions.appspot.com/c8699a60-c481-44b6-b2ba-e258c18f7bea.zip?GoogleAccessId=service-195757800963@gcf-admin-robot.iam.gserviceaccount.com&Expires=1741889447&Signature=iaIF1KsMUiTiuo6Q01fO563tZDRGOHE7kAor6tbkY87lh0bsuTw0iysXZ%2BnC0Mqd511FYENigjv8aqVY0mj7Wfqx36%2FOeO7VGvXdJlH%2FFpx3J95IUJ0bcAr%2Fo1SZgb54k6XLuzAPBoAKgPmlgD%2FYbne%2F45NN5QMVrkQnto2CzPd9qDlhJkHxnHaKg5FStkFl4%2FCUbW%2BeHPSPQkCId3FBf89y4Gp%2FdhVKXHW%2BleAVQkoLi9dJuwc1d9fQpTY4XggIJB3IS3IICoX2DXyhfU5kLFL9TSqJ69bXnVKXBNolZKbBBcJhiyuVH4MkPx29b0xGc%2Btpvery54QJGiDOmIzzvg%3D%3D","environmentVariables":{"FIREBASE_CONFIG":"{\"projectId\":\"flipapp-c5a4d\",\"databaseURL\":\"https://flipapp-c5a4d-default-rtdb.firebaseio.com\",\"storageBucket\":\"flipapp-c5a4d.firebasestorage.app\"}","GCLOUD_PROJECT":"flipapp-c5a4d","EVENTARC_CLOUD_EVENT_SOURCE":"projects/flipapp-c5a4d/locations/us-central1/functions/helloWorld"},"runtime":"nodejs18","buildEnvironmentVariables":{"GOOGLE_NODE_RUN_SCRIPTS":""},"dockerRegistry":"ARTIFACT_REGISTRY"},"versionId":"1","updateTime":"2025-03-13T17:40:51.933108608Z"},"done":true,"error":{"code":7,"message":"Gen1 operation for function projects/flipapp-c5a4d/locations/us-central1/functions/helloWorld failed: Build failed: com.google.net.rpc3.client.RpcClientException: <eye3 title='/ArgoAdminNoCloudAudit.CreateBuild, PERMISSION_DENIED'/> APPLICATION_ERROR;google.devtools.cloudbuild.v1/ArgoAdminNoCloudAudit.CreateBuild;generic::permission_denied: Caller does not have required permission to use project flipapp-c5a4d. Grant the caller the roles/serviceusage.serviceUsageConsumer role, or a custom role with the serviceusage.services.use permission, by visiting https://console.developers.google.com/iam-admin/iam/project?project=flipapp-c5a4d and then retry. Propagation of the new permission may take a few minutes.;AppErrorCode=7;StartTimeMs=1741887650229;unknown;ResFormat=uncompressed;ServerTimeSec=0.191626829;LogBytes=256;Non-FailFast;EndUserCredsRequested;EffSecLevel=privacy_and_integrity;ReqFormat=uncompressed;ReqID=5c81989e32f7ea40;GlobalID=0;Server=[2002:a05:6670:cb15:b0:a83:4fb1:40c2]:4001."}}
+[debug] [2025-03-13T17:40:53.560Z] Got source token undefined for region us-central1
+[error] Gen1 operation for function projects/flipapp-c5a4d/locations/us-central1/functions/helloWorld failed: Build failed: com.google.net.rpc3.client.RpcClientException: <eye3 title='/ArgoAdminNoCloudAudit.CreateBuild, PERMISSION_DENIED'/> APPLICATION_ERROR;google.devtools.cloudbuild.v1/ArgoAdminNoCloudAudit.CreateBuild;generic::permission_denied: Caller does not have required permission to use project flipapp-c5a4d. Grant the caller the roles/serviceusage.serviceUsageConsumer role, or a custom role with the serviceusage.services.use permission, by visiting https://console.developers.google.com/iam-admin/iam/project?project=flipapp-c5a4d and then retry. Propagation of the new permission may take a few minutes.;AppErrorCode=7;StartTimeMs=1741887650229;unknown;ResFormat=uncompressed;ServerTimeSec=0.191626829;LogBytes=256;Non-FailFast;EndUserCredsRequested;EffSecLevel=privacy_and_integrity;ReqFormat=uncompressed;ReqID=5c81989e32f7ea40;GlobalID=0;Server=[2002:a05:6670:cb15:b0:a83:4fb1:40c2]:4001.
+[debug] [2025-03-13T17:40:53.569Z] Total Function Deployment time: 5240
+[debug] [2025-03-13T17:40:53.569Z] 1 Functions Deployed
+[debug] [2025-03-13T17:40:53.569Z] 1 Functions Errored
+[debug] [2025-03-13T17:40:53.569Z] 0 Function Deployments Aborted
+[debug] [2025-03-13T17:40:53.569Z] Average Function Deployment time: 5238
+[info] 
+[info] Functions deploy had errors with the following functions:
+	helloWorld(us-central1)
+[debug] [2025-03-13T17:40:53.637Z] Not printing URL for HTTPS function. Typically this means it didn't match a filter or we failed deployment
+[info] i  functions: cleaning up build files... 
+[debug] [2025-03-13T17:40:53.638Z] Checked if tokens are valid: true, expires at: 1741888828905
+[debug] [2025-03-13T17:40:53.638Z] Checked if tokens are valid: true, expires at: 1741888828905
+[debug] [2025-03-13T17:40:53.639Z] Checked if tokens are valid: true, expires at: 1741888828905
+[debug] [2025-03-13T17:40:53.639Z] Checked if tokens are valid: true, expires at: 1741888828905
+[debug] [2025-03-13T17:40:53.639Z] >>> [apiv2][query] DELETE https://artifactregistry.googleapis.com/v1beta2/projects/flipapp-c5a4d/locations/us-central1/repositories/gcf-artifacts/packages/hello_world [none]
+[debug] [2025-03-13T17:40:53.640Z] >>> [apiv2][query] GET https://us.gcr.io/v2/flipapp-c5a4d/gcf/us-central1/tags/list [none]
+[debug] [2025-03-13T17:40:54.004Z] <<< [apiv2][status] GET https://us.gcr.io/v2/flipapp-c5a4d/gcf/us-central1/tags/list 404
+[debug] [2025-03-13T17:40:54.004Z] <<< [apiv2][body] GET https://us.gcr.io/v2/flipapp-c5a4d/gcf/us-central1/tags/list {"errors":[{"code":"NAME_UNKNOWN","message":"Repository \"us.gcr.io\" not found"}]}
+[debug] [2025-03-13T17:40:54.005Z] Failed docker command with error  Request to https://us.gcr.io/v2/flipapp-c5a4d/gcf/us-central1/tags/list had HTTP Error: 404, Not Found {"name":"FirebaseError","children":[],"context":{"body":{"errors":[{"code":"NAME_UNKNOWN","message":"Repository \"us.gcr.io\" not found"}],"error":{"message":"Not Found"}},"response":{"statusCode":404}},"exit":1,"message":"Request to https://us.gcr.io/v2/flipapp-c5a4d/gcf/us-central1/tags/list had HTTP Error: 404, Not Found","status":404}
+[debug] [2025-03-13T17:40:54.007Z] Checked if tokens are valid: true, expires at: 1741888828905
+[debug] [2025-03-13T17:40:54.007Z] Checked if tokens are valid: true, expires at: 1741888828905
+[debug] [2025-03-13T17:40:54.007Z] >>> [apiv2][query] GET https://us.gcr.io/v2/flipapp-c5a4d/gcf/us-central1/tags/list [none]
+[debug] [2025-03-13T17:40:54.262Z] <<< [apiv2][status] GET https://us.gcr.io/v2/flipapp-c5a4d/gcf/us-central1/tags/list 404
+[debug] [2025-03-13T17:40:54.262Z] <<< [apiv2][body] GET https://us.gcr.io/v2/flipapp-c5a4d/gcf/us-central1/tags/list {"errors":[{"code":"NAME_UNKNOWN","message":"Repository \"us.gcr.io\" not found"}]}
+[debug] [2025-03-13T17:40:54.263Z] Failed docker command with error  Request to https://us.gcr.io/v2/flipapp-c5a4d/gcf/us-central1/tags/list had HTTP Error: 404, Not Found {"name":"FirebaseError","children":[],"context":{"body":{"errors":[{"code":"NAME_UNKNOWN","message":"Repository \"us.gcr.io\" not found"}],"error":{"message":"Not Found"}},"response":{"statusCode":404}},"exit":1,"message":"Request to https://us.gcr.io/v2/flipapp-c5a4d/gcf/us-central1/tags/list had HTTP Error: 404, Not Found","status":404}
+[debug] [2025-03-13T17:40:54.365Z] Checked if tokens are valid: true, expires at: 1741888828905
+[debug] [2025-03-13T17:40:54.365Z] Checked if tokens are valid: true, expires at: 1741888828905
+[debug] [2025-03-13T17:40:54.365Z] >>> [apiv2][query] GET https://us.gcr.io/v2/flipapp-c5a4d/gcf/us-central1/tags/list [none]
+[debug] [2025-03-13T17:40:54.451Z] <<< [apiv2][status] DELETE https://artifactregistry.googleapis.com/v1beta2/projects/flipapp-c5a4d/locations/us-central1/repositories/gcf-artifacts/packages/hello_world 404
+[debug] [2025-03-13T17:40:54.451Z] <<< [apiv2][body] DELETE https://artifactregistry.googleapis.com/v1beta2/projects/flipapp-c5a4d/locations/us-central1/repositories/gcf-artifacts/packages/hello_world {"error":{"code":404,"message":"Package \"projects/flipapp-c5a4d/locations/us-central1/repositories/gcf-artifacts/packages/hello_world\" was not found.","status":"NOT_FOUND"}}
+[debug] [2025-03-13T17:40:54.963Z] <<< [apiv2][status] GET https://us.gcr.io/v2/flipapp-c5a4d/gcf/us-central1/tags/list 404
+[debug] [2025-03-13T17:40:54.963Z] <<< [apiv2][body] GET https://us.gcr.io/v2/flipapp-c5a4d/gcf/us-central1/tags/list {"errors":[{"code":"NAME_UNKNOWN","message":"Repository \"us.gcr.io\" not found"}]}
+[debug] [2025-03-13T17:40:54.963Z] Failed docker command with error  Request to https://us.gcr.io/v2/flipapp-c5a4d/gcf/us-central1/tags/list had HTTP Error: 404, Not Found {"name":"FirebaseError","children":[],"context":{"body":{"errors":[{"code":"NAME_UNKNOWN","message":"Repository \"us.gcr.io\" not found"}],"error":{"message":"Not Found"}},"response":{"statusCode":404}},"exit":1,"message":"Request to https://us.gcr.io/v2/flipapp-c5a4d/gcf/us-central1/tags/list had HTTP Error: 404, Not Found","status":404}
+[warn] ⚠  functions: Unhandled error cleaning up build images. This could result in a small monthly bill if not corrected. You can attempt to delete these images by redeploying or you can delete them manually at https://console.cloud.google.com/gcr/images/flipapp-c5a4d/us/gcf 
+[debug] [2025-03-13T17:40:54.964Z] Functions deploy failed.
+[debug] [2025-03-13T17:40:54.964Z] {
+  "endpoint": {
+    "id": "helloWorld",
+    "project": "flipapp-c5a4d",
+    "region": "us-central1",
+    "entryPoint": "helloWorld",
+    "platform": "gcfv1",
+    "runtime": "nodejs18",
+    "httpsTrigger": {},
+    "ingressSettings": null,
+    "availableMemoryMb": null,
+    "serviceAccount": null,
+    "timeoutSeconds": null,
+    "maxInstances": null,
+    "minInstances": null,
+    "vpc": null,
+    "environmentVariables": {
+      "FIREBASE_CONFIG": "{\"projectId\":\"flipapp-c5a4d\",\"databaseURL\":\"https://flipapp-c5a4d-default-rtdb.firebaseio.com\",\"storageBucket\":\"flipapp-c5a4d.firebasestorage.app\"}",
+      "GCLOUD_PROJECT": "flipapp-c5a4d",
+      "EVENTARC_CLOUD_EVENT_SOURCE": "projects/flipapp-c5a4d/locations/us-central1/functions/helloWorld"
+    },
+    "codebase": "default",
+    "targetedByOnly": false,
+    "hash": "193471d06cfff55d4235eca84a34d637c224b98e",
+    "labels": {
+      "deployment-tool": "cli-firebase"
+    }
+  },
+  "op": "create",
+  "original": {
+    "name": "FirebaseError",
+    "children": [],
+    "exit": 1,
+    "message": "Gen1 operation for function projects/flipapp-c5a4d/locations/us-central1/functions/helloWorld failed: Build failed: com.google.net.rpc3.client.RpcClientException: <eye3 title='/ArgoAdminNoCloudAudit.CreateBuild, PERMISSION_DENIED'/> APPLICATION_ERROR;google.devtools.cloudbuild.v1/ArgoAdminNoCloudAudit.CreateBuild;generic::permission_denied: Caller does not have required permission to use project flipapp-c5a4d. Grant the caller the roles/serviceusage.serviceUsageConsumer role, or a custom role with the serviceusage.services.use permission, by visiting https://console.developers.google.com/iam-admin/iam/project?project=flipapp-c5a4d and then retry. Propagation of the new permission may take a few minutes.;AppErrorCode=7;StartTimeMs=1741887650229;unknown;ResFormat=uncompressed;ServerTimeSec=0.191626829;LogBytes=256;Non-FailFast;EndUserCredsRequested;EffSecLevel=privacy_and_integrity;ReqFormat=uncompressed;ReqID=5c81989e32f7ea40;GlobalID=0;Server=[2002:a05:6670:cb15:b0:a83:4fb1:40c2]:4001.",
+    "original": {
+      "code": 7,
+      "message": "Gen1 operation for function projects/flipapp-c5a4d/locations/us-central1/functions/helloWorld failed: Build failed: com.google.net.rpc3.client.RpcClientException: <eye3 title='/ArgoAdminNoCloudAudit.CreateBuild, PERMISSION_DENIED'/> APPLICATION_ERROR;google.devtools.cloudbuild.v1/ArgoAdminNoCloudAudit.CreateBuild;generic::permission_denied: Caller does not have required permission to use project flipapp-c5a4d. Grant the caller the roles/serviceusage.serviceUsageConsumer role, or a custom role with the serviceusage.services.use permission, by visiting https://console.developers.google.com/iam-admin/iam/project?project=flipapp-c5a4d and then retry. Propagation of the new permission may take a few minutes.;AppErrorCode=7;StartTimeMs=1741887650229;unknown;ResFormat=uncompressed;ServerTimeSec=0.191626829;LogBytes=256;Non-FailFast;EndUserCredsRequested;EffSecLevel=privacy_and_integrity;ReqFormat=uncompressed;ReqID=5c81989e32f7ea40;GlobalID=0;Server=[2002:a05:6670:cb15:b0:a83:4fb1:40c2]:4001."
+    },
+    "status": 7,
+    "code": 7
+  }
+}
+[debug] [2025-03-13T17:40:55.022Z] Error: Failed to create function helloWorld in region us-central1
+    at /Users/jexpearce/.nvm/versions/node/v18.20.7/lib/node_modules/firebase-tools/lib/deploy/functions/release/fabricator.js:52:11
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async Fabricator.createV1Function (/Users/jexpearce/.nvm/versions/node/v18.20.7/lib/node_modules/firebase-tools/lib/deploy/functions/release/fabricator.js:182:32)
+    at async Fabricator.createEndpoint (/Users/jexpearce/.nvm/versions/node/v18.20.7/lib/node_modules/firebase-tools/lib/deploy/functions/release/fabricator.js:134:13)
+    at async handle (/Users/jexpearce/.nvm/versions/node/v18.20.7/lib/node_modules/firebase-tools/lib/deploy/functions/release/fabricator.js:89:17)
+[error] 
+[error] Error: There was an error deploying functions

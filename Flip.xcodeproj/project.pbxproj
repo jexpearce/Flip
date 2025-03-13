@@ -14,6 +14,7 @@
 		42CADCBA2D52A75A00D41EB9 /* WidgetKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 42CADCB92D52A75900D41EB9 /* WidgetKit.framework */; };
 		42CADCBC2D52A75A00D41EB9 /* SwiftUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 42CADCBB2D52A75A00D41EB9 /* SwiftUI.framework */; };
 		42CADCCB2D52A7A400D41EB9 /* FlipWidget.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 42CADCB72D52A75900D41EB9 /* FlipWidget.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		42D52EEF2D8337D000E9EDD2 /* FirebaseMessaging in Frameworks */ = {isa = PBXBuildFile; productRef = 42D52EEE2D8337D000E9EDD2 /* FirebaseMessaging */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -108,6 +109,7 @@
 			files = (
 				42263CDA2D738E0A00856008 /* Kingfisher in Frameworks */,
 				4250012D2D5932DB00230E1B /* FirebaseAuth in Frameworks */,
+				42D52EEF2D8337D000E9EDD2 /* FirebaseMessaging in Frameworks */,
 				4250012F2D5932DB00230E1B /* FirebaseFirestore in Frameworks */,
 				425001312D5932DB00230E1B /* FirebaseStorage in Frameworks */,
 			);
@@ -181,6 +183,7 @@
 				4250012E2D5932DB00230E1B /* FirebaseFirestore */,
 				425001302D5932DB00230E1B /* FirebaseStorage */,
 				42263CD92D738E0A00856008 /* Kingfisher */,
+				42D52EEE2D8337D000E9EDD2 /* FirebaseMessaging */,
 			);
 			productName = test;
 			productReference = 42CADC862D52A72500D41EB9 /* FlipApp.app */;
@@ -417,6 +420,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = FlipApp/FlipApp.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 2;
 				DEVELOPMENT_TEAM = 2HAG477YT9;
@@ -452,6 +456,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = FlipApp/FlipApp.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 2;
 				DEVELOPMENT_TEAM = 2HAG477YT9;
@@ -611,6 +616,11 @@
 			isa = XCSwiftPackageProductDependency;
 			package = 4250012B2D5932DB00230E1B /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
 			productName = FirebaseStorage;
+		};
+		42D52EEE2D8337D000E9EDD2 /* FirebaseMessaging */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 4250012B2D5932DB00230E1B /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseMessaging;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

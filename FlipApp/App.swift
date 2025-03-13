@@ -2,6 +2,7 @@ import BackgroundTasks
 import SwiftUI
 import UserNotifications
 import FirebaseCore
+import FirebaseMessaging
 
 @main
 struct FlipApp: App {
@@ -10,6 +11,9 @@ struct FlipApp: App {
     init() {
         // Configure Firebase first, before any other initialization
         FirebaseApp.configure()
+        
+        // Set Firebase Messaging settings
+        Messaging.messaging().isAutoInitEnabled = true
 
         // Register tasks first, before scheduling anything
         BGTaskScheduler.shared.register(
