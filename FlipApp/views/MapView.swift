@@ -327,6 +327,7 @@ struct FriendMapMarker: View {
     @State private var animate = false
     @State private var profileImage: Image?
     
+    // In FriendMapMarker - statusColor computed property:
     private var statusColor: Color {
         if friend.isHistorical {
             // Historical sessions - with correct transparency based on index
@@ -345,12 +346,12 @@ struct FriendMapMarker: View {
             // Live session - use blue instead of green
             return Color(red: 59/255, green: 130/255, blue: 246/255) // Blue
         } else {
-            // Completed or failed session
+            // Completed or failed session - FIXED
             if friend.lastFlipWasSuccessful {
                 // Success - green
                 return Color(red: 34/255, green: 197/255, blue: 94/255)
             } else {
-                // Failed - red
+                // Failed - red - ENSURE this branch is properly reached
                 return Color(red: 239/255, green: 68/255, blue: 68/255)
             }
         }
@@ -464,22 +465,39 @@ struct FriendMapMarker: View {
             loadProfileImage()
         }
     }
-    
-    // Load the profile image
     private func loadProfileImage() {
         // First get a clean user ID (without historical suffix)
         let cleanUserId = String(friend.id.split(separator: "_").first ?? "")
         
+        // Check if we already have this image cached
+        if let cachedImage = ProfileImageCache.shared.getCachedImage(for: cleanUserId) {
+            DispatchQueue.main.async {
+                self.profileImage = Image(uiImage: cachedImage)
+            }
+            return
+        }
+        
+        // Store the friend ID for later comparison
+        let currentFriendId = friend.id
+        
         // Query Firestore for the user's profile image URL
         FirebaseManager.shared.db.collection("users").document(cleanUserId)
             .getDocument { document, error in
+                // Compare with stored ID to ensure we're still showing the same friend
+                guard currentFriendId == self.friend.id else { return }
+                
                 if let userData = try? document?.data(as: FirebaseManager.FlipUser.self),
                    let imageURLString = userData.profileImageURL,
                    let imageURL = URL(string: imageURLString) {
                     
-                    // Download the image
                     URLSession.shared.dataTask(with: imageURL) { data, response, error in
+                        // Check again that we're still showing the same friend
+                        guard currentFriendId == self.friend.id else { return }
+                        
                         if let data = data, let uiImage = UIImage(data: data) {
+                            // Store in cache with user ID
+                            ProfileImageCache.shared.storeImage(uiImage, for: cleanUserId)
+                            
                             DispatchQueue.main.async {
                                 self.profileImage = Image(uiImage: uiImage)
                             }

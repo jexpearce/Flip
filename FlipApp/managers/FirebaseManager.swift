@@ -310,6 +310,8 @@ extension FirebaseManager {
         // CRITICAL FIX: Make sure actualDuration is calculated properly
         // Only apply a minimum if it makes sense
         let validActualDuration = session.actualDuration
+        let sessionEndTime = session.startTime.addingTimeInterval(Double(session.actualDuration * 60))
+
         
         var sessionData: [String: Any] = [
             "userId": session.userId,
@@ -319,9 +321,9 @@ extension FirebaseManager {
             "lastFlipTime": Timestamp(date: Date()),
             "lastFlipWasSuccessful": session.wasSuccessful,
             "sessionDuration": session.duration,
-            "actualDuration": NSNumber(value: validActualDuration),
+            "actualDuration": validActualDuration,
             "sessionStartTime": Timestamp(date: session.startTime),
-            "sessionEndTime": Timestamp(date: Date()),
+            "sessionEndTime": Timestamp(date: sessionEndTime),
             "createdAt": FieldValue.serverTimestamp()
         ]
         
@@ -416,5 +418,6 @@ struct CompletedSession {
     let actualDuration: Int
     let wasSuccessful: Bool
     let startTime: Date
+    let endTime: Date
     let building: BuildingInfo?
 }

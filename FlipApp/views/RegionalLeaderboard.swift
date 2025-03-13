@@ -79,7 +79,7 @@ struct RegionalLeaderboard: View {
                                 Color(red: 234/255, green: 179/255, blue: 8/255).opacity(0.5) :
                                 Color(red: 239/255, green: 68/255, blue: 68/255).opacity(0.5), radius: 4)
                     
-                    Text(viewModel.isBuildingSpecific ? "LONGEST FLIP OF THE WEEK" : "REGIONAL LEADERBOARD")
+                    Text(viewModel.isBuildingSpecific ? "MOST SESSIONS OF THE WEEK" : "REGIONAL LEADERBOARD")
                         .font(.system(size: 13, weight: .black))
                         .tracking(2)
                         .foregroundStyle(
@@ -204,7 +204,7 @@ struct RegionalLeaderboard: View {
                     
                     Spacer()
                     
-                    Text("DURATION")
+                    Text("SESSIONS")
                         .font(.system(size: 12, weight: .bold))
                         .tracking(1)
                         .foregroundColor(viewModel.isBuildingSpecific ?
@@ -257,18 +257,21 @@ struct RegionalLeaderboard: View {
                                     .underline(color: .white.opacity(0.3))
                                 
                                 // Duration
-                                Text("\(entry.duration) min")
-                                    .onAppear {
-                                        print("⏱️ Displaying duration for \(entry.username): \(entry.duration)")
-                                    }
-                                    .font(.system(size: 18, weight: .black))
-                                    .foregroundColor(viewModel.isBuildingSpecific ?
-                                                     Color(red: 234/255, green: 179/255, blue: 8/255) :
-                                                        Color(red: 239/255, green: 68/255, blue: 68/255))
-                                    .shadow(color: viewModel.isBuildingSpecific ?
-                                            Color(red: 234/255, green: 179/255, blue: 8/255).opacity(0.3) :
-                                                Color(red: 239/255, green: 68/255, blue: 68/255).opacity(0.3), radius: 4)
-                                    .frame(width: 80, alignment: .trailing)
+                                VStack(alignment: .trailing, spacing: 2) {
+                                    Text("\(entry.sessionCount)")
+                                        .font(.system(size: 18, weight: .black))
+                                        .foregroundColor(viewModel.isBuildingSpecific ?
+                                                         Color(red: 234/255, green: 179/255, blue: 8/255) :
+                                                            Color(red: 239/255, green: 68/255, blue: 68/255))
+                                        .shadow(color: viewModel.isBuildingSpecific ?
+                                                Color(red: 234/255, green: 179/255, blue: 8/255).opacity(0.3) :
+                                                    Color(red: 239/255, green: 68/255, blue: 68/255).opacity(0.3), radius: 4)
+                                    
+                                    Text("sessions")
+                                        .font(.system(size: 10, weight: .medium))
+                                        .foregroundColor(.white.opacity(0.7))
+                                }
+                                .frame(width: 80, alignment: .trailing)
                             }
                             .padding(.vertical, 10)
                             .padding(.horizontal, 16)
@@ -413,16 +416,22 @@ struct RegionalLeaderboard: View {
         })
     }
 }
-// This component fetches and displays user profiles
+
+// In UserProfileSheet (RegionalLeaderboard.swift)
 struct UserProfileSheet: View {
     let userId: String
     @State private var user: FirebaseManager.FlipUser?
     @State private var isLoading = true
+    @State private var hasAppeared = false
     @Environment(\.presentationMode) var presentationMode
     
     var body: some View {
         NavigationView {
-            Group {
+            ZStack {
+                // Add a background color to prevent the black screen
+                Color(red: 20/255, green: 10/255, blue: 40/255) // Deep midnight purple
+                    .ignoresSafeArea()
+                
                 if isLoading {
                     ProgressView("Loading profile...")
                         .tint(.white)
@@ -437,26 +446,52 @@ struct UserProfileSheet: View {
                 presentationMode.wrappedValue.dismiss()
             })
             .navigationBarTitleDisplayMode(.inline)
-        }
-        .onAppear {
-            loadUser()
+            // Force the view to refresh after appearing
+            .onAppear {
+                loadUser()
+                
+                // This helps with the black screen issue
+                if !hasAppeared {
+                    hasAppeared = true
+                    // Force a redraw after a short delay
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                        self.isLoading = true
+                        loadUser()
+                    }
+                }
+            }
         }
     }
     
     private func loadUser() {
+        print("Loading user profile for ID: \(userId)")
+        isLoading = true
+        
         FirebaseManager.shared.db.collection("users").document(userId).getDocument { snapshot, error in
-            isLoading = false
             if let error = error {
                 print("Error loading user: \(error.localizedDescription)")
+                DispatchQueue.main.async {
+                    self.isLoading = false
+                }
                 return
             }
             
             if let userData = try? snapshot?.data(as: FirebaseManager.FlipUser.self) {
-                self.user = userData
+                print("Successfully loaded user: \(userData.username)")
+                DispatchQueue.main.async {
+                    self.user = userData
+                    self.isLoading = false
+                }
+            } else {
+                print("Failed to decode user data for ID: \(userId)")
+                DispatchQueue.main.async {
+                    self.isLoading = false
+                }
             }
         }
     }
 }
+
 
 // Profile image component that loads user profile pictures
 struct ProfileImage: View {
@@ -500,6 +535,7 @@ struct ProfileImage: View {
         }
     }
     
+    // In ProfileImage.swift - inside the loadUserData function
     private func loadUserData() {
         isLoading = true
         
@@ -515,6 +551,47 @@ struct ProfileImage: View {
                 return
             } else {
                 print("⚠️ Cached username is empty, fetching fresh data")
+            }
+        }
+        
+        // First try FirebaseManager's current user and friends
+        if let currentUserId = Auth.auth().currentUser?.uid,
+           let currentUser = FirebaseManager.shared.currentUser {
+            
+            // If this is the current user
+            if userId == currentUserId {
+                print("✅ This is the current user: \(currentUser.username)")
+                self.username = currentUser.username
+                self.imageURL = currentUser.profileImageURL
+                isLoading = false
+                
+                // Update cache
+                let userCache = UserCacheItem(
+                    userId: userId,
+                    username: currentUser.username,
+                    profileImageURL: currentUser.profileImageURL
+                )
+                RegionalViewModel.shared.leaderboardViewModel.userCache[userId] = userCache
+                return
+            }
+            
+            // Check if in friends list
+            for friend in FirebaseManager.shared.friends {
+                if friend.id == userId {
+                    print("✅ Found in friends list: \(friend.username)")
+                    self.username = friend.username
+                    self.imageURL = friend.profileImageURL
+                    isLoading = false
+                    
+                    // Update cache
+                    let userCache = UserCacheItem(
+                        userId: userId,
+                        username: friend.username,
+                        profileImageURL: friend.profileImageURL
+                    )
+                    RegionalViewModel.shared.leaderboardViewModel.userCache[userId] = userCache
+                    return
+                }
             }
         }
         
@@ -569,10 +646,40 @@ struct ProfileImage: View {
         }
     }
 
+    // In ProfileImage.swift - modify the fetchCompleteUserData() function:
     private func fetchCompleteUserData() {
         print("🔍 Fetching complete user data for: \(userId)")
         
-        // First try with dispatch group and multiple retry strategy
+        // First check if the user is already in FirebaseManager.shared.currentUser or friends list
+        if let currentUserId = Auth.auth().currentUser?.uid {
+            if userId == currentUserId && FirebaseManager.shared.currentUser != nil {
+                DispatchQueue.main.async {
+                    self.username = FirebaseManager.shared.currentUser?.username ?? "User"
+                    self.imageURL = FirebaseManager.shared.currentUser?.profileImageURL
+                    self.isLoading = false
+                }
+                return
+            }
+            
+            // Check if user is in friends list
+            if let friend = FirebaseManager.shared.friends.first(where: { $0.id == userId }) {
+                DispatchQueue.main.async {
+                    self.username = friend.username
+                    self.imageURL = friend.profileImageURL
+                    self.isLoading = false
+                }
+                // Still update cache
+                let userCache = UserCacheItem(
+                    userId: userId,
+                    username: friend.username,
+                    profileImageURL: friend.profileImageURL
+                )
+                RegionalViewModel.shared.leaderboardViewModel.userCache[userId] = userCache
+                return
+            }
+        }
+        
+        // Original Firestore query logic with better error handling
         var retryCount = 0
         let maxRetries = 2
         
@@ -687,209 +794,22 @@ struct UserCacheItem {
     var profileImageURL: String?
 }
 
-// STRUCTURE 2: RegionalLeaderboardViewModel class - moved outside struct
+
+// Replace your current RegionalLeaderboardViewModel class implementation with this:
+
 class RegionalLeaderboardViewModel: ObservableObject {
     @Published var leaderboardEntries: [RegionalLeaderboardEntry] = []
     @Published var isLoading = false
-    @Published var radius: Int = 5 // Default radius in miles
+    @Published var radius: Int = 5 // Keeping this for backward compatibility
     @Published var locationName: String?
-    @Published var isBuildingSpecific: Bool = false // Add this property here
-    
+    @Published var isBuildingSpecific: Bool = true // Default to building-specific mode
     var userCache: [String: UserCacheItem] = [:]
     
     private var currentLocation: CLLocation?
     private let firebaseManager = FirebaseManager.shared
     private let geocoder = CLGeocoder()
     
-    func loadRegionalLeaderboard(near location: CLLocation) {
-        isBuildingSpecific = false
-        guard let currentUserId = Auth.auth().currentUser?.uid else { return }
-        currentLocation = location
-        isLoading = true
-        
-        // First get the user's friends list to mark friends in leaderboard
-        firebaseManager.db.collection("users").document(currentUserId)
-            .getDocument { [weak self] document, error in
-                guard let self = self,
-                      let userData = try? document?.data(as: FirebaseManager.FlipUser.self)
-                else {
-                    self?.isLoading = false
-                    return
-                }
-                
-                let friendIds = userData.friends
-                
-                // Reverse geocode location
-                self.getLocationName(for: location)
-                
-                // Calculate the coordinates
-                let center = location.coordinate
-                let radiusInMeters = Double(self.radius) * 1609.34 // Convert miles to meters
-                
-                // Query for sessions within radius
-                self.fetchRegionalTopSessions(center: center, radiusInMeters: radiusInMeters, friendIds: friendIds)
-            }
-    }
-    
-    func increaseRadius() {
-        radius = min(radius + 1, 20)
-        if let location = currentLocation {
-            loadRegionalLeaderboard(near: location)
-        }
-    }
-    
-    func decreaseRadius() {
-        radius = max(radius - 1, 1)
-        if let location = currentLocation {
-            loadRegionalLeaderboard(near: location)
-        }
-    }
-    
-    private func getLocationName(for location: CLLocation) {
-        geocoder.reverseGeocodeLocation(location) { [weak self] placemarks, error in
-            DispatchQueue.main.async {
-                if let placemark = placemarks?.first {
-                    if let locality = placemark.locality {
-                        self?.locationName = locality
-                    } else if let area = placemark.administrativeArea {
-                        self?.locationName = area
-                    } else {
-                        self?.locationName = nil
-                    }
-                } else {
-                    self?.locationName = nil
-                }
-            }
-        }
-    }
-    
-    private func fetchRegionalTopSessions(center: CLLocationCoordinate2D, radiusInMeters: Double, friendIds: [String]) {
-        guard let currentUserId = Auth.auth().currentUser?.uid else { return }
-        
-        let db = Firestore.firestore()
-        let calendar = Calendar.current
-        let currentDate = Date()
-        
-        // Calculate the current week's start date (Monday)
-        var components = calendar.dateComponents([.yearForWeekOfYear, .weekOfYear], from: currentDate)
-        components.weekday = 2  // Monday (2 = Monday in iOS Calendar)
-        components.hour = 0
-        components.minute = 0
-        components.second = 0
-        
-        guard let weekStart = calendar.date(from: components) else {
-            print("❌ Error calculating week start")
-            self.isLoading = false
-            return
-        }
-        
-        print("🗓️ Current week starts at: \(weekStart)")
-        
-        // Get the user's location as a CLLocation
-        let userLocation = CLLocation(latitude: center.latitude, longitude: center.longitude)
-        
-        // Process query
-        var matchingSessions: [SessionWithLocation] = []
-        
-        // Query all session locations from this week
-        db.collection("session_locations")
-            .whereField("lastFlipWasSuccessful", isEqualTo: true)
-            .whereField("sessionStartTime", isGreaterThan: Timestamp(date: weekStart)) // Weekly filter
-            .order(by: "sessionStartTime")
-            .order(by: "actualDuration", descending: true)
-            .limit(to: 50)
-            .getDocuments { [weak self] snapshot, error in
-                guard let self = self,
-                      let snapshot = snapshot else {
-                    self?.isLoading = false
-                    return
-                }
-                
-                print("📊 Found \(snapshot.documents.count) sessions this week")
-                
-                for document in snapshot.documents {
-                    let data = document.data()
-                    
-                    // Extract session info
-                    guard let userId = data["userId"] as? String,
-                          let username = data["username"] as? String,
-                          let geoPoint = data["location"] as? GeoPoint,
-                          let actualDuration = data["actualDuration"] as? Int,
-                          let wasSuccessful = data["lastFlipWasSuccessful"] as? Bool,
-                          let _ = (data["sessionStartTime"] as? Timestamp)?
-                        .dateValue() else {
-                        continue
-                    }
-                    
-                    // Only include successful sessions
-                    if !wasSuccessful {
-                        continue
-                    }
-                    
-                    // Calculate distance
-                    let sessionLocation = CLLocation(latitude: geoPoint.latitude, longitude: geoPoint.longitude)
-                    let distance = sessionLocation.distance(from: userLocation)
-                    
-                    // Only include if within radius
-                    if distance <= radiusInMeters {
-                        // Only show distance for friends and current user
-                        let showDistance = userId == currentUserId || friendIds.contains(userId)
-                        
-                        let session = SessionWithLocation(
-                            id: document.documentID,
-                            userId: userId,
-                            username: username,
-                            duration: actualDuration,
-                            location: sessionLocation,
-                            distance: showDistance ? distance : 0, // Only set distance for friends
-                            isFriend: friendIds.contains(userId),
-                            isCurrentUser: userId == currentUserId
-                        )
-                        
-                        matchingSessions.append(session)
-                    }
-                }
-                
-                // Group by user, find max duration for each
-                var userBestSessions: [String: SessionWithLocation] = [:]
-                
-                for session in matchingSessions {
-                    if let existingBest = userBestSessions[session.userId],
-                       existingBest.duration >= session.duration {
-                        continue
-                    }
-                    
-                    userBestSessions[session.userId] = session
-                }
-                
-                
-                // Convert to leaderboard entries and sort
-                let entries = userBestSessions.values.map { session in
-                    RegionalLeaderboardEntry(
-                        id: session.id,
-                        userId: session.userId,
-                        username: session.username,
-                        duration: session.duration,
-                        distance: session.isCurrentUser ? 0 : session.distance,
-                        isFriend: session.isFriend,
-                        isCurrentUser: session.isCurrentUser
-                    )
-                }.sorted { $0.duration > $1.duration }
-                
-                DispatchQueue.main.async {
-                    self.leaderboardEntries = entries
-                    self.isLoading = false
-                }
-            }
-    }
-}
-    
-// STRUCTURE 3: Extension for RegionalLeaderboardViewModel - moved outside class
-
-// Extension for RegionalLeaderboardViewModel to handle buildings
-extension RegionalLeaderboardViewModel {
-    
-    // Update in RegionalLeaderboardViewModel
+    // Only keep the building-specific leaderboard functionality
     func loadBuildingLeaderboard(building: BuildingInfo) {
         guard let currentUserId = Auth.auth().currentUser?.uid else { return }
         isBuildingSpecific = true
@@ -934,99 +854,27 @@ extension RegionalLeaderboardViewModel {
             return
         }
         
-        // Use the standardized building ID that's already stored in the BuildingInfo struct
+        print("🗓️ Weekly leaderboard from: \(weekStart)")
+        
+        // Use the standardized building ID
         let buildingId = building.id
         
         // Get the building's location as a CLLocation
-        let buildingLocation = CLLocation(latitude: building.coordinate.latitude, longitude: building.coordinate.longitude)
+        let buildingLocation = CLLocation(
+            latitude: building.coordinate.latitude,
+            longitude: building.coordinate.longitude
+        )
         let radius = 100.0 // Search within 100 meters of the building
         
-        // First, fetch all users to ensure we have usernames
-        var usernames: [String: String] = [:]
-        let userGroup = DispatchGroup()
-        
-        // Always include current user
-        userGroup.enter()
-        db.collection("users").document(currentUserId).getDocument { document, error in
-            defer { userGroup.leave() }
-            
-            if let document = document, let username = document.data()?["username"] as? String {
-                usernames[currentUserId] = username
-            }
-        }
-        
-        // Fetch friend usernames
-        for friendId in friendIds {
-            userGroup.enter()
-            db.collection("users").document(friendId).getDocument { document, error in
-                defer { userGroup.leave() }
-                
-                if let document = document, let username = document.data()?["username"] as? String {
-                    usernames[friendId] = username
-                }
-            }
-        }
-        
-        userGroup.notify(queue: .main) {
-            // Use exact building ID match first
-            db.collection("session_locations")
-                .whereField("buildingId", isEqualTo: buildingId)
-                .whereField("lastFlipWasSuccessful", isEqualTo: true)
-                .whereField("sessionStartTime", isGreaterThan: Timestamp(date: weekStart))
-                .getDocuments { [weak self] snapshot, error in
-                    guard let self = self else { return }
-                    
-                    if let error = error {
-                        self.tryProximitySearch(
-                            buildingLocation: buildingLocation,
-                            radius: radius,
-                            usernames: usernames,
-                            friendIds: friendIds,
-                            currentUserId: currentUserId,
-                            weekStart: weekStart
-                        )
-                        return
-                    }
-                    
-                    if let documents = snapshot?.documents, !documents.isEmpty {
-                        self.processSessionDocumentsWithImprovedDuration(
-                            documents,
-                            buildingLocation,
-                            friendIds,
-                            currentUserId,
-                            usernames: usernames
-                        )
-                    } else {
-                        // If no exact matches, try proximity search
-                        self.tryProximitySearch(
-                            buildingLocation: buildingLocation,
-                            radius: radius,
-                            usernames: usernames,
-                            friendIds: friendIds,
-                            currentUserId: currentUserId,
-                            weekStart: weekStart
-                        )
-                    }
-                }
-        }
-    }
-    
-    // Helper method for proximity search
-    private func tryProximitySearch(
-        buildingLocation: CLLocation,
-        radius: Double,
-        usernames: [String: String],
-        friendIds: [String],
-        currentUserId: String,
-        weekStart: Date
-    ) {
-        firebaseManager.db.collection("session_locations")
+        // First, fetch all sessions from this week in and near this building
+        db.collection("session_locations")
             .whereField("lastFlipWasSuccessful", isEqualTo: true)
             .whereField("sessionStartTime", isGreaterThan: Timestamp(date: weekStart))
             .getDocuments { [weak self] snapshot, error in
                 guard let self = self else { return }
                 
                 if let error = error {
+                    print("Error fetching sessions: \(error.localizedDescription)")
                     self.isLoading = false
                     return
                 }
@@ -1036,197 +884,166 @@ extension RegionalLeaderboardViewModel {
                     return
                 }
                 
-                // Filter by proximity to building
-                var nearbyDocuments: [QueryDocumentSnapshot] = []
+                print("📊 Found \(documents.count) total sessions this week")
                 
+                // Dictionary to track each user's total time and session count
+                var userWeeklyData: [String: (userId: String, username: String, sessionCount: Int, distance: Double, isFriend: Bool, isCurrentUser: Bool)] = [:]
+                
+                // Process each session document
                 for document in documents {
-                    if let geoPoint = document.data()["location"] as? GeoPoint {
-                        let sessionLocation = CLLocation(latitude: geoPoint.latitude, longitude: geoPoint.longitude)
+                    let data = document.data()
+                    
+                    // Extract basic session info
+                    guard let userId = data["userId"] as? String,
+                          let geoPoint = data["location"] as? GeoPoint else {
+                        continue
+                    }
+                    
+                    // Check if this session is in or near our target building
+                    // Either by exact buildingId match OR by proximity
+                    let isExactBuildingMatch = (data["buildingId"] as? String) == buildingId
+                    
+                    if !isExactBuildingMatch {
+                        // Not an exact match, check proximity
+                        let sessionLocation = CLLocation(
+                            latitude: geoPoint.latitude,
+                            longitude: geoPoint.longitude
+                        )
                         let distance = sessionLocation.distance(from: buildingLocation)
                         
-                        if distance <= radius {
-                            nearbyDocuments.append(document)
+                        // Skip if not within radius
+                        if distance > radius {
+                            continue
                         }
+                    }
+                    
+                    // Get the session duration, defaulting to 0 if missing
+                    var sessionDuration = 0
+                    if let duration = data["actualDuration"] {
+                        // First debug what we're actually getting
+                        print("👾 Raw actualDuration: \(duration), type: \(type(of: duration))")
+                        
+                        // Handle all possible Firestore data types
+                        if let intDuration = duration as? Int {
+                            sessionDuration = intDuration
+                        } else if let doubleDuration = duration as? Double {
+                            sessionDuration = Int(doubleDuration)
+                        } else if let numberDuration = duration as? NSNumber {
+                            sessionDuration = numberDuration.intValue
+                        } else if let stringDuration = duration as? String, let parsed = Int(stringDuration) {
+                            sessionDuration = parsed
+                        } else {
+                            // Try to safely convert any value to Int
+                            let description = "\(duration)"
+                            if let parsed = Int(description) {
+                                sessionDuration = parsed
+                            } else if let parsed = Double(description), parsed.isFinite {
+                                sessionDuration = Int(parsed)
+                            }
+                        }
+                    }
+
+                    // Safety check - make sure we don't have zero for valid sessions
+                    if sessionDuration <= 0 && data["lastFlipWasSuccessful"] as? Bool == true {
+                        print("⚠️ Found zero or negative duration for successful session, using actual duration")
+                        // Try to calculate actual duration from timestamps
+                        if let startTime = (data["sessionStartTime"] as? Timestamp)?.dateValue(),
+                           let endTime = (data["sessionEndTime"] as? Timestamp)?.dateValue() {
+                            let elapsedSeconds = endTime.timeIntervalSince(startTime)
+                            sessionDuration = max(1, Int(elapsedSeconds / 60))
+                            print("📱 Recalculated duration: \(sessionDuration) min from \(Int(elapsedSeconds)) seconds")
+                        }
+                    }
+
+                    print("📱 Final session duration: \(sessionDuration) minutes")
+                    
+                    // Get username safely
+                    let username = data["username"] as? String ?? "User"
+                    
+                    // Calculate distance for display
+                    let sessionLocation = CLLocation(
+                        latitude: geoPoint.latitude,
+                        longitude: geoPoint.longitude
+                    )
+                    let distance = sessionLocation.distance(from: buildingLocation)
+                    
+                    // Only show distance for friends and current user
+                    let showDistance = userId == currentUserId || friendIds.contains(userId)
+                    let displayDistance = showDistance ? distance : 0
+                    
+                    // Update the user's total time
+                    if let existingData = userWeeklyData[userId] {
+                        // Add to existing record
+                        userWeeklyData[userId] = (
+                            userId: userId,
+                            username: existingData.username,
+                            sessionCount: existingData.sessionCount + 1,
+                            distance: displayDistance,
+                            isFriend: friendIds.contains(userId),
+                            isCurrentUser: userId == currentUserId
+                        )
+                    } else {
+                        // Create new record
+                        userWeeklyData[userId] = (
+                            userId: userId,
+                            username: username,
+                            sessionCount: 1,
+                            distance: displayDistance,
+                            isFriend: friendIds.contains(userId),
+                            isCurrentUser: userId == currentUserId
+                        )
                     }
                 }
                 
-                self.processSessionDocumentsWithImprovedDuration(
-                    nearbyDocuments,
-                    buildingLocation,
-                    friendIds,
-                    currentUserId,
-                    usernames: usernames
-                )
+                // Convert aggregated data to leaderboard entries
+                let entries = userWeeklyData.values.map { userData in
+                    RegionalLeaderboardEntry(
+                        id: UUID().uuidString,
+                        userId: userData.userId,
+                        username: userData.username,
+                        totalWeeklyTime: 0, // We'll keep this field but don't use it
+                        sessionCount: userData.sessionCount,
+                        distance: userData.distance,
+                        isFriend: userData.isFriend,
+                        isCurrentUser: userData.isCurrentUser
+                    )
+                // IMPORTANT: Sort by session count instead of time
+                }.sorted { $0.sessionCount > $1.sessionCount }
+                // Take top 10 for display
+                DispatchQueue.main.async {
+                    self.leaderboardEntries = entries.prefix(10).map { $0 }
+                    self.isLoading = false
+                }
             }
     }
     
-    private func processSessionDocumentsWithImprovedDuration(
-        _ documents: [QueryDocumentSnapshot],
-        _ buildingLocation: CLLocation,
-        _ friendIds: [String],
-        _ currentUserId: String,
-        usernames: [String: String]
-    ) {
-        var matchingSessions: [SessionWithLocation] = []
-        
-        // First gather all unique user IDs to fetch usernames in batch
-        var userIds = Set<String>()
-        for document in documents {
-            if let userId = document.data()["userId"] as? String {
-                userIds.insert(userId)
-            }
-        }
-        
-        // Fetch all user data in a batch to ensure we have usernames
-        let group = DispatchGroup()
-        var fetchedUsernames: [String: String] = [:]
-        
-        for userId in userIds {
-            // Skip if we already have this username
-            if let existingUsername = usernames[userId], !existingUsername.isEmpty {
-                fetchedUsernames[userId] = existingUsername
-                continue
-            }
+    // For backward compatibility - required by RegionalView.swift
+    func increaseRadius() {
+        // No implementation needed if you're only using building leaderboard
+    }
+    
+    func decreaseRadius() {
+        // No implementation needed if you're only using building leaderboard
+    }
+    
+    // Stub method for backward compatibility - redirect to building leaderboard
+    func loadRegionalLeaderboard(near location: CLLocation) {
+        // If there's a selected building in RegionalViewModel, use that
+        if let building = RegionalViewModel.shared.selectedBuilding {
+            loadBuildingLeaderboard(building: building)
+        } else {
+            // Otherwise reset state and show empty
+            isBuildingSpecific = false
+            leaderboardEntries = []
+            isLoading = false
             
-            // Try to get from cache first
-            if let cachedUser = userCache[userId], !cachedUser.username.isEmpty {
-                fetchedUsernames[userId] = cachedUser.username
-                continue
-            }
-            
-            // Otherwise fetch from Firestore
-            group.enter()
-            FirebaseManager.shared.db.collection("users").document(userId).getDocument { document, error in
-                defer { group.leave() }
-                
-                if let document = document, let username = document.data()?["username"] as? String, !username.isEmpty {
-                    fetchedUsernames[userId] = username
-                    
-                    // Also cache for future use
-                    let cacheItem = UserCacheItem(
-                        userId: userId,
-                        username: username,
-                        profileImageURL: document.data()?["profileImageURL"] as? String
-                    )
-                    self.userCache[userId] = cacheItem
-                } else {
-                    fetchedUsernames[userId] = "User \(userId.prefix(4))"
+            // Try to get location name for display
+            geocoder.reverseGeocodeLocation(location) { [weak self] placemarks, error in
+                if let placemark = placemarks?.first, let locality = placemark.locality {
+                    DispatchQueue.main.async {
+                        self?.locationName = locality
+                    }
                 }
-            }
-        }
-        
-        // Wait for all fetches to complete
-        group.notify(queue: .main) {
-            // Now process each document with the fetched usernames
-            for document in documents {
-                let data = document.data()
-                
-                // Extract session info with better error handling
-                guard let userId = data["userId"] as? String else {
-                    continue
-                }
-                
-                let sessionLocation = CLLocation(
-                    latitude: (data["location"] as? GeoPoint)?.latitude ?? 0,
-                    longitude: (data["location"] as? GeoPoint)?.longitude ?? 0
-                )
-                
-                // Skip invalid locations
-                if sessionLocation.coordinate.latitude == 0 && sessionLocation.coordinate.longitude == 0 {
-                    continue
-                }
-                
-                // ***CRITICAL FIX*** - Extract duration with careful type handling
-                var actualDuration = 0
-
-                // Check for actual duration with correct type handling
-                if let duration = data["actualDuration"] as? Int {
-                    actualDuration = duration
-                } else if let duration = data["actualDuration"] as? Double {
-                    actualDuration = Int(duration)
-                } else if let duration = data["actualDuration"] as? NSNumber {
-                    actualDuration = duration.intValue
-                } else if let durationString = data["actualDuration"] as? String, let duration = Int(durationString) {
-                    // Also handle string values just in case
-                    actualDuration = duration
-                }
-                // Then try sessionDuration if actualDuration wasn't found
-                else if let duration = data["sessionDuration"] as? Int {
-                    actualDuration = duration
-                } else if let duration = data["sessionDuration"] as? Double {
-                    actualDuration = Int(duration)
-                } else if let duration = data["sessionDuration"] as? NSNumber {
-                    actualDuration = duration.intValue
-                } else if let durationString = data["sessionDuration"] as? String, let duration = Int(durationString) {
-                    actualDuration = duration
-                }
-                // If we still don't have a duration, calculate it from timestamps
-                else if let startTime = (data["sessionStartTime"] as? Timestamp)?.dateValue(),
-                         let endTime = (data["sessionEndTime"] as? Timestamp)?.dateValue() {
-                    let seconds = endTime.timeIntervalSince(startTime)
-                    actualDuration = Int(seconds / 60) // Convert to minutes
-                }
-                
-                // Get username with better resolution
-                let username: String
-                if let fetchedUsername = fetchedUsernames[userId], !fetchedUsername.isEmpty {
-                    username = fetchedUsername
-                } else if let docUsername = data["username"] as? String, !docUsername.isEmpty {
-                    username = docUsername
-                } else {
-                    username = "User \(userId.prefix(4))"
-                }
-                
-                let distance = sessionLocation.distance(from: buildingLocation)
-                
-                // Only show distance for friends and current user
-                let showDistance = userId == currentUserId || friendIds.contains(userId)
-                
-                let session = SessionWithLocation(
-                    id: document.documentID,
-                    userId: userId,
-                    username: username,
-                    duration: actualDuration,
-                    location: sessionLocation,
-                    distance: showDistance ? distance : 0,
-                    isFriend: friendIds.contains(userId),
-                    isCurrentUser: userId == currentUserId
-                )
-                
-                matchingSessions.append(session)
-            }
-            
-            // Group by user, find max duration for each
-            var userBestSessions: [String: SessionWithLocation] = [:]
-            
-            for session in matchingSessions {
-                if let existingBest = userBestSessions[session.userId],
-                   existingBest.duration >= session.duration {
-                    continue
-                }
-                
-                userBestSessions[session.userId] = session
-            }
-            
-            // Convert to leaderboard entries and sort
-            let entries = userBestSessions.values.map { session in
-                RegionalLeaderboardEntry(
-                    id: session.id,
-                    userId: session.userId,
-                    username: session.username,
-                    duration: session.duration,
-                    distance: session.isCurrentUser ? 0 : session.distance,
-                    isFriend: session.isFriend,
-                    isCurrentUser: session.isCurrentUser
-                )
-            }.sorted { $0.duration > $1.duration }
-            
-            // Take top 10 only
-            let limitedEntries = entries.prefix(10).map { $0 }
-            
-            DispatchQueue.main.async {
-                self.leaderboardEntries = limitedEntries
-                self.isLoading = false
             }
         }
     }
@@ -1237,8 +1054,9 @@ struct RegionalLeaderboardEntry: Identifiable {
     let id: String
     let userId: String
     let username: String
-    let duration: Int
-    let distance: Double // In meters
+    let totalWeeklyTime: Int // Changed from duration to totalWeeklyTime (in minutes)
+    let sessionCount: Int    // New: count of sessions for this user this week
+    let distance: Double     // In meters
     let isFriend: Bool
     let isCurrentUser: Bool
     

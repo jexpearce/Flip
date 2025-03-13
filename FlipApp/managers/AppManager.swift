@@ -1758,7 +1758,7 @@ class AppManager: NSObject, ObservableObject {
         
         // Calculate elapsed time and accurate duration
         let elapsedSeconds = selectedMinutes * 60 - remainingSeconds
-        let actualDuration = max(1, elapsedSeconds / 60) // Convert to minutes, minimum 1
+        let actualDuration = elapsedSeconds / 60
         
         // Debug logs for duration calculation
         print("🕙 Duration calculation: selectedMinutes=\(selectedMinutes), remainingSeconds=\(remainingSeconds)")
@@ -1801,7 +1801,7 @@ class AppManager: NSObject, ObservableObject {
         // Only save session data if session completed or failed
         if currentState == .completed || currentState == .failed {
             // Calculate accurate actual duration - this is critical
-            let actualDurationMinutes = max(1, (selectedMinutes * 60 - remainingSeconds) / 60)
+            let actualDurationMinutes = (selectedMinutes * 60 - remainingSeconds) / 60
             print("🕰️ Session completed with actual duration: \(actualDurationMinutes) minutes")
             
             // Create completed session data
@@ -1813,6 +1813,7 @@ class AppManager: NSObject, ObservableObject {
                 actualDuration: actualDurationMinutes,
                 wasSuccessful: currentState == .completed,
                 startTime: Date().addingTimeInterval(-Double(selectedMinutes * 60 - remainingSeconds)),
+                endTime: Date(),  // Add the actual end time
                 building: currentBuilding
             )
             

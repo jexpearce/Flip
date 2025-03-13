@@ -70,12 +70,32 @@ struct ProfileAvatarView: View {
 }
 
 // Helper for caching profile images and optimizing loading
+// Update the existing ProfileImageCache class in ProfileAvatarView.swift
 class ProfileImageCache {
     static let shared = ProfileImageCache()
     
     private let cache = NSCache<NSString, UIImage>()
     
+    // Get image directly from cache (for map markers)
+    func getCachedImage(for userId: String) -> UIImage? {
+        return cache.object(forKey: NSString(string: userId))
+    }
+    
+    // Store image directly in cache
+    func storeImage(_ image: UIImage, for userId: String) {
+        cache.setObject(image, forKey: NSString(string: userId))
+    }
+    
+    // Clear cache for specific user
+    func clearCacheForUser(_ userId: String) {
+        cache.removeObject(forKey: NSString(string: userId))
+    }
+    
+    // This method is for backward compatibility with your existing code
     func getImage(for urlString: String, completion: @escaping (UIImage?) -> Void) {
+        // Extract user ID from URL if it contains one, otherwise use the whole URL
+        let userId = urlString.split(separator: "/").last?.split(separator: "_").first.map(String.init) ?? urlString
+        
         // Check if image is already in memory cache
         let cacheKey = NSString(string: urlString)
         if let cachedImage = cache.object(forKey: cacheKey) {
@@ -98,8 +118,9 @@ class ProfileImageCache {
                 return
             }
             
-            // Store in cache
+            // Store in cache - both with URL and with userId if available
             self?.cache.setObject(image, forKey: cacheKey)
+            self?.cache.setObject(image, forKey: NSString(string: userId))
             
             DispatchQueue.main.async {
                 completion(image)

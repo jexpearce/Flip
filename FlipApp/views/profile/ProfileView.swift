@@ -50,6 +50,13 @@ struct ProfileView: View {
                 // Update the UI with Firestore data
                 DispatchQueue.main.async {
                     self.username = userData.username
+                    
+                    // IMPORTANT: Update the FirebaseManager.shared.currentUser with the Firestore data
+                    // This ensures the profile image URL is properly synchronized
+                    FirebaseManager.shared.currentUser = userData
+                    
+                    // After updating the shared current user, load the profile image
+                    self.profileImageManager.loadProfileImage()
                 }
             }
     }

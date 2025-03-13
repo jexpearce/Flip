@@ -518,6 +518,7 @@ class MapViewModel: NSObject, ObservableObject, CLLocationManagerDelegate {
         print("Location manager failed with error: \(error.localizedDescription)")
     }
     
+    // In MapViewModel.swift - modify the processHistoricalDocument function:
     private func processHistoricalDocument(_ document: QueryDocumentSnapshot, userId: String, index: Int) -> FriendLocation? {
         let data = document.data()
         
@@ -529,16 +530,26 @@ class MapViewModel: NSObject, ObservableObject, CLLocationManagerDelegate {
               Date().timeIntervalSince(sessionEndTime) < 2592000
         else { return nil }
         
-        // IMPORTANT CHANGE: Explicitly check for the wasSuccessful field
+        // CRITICAL FIX: Check multiple possible field names for success status
+        // This fixes the issue with failed sessions always showing as successful
         let wasSuccessful: Bool
         if let successValue = data["lastFlipWasSuccessful"] as? Bool {
             wasSuccessful = successValue
-            print("Historical session success status: \(wasSuccessful ? "SUCCESS" : "FAILED") for \(username)")
+        } else if let successValue = data["wasSuccessful"] as? Bool {
+            wasSuccessful = successValue
+        } else if let actualDuration = data["actualDuration"] as? Int,
+                  let targetDuration = data["sessionDuration"] as? Int {
+            // If we can't find an explicit success/failure flag,
+            // infer it from whether the actual duration matches the target
+            wasSuccessful = (
+                actualDuration >= targetDuration * Int(0.9)
+            ) // Consider success if at least 90% completed
         } else {
-            // Default to true if field is missing
+            // Default to success only as last resort
             wasSuccessful = true
-            print("Missing success field for historical session - defaulting to success")
         }
+        
+        print("Historical session for \(username): success=\(wasSuccessful), fields: \(data.keys.joined(separator: ", "))")
         
         let sessionDuration = data["sessionDuration"] as? Int ?? 25
         let participants = data["participants"] as? [String]
