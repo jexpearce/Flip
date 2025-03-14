@@ -40,10 +40,9 @@ struct MainView: View {
     @StateObject private var authManager = AuthManager.shared
     @StateObject private var viewRouter = ViewRouter()
     
-    // Add this for permission management
+    @EnvironmentObject var appManager: AppManager 
     @StateObject private var permissionManager = PermissionManager.shared
     @State private var checkPermissionsOnAppear = true
-
     var body: some View {
         if authManager.isAuthenticated {
             TabView(selection: $viewRouter.selectedTab) {
@@ -91,6 +90,20 @@ struct MainView: View {
             .accentColor(Color(red: 56/255, green: 189/255, blue: 248/255)) // Set accent color for selected tab
             .frame(maxWidth: .infinity, maxHeight: .infinity)
             .background(Theme.mainGradient)
+            .overlay(
+                Group {
+                    if appManager.isJoinedSession && appManager.liveSessionId != nil &&
+                       (appManager.currentState == .tracking || appManager.currentState == .countdown || appManager.currentState == .paused) {
+                        VStack {
+                            JoinedSessionIndicator()
+                                .padding(.horizontal)
+                                .padding(.top, 15)
+                            
+                            Spacer()
+                        }
+                    }
+                }
+            )
             .toolbarBackground(Theme.deepMidnightPurple, for: .tabBar)
             .toolbarBackground(.visible, for: .tabBar)
             .toolbarColorScheme(.dark, for: .tabBar)

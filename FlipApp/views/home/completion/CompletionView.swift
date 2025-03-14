@@ -169,6 +169,7 @@ struct CompletionView: View {
                     DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) {
                         appManager.currentState = .initial
                         isButtonPressed = false
+                        appManager.sessionAlreadyRecorded = false
                         showSavingIndicator = false
                     }
                 }) {

@@ -176,6 +176,7 @@ struct FailureView: View {
                         DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
                             appManager.startCountdown()
                             isTryAgainPressed = false
+                            appManager.sessionAlreadyRecorded = false
                             showSavingIndicator = false
                         }
                     }) {

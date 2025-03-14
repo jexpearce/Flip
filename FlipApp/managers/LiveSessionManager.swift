@@ -464,7 +464,7 @@ class LiveSessionManager: ObservableObject {
         }
     }
     
-    private func listenToJoinedSession(sessionId: String) {
+    func listenToJoinedSession(sessionId: String) {
         // Remove any existing listener
         if let existingListener = sessionListeners[sessionId] {
             existingListener.remove()
@@ -476,12 +476,15 @@ class LiveSessionManager: ObservableObject {
             .addSnapshotListener { [weak self] document, error in
                 guard let document = document, document.exists,
                       let sessionData = self?.parseLiveSessionDocument(document) else {
-                    self?.currentJoinedSession = nil
+                    DispatchQueue.main.async {
+                        self?.currentJoinedSession = nil
+                    }
                     return
                 }
                 
                 DispatchQueue.main.async {
                     self?.currentJoinedSession = sessionData
+                    self?.objectWillChange.send()
                 }
             }
         

@@ -362,7 +362,7 @@ struct JoinedCompletionView: View {
         }
     }
     
-    private func loadParticipantDetails() {
+    func loadParticipantDetails() {
         guard let sessionId = appManager.liveSessionId else {
             loadingParticipants = false
             return

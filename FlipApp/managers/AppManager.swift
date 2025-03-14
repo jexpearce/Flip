@@ -36,6 +36,7 @@ class AppManager: NSObject, ObservableObject {
     @Published var pauseDuration = 5 // Default pause duration in minutes
     @Published var remainingPauseSeconds = 0 // Remaining seconds in current pause
     @Published var isPauseTimerActive = false // Whether pause timer is active
+    @Published var sessionAlreadyRecorded: Bool = false
 
 
     private var sessionManager = SessionManager.shared
@@ -153,22 +154,46 @@ class AppManager: NSObject, ObservableObject {
             body: "Phone must be face down when timer reaches zero")
     }
     func joinLiveSession(sessionId: String, remainingSeconds: Int, totalDuration: Int) {
+        print("Joining live session: \(sessionId), remaining: \(remainingSeconds)s, duration: \(totalDuration)min")
+        
         // Initialize all values first BEFORE changing state
         self.liveSessionId = sessionId
         self.isJoinedSession = true
-        self.selectedMinutes = totalDuration / 60
+        self.selectedMinutes = totalDuration // Use the correct total duration from the session
         self.remainingSeconds = remainingSeconds
         
-        // Safely get pause settings with fallbacks
-        if let joinedSession = LiveSessionManager.shared.currentJoinedSession {
-            self.allowPauses = joinedSession.allowPauses
-            self.maxPauses = joinedSession.maxPauses
-        } else {
-            // Default values if joined session data isn't available yet
-            self.allowPauses = false
-            self.maxPauses = 0
+        // Get joined session data to properly set all parameters
+        LiveSessionManager.shared.getSessionDetails(sessionId: sessionId) { sessionData in
+            if let session = sessionData {
+                DispatchQueue.main.async {
+                    // Set pause settings based on the original session's settings
+                    self.allowPauses = session.allowPauses
+                    self.maxPauses = session.maxPauses
+                    self.remainingPauses = session.maxPauses
+                    self.originalSessionStarter = session.starterId
+                    
+                    // Save the list of participants for display in completion screens
+                    self.sessionParticipants = session.participants
+                    
+                    // Make sure we're properly setting LiveSessionManager's currentJoinedSession
+                    LiveSessionManager.shared.listenToJoinedSession(sessionId: sessionId)
+                    
+                    // Save state to ensure persistence across app restarts
+                    self.saveSessionState()
+                }
+            } else {
+                // Safety fallback if we can't get session details
+                DispatchQueue.main.async {
+                    // Default values if joined session data isn't available yet
+                    self.allowPauses = false
+                    self.maxPauses = 0
+                    self.remainingPauses = 0
+                    
+                    // Save state to ensure persistence
+                    self.saveSessionState()
+                }
+            }
         }
-        self.remainingPauses = self.maxPauses
         
         // Save state to ensure persistence
         saveSessionState()
@@ -234,6 +259,9 @@ class AppManager: NSObject, ObservableObject {
         
         // Set the pause countdown
         remainingPauseSeconds = pauseDuration * 60
+            
+            // IMPORTANT: Record when the pause starts
+        pauseStartTime = Date()
         
         // Start the pause timer
         startPauseTimer()
@@ -242,6 +270,10 @@ class AppManager: NSObject, ObservableObject {
 
         // Stop motion updates
         motionManager.stopDeviceMotionUpdates()
+        
+        if #available(iOS 16.1, *) {
+                updateLiveActivity()
+            }
 
         // Update Live Activity with paused state
         if #available(iOS 16.1, *) {
@@ -280,9 +312,6 @@ class AppManager: NSObject, ObservableObject {
             LiveSessionManager.shared.broadcastSessionState(sessionId: sessionId, appManager: self)
         }
 
-        // Add debug print
-        print("Session paused. Time remaining: \(remainingTimeString), Pause time: \(formatPauseTimeRemaining())")
-        
         // Send notification for pause
         let plural = remainingPauses == 1 ? "" : "s"
         notificationManager.display(
@@ -290,8 +319,11 @@ class AppManager: NSObject, ObservableObject {
             body: "Pause timer started for \(pauseDuration) minutes. \(remainingPauses) pause\(plural) remaining."
         )
     }
+    private var pauseStartTime: Date?
     private func startPauseTimer() {
         pauseTimer?.invalidate()
+        pauseTimer = nil
+        pauseStartTime = Date()
         pauseTimer = Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { [weak self] _ in
             guard let self = self, self.isPauseTimerActive else { return }
             
@@ -317,6 +349,7 @@ class AppManager: NSObject, ObservableObject {
                 self.isPauseTimerActive = false
                 self.pauseTimer?.invalidate()
                 self.pauseTimer = nil
+                self.pauseStartTime = nil
                 
                 // Auto-resume the session
                 self.autoResumeSession()
@@ -926,11 +959,7 @@ class AppManager: NSObject, ObservableObject {
         // 3. Clean up session
         endSession()
 
-        clearSessionState()
-        
-        // 4. Save final state
-        saveSessionState()
-
+    
         // 5. Provide haptic feedback
         let generator = UINotificationFeedbackGenerator()
         generator.notificationOccurred(.success)
@@ -945,14 +974,24 @@ class AppManager: NSObject, ObservableObject {
             let currentBuildingName = RegionalViewModel.shared.selectedBuilding?.name
             print("🏢 Current building at session completion: \(currentBuildingName ?? "None") [ID: \(currentBuildingId ?? "None")]")
         }
-        
-        // 7. Record session
-        if let _ = liveSessionId, isJoinedSession {
-            // For joined sessions, need to record all participants
-            recordMultiUserSession(wasSuccessful: true)
-        }
-        
-        updateUserStats(successful: true)
+        if !sessionAlreadyRecorded {
+                sessionAlreadyRecorded = true
+                
+                if let _ = liveSessionId, isJoinedSession {
+                    // For joined sessions, need to record all participants
+                    recordMultiUserSession(wasSuccessful: true)
+                } else {
+                    // For solo sessions, just record normally
+                    sessionManager.addSession(
+                        duration: selectedMinutes,
+                        wasSuccessful: true,
+                        actualDuration: selectedMinutes
+                    )
+                }
+                
+                updateUserStats(successful: true)
+            }
+        saveSessionState()
 
         // 8. Update UI state - check participant outcomes for joined sessions
         DispatchQueue.main.async {
@@ -1010,7 +1049,6 @@ class AppManager: NSObject, ObservableObject {
             )
         }
         
-        clearSessionState()
         endSession()
         saveSessionState()
         
@@ -1024,12 +1062,24 @@ class AppManager: NSObject, ObservableObject {
         // Calculate actual duration in minutes
         let actualDuration = (selectedMinutes * 60 - remainingSeconds) / 60
 
-        if let _  = liveSessionId, isJoinedSession {
-            // For joined sessions, need to record all participants
-            recordMultiUserSession(wasSuccessful: false)
-        }
+        if !sessionAlreadyRecorded {
+                sessionAlreadyRecorded = true
+                
+                if let _  = liveSessionId, isJoinedSession {
+                    // For joined sessions, need to record all participants
+                    recordMultiUserSession(wasSuccessful: false)
+                } else {
+                    // For solo sessions, just record normally
+                    sessionManager.addSession(
+                        duration: selectedMinutes,
+                        wasSuccessful: false,
+                        actualDuration: actualDuration
+                    )
+                }
+                
+                updateUserStats(successful: false)
+            }
         
-        updateUserStats(successful: false)
 
         // Update UI state - check participant outcomes for joined sessions
         DispatchQueue.main.async {
@@ -1310,7 +1360,8 @@ class AppManager: NSObject, ObservableObject {
                     flipBackTimeRemaining : nil,
                 pauseTimeRemaining: (currentState == .paused && isPauseTimerActive) ?
                     formatPauseTimeRemaining() : nil,
-                countdownMessage: nil,
+                countdownMessage: currentState == .countdown ?
+                                "\(countdownSeconds) seconds to flip phone" : nil,
                 lastUpdate: Date()
             )
 
@@ -1409,6 +1460,11 @@ class AppManager: NSObject, ObservableObject {
         defaults.set(remainingPauses, forKey: "remainingPauses")
         defaults.set(isFaceDown, forKey: "isFaceDown")
         defaults.set(pauseDuration, forKey: "pauseDuration")
+        if let pauseStartTime = pauseStartTime {
+                defaults.set(pauseStartTime.timeIntervalSince1970, forKey: "pauseStartTime")
+            } else {
+                defaults.removeObject(forKey: "pauseStartTime")
+            }
         
         // Save live session info
         defaults.set(liveSessionId, forKey: "liveSessionId")
@@ -1419,8 +1475,6 @@ class AppManager: NSObject, ObservableObject {
         if currentState == .countdown {
             defaults.set(countdownSeconds, forKey: "countdownSeconds")
         }
-        
-        // If we're in paused state, save paused remaining seconds and pause timer state
         if currentState == .paused {
             defaults.set(pausedRemainingSeconds, forKey: "pausedRemainingSeconds")
             defaults.set(remainingPauseSeconds, forKey: "remainingPauseSeconds")
@@ -1456,6 +1510,13 @@ class AppManager: NSObject, ObservableObject {
         remainingPauses = defaults.integer(forKey: "remainingPauses")
         isFaceDown = defaults.bool(forKey: "isFaceDown")
         pauseDuration = defaults.integer(forKey: "pauseDuration")
+        
+        if let pauseStartTimeInterval = defaults.object(forKey: "pauseStartTime") as? TimeInterval {
+                pauseStartTime = Date(timeIntervalSince1970: pauseStartTimeInterval)
+            } else {
+                pauseStartTime = nil
+            }
+            
         
         // If pauseDuration is 0 (not set previously), set it to default
         if pauseDuration == 0 {
@@ -1494,16 +1555,20 @@ class AppManager: NSObject, ObservableObject {
             startCountdown(fromRestoration: true)
             
         case .paused:
-            // If the app was closed while paused, maintain paused state
-            pausedRemainingSeconds = defaults.integer(forKey: "pausedRemainingSeconds")
-            remainingPauseSeconds = defaults.integer(forKey: "remainingPauseSeconds")
-            isPauseTimerActive = defaults.bool(forKey: "isPauseTimerActive")
-            isPaused = true
-            
-            // If pause timer was active, restart it
-            if isPauseTimerActive && remainingPauseSeconds > 0 {
-                startPauseTimer()
-            }
+                // If the app was closed while paused, maintain paused state
+                pausedRemainingSeconds = defaults.integer(forKey: "pausedRemainingSeconds")
+                remainingPauseSeconds = defaults.integer(forKey: "remainingPauseSeconds")
+                isPauseTimerActive = defaults.bool(forKey: "isPauseTimerActive")
+                isPaused = true
+                
+                // IMPORTANT: Recalculate pause time if needed
+                if isPauseTimerActive && pauseStartTime != nil {
+                    recalculatePauseTime()
+                } else if isPauseTimerActive && remainingPauseSeconds > 0 {
+                    // Fallback: If we have no start time but active timer, start fresh
+                    pauseStartTime = Date().addingTimeInterval(-Double(pauseDuration * 60 - remainingPauseSeconds))
+                    startPauseTimer()
+                }
             
         default:
             // For any other state (.initial, etc), do nothing special
@@ -1587,6 +1652,7 @@ class AppManager: NSObject, ObservableObject {
         defaults.removeObject(forKey: "flipBackTimeRemaining")
         defaults.removeObject(forKey: "remainingPauseSeconds")
         defaults.removeObject(forKey: "isPauseTimerActive")
+        defaults.removeObject(forKey: "pauseStartTime")  // IMPORTANT: Clear this
         
         // Clear live session info
         defaults.removeObject(forKey: "liveSessionId")
@@ -1602,7 +1668,8 @@ class AppManager: NSObject, ObservableObject {
         // Reset pause timer state
         isPauseTimerActive = false
         remainingPauseSeconds = 0
-        
+        pauseStartTime = nil  // IMPORTANT: Clear this
+        sessionAlreadyRecorded = false
         // Add aggressive Live Activity cleanup to ensure widgets don't remain on lock screen
         if #available(iOS 16.1, *) {
             Task {
@@ -1881,6 +1948,9 @@ class AppManager: NSObject, ObservableObject {
         
         // Check orientation regardless of state to ensure accuracy
         checkCurrentOrientation()
+        if currentState == .paused && isPauseTimerActive {
+                recalculatePauseTime()
+            }
         
         // Start or restart location updates with appropriate settings
         Task { @MainActor in
@@ -1894,12 +1964,52 @@ class AppManager: NSObject, ObservableObject {
         }
         
         // Update UI appropriately
-        if currentState == .tracking {
-            if #available(iOS 16.1, *) {
-                Task {
-                    updateLiveActivity()
+        if currentState == .tracking || currentState == .paused {
+                if #available(iOS 16.1, *) {
+                    Task {
+                        updateLiveActivity()
+                    }
                 }
             }
+    }
+    private func recalculatePauseTime() {
+        guard let pauseStartTime = pauseStartTime else {
+            print("Warning: Pause timer active but no pauseStartTime found")
+            return
+        }
+        
+        // Calculate elapsed seconds since pause started
+        let elapsedSeconds = Int(Date().timeIntervalSince(pauseStartTime))
+        let originalPauseDurationSeconds = pauseDuration * 60
+        
+        // Calculate new remaining pause time
+        let newRemainingPauseSeconds = max(0, originalPauseDurationSeconds - elapsedSeconds)
+        
+        print("Recalculating pause time: Original duration: \(originalPauseDurationSeconds)s, Elapsed: \(elapsedSeconds)s, New remaining: \(newRemainingPauseSeconds)s")
+        
+        // Update the remaining time
+        remainingPauseSeconds = newRemainingPauseSeconds
+        
+        // If time is up, auto-resume
+        if remainingPauseSeconds <= 0 {
+            isPauseTimerActive = false
+            pauseTimer?.invalidate()
+            pauseTimer = nil
+            
+            // Auto-resume the session
+            DispatchQueue.main.async {
+                self.autoResumeSession()
+            }
+        } else {
+            // Otherwise restart the timer
+            pauseTimer?.invalidate()
+            pauseTimer = nil
+            startPauseTimer()
+        }
+        
+        // Update Activity
+        if #available(iOS 16.1, *) {
+            updateLiveActivity()
         }
     }
 
