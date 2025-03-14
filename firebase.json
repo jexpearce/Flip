@@ -1,8 +1,8 @@
 {
   "functions": [
     {
-      "source": "sendpushnotification",
-      "codebase": "sendpushnotification",
+      "source": "functions",
+      "codebase": "functions",
       "ignore": [
         "node_modules",
         ".git",
