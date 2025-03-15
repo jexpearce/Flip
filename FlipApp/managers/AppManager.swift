@@ -1460,6 +1460,7 @@ class AppManager: NSObject, ObservableObject {
         defaults.set(remainingPauses, forKey: "remainingPauses")
         defaults.set(isFaceDown, forKey: "isFaceDown")
         defaults.set(pauseDuration, forKey: "pauseDuration")
+        
         if let pauseStartTime = pauseStartTime {
                 defaults.set(pauseStartTime.timeIntervalSince1970, forKey: "pauseStartTime")
             } else {

@@ -1,262 +1,208 @@
 import SwiftUI
 import UIKit
 
-struct MovableCircleCropperView: View {
+struct ImprovedProfileCropperView: View {
     @Binding var image: UIImage?
-    @Binding var isPresented: Bool
+    @Environment(\.presentationMode) var presentationMode
     var onCrop: (UIImage) -> Void
     
-    @State private var cropPosition: CGPoint
-    @State private var lastPosition: CGPoint
+    // State for image positioning and scaling
     @State private var scale: CGFloat = 1.0
     @State private var lastScale: CGFloat = 1.0
+    @State private var offset: CGSize = .zero
+    @State private var lastOffset: CGSize = .zero
     
-    private let cropSize: CGFloat = 250
-    private let minScale: CGFloat = 0.5
-    private let maxScale: CGFloat = 3.0
-    
-    init(image: Binding<UIImage?>, isPresented: Binding<Bool>, onCrop: @escaping (UIImage) -> Void) {
-        self._image = image
-        self._isPresented = isPresented
-        self.onCrop = onCrop
-        
-        // Initialize cropPosition to center of screen
-        let screenWidth = UIScreen.main.bounds.width
-        let screenHeight = UIScreen.main.bounds.height
-        self._cropPosition = State(initialValue: CGPoint(x: screenWidth/2, y: screenHeight/2 - 50))
-        self._lastPosition = State(initialValue: CGPoint(x: screenWidth/2, y: screenHeight/2 - 50))
+    // Fixed crop circle size - using a percentage of screen width for better adaptability
+    private var cropSize: CGFloat {
+        UIScreen.main.bounds.width * 0.85
     }
     
     var body: some View {
-        ZStack {
-            // Dark background
-            Color.black.opacity(0.85)
-                .edgesIgnoringSafeArea(.all)
-            
-            // Main content
-            VStack {
-                // Header
-                Text("Move Circle to Crop")
-                    .font(.system(size: 20, weight: .bold))
-                    .foregroundColor(.white)
-                    .padding(.top, 30)
-                    .padding(.bottom, 10)
+        NavigationView {
+            ZStack {
+                // Dark background
+                Color.black
+                    .edgesIgnoringSafeArea(.all)
                 
-                // Instruction text
-                Text("Drag the circle to position • Pinch to zoom image")
-                    .font(.system(size: 14))
-                    .foregroundColor(.white.opacity(0.7))
-                    .padding(.bottom, 20)
-                
-                // Cropping area
-                GeometryReader { geo in
-                    ZStack {
-                        // Image
-                        if let image = image {
-                            Image(uiImage: image)
-                                .resizable()
-                                .scaledToFill()
-                                .scaleEffect(scale)
-                                .frame(width: geo.size.width, height: geo.size.height)
-                                .clipped()
-                                .gesture(
-                                    MagnificationGesture()
-                                        .onChanged { value in
-                                            let newScale = lastScale * value.magnitude
-                                            scale = min(max(newScale, minScale), maxScale)
-                                        }
-                                        .onEnded { _ in
-                                            lastScale = scale
-                                        }
-                                )
-                        }
-                        
-                        // Overlay - darker background with clear circle
-                        GeometryReader { _ in
+                if let image = image {
+                    GeometryReader { geo in
+                        ZStack {
+                            // Container for the image with clipping
                             ZStack {
-                                // Darkened background
-                                Rectangle()
-                                    .fill(Color.black.opacity(0.6))
-                                    .frame(maxWidth: .infinity, maxHeight: .infinity)
-                                
-                                // Clear circle using blend mode
-                                Circle()
-                                    .frame(width: cropSize, height: cropSize)
-                                    .position(cropPosition)
-                                    .blendMode(.destinationOut)
+                                // The image to be cropped
+                                Image(uiImage: image)
+                                    .resizable()
+                                    .scaledToFit()
+                                    .scaleEffect(scale)
+                                    .offset(offset)
+                                    .frame(width: geo.size.width, height: geo.size.height)
                             }
-                            .compositingGroup()
+                            .gesture(
+                                // Drag gesture for positioning
+                                DragGesture()
+                                    .onChanged { value in
+                                        offset = CGSize(
+                                            width: lastOffset.width + value.translation.width,
+                                            height: lastOffset.height + value.translation.height
+                                        )
+                                    }
+                                    .onEnded { _ in
+                                        lastOffset = offset
+                                    }
+                            )
+                            .gesture(
+                                // Pinch gesture for zooming
+                                MagnificationGesture()
+                                    .onChanged { value in
+                                        let delta = value / lastScale
+                                        lastScale = value
+                                        // Apply a more significant zoom effect
+                                        let newScale = scale * delta
+                                        scale = min(max(newScale, 0.5), 10.0)
+                                    }
+                                    .onEnded { _ in
+                                        lastScale = 1.0
+                                    }
+                            )
+                            // Double-tap to reset
+                            .onTapGesture(count: 2) {
+                                withAnimation(.spring()) {
+                                    scale = calculateInitialScale(image: image, in: geo.size)
+                                    offset = .zero
+                                    lastOffset = .zero
+                                }
+                            }
                             
-                            // Visible circle border
-                            Circle()
-                                .stroke(Color.white, lineWidth: 2)
-                                .frame(width: cropSize, height: cropSize)
-                                .position(cropPosition)
-                                .gesture(
-                                    DragGesture()
-                                        .onChanged { gesture in
-                                            // Update crop position with constraints to keep within bounds
-                                            let newPosition = CGPoint(
-                                                x: lastPosition.x + gesture.translation.width,
-                                                y: lastPosition.y + gesture.translation.height
-                                            )
-                                            
-                                            // Ensure circle stays within view bounds
-                                            let minX = cropSize/2
-                                            let maxX = geo.size.width - cropSize/2
-                                            let minY = cropSize/2
-                                            let maxY = geo.size.height - cropSize/2
-                                            
-                                            cropPosition = CGPoint(
-                                                x: min(maxX, max(minX, newPosition.x)),
-                                                y: min(maxY, max(minY, newPosition.y))
-                                            )
-                                        }
-                                        .onEnded { _ in
-                                            lastPosition = cropPosition
-                                        }
-                                )
-                            
-                            // Add glowing effect to circle
-                            Circle()
-                                .stroke(
-                                    LinearGradient(
-                                        colors: [
-                                            Color.white.opacity(0.8),
-                                            Color.white.opacity(0.3)
-                                        ],
-                                        startPoint: .topLeading,
-                                        endPoint: .bottomTrailing
-                                    ),
-                                    lineWidth: 2
-                                )
-                                .frame(width: cropSize, height: cropSize)
-                                .position(cropPosition)
+                            // Overlay with circle cut-out
+                            CropCircleOverlay(size: geo.size, cropSize: cropSize)
+                                .allowsHitTesting(false) // Allow gestures to pass through to the image
+                        }
+                        .onAppear {
+                            scale = calculateInitialScale(image: image, in: geo.size)
                         }
                     }
+                } else {
+                    Text("No image selected")
+                        .foregroundColor(.white)
                 }
                 
-                Spacer()
-                
-                // Buttons
-                HStack(spacing: 40) {
-                    // Cancel button
-                    Button(action: {
-                        isPresented = false
-                    }) {
-                        Text("Cancel")
-                            .font(.system(size: 18, weight: .bold))
-                            .foregroundColor(.white)
-                            .padding(.horizontal, 25)
-                            .padding(.vertical, 12)
-                            .background(
-                                Capsule()
-                                    .fill(Color.white.opacity(0.1))
-                                    .overlay(
-                                        Capsule()
-                                            .stroke(Color.white.opacity(0.3), lineWidth: 1)
-                                    )
-                            )
-                    }
+                // Instructions at the bottom
+                VStack {
+                    Spacer()
                     
-                    // Crop button
-                    Button(action: {
+                    Text("• Drag to position • Pinch to zoom • Double-tap to reset")
+                        .font(.system(size: 14))
+                        .foregroundColor(.white.opacity(0.8))
+                        .padding(.vertical, 12)
+                        .padding(.horizontal, 20)
+                        .background(Color.black.opacity(0.6))
+                        .cornerRadius(10)
+                        .padding(.bottom, 30)
+                }
+            }
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .principal) {
+                    Text("Position Your Profile Picture")
+                        .font(.headline)
+                        .foregroundColor(.white)
+                }
+                
+                ToolbarItem(placement: .navigationBarLeading) {
+                    Button("Cancel") {
+                        presentationMode.wrappedValue.dismiss()
+                    }
+                    .foregroundColor(.white)
+                }
+                
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button("Done") {
                         if let sourceImage = image {
                             let croppedImage = cropImage(sourceImage)
                             onCrop(croppedImage)
-                            isPresented = false
+                            presentationMode.wrappedValue.dismiss()
                         }
-                    }) {
-                        Text("Crop")
-                            .font(.system(size: 18, weight: .bold))
-                            .foregroundColor(.white)
-                            .padding(.horizontal, 30)
-                            .padding(.vertical, 12)
-                            .background(
-                                Capsule()
-                                    .fill(
-                                        LinearGradient(
-                                            colors: [
-                                                Color(red: 56/255, green: 189/255, blue: 248/255),
-                                                Color(red: 29/255, green: 78/255, blue: 216/255)
-                                            ],
-                                            startPoint: .top,
-                                            endPoint: .bottom
-                                        )
-                                    )
-                                    .overlay(
-                                        Capsule()
-                                            .stroke(Color.white.opacity(0.5), lineWidth: 1)
-                                    )
-                            )
                     }
+                    .foregroundColor(.blue)
+                    .fontWeight(.bold)
                 }
-                .padding(.bottom, 40)
             }
         }
+        .navigationViewStyle(StackNavigationViewStyle())
+        .preferredColorScheme(.dark)
     }
     
+    // Calculate an appropriate initial scale based on image and screen size
+    private func calculateInitialScale(image: UIImage, in size: CGSize) -> CGFloat {
+        let imageSize = image.size
+        let screenSize = size
+        
+        // Calculate initial scale that makes the image fill the circle
+        let initialScale = max(
+            cropSize / (imageSize.width * min(screenSize.width / imageSize.width, screenSize.height / imageSize.height)),
+            cropSize / (imageSize.height * min(screenSize.width / imageSize.width, screenSize.height / imageSize.height))
+        )
+        
+        // Ensure we start with a reasonably zoomed-in view
+        return max(initialScale, 1.0) * 1.1 // Add a little extra zoom (10%)
+    }
+    
+    // Perform the actual cropping of the image
     private func cropImage(_ sourceImage: UIImage) -> UIImage {
-        // Get the view size where we're displaying the image
-        let screenWidth = UIScreen.main.bounds.width
-        let screenHeight = UIScreen.main.bounds.height - 200 // Approximate height of the image area
+        let renderer = UIGraphicsImageRenderer(size: CGSize(width: cropSize, height: cropSize))
         
-        // Calculate the position of the crop circle relative to the image
-        let viewCenterX = screenWidth / 2
-        let viewCenterY = screenHeight / 2
-        
-        // Calculate the offset of the crop center from the view center
-        let offsetX = cropPosition.x - viewCenterX
-        let offsetY = cropPosition.y - viewCenterY
-        
-        // Calculate scaled image dimensions
-        let imageAspect = sourceImage.size.width / sourceImage.size.height
-        let screenAspect = screenWidth / screenHeight
-        
-        var scaledImageSize: CGSize
-        if imageAspect > screenAspect {
-            // Image is wider than screen
-            scaledImageSize = CGSize(
-                width: screenHeight * imageAspect,
-                height: screenHeight
+        return renderer.image { context in
+            // Create the crop circle path
+            let circlePath = UIBezierPath(ovalIn: CGRect(x: 0, y: 0, width: cropSize, height: cropSize))
+            circlePath.addClip()
+            
+            // Get the actual displayed image size
+            let screenSize = UIScreen.main.bounds.size
+            let screenScale = min(screenSize.width / sourceImage.size.width, screenSize.height / sourceImage.size.height)
+            let displayedSize = CGSize(
+                width: sourceImage.size.width * screenScale * scale,
+                height: sourceImage.size.height * screenScale * scale
             )
-        } else {
-            // Image is taller than screen
-            scaledImageSize = CGSize(
-                width: screenWidth,
-                height: screenWidth / imageAspect
+            
+            // Calculate where to draw the image
+            let centerOffsetX = (displayedSize.width / 2) - (cropSize / 2) - offset.width
+            let centerOffsetY = (displayedSize.height / 2) - (cropSize / 2) - offset.height
+            
+            // Draw the image
+            let drawRect = CGRect(
+                x: -centerOffsetX,
+                y: -centerOffsetY,
+                width: displayedSize.width,
+                height: displayedSize.height
             )
+            
+            sourceImage.draw(in: drawRect)
         }
+    }
+}
+
+// Overlay view that creates a transparent circle in an opaque background
+struct CropCircleOverlay: View {
+    let size: CGSize
+    let cropSize: CGFloat
+    
+    var body: some View {
+        ZStack {
+            // Semi-transparent black background
+            Rectangle()
+                .fill(Color.black.opacity(0.6))
+            
+            // Transparent circle
+            Circle()
+                .frame(width: cropSize, height: cropSize)
+                .blendMode(.destinationOut)
+        }
+        .compositingGroup()
+        .frame(width: size.width, height: size.height)
         
-        // Apply the user's scale
-        let displayedImageWidth = scaledImageSize.width * scale
-        let displayedImageHeight = scaledImageSize.height * scale
-        
-        // Calculate the crop rectangle in the scaled image coordinates
-        let centerOffsetX = (displayedImageWidth - screenWidth) / 2
-        let centerOffsetY = (displayedImageHeight - screenHeight) / 2
-        
-        // Create a context to draw the circular crop
-        UIGraphicsBeginImageContextWithOptions(CGSize(width: cropSize, height: cropSize), false, 0)
-        
-        // Create circular clipping path
-        let path = UIBezierPath(ovalIn: CGRect(x: 0, y: 0, width: cropSize, height: cropSize))
-        path.addClip()
-        
-        // Calculate where to draw the image so that the desired area appears in the crop circle
-        let drawRectX = -centerOffsetX - offsetX
-        let drawRectY = -centerOffsetY - offsetY
-        
-        sourceImage.draw(in: CGRect(
-            x: drawRectX,
-            y: drawRectY,
-            width: displayedImageWidth,
-            height: displayedImageHeight
-        ))
-        
-        let croppedImage = UIGraphicsGetImageFromCurrentImageContext() ?? sourceImage
-        UIGraphicsEndImageContext()
-        
-        return croppedImage
+        // White circle outline for visibility
+        Circle()
+            .stroke(Color.white, lineWidth: 2)
+            .frame(width: cropSize, height: cropSize)
     }
 }

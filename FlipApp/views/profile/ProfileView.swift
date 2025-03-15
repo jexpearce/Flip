@@ -568,10 +568,9 @@ struct ProfileView: View {
         .sheet(isPresented: $showSettingsSheet) {
             SettingsView()
         }
-        .sheet(isPresented: $profileImageManager.isCropperPresented) {
-            MovableCircleCropperView(
-                image: $profileImageManager.selectedImage,
-                isPresented: $profileImageManager.isCropperPresented
+        .fullScreenCover(isPresented: $profileImageManager.isCropperPresented) {
+            ImprovedProfileCropperView(
+                image: $profileImageManager.selectedImage
             ) { croppedImage in
                 profileImageManager.profileImage = croppedImage
                 profileImageManager.uploadImage()

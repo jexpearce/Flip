@@ -898,6 +898,9 @@ class FeedViewModel: ObservableObject {
         
         print("Loading sessions for users: \(userIds)")
         
+        // Create a Set to track unique session IDs we've already processed
+        var processedSessionIds = Set<String>()
+        
         sessionListener = firebaseManager.db.collection("sessions")
             .whereField("userId", in: userIds)
             .order(by: "startTime", descending: true)
@@ -913,23 +916,35 @@ class FeedViewModel: ObservableObject {
                     } else if let documents = snapshot?.documents {
                         print("Loaded \(documents.count) sessions")
                         
-                        let loadedSessions = documents.compactMap { document in
-                            try? document.data(as: Session.self)
+                        // Process documents into sessions, filtering out duplicates
+                        var uniqueSessions: [Session] = []
+                        
+                        for document in documents {
+                            guard let session = try? document.data(as: Session.self) else {
+                                continue
+                            }
+                            
+                            let sessionId = session.id.uuidString
+                            
+                            // Only add the session if we haven't seen this ID before
+                            if !processedSessionIds.contains(sessionId) {
+                                processedSessionIds.insert(sessionId)
+                                uniqueSessions.append(session)
+                            } else {
+                                print("Skipping duplicate session ID: \(sessionId)")
+                            }
                         }
                         
-                        // Deduplicate sessions based on their ID
-                        let uniqueSessions = Dictionary(grouping: loadedSessions, by: { $0.id.uuidString })
-                            .compactMapValues { $0.first }
-                            .values
-                            .sorted(by: { $0.startTime > $1.startTime })
+                        // Sort by start time, newest first
+                        uniqueSessions.sort { $0.startTime > $1.startTime }
                         
-                        self.feedSessions = Array(uniqueSessions)
-                                            
-                                            // Preload all user data before loading other session data
-                                            self.preloadUserData(for: self.feedSessions)
-                                            
-                                            // After loading sessions, load all associated data
-                                            self.loadAllSessionData()
+                        self.feedSessions = uniqueSessions
+                        
+                        // Preload all user data before loading other session data
+                        self.preloadUserData(for: self.feedSessions)
+                        
+                        // After loading sessions, load all associated data
+                        self.loadAllSessionData()
                     }
                     self.isLoading = false
                 }
@@ -947,6 +962,9 @@ class FeedViewModel: ObservableObject {
         
         print("Loading sessions for user: \(userId)")
         
+        // Create a Set to track unique session IDs we've already processed
+        var processedSessionIds = Set<String>()
+        
         sessionListener = firebaseManager.db.collection("sessions")
             .whereField("userId", isEqualTo: userId)
             .order(by: "startTime", descending: true)
@@ -962,17 +980,29 @@ class FeedViewModel: ObservableObject {
                     } else if let documents = snapshot?.documents {
                         print("Loaded \(documents.count) sessions")
                         
-                        let loadedSessions = documents.compactMap { document in
-                            try? document.data(as: Session.self)
+                        // Process documents into sessions, filtering out duplicates
+                        var uniqueSessions: [Session] = []
+                        
+                        for document in documents {
+                            guard let session = try? document.data(as: Session.self) else {
+                                continue
+                            }
+                            
+                            let sessionId = session.id.uuidString
+                            
+                            // Only add the session if we haven't seen this ID before
+                            if !processedSessionIds.contains(sessionId) {
+                                processedSessionIds.insert(sessionId)
+                                uniqueSessions.append(session)
+                            } else {
+                                print("Skipping duplicate session ID: \(sessionId)")
+                            }
                         }
                         
-                        // Deduplicate sessions based on their ID
-                        let uniqueSessions = Dictionary(grouping: loadedSessions, by: { $0.id.uuidString })
-                            .compactMapValues { $0.first }
-                            .values
-                            .sorted(by: { $0.startTime > $1.startTime })
+                        // Sort by start time, newest first
+                        uniqueSessions.sort { $0.startTime > $1.startTime }
                         
-                        self.feedSessions = Array(uniqueSessions)
+                        self.feedSessions = uniqueSessions
                         
                         // After loading sessions, load all associated data
                         self.loadAllSessionData()
@@ -1250,46 +1280,33 @@ class FeedViewModel: ObservableObject {
             }
             
             if let document = document, document.exists {
-                // User already liked the session, so unlike it
-                print("Unlike action: Removing existing like")
-                likeRef.delete { error in
-                    if let error = error {
-                        print("Error removing like: \(error.localizedDescription)")
-                    } else {
-                        print("Like removed successfully")
-                        
-                        // Update local state for immediate UI feedback
-                        DispatchQueue.main.async {
-                            self.likedByUser[sessionId] = false
-                            if let count = self.sessionLikes[sessionId], count > 0 {
-                                self.sessionLikes[sessionId] = count - 1
+                        // User already liked the session, so unlike it
+                        print("Unlike action: Removing existing like")
+                        likeRef.delete { error in
+                            if let error = error {
+                                print("Error removing like: \(error.localizedDescription)")
+                            } else {
+                                print("Like removed successfully")
+                                
+                                // Don't update UI here - let the listener handle it
+                                // This prevents race conditions
                             }
-                            
-                            // Update user lists
-                            if var users = self.likesUsers[sessionId] {
-                                users.removeAll { $0 == currentUserId }
-                                self.likesUsers[sessionId] = users
-                            }
-                            
-                            self.objectWillChange.send()
                         }
-                    }
-                }
-            } else {
-                // User hasn't liked the session yet, so add a like
-                print("Like action: Adding new like")
-                let timestamp = Timestamp(date: Date())
-                
-                // Get user data for display
-                let username = self.users[currentUserId]?.username ?? "User"
-                
-                // Store like data
-                let likeData: [String: Any] = [
-                    "userId": currentUserId,
-                    "username": username,
-                    "sessionId": sessionId,
-                    "timestamp": timestamp
-                ]
+                    } else {
+                        // User hasn't liked the session yet, so add a like
+                        print("Like action: Adding new like")
+                        let timestamp = Timestamp(date: Date())
+                        
+                        // Get user data for display
+                        let username = self.users[currentUserId]?.username ?? "User"
+                        
+                        // Store like data
+                        let likeData: [String: Any] = [
+                            "userId": currentUserId,
+                            "username": username,
+                            "sessionId": sessionId,
+                            "timestamp": timestamp
+                        ]
                 
                 likeRef.setData(likeData) { error in
                     if let error = error {
@@ -1297,21 +1314,6 @@ class FeedViewModel: ObservableObject {
                     } else {
                         print("Like added successfully")
                         
-                        // Update local state for immediate UI feedback
-                        DispatchQueue.main.async {
-                            self.likedByUser[sessionId] = true
-                            let currentCount = self.sessionLikes[sessionId] ?? 0
-                            self.sessionLikes[sessionId] = currentCount + 1
-                            
-                            // Update user lists
-                            var users = self.likesUsers[sessionId] ?? []
-                            if !users.contains(currentUserId) {
-                                users.append(currentUserId)
-                                self.likesUsers[sessionId] = users
-                            }
-                            
-                            self.objectWillChange.send()
-                        }
                     }
                 }
             }

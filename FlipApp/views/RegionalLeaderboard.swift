@@ -534,141 +534,71 @@ struct ProfileImage: View {
             loadUserData()
         }
     }
-    
-    // In ProfileImage.swift - inside the loadUserData function
     private func loadUserData() {
         isLoading = true
         
         print("🖼️ ProfileImage loading data for user: \(userId)")
         
-        // First check if we already have a cached username from the ViewModel
-        if let cachedUser = RegionalViewModel.shared.leaderboardViewModel.userCache[userId] {
-            if !cachedUser.username.isEmpty {
-                print("✅ Using cached username: \(cachedUser.username)")
-                self.username = cachedUser.username
-                self.imageURL = cachedUser.profileImageURL
-                isLoading = false
-                return
-            } else {
-                print("⚠️ Cached username is empty, fetching fresh data")
-            }
-        }
-        
-        // First try FirebaseManager's current user and friends
+        // First check if user is the current user
         if let currentUserId = Auth.auth().currentUser?.uid,
-           let currentUser = FirebaseManager.shared.currentUser {
+           let currentUser = FirebaseManager.shared.currentUser,
+           userId == currentUserId,
+           !currentUser.username.isEmpty {
             
-            // If this is the current user
-            if userId == currentUserId {
-                print("✅ This is the current user: \(currentUser.username)")
-                self.username = currentUser.username
-                self.imageURL = currentUser.profileImageURL
-                isLoading = false
-                
-                // Update cache
-                let userCache = UserCacheItem(
-                    userId: userId,
-                    username: currentUser.username,
-                    profileImageURL: currentUser.profileImageURL
-                )
-                RegionalViewModel.shared.leaderboardViewModel.userCache[userId] = userCache
-                return
-            }
+            print("✅ This is the current user: \(currentUser.username)")
+            self.username = currentUser.username
+            self.imageURL = currentUser.profileImageURL
+            isLoading = false
             
-            // Check if in friends list
-            for friend in FirebaseManager.shared.friends {
-                if friend.id == userId {
-                    print("✅ Found in friends list: \(friend.username)")
-                    self.username = friend.username
-                    self.imageURL = friend.profileImageURL
-                    isLoading = false
-                    
-                    // Update cache
-                    let userCache = UserCacheItem(
-                        userId: userId,
-                        username: friend.username,
-                        profileImageURL: friend.profileImageURL
-                    )
-                    RegionalViewModel.shared.leaderboardViewModel.userCache[userId] = userCache
-                    return
-                }
-            }
+            // Make sure this user is in the cache
+            let userCache = UserCacheItem(
+                userId: userId,
+                username: currentUser.username,
+                profileImageURL: currentUser.profileImageURL
+            )
+            RegionalViewModel.shared.leaderboardViewModel.userCache[userId] = userCache
+            return
         }
         
-        // Next check if the user is already in the leaderboard entries
+        // Next check our local cache in RegionalLeaderboardViewModel
+        if let cachedUser = RegionalViewModel.shared.leaderboardViewModel.userCache[userId],
+           !cachedUser.username.isEmpty && cachedUser.username != "User" {
+            print("✅ Using cached username: \(cachedUser.username)")
+            self.username = cachedUser.username
+            self.imageURL = cachedUser.profileImageURL
+            isLoading = false
+            return
+        }
+        
+        // Check in leaderboard entries
         for entry in RegionalViewModel.shared.leaderboardViewModel.leaderboardEntries {
-            if entry.userId == userId && !entry.username.isEmpty {
+            if entry.userId == userId && !entry.username.isEmpty && entry.username != "User" {
                 print("✅ Found username in leaderboard entries: \(entry.username)")
                 self.username = entry.username
                 
-                // Also cache this for future use
+                // Save to cache
                 let cacheItem = UserCacheItem(
                     userId: userId,
                     username: entry.username,
-                    profileImageURL: nil // We don't have the URL yet
+                    profileImageURL: nil // Will fetch this below
                 )
                 RegionalViewModel.shared.leaderboardViewModel.userCache[userId] = cacheItem
                 
-                // Still fetch the profile image
+                // We found the username but still need to get profile image
                 fetchProfileImage()
                 return
             }
         }
         
-        // If not found in cache, fetch from Firestore
-        fetchCompleteUserData()
-    }
-    private func fetchProfileImage() {
-        // Only fetch the profile image URL
-        FirebaseManager.shared.db.collection("users").document(userId).getDocument {  snapshot, error in
-            if let error = error {
-                print("❌ Error fetching profile image: \(error.localizedDescription)")
-                self.isLoading = false
-                return
-            }
-            
-            if let data = snapshot?.data(), let profileURL = data["profileImageURL"] as? String {
-                DispatchQueue.main.async {
-                    self.imageURL = profileURL
-                    self.isLoading = false
-                    
-                    // Update cache with profile URL
-                    if var cachedUser = RegionalViewModel.shared.leaderboardViewModel.userCache[userId] {
-                        cachedUser.profileImageURL = profileURL
-                        RegionalViewModel.shared.leaderboardViewModel.userCache[userId] = cachedUser
-                    }
-                }
-            } else {
-                DispatchQueue.main.async {
-                    self.isLoading = false
-                }
-            }
-        }
-    }
-
-    // In ProfileImage.swift - modify the fetchCompleteUserData() function:
-    private func fetchCompleteUserData() {
-        print("🔍 Fetching complete user data for: \(userId)")
-        
-        // First check if the user is already in FirebaseManager.shared.currentUser or friends list
-        if let currentUserId = Auth.auth().currentUser?.uid {
-            if userId == currentUserId && FirebaseManager.shared.currentUser != nil {
-                DispatchQueue.main.async {
-                    self.username = FirebaseManager.shared.currentUser?.username ?? "User"
-                    self.imageURL = FirebaseManager.shared.currentUser?.profileImageURL
-                    self.isLoading = false
-                }
-                return
-            }
-            
-            // Check if user is in friends list
-            if let friend = FirebaseManager.shared.friends.first(where: { $0.id == userId }) {
-                DispatchQueue.main.async {
-                    self.username = friend.username
-                    self.imageURL = friend.profileImageURL
-                    self.isLoading = false
-                }
-                // Still update cache
+        // Next check FirebaseManager.shared.friends
+        for friend in FirebaseManager.shared.friends {
+            if friend.id == userId && !friend.username.isEmpty {
+                print("✅ Found in friends list: \(friend.username)")
+                self.username = friend.username
+                self.imageURL = friend.profileImageURL
+                isLoading = false
+                
+                // Update cache
                 let userCache = UserCacheItem(
                     userId: userId,
                     username: friend.username,
@@ -679,19 +609,70 @@ struct ProfileImage: View {
             }
         }
         
-        // Original Firestore query logic with better error handling
+        // If we're here, we need to fetch from Firestore
+        fetchCompleteUserData()
+    }
+
+    // Helper method to just fetch the profile image for a user we already know the username for
+    private func fetchProfileImage() {
+        // Check if we already have a cached image
+        if let cachedImage = ProfileImageCache.shared.getCachedImage(for: userId) {
+            self.imageURL = "cached" // Just a placeholder, we won't use this value
+            self.isLoading = false
+            return
+        }
+        
+        // Otherwise, fetch it from Firestore
+        FirebaseManager.shared.db.collection("users").document(userId).getDocument { snapshot, error in
+        
+            if let data = snapshot?.data(), let profileURL = data["profileImageURL"] as? String, !profileURL.isEmpty {
+                DispatchQueue.main.async {
+                    self.imageURL = profileURL
+                    self.isLoading = false
+                    
+                    // Update cache with profile URL
+                    if var cachedUser = RegionalViewModel.shared.leaderboardViewModel.userCache[userId] {
+                        cachedUser.profileImageURL = profileURL
+                        RegionalViewModel.shared.leaderboardViewModel.userCache[userId] = cachedUser
+                    }
+                    
+                    // Also download and cache the actual image
+                    if let url = URL(string: profileURL) {
+                        URLSession.shared.dataTask(with: url) { data, response, error in
+                            if let data = data, let image = UIImage(data: data) {
+                                // Store in ProfileImageCache for map markers
+                                ProfileImageCache.shared.storeImage(image, for: self.userId)
+                            }
+                        }.resume()
+                    }
+                }
+            } else {
+                DispatchQueue.main.async {
+                    self.isLoading = false
+                }
+            }
+        }
+    }
+
+    // Enhanced function to fetch complete user data
+    private func fetchCompleteUserData() {
+        print("🔍 Fetching complete user data for: \(userId)")
+        
         var retryCount = 0
         let maxRetries = 2
         
         func attemptFetch() {
             FirebaseManager.shared.db.collection("users").document(userId).getDocument { snapshot, error in
+                
                 if let error = error {
                     print("❌ Error loading user data (attempt \(retryCount+1)): \(error.localizedDescription)")
                     
                     if retryCount < maxRetries {
                         retryCount += 1
                         print("🔄 Retrying fetch...")
-                        attemptFetch()
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                            attemptFetch()
+                        }
                     } else {
                         print("⚠️ All retries failed, using fallback name")
                         DispatchQueue.main.async {
@@ -707,18 +688,34 @@ struct ProfileImage: View {
                     if let fetchedUsername = data["username"] as? String, !fetchedUsername.isEmpty {
                         print("✅ Successfully loaded username: \(fetchedUsername)")
                         
-                        // Cache this result
+                        // Get profile image URL if available
+                        let profileImageURL = data["profileImageURL"] as? String
+                        
+                        // Cache this user
                         let userCache = UserCacheItem(
                             userId: userId,
                             username: fetchedUsername,
-                            profileImageURL: data["profileImageURL"] as? String
+                            profileImageURL: profileImageURL
                         )
                         RegionalViewModel.shared.leaderboardViewModel.userCache[userId] = userCache
                         
                         DispatchQueue.main.async {
                             self.username = fetchedUsername
-                            self.imageURL = data["profileImageURL"] as? String
+                            self.imageURL = profileImageURL
                             self.isLoading = false
+                        }
+                        
+                        // Also update Firebase sessions with correct username
+                        RegionalViewModel.shared.leaderboardViewModel.updateSessionUsernames(userId: self.userId, username: fetchedUsername)
+                        
+                        // If we have an image URL, cache the actual image
+                        if let imageURL = profileImageURL, let url = URL(string: imageURL) {
+                            URLSession.shared.dataTask(with: url) { data, response, error in
+                                if let data = data, let image = UIImage(data: data) {
+                                    // Store in ProfileImageCache for map markers
+                                    ProfileImageCache.shared.storeImage(image, for: self.userId)
+                                }
+                            }.resume()
                         }
                     } else {
                         // Try alternative methods to get a name
@@ -742,6 +739,12 @@ struct ProfileImage: View {
                                 profileImageURL: data["profileImageURL"] as? String
                             )
                             RegionalViewModel.shared.leaderboardViewModel.userCache[userId] = userCache
+                        } else {
+                            print("❌ No usable identifying info for user: \(userId)")
+                            DispatchQueue.main.async {
+                                self.username = "User \(self.userId.prefix(4))"
+                                self.isLoading = false
+                            }
                         }
                     }
                 } else {
@@ -834,7 +837,6 @@ class RegionalLeaderboardViewModel: ObservableObject {
                 self.fetchBuildingTopSessions(building: building, friendIds: friendIds)
             }
     }
-    
     func fetchBuildingTopSessions(building: BuildingInfo, friendIds: [String]) {
         guard let currentUserId = Auth.auth().currentUser?.uid else { return }
         
@@ -889,6 +891,9 @@ class RegionalLeaderboardViewModel: ObservableObject {
                 // Dictionary to track each user's total time and session count
                 var userWeeklyData: [String: (userId: String, username: String, sessionCount: Int, distance: Double, isFriend: Bool, isCurrentUser: Bool)] = [:]
                 
+                // Collection of user IDs we need to fetch usernames for
+                var userIdsToFetch = Set<String>()
+                
                 // Process each session document
                 for document in documents {
                     let data = document.data()
@@ -898,6 +903,9 @@ class RegionalLeaderboardViewModel: ObservableObject {
                           let geoPoint = data["location"] as? GeoPoint else {
                         continue
                     }
+                    
+                    // Add this user ID to the list we need to fetch
+                    userIdsToFetch.insert(userId)
                     
                     // Check if this session is in or near our target building
                     // Either by exact buildingId match OR by proximity
@@ -917,48 +925,11 @@ class RegionalLeaderboardViewModel: ObservableObject {
                         }
                     }
                     
-                    // Get the session duration, defaulting to 0 if missing
-                    var sessionDuration = 0
-                    if let duration = data["actualDuration"] {
-                        // First debug what we're actually getting
-                        print("👾 Raw actualDuration: \(duration), type: \(type(of: duration))")
-                        
-                        // Handle all possible Firestore data types
-                        if let intDuration = duration as? Int {
-                            sessionDuration = intDuration
-                        } else if let doubleDuration = duration as? Double {
-                            sessionDuration = Int(doubleDuration)
-                        } else if let numberDuration = duration as? NSNumber {
-                            sessionDuration = numberDuration.intValue
-                        } else if let stringDuration = duration as? String, let parsed = Int(stringDuration) {
-                            sessionDuration = parsed
-                        } else {
-                            // Try to safely convert any value to Int
-                            let description = "\(duration)"
-                            if let parsed = Int(description) {
-                                sessionDuration = parsed
-                            } else if let parsed = Double(description), parsed.isFinite {
-                                sessionDuration = Int(parsed)
-                            }
-                        }
-                    }
-
-                    // Safety check - make sure we don't have zero for valid sessions
-                    if sessionDuration <= 0 && data["lastFlipWasSuccessful"] as? Bool == true {
-                        print("⚠️ Found zero or negative duration for successful session, using actual duration")
-                        // Try to calculate actual duration from timestamps
-                        if let startTime = (data["sessionStartTime"] as? Timestamp)?.dateValue(),
-                           let endTime = (data["sessionEndTime"] as? Timestamp)?.dateValue() {
-                            let elapsedSeconds = endTime.timeIntervalSince(startTime)
-                            sessionDuration = max(1, Int(elapsedSeconds / 60))
-                            print("📱 Recalculated duration: \(sessionDuration) min from \(Int(elapsedSeconds)) seconds")
-                        }
-                    }
-
-                    print("📱 Final session duration: \(sessionDuration) minutes")
+                    // Get session data like duration
+                    let sessionDuration = data["actualDuration"] as? Int ?? 0
                     
-                    // Get username safely
-                    let username = data["username"] as? String ?? "User"
+                    // Get username safely - but only as temporary placeholder
+                    let tempUsername = data["username"] as? String ?? "User"
                     
                     // Calculate distance for display
                     let sessionLocation = CLLocation(
@@ -973,7 +944,7 @@ class RegionalLeaderboardViewModel: ObservableObject {
                     
                     // Update the user's total time
                     if let existingData = userWeeklyData[userId] {
-                        // Add to existing record
+                        // Add to existing record - keep existing username
                         userWeeklyData[userId] = (
                             userId: userId,
                             username: existingData.username,
@@ -983,10 +954,10 @@ class RegionalLeaderboardViewModel: ObservableObject {
                             isCurrentUser: userId == currentUserId
                         )
                     } else {
-                        // Create new record
+                        // Create new record with temporary username - we'll update this later
                         userWeeklyData[userId] = (
                             userId: userId,
-                            username: username,
+                            username: tempUsername,
                             sessionCount: 1,
                             distance: displayDistance,
                             isFriend: friendIds.contains(userId),
@@ -995,28 +966,198 @@ class RegionalLeaderboardViewModel: ObservableObject {
                     }
                 }
                 
-                // Convert aggregated data to leaderboard entries
-                let entries = userWeeklyData.values.map { userData in
-                    RegionalLeaderboardEntry(
-                        id: UUID().uuidString,
-                        userId: userData.userId,
-                        username: userData.username,
-                        totalWeeklyTime: 0, // We'll keep this field but don't use it
-                        sessionCount: userData.sessionCount,
-                        distance: userData.distance,
-                        isFriend: userData.isFriend,
-                        isCurrentUser: userData.isCurrentUser
-                    )
-                // IMPORTANT: Sort by session count instead of time
-                }.sorted { $0.sessionCount > $1.sessionCount }
-                // Take top 10 for display
-                DispatchQueue.main.async {
-                    self.leaderboardEntries = entries.prefix(10).map { $0 }
-                    self.isLoading = false
+                // No data found - update UI now
+                if userWeeklyData.isEmpty {
+                    DispatchQueue.main.async {
+                        self.leaderboardEntries = []
+                        self.isLoading = false
+                    }
+                    return
+                }
+                
+                // Now fetch all usernames in a single batch for better performance
+                self.fetchUsernames(Array(userIdsToFetch)) { usernameMap in
+                    // Update the usernames in our data
+                    for userId in userWeeklyData.keys {
+                        if let fetchedUsername = usernameMap[userId], !fetchedUsername.isEmpty {
+                            var userData = userWeeklyData[userId]!
+                            userData.username = fetchedUsername
+                            userWeeklyData[userId] = userData
+                        }
+                    }
+                    
+                    // Convert aggregated data to leaderboard entries
+                    let entries = userWeeklyData.values.map { userData in
+                        RegionalLeaderboardEntry(
+                            id: UUID().uuidString,
+                            userId: userData.userId,
+                            username: userData.username,
+                            totalWeeklyTime: 0, // We'll keep this field but don't use it
+                            sessionCount: userData.sessionCount,
+                            distance: userData.distance,
+                            isFriend: userData.isFriend,
+                            isCurrentUser: userData.isCurrentUser
+                        )
+                    // IMPORTANT: Sort by session count instead of time
+                    }.sorted { $0.sessionCount > $1.sessionCount }
+                    
+                    // Take top 10 for display
+                    DispatchQueue.main.async {
+                        self.leaderboardEntries = entries.prefix(10).map { $0 }
+                        self.isLoading = false
+                    }
                 }
             }
     }
-    
+
+    // Add these helper functions to RegionalLeaderboardViewModel
+
+    // New helper function to fetch usernames efficiently
+    private func fetchUsernames(_ userIds: [String], completion: @escaping ([String: String]) -> Void) {
+        guard !userIds.isEmpty else {
+            completion([:])
+            return
+        }
+        
+        print("🔄 Fetching usernames for \(userIds.count) users")
+        
+        // First check our cache
+        var result: [String: String] = [:]
+        var idsToFetch: [String] = []
+        
+        for userId in userIds {
+            if let cachedUser = userCache[userId], !cachedUser.username.isEmpty && cachedUser.username != "User" {
+                result[userId] = cachedUser.username
+            } else if let currentUser = FirebaseManager.shared.currentUser, currentUser.id == userId, !currentUser.username.isEmpty {
+                result[userId] = currentUser.username
+                // Update cache
+                userCache[userId] = UserCacheItem(
+                    userId: userId,
+                    username: currentUser.username,
+                    profileImageURL: currentUser.profileImageURL
+                )
+            } else {
+                idsToFetch.append(userId)
+            }
+        }
+        
+        // If we have all usernames already, return
+        if idsToFetch.isEmpty {
+            completion(result)
+            return
+        }
+        
+        // Fetch in batches of 10 to avoid Firestore limitations
+        let batchSize = 10
+        let dispatchGroup = DispatchGroup()
+        
+        for i in stride(from: 0, to: idsToFetch.count, by: batchSize) {
+            let end = min(i + batchSize, idsToFetch.count)
+            let batch = Array(idsToFetch[i..<end])
+            
+            dispatchGroup.enter()
+            fetchUserBatch(batch) { batchResult in
+                // Add this batch to our results
+                for (id, username) in batchResult {
+                    result[id] = username
+                }
+                dispatchGroup.leave()
+            }
+        }
+        
+        dispatchGroup.notify(queue: .main) {
+            print("✅ Completed fetching usernames - found \(result.count) valid names")
+            completion(result)
+        }
+    }
+
+    private func fetchUserBatch(_ userIds: [String], completion: @escaping ([String: String]) -> Void) {
+        let db = Firestore.firestore()
+        var batchResult: [String: String] = [:]
+        let dispatchGroup = DispatchGroup()
+        
+        for userId in userIds {
+            dispatchGroup.enter()
+            
+            db.collection("users").document(userId).getDocument { [weak self] document, error in
+                defer { dispatchGroup.leave() }
+                
+                // Try to get username from document
+                if let data = document?.data(), let username = data["username"] as? String, !username.isEmpty {
+                    print("📝 Found username for \(userId): \(username)")
+                    batchResult[userId] = username
+                    
+                    // Update our cache
+                    let profileImageURL = data["profileImageURL"] as? String
+                    self?.userCache[userId] = UserCacheItem(
+                        userId: userId,
+                        username: username,
+                        profileImageURL: profileImageURL
+                    )
+                    
+                    // Also update any sessions that have a generic username
+                    self?.updateSessionUsernames(userId: userId, username: username)
+                } else {
+                    print("⚠️ No username found for user \(userId)")
+                    batchResult[userId] = "User"
+                }
+            }
+        }
+        
+        dispatchGroup.notify(queue: .main) {
+            completion(batchResult)
+        }
+    }
+
+    // Helper method to update usernames in session records
+    func updateSessionUsernames(userId: String, username: String) {
+        // Only update if we have a valid username
+        guard !username.isEmpty && username != "User" else { return }
+        
+        // Get collections where usernames might be stored
+        let collections = ["session_locations", "locations", "sessions"]
+        let db = FirebaseManager.shared.db
+        let oneMonthAgo = Calendar.current.date(byAdding: .month, value: -1, to: Date()) ?? Date()
+        
+        for collection in collections {
+            // Look for sessions by this user in the last month
+            db.collection(collection)
+                .whereField("userId", isEqualTo: userId)
+                .whereField("username", isEqualTo: "User") // Only update if username is empty/generic
+                .whereField("sessionStartTime", isGreaterThan: Timestamp(date: oneMonthAgo))
+                .limit(to: 20) // Limit the updates to avoid excessive writes
+                .getDocuments { snapshot, error in
+                    if let error = error {
+                        print("❌ Error finding sessions to update: \(error.localizedDescription)")
+                        return
+                    }
+                    
+                    guard let documents = snapshot?.documents, !documents.isEmpty else {
+                        print("✅ No sessions need username update in \(collection)")
+                        return
+                    }
+                    
+                    print("🔄 Updating \(documents.count) sessions with correct username in \(collection)")
+                    
+                    // Create a batch write
+                    let batch = db.batch()
+                    
+                    for document in documents {
+                        let docRef = db.collection(collection).document(document.documentID)
+                        batch.updateData(["username": username], forDocument: docRef)
+                    }
+                    
+                    // Commit the batch
+                    batch.commit { error in
+                        if let error = error {
+                            print("❌ Error updating session usernames: \(error.localizedDescription)")
+                        } else {
+                            print("✅ Successfully updated \(documents.count) session usernames")
+                        }
+                    }
+                }
+        }
+    }
     // For backward compatibility - required by RegionalView.swift
     func increaseRadius() {
         // No implementation needed if you're only using building leaderboard

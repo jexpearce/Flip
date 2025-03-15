@@ -5,8 +5,8 @@ import FirebaseAuth
 import FirebaseFirestore
 import CoreLocation
 
-// Model for user location data - Enhanced with better timestamp handling
-struct FriendLocation: Identifiable {
+// Model for user location data
+struct FriendLocation: Identifiable, Equatable {
     let id: String
     let username: String
     let coordinate: CLLocationCoordinate2D
@@ -56,6 +56,21 @@ struct FriendLocation: Identifiable {
         } else {
             return "\(minutes)m"
         }
+    }
+    
+    // Required for Equatable conformance - needed for proper map view refreshing
+    static func == (lhs: FriendLocation, rhs: FriendLocation) -> Bool {
+        return lhs.id == rhs.id &&
+               lhs.username == rhs.username &&
+               lhs.coordinate.latitude == rhs.coordinate.latitude &&
+               lhs.coordinate.longitude == rhs.coordinate.longitude &&
+               lhs.isCurrentlyFlipped == rhs.isCurrentlyFlipped &&
+               lhs.lastFlipTime == rhs.lastFlipTime &&
+               lhs.lastFlipWasSuccessful == rhs.lastFlipWasSuccessful &&
+               lhs.sessionDuration == rhs.sessionDuration &&
+               lhs.sessionStartTime == rhs.sessionStartTime &&
+               lhs.isHistorical == rhs.isHistorical &&
+               lhs.sessionIndex == rhs.sessionIndex
     }
 }
 
@@ -139,6 +154,9 @@ class MapViewModel: NSObject, ObservableObject, CLLocationManagerDelegate {
     @Published var userLocation: CLLocationCoordinate2D?
     @Published var isFirstLoad: Bool = true
     
+    @Published var refreshInProgress = false
+    private var lastRefreshTime = Date().timeIntervalSince1970 - 60
+    
     private let db = Firestore.firestore()
     private let locationManager = CLLocationManager()
     private var locationListener: ListenerRegistration?
@@ -191,8 +209,34 @@ class MapViewModel: NSObject, ObservableObject, CLLocationManagerDelegate {
     }
     
     func refreshLocations() {
-        // Fresh reload of friend locations
-        startListeningForLocationUpdates()
+        // Prevent multiple refreshes in quick succession
+        let currentTime = Date().timeIntervalSince1970
+        if currentTime - lastRefreshTime < 5.0 && refreshInProgress {
+            print("⏱️ Skipping refresh, too soon after last refresh")
+            return
+        }
+        
+        print("🔄 Starting location refresh")
+        refreshInProgress = true
+        lastRefreshTime = currentTime
+        
+        // Clear existing data before refresh to avoid duplicates
+        ProfileImageCache.shared.clearCache()
+        
+        // Start with a clean slate for friend locations
+        DispatchQueue.main.async {
+            self.friendLocations = []
+        }
+        
+        // Fresh reload of friend locations with delay to ensure clean state
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+            self.startListeningForLocationUpdates()
+            
+            // Set a timeout to mark refresh as completed
+            DispatchQueue.main.asyncAfter(deadline: .now() + 5.0) {
+                self.refreshInProgress = false
+            }
+        }
     }
     
     func centerOnUser() {
@@ -234,27 +278,47 @@ class MapViewModel: NSObject, ObservableObject, CLLocationManagerDelegate {
                     var userIds = userData.friends
                     userIds.append(currentUserId)
                     
-                    // FIRST: Listen for ONLY ACTIVE SESSIONS
+                    // FIRST: Clear existing listeners
+                    self.locationListener?.remove()
+                    
+                    // SECOND: Listen for ACTIVE SESSIONS first
                     self.listenForActiveSessions(userIds: userIds)
                     
-                    // SECOND: Only if user has opted to see history, fetch past sessions
+                    // THIRD: Only if user has opted to see history, fetch past sessions
                     if showHistory {
-                        // Fetch historical sessions for EACH user, limited to 3 per user
-                        let dispatchGroup = DispatchGroup()
-                        var historicalLocations: [FriendLocation] = []
-                        
-                        for userId in userIds {
-                            dispatchGroup.enter()
-                            self.fetchHistoricalSessions(userId: userId, limit: 3) { locations in
-                                historicalLocations.append(contentsOf: locations)
-                                dispatchGroup.leave()
+                        // Wait a bit to ensure active sessions are processed first
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                            // Fetch historical sessions for EACH user, limited to 3 per user
+                            let dispatchGroup = DispatchGroup()
+                            var historicalLocations: [FriendLocation] = []
+                            
+                            for userId in userIds {
+                                dispatchGroup.enter()
+                                self.fetchHistoricalSessions(userId: userId, limit: 3) { locations in
+                                    historicalLocations.append(contentsOf: locations)
+                                    dispatchGroup.leave()
+                                }
                             }
-                        }
-                        
-                        dispatchGroup.notify(queue: .main) {
-                            // Add historical locations to the existing active locations
-                            self.friendLocations.append(contentsOf: historicalLocations)
-                            print("Added \(historicalLocations.count) historical locations to map")
+                            
+                            dispatchGroup.notify(queue: .main) {
+                                // Add historical locations to the existing active locations
+                                DispatchQueue.main.async {
+                                    // Get current active locations
+                                    let currentLocations = self.friendLocations
+                                    
+                                    // Merge with historical, avoiding duplicates
+                                    var newLocations = currentLocations
+                                    for location in historicalLocations {
+                                        // Only add if not already present (by ID)
+                                        if !newLocations.contains(where: { $0.id == location.id }) {
+                                            newLocations.append(location)
+                                        }
+                                    }
+                                    
+                                    self.friendLocations = newLocations
+                                    print("📍 Total locations on map: \(self.friendLocations.count) (active: \(currentLocations.count), historical: \(historicalLocations.count))")
+                                }
+                            }
                         }
                     }
                 }
@@ -262,6 +326,8 @@ class MapViewModel: NSObject, ObservableObject, CLLocationManagerDelegate {
     }
     
     private func listenForActiveSessions(userIds: [String]) {
+        print("👥 Listening for active sessions for \(userIds.count) users")
+        
         // Stop any existing listener
         locationListener?.remove()
         
@@ -272,12 +338,14 @@ class MapViewModel: NSObject, ObservableObject, CLLocationManagerDelegate {
                 guard let self = self else { return }
                 
                 if let error = error {
-                    print("Error in location listener: \(error.localizedDescription)")
+                    print("❌ Error in location listener: \(error.localizedDescription)")
                     return
                 }
                 
                 var currentLocations: [FriendLocation] = []
                 if let documents = snapshot?.documents {
+                    print("📑 Processing \(documents.count) active location documents")
+                    
                     // Process each location document
                     for document in documents {
                         let data = document.data()
@@ -296,13 +364,15 @@ class MapViewModel: NSObject, ObservableObject, CLLocationManagerDelegate {
                                 continue
                             }
                             
-                            // CRITICAL: Properly check if session was successful
+                            // CRITICAL: Explicitly check success field
                             let wasSuccessful: Bool
                             if let successField = data["lastFlipWasSuccessful"] as? Bool {
                                 wasSuccessful = successField
+                                print("📱 Active session success status: \(wasSuccessful)")
                             } else {
-                                // Default to true if field is missing
+                                // Default to true only if field is missing
                                 wasSuccessful = true
+                                print("⚠️ Missing success field for active session, defaulting to success")
                             }
                             
                             let sessionDuration = data["sessionDuration"] as? Int ?? 25 // Default to 25 min
@@ -330,11 +400,13 @@ class MapViewModel: NSObject, ObservableObject, CLLocationManagerDelegate {
                         }
                     }
                     
-                    print("Found \(currentLocations.count) active session locations")
+                    print("👁️ Found \(currentLocations.count) active session locations")
                 }
                 
-                // Update UI with active locations - we'll add historical locations separately
+                // Update UI with active locations
                 DispatchQueue.main.async {
+                    // Replace the locations array with just active locations
+                    // Historical locations will be added later
                     self.friendLocations = currentLocations
                     
                     // Center on user location if this is first load
@@ -519,6 +591,8 @@ class MapViewModel: NSObject, ObservableObject, CLLocationManagerDelegate {
     }
     
     // In MapViewModel.swift - modify the processHistoricalDocument function:
+    // Replace the processHistoricalDocument function in MapViewModel with this fixed version
+
     private func processHistoricalDocument(_ document: QueryDocumentSnapshot, userId: String, index: Int) -> FriendLocation? {
         let data = document.data()
         
@@ -530,28 +604,45 @@ class MapViewModel: NSObject, ObservableObject, CLLocationManagerDelegate {
               Date().timeIntervalSince(sessionEndTime) < 2592000
         else { return nil }
         
-        // CRITICAL FIX: Check multiple possible field names for success status
-        // This fixes the issue with failed sessions always showing as successful
+        // CRITICAL FIX: Explicitly check all possible field names for success status
+        // Log the keys present in the document for debugging
+        print("🧹 Historical session document fields: \(Array(data.keys).joined(separator: ", "))")
+        
+        // First determine the success status with clear checks
         let wasSuccessful: Bool
+        
+        // Try all known field names - explicit checks for each field type
         if let successValue = data["lastFlipWasSuccessful"] as? Bool {
+            print("✅ Found direct success field: \(successValue)")
             wasSuccessful = successValue
         } else if let successValue = data["wasSuccessful"] as? Bool {
+            print("✅ Found alternative wasSuccessful field: \(successValue)")
             wasSuccessful = successValue
-        } else if let actualDuration = data["actualDuration"] as? Int,
-                  let targetDuration = data["sessionDuration"] as? Int {
-            // If we can't find an explicit success/failure flag,
-            // infer it from whether the actual duration matches the target
-            wasSuccessful = (
-                actualDuration >= targetDuration * Int(0.9)
-            ) // Consider success if at least 90% completed
+        } else if let actualDuration = getIntegerValue(from: data["actualDuration"]),
+                  let targetDuration = getIntegerValue(from: data["sessionDuration"]) {
+            // If we can't find an explicit flag, infer from duration
+            let success = actualDuration >= Int(Double(targetDuration) * 0.9) // 90% threshold
+            print("📊 Inferred success from duration: \(success) (actual: \(actualDuration), target: \(targetDuration))")
+            wasSuccessful = success
         } else {
-            // Default to success only as last resort
-            wasSuccessful = true
+            // Last resort - check if any failure indicators exist
+            let hasFailed = data["didFail"] as? Bool ?? false
+            let wasAborted = data["wasAborted"] as? Bool ?? false
+            
+            if hasFailed || wasAborted {
+                print("❌ Found failure indicator")
+                wasSuccessful = false
+            } else {
+                // Default to success if we can't determine
+                print("⚠️ Could not determine success state, defaulting to success")
+                wasSuccessful = true
+            }
         }
         
-        print("Historical session for \(username): success=\(wasSuccessful), fields: \(data.keys.joined(separator: ", "))")
+        // IMPORTANT: Log the final determination for debugging
+        print("🏁 Session for \(username): success=\(wasSuccessful)")
         
-        let sessionDuration = data["sessionDuration"] as? Int ?? 25
+        let sessionDuration = getIntegerValue(from: data["sessionDuration"]) ?? 25
         let participants = data["participants"] as? [String]
         let participantNames = data["participantNames"] as? [String]
         
@@ -564,7 +655,7 @@ class MapViewModel: NSObject, ObservableObject, CLLocationManagerDelegate {
             ),
             isCurrentlyFlipped: false,
             lastFlipTime: sessionEndTime,
-            lastFlipWasSuccessful: wasSuccessful,
+            lastFlipWasSuccessful: wasSuccessful, // FIXED: Use our explicit determination
             sessionDuration: sessionDuration,
             sessionStartTime: sessionStartTime,
             isHistorical: true,
@@ -572,6 +663,20 @@ class MapViewModel: NSObject, ObservableObject, CLLocationManagerDelegate {
             participants: participants,
             participantNames: participantNames
         )
+    }
+
+    // Helper function to safely extract integer values from different types
+    private func getIntegerValue(from value: Any?) -> Int? {
+        if let intValue = value as? Int {
+            return intValue
+        } else if let doubleValue = value as? Double {
+            return Int(doubleValue)
+        } else if let stringValue = value as? String, let parsed = Int(stringValue) {
+            return parsed
+        } else if let numberValue = value as? NSNumber {
+            return numberValue.intValue
+        }
+        return nil
     }
     
     // New method to fetch group sessions

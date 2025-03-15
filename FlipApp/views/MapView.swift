@@ -326,6 +326,8 @@ struct FriendMapMarker: View {
     let friend: FriendLocation
     @State private var animate = false
     @State private var profileImage: Image?
+    @State private var isLoading = true
+    @State private var loadingId: String = ""
     
     // In FriendMapMarker - statusColor computed property:
     private var statusColor: Color {
@@ -404,6 +406,11 @@ struct FriendMapMarker: View {
                     .scaledToFill()
                     .frame(width: markerSize - 4, height: markerSize - 4)
                     .clipShape(Circle())
+            } else if isLoading {
+                // Show loading indicator
+                ProgressView()
+                    .scaleEffect(0.7)
+                    .frame(width: markerSize - 4, height: markerSize - 4)
             } else {
                 // Default placeholder
                 Text(String(friend.username.prefix(1).uppercased()))
@@ -451,10 +458,30 @@ struct FriendMapMarker: View {
                     )
                     .offset(x: 12, y: -12)
             }
+            
+            // Debug indicator for failed sessions
+            if !friend.lastFlipWasSuccessful {
+                Text("F")
+                    .font(.system(size: 10, weight: .bold))
+                    .foregroundColor(.white)
+                    .frame(width: 16, height: 16)
+                    .background(
+                        Circle()
+                            .fill(Color.red.opacity(0.8))
+                    )
+                    .offset(x: -12, y: 12)
+            }
         }
         .shadow(color: statusColor.opacity(friend.isHistorical ? 0.3 : 0.5), radius: friend.isHistorical ? 2 : 4)
         .opacity(friend.isHistorical ? (1.0 - (Double(friend.sessionIndex) * 0.15)) : 1.0)  // Additional subtle opacity adjustment
         .onAppear {
+            // Reset state when view appears
+            if loadingId != friend.id {
+                profileImage = nil
+                isLoading = true
+                loadingId = friend.id
+            }
+            
             if friend.isCurrentlyFlipped && !friend.isHistorical {
                 withAnimation(Animation.easeInOut(duration: 1.5).repeatForever(autoreverses: false)) {
                     animate = true
@@ -464,7 +491,16 @@ struct FriendMapMarker: View {
             // Try to load the user's profile image
             loadProfileImage()
         }
+        .id(friend.id) // Force view refresh when friend.id changes
+        .onChange(of: friend.id) { _ in
+            // Reset and reload when ID changes
+            profileImage = nil
+            isLoading = true
+            loadingId = friend.id
+            loadProfileImage()
+        }
     }
+    
     private func loadProfileImage() {
         // First get a clean user ID (without historical suffix)
         let cleanUserId = String(friend.id.split(separator: "_").first ?? "")
@@ -473,41 +509,106 @@ struct FriendMapMarker: View {
         if let cachedImage = ProfileImageCache.shared.getCachedImage(for: cleanUserId) {
             DispatchQueue.main.async {
                 self.profileImage = Image(uiImage: cachedImage)
+                self.isLoading = false
             }
             return
         }
         
-        // Store the friend ID for later comparison
-        let currentFriendId = friend.id
+        // If no cached image, check if we have profile URL in RegionalViewModel's cache
+        if let cachedUser = RegionalViewModel.shared.leaderboardViewModel.userCache[cleanUserId],
+           let profileURL = cachedUser.profileImageURL,
+           !profileURL.isEmpty,
+           let url = URL(string: profileURL) {
+            
+            URLSession.shared.dataTask(with: url) { data, response, error in
+                // Check if the friend ID is still the same
+                guard loadingId == friend.id else { return }
+                
+                if let data = data, let uiImage = UIImage(data: data) {
+                    // Create a thumbnail for better performance
+                    let thumbnail = uiImage.thumbnailForCache(size: 100)
+                    
+                    // Store in cache with user ID
+                    ProfileImageCache.shared.storeImage(thumbnail, for: cleanUserId)
+                    
+                    DispatchQueue.main.async {
+                        self.profileImage = Image(uiImage: thumbnail)
+                        self.isLoading = false
+                    }
+                } else {
+                    DispatchQueue.main.async {
+                        self.isLoading = false
+                    }
+                }
+            }.resume()
+            return
+        }
         
-        // Query Firestore for the user's profile image URL
+        // If we get here, query Firestore for the user's profile image URL
         FirebaseManager.shared.db.collection("users").document(cleanUserId)
             .getDocument { document, error in
-                // Compare with stored ID to ensure we're still showing the same friend
-                guard currentFriendId == self.friend.id else { return }
+                // Check if the friend ID is still the same
+                guard loadingId == friend.id else { return }
                 
                 if let userData = try? document?.data(as: FirebaseManager.FlipUser.self),
                    let imageURLString = userData.profileImageURL,
                    let imageURL = URL(string: imageURLString) {
                     
+                    // Update RegionalViewModel's cache
+                    let userCache = UserCacheItem(
+                        userId: cleanUserId,
+                        username: userData.username,
+                        profileImageURL: imageURLString
+                    )
+                    RegionalViewModel.shared.leaderboardViewModel.userCache[cleanUserId] = userCache
+                    
                     URLSession.shared.dataTask(with: imageURL) { data, response, error in
-                        // Check again that we're still showing the same friend
-                        guard currentFriendId == self.friend.id else { return }
+                        // Check if the friend ID is still the same
+                        guard loadingId == friend.id else { return }
                         
                         if let data = data, let uiImage = UIImage(data: data) {
+                            // Create a thumbnail for better performance
+                            let thumbnail = uiImage.thumbnailForCache(size: 100)
+                            
                             // Store in cache with user ID
-                            ProfileImageCache.shared.storeImage(uiImage, for: cleanUserId)
+                            ProfileImageCache.shared.storeImage(thumbnail, for: cleanUserId)
                             
                             DispatchQueue.main.async {
-                                self.profileImage = Image(uiImage: uiImage)
+                                self.profileImage = Image(uiImage: thumbnail)
+                                self.isLoading = false
+                            }
+                        } else {
+                            DispatchQueue.main.async {
+                                self.isLoading = false
                             }
                         }
                     }.resume()
+                } else {
+                    DispatchQueue.main.async {
+                        self.isLoading = false
+                    }
                 }
             }
     }
+    
+    // Helper to create a thumbnail image
+    private func createThumbnail(from image: UIImage, size: CGFloat) -> UIImage {
+        let renderer = UIGraphicsImageRenderer(size: CGSize(width: size, height: size))
+        return renderer.image { (context) in
+            image.draw(in: CGRect(origin: .zero, size: CGSize(width: size, height: size)))
+        }
+    }
 }
 
+// Add this helper extension if not already present
+extension UIImage {
+    func thumbnailForCache(size: CGFloat = 100) -> UIImage {
+        let renderer = UIGraphicsImageRenderer(size: CGSize(width: size, height: size))
+        return renderer.image { (context) in
+            self.draw(in: CGRect(origin: .zero, size: CGSize(width: size, height: size)))
+        }
+    }
+}
 struct FriendPreviewCard: View {
     let friend: FriendLocation
     let onDismiss: () -> Void

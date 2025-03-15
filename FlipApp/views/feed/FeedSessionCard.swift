@@ -309,19 +309,13 @@ struct FeedSessionCard: View {
                             // Toggle like state via ViewModel
                             viewModel.likeSession(sessionId: session.id.uuidString)
                             
-                            // Update local state for immediate UI feedback
-                            isLiked.toggle()
                             
                             // Haptic feedback
                             let generator = UIImpactFeedbackGenerator(style: .medium)
                             generator.impactOccurred()
                             
                             // Update the count for immediate feedback
-                            if isLiked {
-                                likesCount += 1
-                            } else if likesCount > 0 {
-                                likesCount -= 1
-                            }
+
                         }) {
                             HStack(spacing: 8) {
                                 Image(systemName: isLiked ? "heart.fill" : "heart")
