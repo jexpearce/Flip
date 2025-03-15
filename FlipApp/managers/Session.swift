@@ -42,6 +42,9 @@ struct Session: Codable, Identifiable {
         let wasSuccessful: Bool
         let actualDuration: Int
     }
+    static func == (lhs: Session, rhs: Session) -> Bool {
+        return lhs.id == rhs.id
+    }
     
     // Helper initializer for creating a session with notes
     static func createWithNotes(

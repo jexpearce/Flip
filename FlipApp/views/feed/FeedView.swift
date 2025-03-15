@@ -646,6 +646,7 @@ class FeedViewModel: ObservableObject {
     @Published var showError = false
     @Published var errorMessage = ""
     @Published var sessionComments: [String: [SessionComment]] = [:] // Map session ID to comments array
+    private var globalProcessedSessionIds = Set<String>()
     private var sessionListener: ListenerRegistration?
     private var commentsListeners: [String: ListenerRegistration] = [:]
     @Published var sessionLikes: [String: Int] = [:] // Map session ID to like count
@@ -897,9 +898,10 @@ class FeedViewModel: ObservableObject {
         sessionListener?.remove()
         
         print("Loading sessions for users: \(userIds)")
+        var localProcessedSessionIds = Set<String>()
         
         // Create a Set to track unique session IDs we've already processed
-        var processedSessionIds = Set<String>()
+//        var processedSessionIds = Set<String>()
         
         sessionListener = firebaseManager.db.collection("sessions")
             .whereField("userId", in: userIds)
@@ -918,28 +920,40 @@ class FeedViewModel: ObservableObject {
                         
                         // Process documents into sessions, filtering out duplicates
                         var uniqueSessions: [Session] = []
-                        
-                        for document in documents {
-                            guard let session = try? document.data(as: Session.self) else {
-                                continue
-                            }
-                            
-                            let sessionId = session.id.uuidString
-                            
-                            // Only add the session if we haven't seen this ID before
-                            if !processedSessionIds.contains(sessionId) {
-                                processedSessionIds.insert(sessionId)
-                                uniqueSessions.append(session)
-                            } else {
-                                print("Skipping duplicate session ID: \(sessionId)")
-                            }
-                        }
+                                            
+                                            for document in documents {
+                                                guard let session = try? document.data(as: Session.self) else {
+                                                    continue
+                                                }
+                                                
+                                                let sessionId = session.id.uuidString
+                                                
+                                                // First check against our global session ID set
+                                                if !self.globalProcessedSessionIds.contains(sessionId) &&
+                                                   !localProcessedSessionIds.contains(sessionId) {
+                                                    self.globalProcessedSessionIds.insert(sessionId)
+                                                    localProcessedSessionIds.insert(sessionId)
+                                                    uniqueSessions.append(session)
+                                                } else {
+                                                    print("Skipping duplicate session ID: \(sessionId)")
+                                                }
+                                            }
                         
                         // Sort by start time, newest first
                         uniqueSessions.sort { $0.startTime > $1.startTime }
                         
-                        self.feedSessions = uniqueSessions
-                        
+                        if self.feedSessions.isEmpty {
+                                                self.feedSessions = uniqueSessions
+                                            } else {
+                                                // Add new sessions from this batch that aren't already in feedSessions
+                                                for session in uniqueSessions {
+                                                    if !self.feedSessions.contains(where: { $0.id == session.id }) {
+                                                        self.feedSessions.append(session)
+                                                    }
+                                                }
+                                                // Re-sort the combined list
+                                                self.feedSessions.sort { $0.startTime > $1.startTime }
+                                            }
                         // Preload all user data before loading other session data
                         self.preloadUserData(for: self.feedSessions)
                         
@@ -961,6 +975,7 @@ class FeedViewModel: ObservableObject {
         sessionListener?.remove()
         
         print("Loading sessions for user: \(userId)")
+        var localProcessedSessionIds = Set<String>()  // This was missing!
         
         // Create a Set to track unique session IDs we've already processed
         var processedSessionIds = Set<String>()

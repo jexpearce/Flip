@@ -156,20 +156,59 @@ struct CompletionView: View {
                     // Hide keyboard first
                     hideKeyboard()
                     
-                    // Save session with notes
-                    sessionManager.addSession(
-                        duration: appManager.selectedMinutes,
-                        wasSuccessful: true,
-                        actualDuration: appManager.selectedMinutes,
-                        sessionTitle: sessionTitle.isEmpty ? nil : sessionTitle,
-                        sessionNotes: sessionNotes.isEmpty ? nil : sessionNotes
-                    )
+                    // FIXED: Only save NEW session if it hasn't been recorded already
+                    if !appManager.sessionAlreadyRecorded {
+                        // Save session with notes
+                        sessionManager.addSession(
+                            duration: appManager.selectedMinutes,
+                            wasSuccessful: true,
+                            actualDuration: appManager.selectedMinutes,
+                            sessionTitle: sessionTitle.isEmpty ? nil : sessionTitle,
+                            sessionNotes: sessionNotes.isEmpty ? nil : sessionNotes
+                        )
+                        // Mark as recorded to prevent duplicates
+                        appManager.sessionAlreadyRecorded = true
+                    } else {
+                        // If already recorded, update the most recent session with the notes
+                        if !sessionTitle.isEmpty || !sessionNotes.isEmpty {
+                            // Find and update the most recent session for this user
+                            guard let userId = Auth.auth().currentUser?.uid else { return }
+                            // Take the first session (most recent) that matches the user ID
+                            if let index = sessionManager.sessions.firstIndex(where: { $0.userId == userId }) {
+                                let session = sessionManager.sessions[index]
+                                // Create a new session with updated notes
+                                let updatedSession = Session(
+                                    id: session.id,
+                                    userId: session.userId,
+                                    username: session.username,
+                                    startTime: session.startTime,
+                                    duration: session.duration,
+                                    wasSuccessful: session.wasSuccessful,
+                                    actualDuration: session.actualDuration,
+                                    sessionTitle: sessionTitle.isEmpty ? nil : sessionTitle,
+                                    sessionNotes: sessionNotes.isEmpty ? nil : sessionNotes,
+                                    participants: session.participants,
+                                    originalStarterId: session.originalStarterId,
+                                    wasJoinedSession: session.wasJoinedSession,
+                                    comment: session.comment,
+                                    commentorId: session.commentorId,
+                                    commentorName: session.commentorName,
+                                    commentTime: session.commentTime,
+                                    liveSessionId: session.liveSessionId
+                                )
+                                // Update the session in Firebase
+                                try? FirebaseManager.shared.db.collection("sessions")
+                                    .document(session.id.uuidString)
+                                    .setData(from: updatedSession)
+                            }
+                        }
+                    }
                     
                     // Add a small delay to show "Saving..." effect
                     DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) {
                         appManager.currentState = .initial
                         isButtonPressed = false
-                        appManager.sessionAlreadyRecorded = false
+                        appManager.sessionAlreadyRecorded = false // Reset for next session
                         showSavingIndicator = false
                     }
                 }) {

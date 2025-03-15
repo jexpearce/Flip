@@ -244,7 +244,7 @@ struct ScrollableContentView: View {
         ScrollView {
             VStack(alignment: .leading, spacing: 20) {
                 if searchText.isEmpty {
-                    // Recommendations section
+                    // Recommendations section with mutual friends first
                     RecommendationsSection(
                         viewModel: viewModel,
                         orangeGlow: orangeGlow,
@@ -261,58 +261,6 @@ struct ScrollableContentView: View {
                 }
             }
             .padding(.vertical)
-        }
-    }
-}
-
-// MARK: - Recommendations Section
-struct RecommendationsSection: View {
-    // Using StateObject instead of ObservedObject to ensure proper state management
-    @ObservedObject var viewModel: SearchManager
-    let orangeGlow: Color
-    var onViewProfile: (FirebaseManager.FlipUser) -> Void
-    
-    var body: some View {
-        if !viewModel.recommendations.isEmpty {
-            HStack {
-                Text("RECOMMENDED")
-                    .font(.system(size: 16, weight: .black))
-                    .tracking(5)
-                    .foregroundColor(.white)
-                    .shadow(color: orangeGlow, radius: 6)
-                
-                Spacer()
-                
-                Text("\(viewModel.filteredRecommendations.count) users")
-                    .font(.system(size: 14))
-                    .foregroundColor(.white.opacity(0.7))
-            }
-            .padding(.horizontal)
-            .padding(.top, 10)
-
-            ForEach(viewModel.filteredRecommendations) { user in
-                EnhancedUserSearchCard(
-                    user: user,
-                    requestStatus: viewModel.requestStatus(for: user.id),
-                    onSendRequest: {
-                        viewModel.sendFriendRequest(to: user.id)
-                    },
-                                            onCancelRequest: {
-                        viewModel.promptCancelRequest(for: user)
-                    },
-                    onViewProfile: {
-                        onViewProfile(user)
-                    }
-                )
-            }
-            
-            if viewModel.filteredRecommendations.isEmpty {
-                // Show "no users" state if filtered list is empty
-                NoUsersFoundView(
-                    message: "All recommended users are already your friends",
-                    icon: "person.2.fill"
-                )
-            }
         }
     }
 }
@@ -346,11 +294,19 @@ struct SearchResultsSection: View {
                 icon: "magnifyingglass"
             )
         } else {
+            // Sort search results by mutual friends count
+            let sortedResults = viewModel.filteredSearchResults.sorted { userA, userB in
+                let mutualCountA = viewModel.mutualFriendCount(for: userA.id)
+                let mutualCountB = viewModel.mutualFriendCount(for: userB.id)
+                return mutualCountA > mutualCountB
+            }
+            
             // Search results with enhanced styling
-            ForEach(viewModel.filteredSearchResults) { user in
+            ForEach(sortedResults) { user in
                 EnhancedUserSearchCard(
                     user: user,
                     requestStatus: viewModel.requestStatus(for: user.id),
+                    mutualCount: viewModel.mutualFriendCount(for: user.id),
                     onSendRequest: {
                         viewModel.sendFriendRequest(to: user.id)
                     },
@@ -360,6 +316,169 @@ struct SearchResultsSection: View {
                     onViewProfile: {
                         onViewProfile(user)
                     }
+                )
+            }
+        }
+    }
+}
+
+// MARK: - Recommendations Section
+struct RecommendationsSection: View {
+    @ObservedObject var viewModel: SearchManager
+    let orangeGlow: Color
+    var onViewProfile: (FirebaseManager.FlipUser) -> Void
+    
+    // Gold color for mutual friends
+    private let goldAccent = Color(red: 250/255, green: 204/255, blue: 21/255)
+    private let orangeAccent = Color(red: 249/255, green: 115/255, blue: 22/255)
+    
+    var body: some View {
+        VStack(alignment: .leading, spacing: 20) {
+            // Mutual Friends Section
+            if !viewModel.usersWithMutuals.isEmpty {
+                // Section header
+                HStack {
+                    HStack(spacing: 8) {
+                        Image(systemName: "person.2.fill")
+                            .foregroundColor(goldAccent)
+                            .font(.system(size: 16))
+                            .shadow(color: goldAccent.opacity(0.7), radius: 4)
+                        
+                        Text("MUTUAL FRIENDS")
+                            .font(.system(size: 16, weight: .black))
+                            .tracking(2)
+                            .foregroundColor(.white)
+                            .shadow(color: goldAccent.opacity(0.5), radius: 6)
+                    }
+                    
+                    Spacer()
+                    
+                    Text("\(viewModel.usersWithMutuals.count) users")
+                        .font(.system(size: 14))
+                        .foregroundColor(.white.opacity(0.7))
+                }
+                .padding(.horizontal)
+                let sortedMutuals = viewModel.usersWithMutuals.sorted { userA, userB in
+                    let mutualCountA = viewModel.mutualFriendCount(for: userA.id)
+                    let mutualCountB = viewModel.mutualFriendCount(for: userB.id)
+                    return mutualCountA > mutualCountB
+                }
+                
+                // Users with mutual friends
+                ForEach(sortedMutuals) { user in
+                    EnhancedUserSearchCard(
+                        user: user,
+                        requestStatus: viewModel.requestStatus(for: user.id),
+                        mutualCount: viewModel.mutualFriendCount(for: user.id),
+                        onSendRequest: {
+                            viewModel.sendFriendRequest(to: user.id)
+                        },
+                        onCancelRequest: {
+                            viewModel.promptCancelRequest(for: user)
+                        },
+                        onViewProfile: {
+                            onViewProfile(user)
+                        }
+                    )
+                }
+            }
+            
+            // Other Users Section
+            if !viewModel.otherUsers.isEmpty {
+                // Section header
+                HStack {
+                    Text("OTHER USERS")
+                        .font(.system(size: 16, weight: .black))
+                        .tracking(2)
+                        .foregroundColor(.white)
+                        .shadow(color: orangeGlow, radius: 6)
+                    
+                    Spacer()
+                    
+                    Text("\(viewModel.otherUsers.count) users")
+                        .font(.system(size: 14))
+                        .foregroundColor(.white.opacity(0.7))
+                }
+                .padding(.horizontal)
+                .padding(.top, 10)
+                
+                // Users without mutual friends (limited unless "Show More" is tapped)
+                ForEach(viewModel.otherUsersToShow) { user in
+                    EnhancedUserSearchCard(
+                        user: user,
+                        requestStatus: viewModel.requestStatus(for: user.id),
+                        mutualCount: 0,
+                        onSendRequest: {
+                            viewModel.sendFriendRequest(to: user.id)
+                        },
+                        onCancelRequest: {
+                            viewModel.promptCancelRequest(for: user)
+                        },
+                        onViewProfile: {
+                            onViewProfile(user)
+                        }
+                    )
+                }
+                
+                // Show More button
+                if viewModel.hasMoreOtherUsers {
+                    Button(action: {
+                        withAnimation {
+                            viewModel.toggleShowMoreRecommendations()
+                        }
+                    }) {
+                        HStack {
+                            Text(viewModel.showMoreRecommendations ? "SHOW LESS" : "SHOW MORE")
+                                .font(.system(size: 14, weight: .bold))
+                                .tracking(1)
+                                .foregroundColor(.white)
+                            
+                            Image(systemName: viewModel.showMoreRecommendations ? "chevron.up" : "chevron.down")
+                                .font(.system(size: 12, weight: .bold))
+                                .foregroundColor(.white)
+                        }
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 12)
+                        .background(
+                            ZStack {
+                                RoundedRectangle(cornerRadius: 12)
+                                    .fill(
+                                        LinearGradient(
+                                            colors: [
+                                                Color.white.opacity(0.2),
+                                                Color.white.opacity(0.05)
+                                            ],
+                                            startPoint: .top,
+                                            endPoint: .bottom
+                                        )
+                                    )
+                                
+                                RoundedRectangle(cornerRadius: 12)
+                                    .stroke(
+                                        LinearGradient(
+                                            colors: [
+                                                Color.white.opacity(0.4),
+                                                Color.white.opacity(0.1)
+                                            ],
+                                            startPoint: .topLeading,
+                                            endPoint: .bottomTrailing
+                                        ),
+                                        lineWidth: 1
+                                    )
+                            }
+                        )
+                        .shadow(color: orangeAccent.opacity(0.2), radius: 4)
+                    }
+                    .padding(.horizontal)
+                    .padding(.top, 5)
+                }
+            }
+            
+            // If no recommendations at all
+            if viewModel.usersWithMutuals.isEmpty && viewModel.otherUsers.isEmpty {
+                NoUsersFoundView(
+                    message: "No users found to recommend",
+                    icon: "person.2.slash"
                 )
             }
         }
@@ -453,6 +572,7 @@ enum RequestStatus {
 struct EnhancedUserSearchCard: View {
     let user: FirebaseManager.FlipUser
     let requestStatus: RequestStatus
+    let mutualCount: Int  // New parameter for mutual friends count
     let onSendRequest: () -> Void
     let onCancelRequest: () -> Void
     let onViewProfile: () -> Void
@@ -464,6 +584,7 @@ struct EnhancedUserSearchCard: View {
     private let orangeAccent = Color(red: 249/255, green: 115/255, blue: 22/255)
     private let orangeGlow = Color(red: 249/255, green: 115/255, blue: 22/255).opacity(0.5)
     private let purpleAccent = Color(red: 147/255, green: 51/255, blue: 234/255)
+    private let goldAccent = Color(red: 250/255, green: 204/255, blue: 21/255)  // Gold color for mutual friends
     
     var body: some View {
         Button(action: {
@@ -487,10 +608,38 @@ struct EnhancedUserSearchCard: View {
                 
                 // User info with enhanced styling
                 VStack(alignment: .leading, spacing: 5) {
-                    Text(user.username)
-                        .font(.system(size: 18, weight: .bold))
-                        .foregroundColor(.white)
-                        .shadow(color: orangeGlow, radius: 6)
+                    // Username with mutual badge
+                    HStack(spacing: 8) {
+                        Text(user.username)
+                            .font(.system(size: 18, weight: .bold))
+                            .foregroundColor(.white)
+                            .lineLimit(1)
+                            .frame(maxWidth: 150, alignment: .leading)
+                            .shadow(color: orangeGlow, radius: 6)
+                        
+                        // Show mutual friends badge if any - Simple version
+                        if mutualCount > 0 {
+                            HStack(spacing: 3) {
+                                Image(systemName: "person.2.fill")
+                                    .font(.system(size: 10))
+                                    .foregroundColor(goldAccent)
+                                
+                                Text("\(mutualCount)")
+                                    .font(.system(size: 11, weight: .bold))
+                                    .foregroundColor(goldAccent)
+                            }
+                            .padding(.horizontal, 6)
+                            .padding(.vertical, 2)
+                            .background(
+                                RoundedRectangle(cornerRadius: 8)
+                                    .fill(goldAccent.opacity(0.15))
+                                    .overlay(
+                                        RoundedRectangle(cornerRadius: 8)
+                                            .stroke(goldAccent.opacity(0.3), lineWidth: 1)
+                                    )
+                            )
+                        }
+                    }
                     
                     HStack(spacing: 12) {
                         Label(
@@ -506,6 +655,7 @@ struct EnhancedUserSearchCard: View {
                         )
                         .font(.system(size: 14))
                         .foregroundColor(.white.opacity(0.7))
+                    
                     }
                 }
                 .padding(.leading, 4)
@@ -643,11 +793,12 @@ struct EnhancedUserSearchCard: View {
             .padding()
             .background(
                 ZStack {
+                    // Give mutual friends cards a subtle gold highlight
                     RoundedRectangle(cornerRadius: 16)
                         .fill(
                             LinearGradient(
                                 colors: [
-                                    Color.white.opacity(0.1),
+                                    mutualCount > 0 ? goldAccent.opacity(0.05) : Color.white.opacity(0.1),
                                     Color.white.opacity(0.05)
                                 ],
                                 startPoint: .top,
@@ -659,7 +810,7 @@ struct EnhancedUserSearchCard: View {
                         .stroke(
                             LinearGradient(
                                 colors: [
-                                    Color.white.opacity(0.5),
+                                    mutualCount > 0 ? goldAccent.opacity(0.3) : Color.white.opacity(0.5),
                                     Color.white.opacity(0.1)
                                 ],
                                 startPoint: .topLeading,
@@ -669,30 +820,11 @@ struct EnhancedUserSearchCard: View {
                         )
                 }
             )
-            .shadow(color: Color.black.opacity(0.2), radius: 4, x: 0, y: 2)
+            .shadow(color: mutualCount > 0 ? goldAccent.opacity(0.1) : Color.black.opacity(0.2), radius: 4, x: 0, y: 2)
             .scaleEffect(isCardPressed ? 0.98 : 1.0)
             .animation(.spring(response: 0.3, dampingFraction: 0.6), value: isCardPressed)
             .padding(.horizontal)
         }
         .buttonStyle(PlainButtonStyle())
-    }
-}
-
-// MARK: - SearchManager Extension for filtering friends
-extension SearchManager {
-    // Filter out users who are already friends from recommendations
-    var filteredRecommendations: [FirebaseManager.FlipUser] {
-        recommendations.filter { user in
-            let status = requestStatus(for: user.id)
-            return status != .friends
-        }
-    }
-    
-    // Filter out users who are already friends from search results
-    var filteredSearchResults: [FirebaseManager.FlipUser] {
-        searchResults.filter { user in
-            let status = requestStatus(for: user.id)
-            return status != .friends
-        }
     }
 }

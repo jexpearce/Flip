@@ -41,7 +41,7 @@ class AppManager: NSObject, ObservableObject {
 
     private var sessionManager = SessionManager.shared
     private var notificationManager = NotificationManager.shared
-
+    private var locationSessionSaved = false
     // MARK: - Motion Properties
     private let motionManager = CMMotionManager()
     private let activityManager = CMMotionActivityManager()
@@ -921,6 +921,10 @@ class AppManager: NSObject, ObservableObject {
 
     // MARK: - Session Completion
     private func completeSession() {
+        if currentState == .completed || currentState == .failed {
+                print("Session already in terminal state: \(currentState)")
+                return
+            }
         
         // 1. Handle Live Activity first
         if #available(iOS 16.1, *) {
@@ -966,22 +970,23 @@ class AppManager: NSObject, ObservableObject {
 
         // 6. Send completion notification
         notifyCompletion()
-        Task {@MainActor in
-            self.updateLocationDuringSession()
-        }
+        
         Task { @MainActor in
             let currentBuildingId = RegionalViewModel.shared.selectedBuilding?.id
             let currentBuildingName = RegionalViewModel.shared.selectedBuilding?.name
             print("🏢 Current building at session completion: \(currentBuildingName ?? "None") [ID: \(currentBuildingId ?? "None")]")
         }
+        
         if !sessionAlreadyRecorded {
                 sessionAlreadyRecorded = true
                 
+                // Save the user's stats
+                updateUserStats(successful: true)
+                
+                // Only record ONE session - either through recordMultiUserSession or directly
                 if let _ = liveSessionId, isJoinedSession {
-                    // For joined sessions, need to record all participants
                     recordMultiUserSession(wasSuccessful: true)
                 } else {
-                    // For solo sessions, just record normally
                     sessionManager.addSession(
                         duration: selectedMinutes,
                         wasSuccessful: true,
@@ -989,8 +994,13 @@ class AppManager: NSObject, ObservableObject {
                     )
                 }
                 
-                updateUserStats(successful: true)
+                // Update location data AFTER recording session to ensure we don't double-save
+                Task { @MainActor in
+                    self.updateLocationDuringSession()
+                }
             }
+                
+        
         saveSessionState()
 
         // 8. Update UI state - check participant outcomes for joined sessions
@@ -1050,35 +1060,40 @@ class AppManager: NSObject, ObservableObject {
         }
         
         endSession()
-        saveSessionState()
         
-        Task { @MainActor in
-            self.updateLocationDuringSession()
-        }
+        
+        
         
         notifyFailure()
         notifyFriendsOfFailure()
-        
+//        
         // Calculate actual duration in minutes
         let actualDuration = (selectedMinutes * 60 - remainingSeconds) / 60
-
+//        _
         if !sessionAlreadyRecorded {
                 sessionAlreadyRecorded = true
                 
-                if let _  = liveSessionId, isJoinedSession {
-                    // For joined sessions, need to record all participants
+                // Save the user's stats
+                updateUserStats(successful: false)
+                
+                // Only record ONE session - either through recordMultiUserSession or directly
+                if let _ = liveSessionId, isJoinedSession {
                     recordMultiUserSession(wasSuccessful: false)
                 } else {
-                    // For solo sessions, just record normally
                     sessionManager.addSession(
                         duration: selectedMinutes,
                         wasSuccessful: false,
-                        actualDuration: actualDuration
+                        actualDuration: selectedMinutes
                     )
                 }
                 
-                updateUserStats(successful: false)
+                // Update location data AFTER recording session to ensure we don't double-save
+                Task { @MainActor in
+                    self.updateLocationDuringSession()
+                }
             }
+        saveSessionState()
+
         
 
         // Update UI state - check participant outcomes for joined sessions
@@ -1774,7 +1789,7 @@ class AppManager: NSObject, ObservableObject {
                         "timestamp": Timestamp(date: now),
                         "message": "\(userData.username) just failed a session!",
                         "read": false,
-                        "silent": true,
+                        "silent": false, // Changed from true to false
                     ]
                     
                     // Send to each friend who has notifications enabled
@@ -1868,6 +1883,11 @@ class AppManager: NSObject, ObservableObject {
         
         // Only save session data if session completed or failed
         if currentState == .completed || currentState == .failed {
+            if locationSessionSaved || sessionAlreadyRecorded {
+                        print("Skipping location session save - already saved")
+                        return
+                    }
+            locationSessionSaved = true
             // Calculate accurate actual duration - this is critical
             let actualDurationMinutes = (selectedMinutes * 60 - remainingSeconds) / 60
             print("🕰️ Session completed with actual duration: \(actualDurationMinutes) minutes")
