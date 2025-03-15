@@ -382,18 +382,22 @@ struct FriendsView: View {
         
         isJoiningSession = true
         
+        // IMPORTANT: Reset any existing join state first
+        appManager.resetJoinState()
+        
         // Get friend name from active sessions
         let friendName = liveSessionManager.activeFriendSessions[sessionId]?.starterUsername ?? "Friend"
         
         // First, try the direct join method from LiveSessionManager
         LiveSessionManager.shared.joinSession(sessionId: sessionId) { success, remainingSeconds, totalDuration in
+
             DispatchQueue.main.async {
-                isJoiningSession = false
+                self.isJoiningSession = false
                 
                 if success {
                     print("Successfully joined session \(sessionId) via LiveSessionManager")
                     // Start the joined session directly through AppManager
-                    appManager.joinLiveSession(
+                    self.appManager.joinLiveSession(
                         sessionId: sessionId,
                         remainingSeconds: remainingSeconds,
                         totalDuration: totalDuration
@@ -407,6 +411,9 @@ struct FriendsView: View {
                 } else {
                     // ONLY try backup method if direct join fails
                     print("Direct join failed, trying via coordinator...")
+                    
+                    // Reset state before setting up new join
+                    SessionJoinCoordinator.shared.clearPendingSession()
                     
                     // Use the coordinator to pass session information
                     SessionJoinCoordinator.shared.setJoinSession(id: sessionId, name: friendName)

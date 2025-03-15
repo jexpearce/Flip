@@ -916,6 +916,13 @@ class AppManager: NSObject, ObservableObject {
                 print("Terminal state with active timers, cleaning up")
                 invalidateAllTimers()
             }
+        case .othersActive:
+                // Add this case to make the switch exhaustive
+                // Similar to other terminal states
+            if sessionTimer != nil || countdownTimer != nil || flipBackTimer != nil {
+                print("Terminal state with active timers, cleaning up")
+                invalidateAllTimers()
+            }
         }
     }
 
@@ -1005,14 +1012,14 @@ class AppManager: NSObject, ObservableObject {
 
         // 8. Update UI state - check participant outcomes for joined sessions
         DispatchQueue.main.async {
-            if self.isJoinedSession {
-                // Determine the appropriate completion view
-                self.determineCompletionView { state in
-                    self.currentState = state
+                if self.isJoinedSession {
+                    // Determine the appropriate completion view
+                    self.determineCompletionView { state in
+                        self.currentState = state
+                    }
+                } else {
+                    self.currentState = .completed
                 }
-            } else {
-                self.currentState = .completed
-            }
         }
     }
 
@@ -1591,40 +1598,43 @@ class AppManager: NSObject, ObservableObject {
             break
         }
     }
+
+    // Modify determineCompletionView in AppManager.swift
     func determineCompletionView(completion: @escaping (FlipState) -> Void) {
         // If not a joined session, use standard completion
         if !isJoinedSession {
-                completion(currentState) // Immediately return current state
-                return
-            }
+            completion(currentState)
+            return
+        }
         
-        // For joined sessions, we need to check all participant statuses
+        // For joined sessions, check all participant statuses
         guard let sessionId = liveSessionId else {
-                completion(currentState) // Fallback to current state
-                return
-            }
+            completion(currentState)
+            return
+        }
+        
         LiveSessionManager.shared.db.collection("live_sessions").document(sessionId).getDocument { [weak self] document, error in
             guard let self = self else { return }
-
+            
             if let error = error {
                 print("Error fetching session data: \(error.localizedDescription)")
                 DispatchQueue.main.async {
-                    completion(self.currentState) // Fallback to current state
+                    completion(self.currentState)
                 }
                 return
             }
-
+            
             guard let document = document,
                   document.exists,
                   let data = document.data(),
                   let participantStatus = data["participantStatus"] as? [String: String] else {
                 DispatchQueue.main.async {
-                    completion(self.currentState) // Fallback to current state
+                    completion(self.currentState)
                 }
                 return
             }
             
-            // Count success/failure states
+            // Count different status types
             var completedCount = 0
             var failedCount = 0
             var activeCount = 0
@@ -1639,20 +1649,25 @@ class AppManager: NSObject, ObservableObject {
                 }
             }
             
+            // Determine the appropriate view state
             let shownState: FlipState
-                    if completedCount > 0 && failedCount > 0 {
-                        shownState = .mixedOutcome
-                    } else if failedCount > 0 {
-                        shownState = .failed
-                    } else if completedCount > 0 && activeCount == 0 {
-                        shownState = .joinedCompleted
-                    } else {
-                        shownState = self.currentState
-                    }
             
-            // Update the state on main thread
+            // Check if any participants are still active
+            if activeCount > 0 {
+                // If we have active participants, use the new state
+                shownState = .othersActive
+            } else if completedCount > 0 && failedCount > 0 {
+                shownState = .mixedOutcome
+            } else if failedCount > 0 {
+                shownState = .failed
+            } else if completedCount > 0 {
+                shownState = .joinedCompleted
+            } else {
+                shownState = self.currentState
+            }
+            
             DispatchQueue.main.async {
-                completion(shownState) // Pass the final state to the completion handler
+                completion(shownState)
             }
         }
     }
@@ -1680,7 +1695,9 @@ class AppManager: NSObject, ObservableObject {
         isJoinedSession = false
         originalSessionStarter = nil
         sessionParticipants = []
-        
+            
+        // Make sure to clean up any live session listeners
+        LiveSessionManager.shared.cleanupListeners()
         // Reset pause timer state
         isPauseTimerActive = false
         remainingPauseSeconds = 0
@@ -1724,6 +1741,20 @@ class AppManager: NSObject, ObservableObject {
             self.currentState = .initial
         }
     }
+    func resetJoinState() {
+        print("Resetting join state")
+        isJoinedSession = false
+        liveSessionId = nil
+        originalSessionStarter = nil
+        sessionParticipants = []
+        
+        // Also clean up any live session listeners
+        LiveSessionManager.shared.cleanupListeners()
+        
+        // Save state to persist these changes
+        saveSessionState()
+    }
+
 
     private func notifyFriendsOfFailure() {
         // Check if notifications are enabled in user settings

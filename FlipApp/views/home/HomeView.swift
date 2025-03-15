@@ -28,6 +28,8 @@ struct HomeView: View {
                     JoinedCompletionView()
                 case .mixedOutcome:
                     MixedOutcomeView()
+                case .othersActive:
+                    OthersActiveView()
                 }
             }
             

@@ -1243,7 +1243,10 @@ class FeedViewModel: ObservableObject {
             
             // Also include participants from group sessions
             if let participants = session.participants {
-                for participant in participants {
+                let filteredParticipants = participants.filter {
+                    participant in participant.id != Auth.auth().currentUser?.uid
+                }
+                for participant in filteredParticipants {
                     userIds.insert(participant.id)
                 }
             }

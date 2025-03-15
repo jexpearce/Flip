@@ -9,6 +9,7 @@ struct EnhancedFriendCard: View {
     @State private var isGlowing = false
     @State private var elapsedSeconds: Int = 0
     @State private var timer: Timer? = nil
+    @StateObject private var sessionTimer = LiveSessionTimer()
     
     // LiveSessionData if the friend is in an active session
     let liveSession: LiveSessionManager.LiveSessionData?
@@ -28,13 +29,21 @@ struct EnhancedFriendCard: View {
     
     // Computed real-time elapsed time string
     private var formattedElapsedTime: String {
-        guard let session = liveSession else { return "0:00" }
-        
-        let totalElapsed = session.elapsedSeconds + (session.isPaused ? 0 : elapsedSeconds)
-        let minutes = totalElapsed / 60
-        let seconds = totalElapsed % 60
-        return String(format: "%d:%02d", minutes, seconds)
-    }
+            guard let session = liveSession else { return "0:00" }
+            
+            // Use sessionTimer.currentTick to force update
+            let _ = sessionTimer.currentTick
+            
+            // Calculate elapsed time including drift compensation
+            let baseElapsed = session.elapsedSeconds
+            let timeSinceUpdate = Int(Date().timeIntervalSince1970 - session.lastUpdateTime.timeIntervalSince1970)
+            let adjustment = session.isPaused ? 0 : min(timeSinceUpdate, 60) // Limit adjustment to avoid huge jumps
+            
+            let totalElapsed = baseElapsed + adjustment
+            let minutes = totalElapsed / 60
+            let seconds = totalElapsed % 60
+            return String(format: "%d:%02d", minutes, seconds)
+        }
 
     var body: some View {
         VStack(spacing: 0) {
@@ -166,26 +175,26 @@ struct EnhancedFriendCard: View {
             
             // Session timing information - only shown for live sessions
             if isLive, let session = liveSession {
-                VStack(spacing: 8) {
-                    Divider()
-                        .background(Color.white.opacity(0.2))
-                        .padding(.vertical, 10)
-                    
-                    HStack {
-                        VStack(alignment: .leading, spacing: 2) {
-                            Text("TIME")
-                                .font(.system(size: 12, weight: .medium))
-                                .tracking(1)
-                                .foregroundColor(Color(red: 56/255, green: 189/255, blue: 248/255).opacity(0.8))
+                        VStack(spacing: 8) {
+                            Divider()
+                                .background(Color.white.opacity(0.2))
+                                .padding(.vertical, 10)
                             
-                            // Use our real-time updated timer here instead of the static value
-                            Text(formattedElapsedTime)
-                                .font(.system(size: 18, weight: .bold))
-                                .monospacedDigit()
-                                .foregroundColor(.white)
-                                .id(elapsedSeconds) // Force refresh when counter changes
-                                .shadow(color: Color(red: 56/255, green: 189/255, blue: 248/255).opacity(0.5), radius: 4)
-                        }
+                            HStack {
+                                VStack(alignment: .leading, spacing: 2) {
+                                    Text("TIME")
+                                        .font(.system(size: 12, weight: .medium))
+                                        .tracking(1)
+                                        .foregroundColor(Color(red: 56/255, green: 189/255, blue: 248/255).opacity(0.8))
+                                    
+                                    // Use our real-time updated timer here
+                                    Text(formattedElapsedTime)
+                                        .font(.system(size: 18, weight: .bold))
+                                        .monospacedDigit()
+                                        .foregroundColor(.white)
+                                        .id(sessionTimer.currentTick) // Force refresh when counter changes
+                                        .shadow(color: Color(red: 56/255, green: 189/255, blue: 248/255).opacity(0.5), radius: 4)
+                                }
                         
                         Spacer()
                         
@@ -278,8 +287,11 @@ struct EnhancedFriendCard: View {
         .scaleEffect(isPressed ? 0.98 : 1.0)
         .animation(.spring(response: 0.3, dampingFraction: 0.6), value: isPressed)
         .onAppear {
-            startTimer()
-        }
+                // Update the session timer with this card's session data
+                if let session = liveSession {
+                    sessionTimer.updateSession(session: session)
+                }
+            }
         .onDisappear {
             stopTimer()
         }

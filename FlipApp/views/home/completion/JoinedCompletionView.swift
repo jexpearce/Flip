@@ -234,21 +234,27 @@ struct JoinedCompletionView: View {
                     
                     // Save session with notes if we're the original starter
                     if canEditNotes {
-                        sessionManager.addSession(
-                            duration: appManager.selectedMinutes,
-                            wasSuccessful: true,
-                            actualDuration: appManager.selectedMinutes,
-                            sessionTitle: sessionTitle.isEmpty ? nil : sessionTitle,
-                            sessionNotes: sessionNotes.isEmpty ? nil : sessionNotes
-                        )
-                    }
+                            sessionManager.addSession(
+                                duration: appManager.selectedMinutes,
+                                wasSuccessful: true,
+                                actualDuration: appManager.selectedMinutes,
+                                sessionTitle: sessionTitle.isEmpty ? nil : sessionTitle,
+                                sessionNotes: sessionNotes.isEmpty ? nil : sessionNotes
+                            )
+                        }
                     
                     // Add a small delay to show "Saving..." effect
                     DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) {
-                        appManager.currentState = .initial
-                        isButtonPressed = false
-                        showSavingIndicator = false
-                    }
+                            // IMPORTANT: Clear join state explicitly
+                            appManager.isJoinedSession = false
+                            appManager.liveSessionId = nil
+                            appManager.originalSessionStarter = nil
+                            appManager.sessionParticipants = []
+                            
+                            appManager.currentState = .initial
+                            isButtonPressed = false
+                            showSavingIndicator = false
+                        }
                 }) {
                     HStack {
                         if showSavingIndicator {

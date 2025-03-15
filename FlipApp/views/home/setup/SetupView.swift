@@ -1,4 +1,5 @@
 import SwiftUI
+import Foundation
 
 struct SetupView: View {
     @EnvironmentObject var appManager: AppManager
@@ -425,65 +426,66 @@ struct SetupView: View {
             
             // Check if we're being called to join a session
             if let sessionData = SessionJoinCoordinator.shared.getJoinSession() {
-                joinLiveSessionMode = true
-                sessionToJoin = sessionData
-                
-                // Show joining indicator
-                withAnimation {
-                    showJoiningIndicator = true
-                }
-                LiveSessionManager.shared.getSessionDetails(sessionId: sessionData.id) { session in
-                    guard let session = session else {
-                        // Session doesn't exist, reset join mode and clear coordinator
-                        DispatchQueue.main.async {
-                            SessionJoinCoordinator.shared.clearPendingSession()
-                            withAnimation {
-                                showJoiningIndicator = false
-                                joinLiveSessionMode = false
-                            }
-                        }
-                        return
+                    joinLiveSessionMode = true
+                    sessionToJoin = sessionData
+                    
+                    // Show joining indicator
+                    withAnimation {
+                        showJoiningIndicator = true
                     }
-                    DispatchQueue.main.async {
-                        // Pre-set values first
-                        appManager.selectedMinutes = session.targetDuration
-                        
-                        // Now try to join
-                        LiveSessionManager.shared.joinSession(sessionId: sessionData.id) { success, remainingSeconds, totalDuration in
-                            if success {
-                                // Join succeeded
-                                appManager.joinLiveSession(
-                                    sessionId: sessionData.id,
-                                    remainingSeconds: remainingSeconds,
-                                    totalDuration: totalDuration
-                                )
+                    
+                    // First ensure any existing session state is properly reset
+                    appManager.resetJoinState()
+                    
+                    // Get session details
+                    LiveSessionManager.shared.getSessionDetails(sessionId: sessionData.id) { session in
+                        if let session = session {
+                            DispatchQueue.main.async {
+                                // Set values first
+                                self.appManager.selectedMinutes = session.targetDuration
                                 
-                                // Clear coordinator state
-                                SessionJoinCoordinator.shared.clearPendingSession()
-                                
-                                // Hide join indicator after short delay
-                                DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-                                    withAnimation {
-                                        showJoiningIndicator = false
+                                // Now try to join
+                                LiveSessionManager.shared.joinSession(sessionId: sessionData.id) { success, remainingSeconds, totalDuration in
+                                    if success {
+                                        self.appManager.joinLiveSession(
+                                            sessionId: sessionData.id,
+                                            remainingSeconds: remainingSeconds,
+                                            totalDuration: totalDuration
+                                        )
+                                        
+                                        // Clear coordinator state
+                                        SessionJoinCoordinator.shared.clearPendingSession()
+                                        
+                                        // Hide join indicator after short delay
+                                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                                            withAnimation {
+                                                self.showJoiningIndicator = false
+                                            }
+                                        }
+                                    } else {
+                                        // Handle failure
+                                        SessionJoinCoordinator.shared.clearPendingSession()
+                                        withAnimation {
+                                            self.showJoiningIndicator = false
+                                            self.joinLiveSessionMode = false
+                                        }
                                     }
                                 }
-                                
-                                
-                            } else {
-                                // Handle failure
-                                print("Failed to join session")
+                            }
+                        } else {
+                            // Session doesn't exist
+                            DispatchQueue.main.async {
                                 SessionJoinCoordinator.shared.clearPendingSession()
                                 withAnimation {
-                                    showJoiningIndicator = false
-                                    joinLiveSessionMode = false
+                                    self.showJoiningIndicator = false
+                                    self.joinLiveSessionMode = false
                                 }
                             }
                         }
                     }
                 }
             }
-        }
-        .environmentObject(viewRouter)
+            .environmentObject(viewRouter)
     }
 }
         

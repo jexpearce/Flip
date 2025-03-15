@@ -1,50 +1,35 @@
-import Foundation
 import SwiftUI
 import FirebaseAuth
 
-struct MixedOutcomeView: View {
+struct OthersActiveView: View {
     @EnvironmentObject var appManager: AppManager
     @EnvironmentObject var sessionManager: SessionManager
     @State private var showIcon = false
     @State private var showTitle = false
     @State private var showStats = false
+    @State private var showNotes = false
     @State private var showButton = false
-    @State private var isButtonPressed = false
     @State private var isGlowing = false
+    @State private var isButtonPressed = false
+    @State private var showSavingIndicator = false
     
-    // State variables for participations
+    // State variables for participants
     @State private var participantDetails: [ParticipantDetail] = []
     @State private var loadingParticipants = true
     
-    // Current user status
+    // Current user's success status
     private var currentUserSucceeded: Bool {
         guard let userId = Auth.auth().currentUser?.uid else { return false }
         return participantDetails.first(where: { $0.id == userId })?.wasSuccessful ?? false
     }
     
-    // Completion info
-    private var completionMessage: String {
-        if participantDetails.isEmpty {
-            return "Session completed with mixed results"
-        }
-        
-        let successful = participantDetails.filter { $0.wasSuccessful }
-        let failed = participantDetails.filter { !$0.wasSuccessful }
-        
-        if successful.isEmpty {
-            return "All participants failed to complete the session"
-        } else if failed.isEmpty {
-            return "All participants successfully completed the session"
-        } else {
-            return "\(successful.count) completed, \(failed.count) failed"
-        }
-    }
-    
     struct ParticipantDetail: Identifiable {
         let id: String
         let username: String
-        let wasSuccessful: Bool
+        let wasSuccessful: Bool?  // Optional because some may still be active
+        let isActive: Bool        // Whether this participant is still in session
         let duration: Int
+        let remainingSeconds: Int?
     }
     
     var body: some View {
@@ -108,7 +93,7 @@ struct MixedOutcomeView: View {
                 }
                 .scaleEffect(showIcon ? 1 : 0)
                 
-                // Title
+                // Title with animation
                 Text(currentUserSucceeded ? "YOU SUCCEEDED" : "SESSION FAILED")
                     .font(.system(size: 28, weight: .black))
                     .tracking(6)
@@ -129,7 +114,7 @@ struct MixedOutcomeView: View {
                             .padding(.vertical, 15)
                     } else {
                         // Group status message with yellow highlighting
-                        Text(completionMessage)
+                        Text("Others still in session")
                             .font(.system(size: 18, weight: .medium))
                             .foregroundColor(Color(red: 250/255, green: 204/255, blue: 21/255))
                             .multilineTextAlignment(.center)
@@ -180,9 +165,9 @@ struct MixedOutcomeView: View {
                             }
                         }
                         
-                        // Participant list
-                        if participantDetails.count > 1 {
-                             ParticipantListMixed(participants: participantDetails)
+                        // Participant list with active status
+                        if !participantDetails.isEmpty {
+                             ActiveParticipantsList(participants: participantDetails)
                                  .padding(.top, 15)
                         }
                     }
@@ -228,58 +213,82 @@ struct MixedOutcomeView: View {
                 Button(action: {
                     withAnimation(.spring()) {
                         isButtonPressed = true
+                        showSavingIndicator = true
                     }
                     
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-                            // IMPORTANT: Clear join state explicitly
-                            appManager.isJoinedSession = false
-                            appManager.liveSessionId = nil
-                            appManager.originalSessionStarter = nil
-                            appManager.sessionParticipants = []
-                            
-                            appManager.currentState = .initial
-                            isButtonPressed = false
-                        }
-                }) {
-                    Text("RETURN HOME")
-                        .font(.system(size: 18, weight: .black))
-                        .tracking(2)
-                        .foregroundColor(.white)
-                        .frame(height: 56)
-                        .frame(maxWidth: .infinity)
-                        .background(
-                            ZStack {
-                                RoundedRectangle(cornerRadius: 16)
-                                    .fill(
-                                        LinearGradient(
-                                            colors: [
-                                                Color(red: 168/255, green: 85/255, blue: 247/255),
-                                                Color(red: 88/255, green: 28/255, blue: 135/255)
-                                            ],
-                                            startPoint: .topLeading,
-                                            endPoint: .bottomTrailing
-                                        )
-                                    )
-                                
-                                RoundedRectangle(cornerRadius: 16)
-                                    .fill(Color.white.opacity(0.1))
-                                
-                                RoundedRectangle(cornerRadius: 16)
-                                    .stroke(
-                                        LinearGradient(
-                                            colors: [
-                                                Color.white.opacity(0.6),
-                                                Color.white.opacity(0.2)
-                                            ],
-                                            startPoint: .topLeading,
-                                            endPoint: .bottomTrailing
-                                        ),
-                                        lineWidth: 1
-                                    )
-                            }
+                    // Save session if needed before exiting
+                    if !appManager.sessionAlreadyRecorded {
+                        let actualDuration = (appManager.selectedMinutes * 60 - appManager.remainingSeconds) / 60
+                        
+                        sessionManager.addSession(
+                            duration: appManager.selectedMinutes,
+                            wasSuccessful: currentUserSucceeded,
+                            actualDuration: actualDuration
                         )
-                        .shadow(color: Color(red: 168/255, green: 85/255, blue: 247/255).opacity(0.5), radius: 8)
-                        .scaleEffect(isButtonPressed ? 0.97 : 1.0)
+                        
+                        // Mark as recorded to prevent duplicates
+                        appManager.sessionAlreadyRecorded = true
+                    }
+                    
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) {
+                        appManager.currentState = .initial
+                        appManager.isJoinedSession = false // IMPORTANT: Reset joined status
+                        appManager.liveSessionId = nil     // IMPORTANT: Clear session ID
+                        appManager.originalSessionStarter = nil
+                        appManager.sessionParticipants = []
+                        isButtonPressed = false
+                        showSavingIndicator = false
+                        appManager.sessionAlreadyRecorded = false // Reset for next session
+                    }
+                }) {
+                    HStack {
+                        if showSavingIndicator {
+                            ProgressView()
+                                .tint(.white)
+                                .scaleEffect(0.8)
+                                .padding(.trailing, 8)
+                        }
+                        
+                        Text(showSavingIndicator ? "SAVING..." : "RETURN HOME")
+                            .font(.system(size: 18, weight: .black))
+                            .tracking(2)
+                            .foregroundColor(.white)
+                    }
+                    .frame(height: 56)
+                    .frame(maxWidth: .infinity)
+                    .background(
+                        ZStack {
+                            RoundedRectangle(cornerRadius: 16)
+                                .fill(
+                                    LinearGradient(
+                                        colors: [
+                                            Color(red: 168/255, green: 85/255, blue: 247/255),
+                                            Color(red: 88/255, green: 28/255, blue: 135/255)
+                                        ],
+                                        startPoint: .topLeading,
+                                        endPoint: .bottomTrailing
+                                    )
+                                )
+                            
+                            RoundedRectangle(cornerRadius: 16)
+                                .fill(Color.white.opacity(0.1))
+                            
+                            RoundedRectangle(cornerRadius: 16)
+                                .stroke(
+                                    LinearGradient(
+                                        colors: [
+                                            Color.white.opacity(0.6),
+                                            Color.white.opacity(0.2)
+                                        ],
+                                        startPoint: .topLeading,
+                                        endPoint: .bottomTrailing
+                                    ),
+                                    lineWidth: 1
+                                )
+                        }
+                    )
+                    .shadow(color: Color(red: 168/255, green: 85/255, blue: 247/255).opacity(0.5), radius: 8)
+                    .scaleEffect(isButtonPressed ? 0.97 : 1.0)
                 }
                 .padding(.horizontal, 30)
                 .offset(y: showButton ? 0 : 50)
@@ -315,8 +324,10 @@ struct MixedOutcomeView: View {
         .background(Theme.mainGradient.edgesIgnoringSafeArea(.all))
     }
     
-    struct ParticipantListMixed: View {
-        let participants: [MixedOutcomeView.ParticipantDetail]
+    struct ActiveParticipantsList: View {
+        let participants: [ParticipantDetail]
+        @State private var timeString: String = ""
+        private let timer = Timer.publish(every: 1, on: .main, in: .common).autoconnect()
         
         var body: some View {
             VStack(alignment: .leading, spacing: 10) {
@@ -335,15 +346,38 @@ struct MixedOutcomeView: View {
                         Spacer()
                         
                         HStack(spacing: 6) {
-                            Image(systemName: participant.wasSuccessful ? "checkmark.circle.fill" : "xmark.circle.fill")
-                                .foregroundColor(participant.wasSuccessful ?
-                                                Color(red: 34/255, green: 197/255, blue: 94/255) :
-                                                Color(red: 239/255, green: 68/255, blue: 68/255))
-                                .font(.system(size: 14))
-                            
-                            Text("\(participant.duration) min")
-                                .font(.system(size: 12, weight: .medium))
-                                .foregroundColor(.white.opacity(0.8))
+                            // Different status indicators based on participant state
+                            if participant.isActive {
+                                // Active participant with timer
+                                if let remaining = participant.remainingSeconds {
+                                    let minutes = remaining / 60
+                                    let seconds = remaining % 60
+                                    
+                                    Text("ACTIVE")
+                                        .font(.system(size: 10, weight: .bold))
+                                        .foregroundColor(Color.green.opacity(0.9))
+                                        .padding(.trailing, 4)
+                                    
+                                    Text("\(minutes):\(seconds < 10 ? "0" : "")\(seconds)")
+                                        .font(.system(size: 12, weight: .medium))
+                                        .foregroundColor(.white.opacity(0.8))
+                                        .monospacedDigit()
+                                        .onReceive(timer) { _ in
+                                            // Update time here if needed
+                                        }
+                                }
+                            } else {
+                                // Completed or failed participant
+                                Image(systemName: participant.wasSuccessful ?? false ? "checkmark.circle.fill" : "xmark.circle.fill")
+                                    .foregroundColor(participant.wasSuccessful ?? false ?
+                                                    Color(red: 34/255, green: 197/255, blue: 94/255) :
+                                                    Color(red: 239/255, green: 68/255, blue: 68/255))
+                                    .font(.system(size: 14))
+                                
+                                Text("\(participant.duration) min")
+                                    .font(.system(size: 12, weight: .medium))
+                                    .foregroundColor(.white.opacity(0.8))
+                            }
                         }
                         .padding(.vertical, 5)
                         .padding(.horizontal, 10)
@@ -382,8 +416,9 @@ struct MixedOutcomeView: View {
         FirebaseManager.shared.db.collection("live_sessions").document(sessionId).getDocument { document, error in
             guard let data = document?.data(),
                   let participants = data["participants"] as? [String],
-                  let participantStatus = data["participantStatus"] as? [String: String] else {
-                loadingParticipants = false
+                  let participantStatus = data["participantStatus"] as? [String: String],
+                  let remainingSeconds = data["remainingSeconds"] as? Int else {
+                self.loadingParticipants = false
                 return
             }
             
@@ -396,14 +431,20 @@ struct MixedOutcomeView: View {
                 
                 FirebaseManager.shared.db.collection("users").document(participantId).getDocument { userDoc, userError in
                     if let userData = try? userDoc?.data(as: FirebaseManager.FlipUser.self) {
-                        let isCompleted = participantStatus[participantId] == LiveSessionManager.ParticipantStatus.completed.rawValue
-                        let duration = appManager.selectedMinutes
+                        let status = participantStatus[participantId]
+                        let isActive = status != LiveSessionManager.ParticipantStatus.completed.rawValue &&
+                                       status != LiveSessionManager.ParticipantStatus.failed.rawValue
+                        
+                        let wasSuccessful = status == LiveSessionManager.ParticipantStatus.completed.rawValue ? true :
+                                          status == LiveSessionManager.ParticipantStatus.failed.rawValue ? false : nil
                         
                         details.append(ParticipantDetail(
                             id: participantId,
                             username: userData.username,
-                            wasSuccessful: isCompleted,
-                            duration: duration
+                            wasSuccessful: wasSuccessful,
+                            isActive: isActive,
+                            duration: appManager.selectedMinutes,
+                            remainingSeconds: isActive ? remainingSeconds : nil
                         ))
                     }
                     group.leave()
@@ -411,7 +452,13 @@ struct MixedOutcomeView: View {
             }
             
             group.notify(queue: .main) {
-                self.participantDetails = details.sorted { $0.username < $1.username }
+                self.participantDetails = details.sorted(by: { a, b in
+                    // Sort active participants first, then by name
+                    if a.isActive && !b.isActive { return true }
+                    if !a.isActive && b.isActive { return false }
+                    return a.username < b.username
+                })
+                
                 self.loadingParticipants = false
             }
         }

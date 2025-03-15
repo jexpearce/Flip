@@ -36,12 +36,11 @@ class LiveSessionManager: ObservableObject {
             startCleanupTimer()
             // Add observer for refresh requests
             NotificationCenter.default.addObserver(
-                self,
-                selector: #selector(handleRefreshNotification),
-                name: Notification.Name("RefreshLiveSessions"),
-                object: nil
-            
-            )
+                    self,
+                    selector: #selector(handleRefreshNotification),
+                    name: Notification.Name("RefreshLiveSessions"),
+                    object: nil
+                )
         }
     
     // MARK: - Model Structs
@@ -214,7 +213,10 @@ class LiveSessionManager: ObservableObject {
                     return
                 }
                 
-                // Listen for active sessions where friends are participants
+                // Keep track of sessions we've seen to detect removed ones
+                var foundSessionIds = Set<String>()
+                
+                // Create a more robust listener
                 self.db.collection("live_sessions")
                     .whereField("participants", arrayContainsAny: friendIds)
                     .addSnapshotListener { querySnapshot, error in
@@ -223,20 +225,42 @@ class LiveSessionManager: ObservableObject {
                             return
                         }
                         
-                        // Process session documents
+                        print("Received \(documents.count) live sessions from query")
+                        
+                        // Process session documents on main thread
                         DispatchQueue.main.async {
-                            var newActiveSessions: [String: LiveSessionData] = [:]
-                            
-                            for document in documents {
-                                if let sessionData = self.parseLiveSessionDocument(document) {
-                                    // Only include sessions that haven't ended
-                                    if sessionData.remainingSeconds > 0 {
-                                        newActiveSessions[document.documentID] = sessionData
-                                    }
+                            let validSessions = documents.compactMap { doc -> (String, LiveSessionData)? in
+                                guard let sessionData = self.parseLiveSessionDocument(doc) else {
+                                    return nil
                                 }
+                                
+                                // Filter sessions based on validity criteria
+                                let isSessionTooOld = Date().timeIntervalSince(sessionData.lastUpdateTime) > 120 // 2 minutes
+                                let sessionEndTime = sessionData.startTime.addingTimeInterval(TimeInterval(sessionData.targetDuration * 60))
+                                let isSessionEnded = Date() > sessionEndTime
+                                
+                                if !isSessionTooOld && !isSessionEnded && sessionData.remainingSeconds > 0 {
+                                    foundSessionIds.insert(doc.documentID)
+                                    return (doc.documentID, sessionData)
+                                }
+                                
+                                return nil
                             }
                             
-                            self.activeFriendSessions = newActiveSessions
+                            // First, handle sessions that need to be removed
+                            let sessionsToRemove = Set(self.activeFriendSessions.keys).subtracting(foundSessionIds)
+                            for sessionId in sessionsToRemove {
+                                print("Removing session \(sessionId) - not in query results")
+                                self.activeFriendSessions.removeValue(forKey: sessionId)
+                            }
+                            
+                            // Now add/update valid sessions
+                            for (id, session) in validSessions {
+                                self.activeFriendSessions[id] = session
+                            }
+                            
+                            // Force a UI update
+                            self.objectWillChange.send()
                         }
                     }
             }
@@ -246,16 +270,19 @@ class LiveSessionManager: ObservableObject {
         
         let data = document.data() ?? [:]
         
-        guard let starterId = data["starterId"] as? String,
-              let starterUsername = data["starterUsername"] as? String,
-              let participants = data["participants"] as? [String],
+        // Required fields with strong validation
+        guard let starterId = data["starterId"] as? String, !starterId.isEmpty,
+              let participants = data["participants"] as? [String], !participants.isEmpty,
               let startTimestamp = data["startTime"] as? Timestamp,
-              let targetDuration = data["targetDuration"] as? Int else {
-            print("Missing required fields in session document")
+              let targetDuration = data["targetDuration"] as? Int, targetDuration > 0 else {
+            print("Missing or invalid required fields in session document \(document.documentID)")
             return nil
         }
         
-        // For older accounts, use default values with nil coalescing
+        // Get starter username with fallback
+        let starterUsername = (data["starterUsername"] as? String) ?? "User"
+        
+        // For remaining fields, use safe defaults with nil coalescing
         let remainingSeconds = (data["remainingSeconds"] as? Int) ?? (targetDuration * 60)
         let isPaused = (data["isPaused"] as? Bool) ?? false
         let allowPauses = (data["allowPauses"] as? Bool) ?? false
@@ -422,6 +449,8 @@ class LiveSessionManager: ObservableObject {
                 }
                 return false
             }
+            let sessionEndTime = session.startTime.addingTimeInterval(TimeInterval(session.targetDuration * 60))
+                    let isSessionEnded = Date() > sessionEndTime
             
             return session.remainingSeconds <= 0 ||
                    session.lastUpdateTime < timeThreshold ||
@@ -430,31 +459,31 @@ class LiveSessionManager: ObservableObject {
         
         // Remove stale sessions from the local map
         for (sessionId, _) in staleSessions {
-            print("Removing stale session: \(sessionId)")
-            DispatchQueue.main.async {
-                self.activeFriendSessions.removeValue(forKey: sessionId)
-            }
-            
-            // Also remove from Firestore if all participants are done with the session
-            if let session = activeFriendSessions[sessionId],
-               session.participants.allSatisfy({ participantId in
-                   if let status = session.participantStatus[participantId] {
-                       return status == .completed || status == .failed
-                   }
-                   return false
-               }) {
-                // Delete from Firestore with a slight delay
-                DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
-                    self.db.collection("live_sessions").document(sessionId).delete { error in
-                        if let error = error {
-                            print("Error deleting stale session: \(error.localizedDescription)")
-                        } else {
-                            print("Successfully deleted stale session: \(sessionId)")
+                print("Removing stale session: \(sessionId)")
+                DispatchQueue.main.async {
+                    self.activeFriendSessions.removeValue(forKey: sessionId)
+                }
+                
+                // Also remove from Firestore if all participants are done with the session
+                if let session = activeFriendSessions[sessionId],
+                   session.participants.allSatisfy({ participantId in
+                       if let status = session.participantStatus[participantId] {
+                           return status == .completed || status == .failed
+                       }
+                       return false
+                   }) {
+                    // Delete from Firestore with a slight delay
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
+                        self.db.collection("live_sessions").document(sessionId).delete { error in
+                            if let error = error {
+                                print("Error deleting stale session: \(error.localizedDescription)")
+                            } else {
+                                print("Successfully deleted stale session: \(sessionId)")
+                            }
                         }
                     }
                 }
             }
-        }
         
         // Force UI update after cleaning up
         if !staleSessions.isEmpty {
@@ -643,7 +672,7 @@ class LiveSessionManager: ObservableObject {
                             self.objectWillChange.send()
                             print("Updated to \(newActiveSessions.count) active friend sessions")
                         }
-                }
+                    }
             }
         
         // If we're in a session, ensure it's still updated
@@ -651,6 +680,8 @@ class LiveSessionManager: ObservableObject {
             listenToJoinedSession(sessionId: sessionId)
         }
     }
+
+    // 5. Set up notification handler for refresh
     @objc private func handleRefreshNotification() {
         refreshLiveSessions()
     }
