@@ -1,10 +1,3 @@
-//
-//  RankPromotionAlert.swift
-//  FlipApp
-//
-//  Created by Jex Pearce on 2/25/25.
-//
-
 import Foundation
 import SwiftUI
 import FirebaseAuth
@@ -107,9 +100,31 @@ struct RankPromotionAlert: View {
                         .shadow(color: rankColor.opacity(0.8), radius: 10)
                         .padding(.vertical, 5)
                     
+                    // New streaming ribbon behind rank name
+                    ZStack {
+                        Text("LEVELED UP!")
+                            .font(.system(size: 14, weight: .black))
+                            .tracking(2)
+                            .padding(.horizontal, 16)
+                            .padding(.vertical, 4)
+                            .background(
+                                Capsule()
+                                    .fill(
+                                        LinearGradient(
+                                            colors: [rankColor.opacity(0.8), rankColor.opacity(0.6)],
+                                            startPoint: .leading,
+                                            endPoint: .trailing
+                                        )
+                                    )
+                            )
+                            .foregroundColor(.white)
+                            .shadow(color: rankColor.opacity(0.5), radius: 4)
+                    }
+                    
                     Text("Keep up the discipline!")
                         .font(.system(size: 16))
                         .foregroundColor(.white.opacity(0.9))
+                        .padding(.top, 10)
                 }
                 
                 // Continue button
@@ -125,6 +140,7 @@ struct RankPromotionAlert: View {
                         .padding(.vertical, 15)
                         .background(
                             ZStack {
+                                // Vibrant gradient
                                 RoundedRectangle(cornerRadius: 15)
                                     .fill(
                                         LinearGradient(
@@ -287,25 +303,25 @@ extension ScoreManager {
     private func getRankForScore(_ score: Double) -> (name: String, color: Color) {
         switch score {
             case 0.0..<30.0:
-                return ("Novice", Color(red: 156/255, green: 163/255, blue: 175/255))
+                return ("Novice", Color(red: 156/255, green: 163/255, blue: 231/255)) // Periwinkle
             case 30.0..<60.0:
-                return ("Apprentice", Color(red: 96/255, green: 165/255, blue: 250/255))
+                return ("Apprentice", Color(red: 96/255, green: 165/255, blue: 250/255)) // Light blue
             case 60.0..<90.0:
-                return ("Beginner", Color(red: 59/255, green: 130/255, blue: 246/255))
+                return ("Beginner", Color(red: 59/255, green: 130/255, blue: 246/255)) // Blue
             case 90.0..<120.0:
-                return ("Steady", Color(red: 16/255, green: 185/255, blue: 129/255))
+                return ("Steady", Color(red: 16/255, green: 185/255, blue: 129/255)) // Green
             case 120.0..<150.0:
-                return ("Focused", Color(red: 245/255, green: 158/255, blue: 11/255))
+                return ("Focused", Color(red: 249/255, green: 180/255, blue: 45/255)) // Bright amber
             case 150.0..<180.0:
-                return ("Disciplined", Color(red: 249/255, green: 115/255, blue: 22/255))
+                return ("Disciplined", Color(red: 249/255, green: 115/255, blue: 22/255)) // Orange
             case 180.0..<210.0:
-                return ("Resolute", Color(red: 239/255, green: 68/255, blue: 68/255))
+                return ("Resolute", Color(red: 239/255, green: 68/255, blue: 68/255)) // Red
             case 210.0..<240.0:
-                return ("Master", Color(red: 236/255, green: 72/255, blue: 153/255))
+                return ("Master", Color(red: 236/255, green: 72/255, blue: 153/255)) // Pink
             case 240.0..<270.0:
-                return ("Guru", Color(red: 139/255, green: 92/255, blue: 246/255))
+                return ("Guru", Color(red: 147/255, green: 51/255, blue: 234/255)) // Vivid purple
             case 270.0...300.0:
-                return ("Enlightened", Color(red: 217/255, green: 70/255, blue: 239/255))
+                return ("Enlightened", Color(red: 236/255, green: 64/255, blue: 255/255)) // Bright fuchsia
             default:
                 return ("Unranked", Color.gray)
         }

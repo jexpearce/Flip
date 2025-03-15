@@ -111,19 +111,34 @@ private struct ProgressIndicator: View {
 private struct ProgressDot: View {
     let progressValue: Double
     let circleSize: CGFloat
+    
+    // Split position calculations into computed properties
+    private var radius: CGFloat {
+        (circleSize - 20) / 2
+    }
+    
+    private var angleInRadians: Double {
+        2 * .pi * progressValue - .pi/2
+    }
+    
+    private var xPosition: CGFloat {
+        circleSize/2 + radius * CGFloat(cos(angleInRadians))
+    }
+    
+    private var yPosition: CGFloat {
+        circleSize/2 + radius * CGFloat(sin(angleInRadians))
+    }
 
     var body: some View {
-        // Precompute the offset values to simplify the view
-        let radius = (circleSize - 20) / 2
-        let angle = 2 * .pi * progressValue - .pi / 2
-        let xOffset = radius * cos(angle)
-        let yOffset = radius * sin(angle)
-
-        return Circle()
+        Circle()
             .fill(Theme.yellow)
             .frame(width: 12, height: 12)
-            .offset(x: xOffset, y: yOffset)
+            .overlay(
+                Circle()
+                    .stroke(Color.white, lineWidth: 1)
+            )
             .shadow(color: Theme.yellowShadow, radius: 4)
+            .position(x: xPosition, y: yPosition)
     }
 }
 
@@ -138,10 +153,10 @@ private struct CenterCircle: View {
                     ]),
                     center: .center,
                     startRadius: 0,
-                    endRadius: 60
+                    endRadius: 70
                 )
             )
-            .frame(width: 200, height: 200)
+            .frame(width: 210, height: 210) // Slightly larger to accommodate bigger picker
             .overlay(
                 Circle()
                     .strokeBorder(Color.white.opacity(0.2), lineWidth: 1)
@@ -154,27 +169,27 @@ private struct TimePicker: View {
     let timeIntervals: [Int]
 
     var body: some View {
-        VStack(spacing: 4) { // Increase spacing from 0 to 4 to create separation
+        VStack(spacing: 6) { // Increased spacing between picker and "minutes" text
             Picker("", selection: $selectedMinutes) {
                 ForEach(timeIntervals, id: \.self) { minutes in
                     Text("\(minutes)")
-                        .font(.system(size: 46, weight: .bold, design: .default))
+                        .font(.system(size: 50, weight: .bold, design: .default)) // Increased font size
                         .foregroundColor(.white)
                         .tag(minutes)
-                        .padding(.vertical, 4) // Add padding to increase space between items
+                        .padding(.vertical, 8) // Increased padding between items
                 }
             }
             .pickerStyle(WheelPickerStyle())
-            .frame(width: 130, height: 90) // Increased width slightly from 120 to 130
+            .frame(width: 160, height: 110) // Increased width and height
             .compositingGroup()
             .clipped()
-            .scaleEffect(1.15) // Slightly reduced scale to maintain overall size
+            .scaleEffect(1.2) // Adjusted scale to better fit the space
 
             Text("minutes")
-                .font(.system(size: 16, weight: .medium))
+                .font(.system(size: 18, weight: .medium)) // Slightly larger
                 .foregroundColor(Theme.yellow)
-                .padding(.top, 8) // Increased from 5 to 8 to move it down more
+                .padding(.top, 8)
         }
-        .frame(width: 140, height: 140) // Maintain the same overall size
+        .frame(width: 160, height: 150) // Enlarged the overall container
     }
 }

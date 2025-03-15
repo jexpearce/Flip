@@ -3,7 +3,6 @@ import FirebaseFirestore
 import Foundation
 import SwiftUI
 
-
 struct UserProfileView: View {
     let user: FirebaseManager.FlipUser
     @State private var showStats = false
@@ -22,6 +21,7 @@ struct UserProfileView: View {
     @State private var userFriends: [FirebaseManager.FlipUser] = []
     @State private var mutualFriends: [FirebaseManager.FlipUser] = []
     @State private var loadingFriends = false
+    @State private var isLoading = true // Add loading state
     
     // Cyan-midnight theme colors
     private let cyanBluePurpleGradient = LinearGradient(
@@ -63,107 +63,137 @@ struct UserProfileView: View {
     
     var body: some View {
         ZStack {
-            // Main background with decorative elements
+            // Main background with decorative elements - always show this
             ProfileBackgroundView(
                 cyanBluePurpleGradient: cyanBluePurpleGradient,
                 cyanBlueAccent: cyanBlueAccent
             )
             
-            ScrollView {
-                VStack(spacing: 20) {
-                    // Profile Header
-                    ProfileHeaderView(
-                        user: user,
-                        userScore: userScore,
-                        cyanBlueGlow: cyanBlueGlow,
-                        cyanBlueAccent: cyanBlueAccent,
-                        isCurrentUser: isCurrentUser,
-                        isFriend: isFriend,
-                        hasSentFriendRequest: hasSentFriendRequest,
-                        showRemoveFriendAlert: $showRemoveFriendAlert,
-                        showCancelRequestAlert: $showCancelRequestAlert,
-                        showAddFriendConfirmation: $showAddFriendConfirmation
-                    )
+            if isLoading {
+                // Loading indicator overlay
+                VStack(spacing: 16) {
+                    ProgressView()
+                        .scaleEffect(1.5)
+                        .tint(cyanBlueAccent)
                     
-                    // Friend status badge
-                    if !isCurrentUser {
-                        FriendStatusBadgeView(
+                    Text("Loading profile...")
+                        .font(.system(size: 18, weight: .medium))
+                        .foregroundColor(.white)
+                        .shadow(color: cyanBlueGlow, radius: 6)
+                }
+            } else {
+                // Main content after loading
+                ScrollView {
+                    VStack(spacing: 20) {
+                        // Profile Header
+                        ProfileHeaderView(
+                            user: user,
+                            userScore: userScore,
+                            cyanBlueGlow: cyanBlueGlow,
+                            cyanBlueAccent: cyanBlueAccent,
+                            isCurrentUser: isCurrentUser,
                             isFriend: isFriend,
-                            hasSentFriendRequest: hasSentFriendRequest
+                            hasSentFriendRequest: hasSentFriendRequest,
+                            showRemoveFriendAlert: $showRemoveFriendAlert,
+                            showCancelRequestAlert: $showCancelRequestAlert,
+                            showAddFriendConfirmation: $showAddFriendConfirmation
+                        )
+                        
+                        // Friend status badge
+                        if !isCurrentUser {
+                            FriendStatusBadgeView(
+                                isFriend: isFriend,
+                                hasSentFriendRequest: hasSentFriendRequest
+                            )
+                        }
+                        
+                        // Friends count button - leads to friends list
+                        FriendsCountButton(
+                            user: user,
+                            isCurrentUser: isCurrentUser,
+                            cyanBlueAccent: cyanBlueAccent,
+                            showFriendsList: $showFriendsList,
+                            loadUserFriends: loadUserFriends
+                        )
+                        
+                        // Stats Summary Card with button to detailed view
+                        StatsCardView(
+                            user: user,
+                            cyanBlueAccent: cyanBlueAccent,
+                            showDetailedStats: $showDetailedStats
+                        )
+
+                        // Enhanced Longest Session Card - Weekly Stats
+                        WeeklyStatsView(
+                            user: user,
+                            weeksLongestSession: weeksLongestSession,
+                            cyanBlueAccent: cyanBlueAccent,
+                            cyanBlueGlow: cyanBlueGlow
+                        )
+
+                        // Recent Sessions
+                        RecentSessionsView(
+                            user: user,
+                            weeklyViewModel: weeklyViewModel,
+                            cyanBlueGlow: cyanBlueGlow
                         )
                     }
-                    
-                    // Friends count button - leads to friends list
-                    FriendsCountButton(
+                    .padding(.bottom, 30)
+                }
+                
+                // Friends List overlay when activated
+                if showFriendsList {
+                    UserFriendsListView(
                         user: user,
-                        isCurrentUser: isCurrentUser,
-                        cyanBlueAccent: cyanBlueAccent,
-                        showFriendsList: $showFriendsList,
-                        loadUserFriends: loadUserFriends
-                    )
-                    
-                    // Stats Summary Card with button to detailed view
-                    StatsCardView(
-                        user: user,
-                        cyanBlueAccent: cyanBlueAccent,
-                        showDetailedStats: $showDetailedStats
-                    )
-
-                    // Enhanced Longest Session Card - Weekly Stats
-                    WeeklyStatsView(
-                        user: user,
-                        weeksLongestSession: weeksLongestSession,
-                        cyanBlueAccent: cyanBlueAccent,
-                        cyanBlueGlow: cyanBlueGlow
-                    )
-
-                    // Recent Sessions
-                    RecentSessionsView(
-                        user: user,
-                        weeklyViewModel: weeklyViewModel,
-                        cyanBlueGlow: cyanBlueGlow
+                        isPresented: $showFriendsList,
+                        mutualFriends: mutualFriends,
+                        userFriends: userFriends,
+                        loadingFriends: loadingFriends
                     )
                 }
-                .padding(.bottom, 30)
-            }
-            
-            // Friends List overlay when activated
-            if showFriendsList {
-                UserFriendsListView(
+                
+                // Alert Overlays
+                AlertOverlays(
+                    showRemoveFriendAlert: $showRemoveFriendAlert,
+                    showCancelRequestAlert: $showCancelRequestAlert,
+                    showAddFriendConfirmation: $showAddFriendConfirmation,
                     user: user,
-                    isPresented: $showFriendsList,
-                    mutualFriends: mutualFriends,
-                    userFriends: userFriends,
-                    loadingFriends: loadingFriends
+                    friendManager: friendManager,
+                    searchManager: searchManager,
+                    friendRequestSent: $friendRequestSent,
+                    cancelFriendRequest: cancelFriendRequest,
+                    presentationMode: presentationMode
                 )
             }
-            
-            // Alert Overlays
-            AlertOverlays(
-                showRemoveFriendAlert: $showRemoveFriendAlert,
-                showCancelRequestAlert: $showCancelRequestAlert,
-                showAddFriendConfirmation: $showAddFriendConfirmation,
-                user: user,
-                friendManager: friendManager,
-                searchManager: searchManager,
-                friendRequestSent: $friendRequestSent,
-                cancelFriendRequest: cancelFriendRequest,
-                presentationMode: presentationMode
-            )
         }
         .navigationBarTitleDisplayMode(.inline)
         .onAppear {
-            withAnimation(.spring().delay(0.3)) {
-                showStats = true
-            }
+            // Immediately load data
+            loadInitialData()
+        }
+        .sheet(isPresented: $showDetailedStats) {
+            FriendStatsView(user: user)
+        }
+    }
+    
+    // New function to handle data loading
+    private func loadInitialData() {
+        // Start loading immediately
+        Task {
             // Load sessions data
             weeklyViewModel.loadSessions(for: user.id)
             
             // Load user's score
             loadUserScore()
-        }
-        .sheet(isPresented: $showDetailedStats) {
-            FriendStatsView(user: user)
+            
+            // Short delay to ensure data is loaded and view rendering is complete
+            try? await Task.sleep(nanoseconds: 500_000_000) // 0.5 seconds
+            
+            // Update UI with animation
+            withAnimation(.spring()) {
+                isLoading = false
+                showStats = true
+            }
         }
     }
     
@@ -321,8 +351,6 @@ struct ProfileBackgroundView: View {
             .blur(radius: 40)
     }
 }
-
-// MARK: - Profile Header Component
 struct ProfileHeaderView: View {
     let user: FirebaseManager.FlipUser
     let userScore: Double
@@ -331,6 +359,7 @@ struct ProfileHeaderView: View {
     let isCurrentUser: Bool
     let isFriend: Bool
     let hasSentFriendRequest: Bool
+    @State private var streakStatus: StreakStatus = .none
     @Binding var showRemoveFriendAlert: Bool
     @Binding var showCancelRequestAlert: Bool
     @Binding var showAddFriendConfirmation: Bool
@@ -339,25 +368,25 @@ struct ProfileHeaderView: View {
     private func getRank(for score: Double) -> (name: String, color: Color) {
         switch score {
             case 0.0..<30.0:
-                return ("Novice", Color(red: 156/255, green: 163/255, blue: 175/255))
+                return ("Novice", Color(red: 156/255, green: 163/255, blue: 231/255)) // Periwinkle
             case 30.0..<60.0:
-                return ("Apprentice", Color(red: 96/255, green: 165/255, blue: 250/255))
+                return ("Apprentice", Color(red: 96/255, green: 165/255, blue: 250/255)) // Light blue
             case 60.0..<90.0:
-                return ("Beginner", Color(red: 59/255, green: 130/255, blue: 246/255))
+                return ("Beginner", Color(red: 59/255, green: 130/255, blue: 246/255)) // Blue
             case 90.0..<120.0:
-                return ("Steady", Color(red: 16/255, green: 185/255, blue: 129/255))
+                return ("Steady", Color(red: 16/255, green: 185/255, blue: 129/255)) // Green
             case 120.0..<150.0:
-                return ("Focused", Color(red: 245/255, green: 158/255, blue: 11/255))
+                return ("Focused", Color(red: 249/255, green: 180/255, blue: 45/255)) // Bright amber
             case 150.0..<180.0:
-                return ("Disciplined", Color(red: 249/255, green: 115/255, blue: 22/255))
+                return ("Disciplined", Color(red: 249/255, green: 115/255, blue: 22/255)) // Orange
             case 180.0..<210.0:
-                return ("Resolute", Color(red: 239/255, green: 68/255, blue: 68/255))
+                return ("Resolute", Color(red: 239/255, green: 68/255, blue: 68/255)) // Red
             case 210.0..<240.0:
-                return ("Master", Color(red: 236/255, green: 72/255, blue: 153/255))
+                return ("Master", Color(red: 236/255, green: 72/255, blue: 153/255)) // Pink
             case 240.0..<270.0:
-                return ("Guru", Color(red: 139/255, green: 92/255, blue: 246/255))
+                return ("Guru", Color(red: 147/255, green: 51/255, blue: 234/255)) // Vivid purple
             case 270.0...300.0:
-                return ("Enlightened", Color(red: 217/255, green: 70/255, blue: 239/255))
+                return ("Enlightened", Color(red: 236/255, green: 64/255, blue: 255/255)) // Bright fuchsia
             default:
                 return ("Unranked", Color.gray)
         }
@@ -365,11 +394,12 @@ struct ProfileHeaderView: View {
     
     var body: some View {
         HStack(alignment: .top, spacing: 15) {
-            // Profile Picture
-            ZoomableProfileAvatar(
+            // Profile Picture with Streak Indicator
+            ProfileAvatarWithStreak(
                 imageURL: user.profileImageURL,
                 size: 80,
-                username: user.username
+                username: user.username,
+                streakStatus: streakStatus
             )
             
             VStack(alignment: .leading, spacing: 12) {
@@ -384,6 +414,31 @@ struct ProfileHeaderView: View {
                     .font(.system(size: 18, weight: .bold))
                     .foregroundColor(rank.color)
                     .shadow(color: rank.color.opacity(0.5), radius: 4)
+                
+                // Display streak status if active
+                if streakStatus != .none {
+                    HStack(spacing: 8) {
+                        Image(systemName: "flame.fill")
+                            .font(.system(size: 16, weight: .bold))
+                            .foregroundColor(streakStatus == .redFlame ? .red : .orange)
+                            .shadow(color: streakStatus == .redFlame ? Color.red.opacity(0.6) : Color.orange.opacity(0.6), radius: 4)
+                        
+                        Text(streakStatus == .redFlame ? "BLAZING STREAK" : "ON FIRE")
+                            .font(.system(size: 14, weight: .bold))
+                            .foregroundColor(streakStatus == .redFlame ? .red : .orange)
+                            .shadow(color: streakStatus == .redFlame ? Color.red.opacity(0.4) : Color.orange.opacity(0.4), radius: 2)
+                    }
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 4)
+                    .background(
+                        RoundedRectangle(cornerRadius: 8)
+                            .fill(streakStatus == .redFlame ? Color.red.opacity(0.1) : Color.orange.opacity(0.1))
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 8)
+                                    .stroke(streakStatus == .redFlame ? Color.red.opacity(0.2) : Color.orange.opacity(0.2), lineWidth: 1)
+                            )
+                    )
+                }
             }
             
             Spacer()
@@ -478,8 +533,29 @@ struct ProfileHeaderView: View {
         }
         .padding(.horizontal)
         .padding(.top, 20)
+        .onAppear {
+            // Load streak status on appear
+            loadStreakStatus()
+        }
+    }
+    
+    // Function to load the user's streak status
+    private func loadStreakStatus() {
+        FirebaseManager.shared.db.collection("users").document(user.id)
+            .collection("streak").document("current")
+            .getDocument { snapshot, error in
+                if let data = snapshot?.data(),
+                   let statusString = data["streakStatus"] as? String,
+                   let status = StreakStatus(rawValue: statusString) {
+                    
+                    DispatchQueue.main.async {
+                        self.streakStatus = status
+                    }
+                }
+            }
     }
 }
+
 
 // MARK: - Friend Status Badge Component
 struct FriendStatusBadgeView: View {

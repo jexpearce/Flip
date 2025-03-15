@@ -1,10 +1,3 @@
-//
-//  ScoreComponents.swift
-//  FlipApp
-//
-//  Created by Jex Pearce on 2/24/25.
-//
-
 import Foundation
 import SwiftUI
 
@@ -56,6 +49,13 @@ struct DisciplineRankCard: View {
                             .foregroundColor(.white.opacity(0.5))
                     }
                 }
+            }
+            
+            // NEW: Streak indicator if active
+            if scoreManager.streakStatus != .none {
+                StreakIndicatorBar(scoreManager: scoreManager)
+                    .padding(.top, 2)
+                    .padding(.bottom, 6)
             }
             
             // View Score History Button
@@ -122,8 +122,88 @@ struct DisciplineRankCard: View {
     }
 }
 
+// NEW: Streak indicator bar component
+struct StreakIndicatorBar: View {
+    @ObservedObject var scoreManager: ScoreManager
+    @State private var isAnimating = false
+    
+    var body: some View {
+        HStack(spacing: 10) {
+            // Streak flame icon
+            ZStack {
+                Circle()
+                    .fill(
+                        LinearGradient(
+                            colors: [
+                                scoreManager.streakStatus == .redFlame ? Color.red.opacity(0.7) : Color.orange.opacity(0.7),
+                                scoreManager.streakStatus == .redFlame ? Color.red.opacity(0.5) : Color.orange.opacity(0.5)
+                            ],
+                            startPoint: .top,
+                            endPoint: .bottom
+                        )
+                    )
+                    .frame(width: 32, height: 32)
+                
+                Image(systemName: "flame.fill")
+                    .font(.system(size: 16))
+                    .foregroundColor(.white)
+                    .scaleEffect(isAnimating ? 1.1 : 0.9)
+                    .animation(Animation.easeInOut(duration: 1.2).repeatForever(autoreverses: true), value: isAnimating)
+            }
+            .shadow(color: scoreManager.streakStatus == .redFlame ? Color.red.opacity(0.8) : Color.orange.opacity(0.8), radius: 8)
+            
+            // Streak info
+            VStack(alignment: .leading, spacing: 2) {
+                Text(scoreManager.streakStatus == .redFlame ? "BLAZING STREAK! 🔥" : "STREAK! 🔥")
+                    .font(.system(size: 12, weight: .black))
+                    .foregroundColor(scoreManager.streakStatus == .redFlame ? Color.red : Color.orange)
+                
+                Text("\(scoreManager.currentStreak) sessions · \(scoreManager.streakSessionsTime) minutes")
+                    .font(.system(size: 11, weight: .medium))
+                    .foregroundColor(.white.opacity(0.8))
+            }
+            
+            Spacer()
+        }
+        .padding(.vertical, 8)
+        .padding(.horizontal, 12)
+        .background(
+            RoundedRectangle(cornerRadius: 10)
+                .fill(
+                    LinearGradient(
+                        colors: [
+                            scoreManager.streakStatus == .redFlame ? Color.red.opacity(0.15) : Color.orange.opacity(0.15),
+                            scoreManager.streakStatus == .redFlame ? Color.red.opacity(0.05) : Color.orange.opacity(0.05)
+                        ],
+                        startPoint: .leading,
+                        endPoint: .trailing
+                    )
+                )
+                .overlay(
+                    RoundedRectangle(cornerRadius: 10)
+                        .stroke(
+                            scoreManager.streakStatus == .redFlame ? Color.red.opacity(0.3) : Color.orange.opacity(0.3),
+                            lineWidth: 1
+                        )
+                )
+        )
+        .onAppear {
+            isAnimating = true
+        }
+    }
+}
+
+// ENHANCED: Updated with more vibrant colors and indicator for streaks
 struct RankCircle: View {
     let score: Double
+    let size: CGFloat
+    var showStreakIndicator: Bool = true
+    
+    init(score: Double, size: CGFloat = 50, showStreakIndicator: Bool = true) {
+        self.score = score
+        self.size = size
+        self.showStreakIndicator = showStreakIndicator
+    }
     
     private var rankColor: Color {
         ScoreManager.shared.getCurrentRank().color
@@ -159,22 +239,59 @@ struct RankCircle: View {
         ZStack {
             // Background Circle
             Circle()
-                .stroke(Color.white.opacity(0.2), lineWidth: 6)
+                .stroke(Color.white.opacity(0.2), lineWidth: size * 0.12)
             
             // Progress Circle
             Circle()
                 .trim(from: 0, to: CGFloat(progress))
                 .stroke(
                     rankColor,
-                    style: StrokeStyle(lineWidth: 6, lineCap: .round)
+                    style: StrokeStyle(lineWidth: size * 0.12, lineCap: .round)
                 )
                 .rotationEffect(.degrees(-90))
                 .shadow(color: rankColor.opacity(0.5), radius: 4)
             
             // Score Text
             Text(String(format: "%.0f", score))
-                .font(.system(size: 18, weight: .bold))
+                .font(.system(size: size * 0.36, weight: .bold))
                 .foregroundColor(.white)
+            
+            // NEW: Optional streak indicator
+            if showStreakIndicator && ScoreManager.shared.streakStatus != .none {
+                StreakIndicator(streakStatus: ScoreManager.shared.streakStatus)
+                    .position(x: size * 0.8, y: size * 0.2)
+            }
+        }
+        .frame(width: size, height: size)
+    }
+}
+
+// NEW: Flame indicator component for rank circles
+struct StreakIndicator: View {
+    let streakStatus: StreakStatus
+    @State private var isAnimating = false
+    
+    var body: some View {
+        ZStack {
+            Circle()
+                .fill(
+                    streakStatus == .redFlame ? Color.red : Color.orange
+                )
+                .frame(width: 16, height: 16)
+                .shadow(color: streakStatus == .redFlame ? Color.red.opacity(0.6) : Color.orange.opacity(0.6), radius: 4)
+            
+            Image(systemName: "flame.fill")
+                .font(.system(size: 10, weight: .bold))
+                .foregroundColor(.white)
+                .scaleEffect(isAnimating ? 1.2 : 1.0)
+                .animation(
+                    Animation.easeInOut(duration: 0.8)
+                        .repeatForever(autoreverses: true),
+                    value: isAnimating
+                )
+        }
+        .onAppear {
+            isAnimating = true
         }
     }
 }
@@ -222,6 +339,65 @@ struct ScoreHistoryView: View {
                 }
                 .padding(.horizontal)
                 
+                // Streak Status (if active)
+                if scoreManager.streakStatus != .none {
+                    HStack(spacing: 15) {
+                        ZStack {
+                            Circle()
+                                .fill(
+                                    LinearGradient(
+                                        colors: [
+                                            scoreManager.streakStatus == .redFlame ? Color.red.opacity(0.7) : Color.orange.opacity(0.7),
+                                            scoreManager.streakStatus == .redFlame ? Color.red.opacity(0.5) : Color.orange.opacity(0.5)
+                                        ],
+                                        startPoint: .top,
+                                        endPoint: .bottom
+                                    )
+                                )
+                                .frame(width: 50, height: 50)
+                            
+                            Image(systemName: "flame.fill")
+                                .font(.system(size: 24))
+                                .foregroundColor(.white)
+                        }
+                        .shadow(color: scoreManager.streakStatus == .redFlame ? Color.red.opacity(0.8) : Color.orange.opacity(0.8), radius: 8)
+                        
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text(scoreManager.streakStatus == .redFlame ? "BLAZING STREAK! 🔥🔥" : "ON FIRE! 🔥")
+                                .font(.system(size: 16, weight: .bold))
+                                .foregroundColor(scoreManager.streakStatus == .redFlame ? Color.red : Color.orange)
+                            
+                            Text(scoreManager.getStreakDescription())
+                                .font(.system(size: 14))
+                                .foregroundColor(.white.opacity(0.8))
+                                .lineLimit(2)
+                        }
+                    }
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding()
+                    .background(
+                        RoundedRectangle(cornerRadius: 15)
+                            .fill(
+                                LinearGradient(
+                                    colors: [
+                                        scoreManager.streakStatus == .redFlame ? Color.red.opacity(0.2) : Color.orange.opacity(0.2),
+                                        scoreManager.streakStatus == .redFlame ? Color.red.opacity(0.05) : Color.orange.opacity(0.05)
+                                    ],
+                                    startPoint: .leading,
+                                    endPoint: .trailing
+                                )
+                            )
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 15)
+                                    .stroke(
+                                        scoreManager.streakStatus == .redFlame ? Color.red.opacity(0.3) : Color.orange.opacity(0.3),
+                                        lineWidth: 1
+                                    )
+                            )
+                    )
+                    .padding(.horizontal)
+                }
+                
                 // Rank Progress
                 VStack(spacing: 8) {
                     ZStack(alignment: .leading) {
@@ -259,7 +435,7 @@ struct ScoreHistoryView: View {
                         .tracking(2)
                         .foregroundColor(.white.opacity(0.7))
                     
-                    Text("The FLIP scoring system rewards discipline and focus. Longer sessions and disabling pauses earn more points, while failures result in penalties.")
+                    Text("The FLIP scoring system rewards discipline and focus with a more balanced approach. Longer sessions and disabling pauses earn more points, while maintaining streaks gives additional bonuses.")
                         .font(.system(size: 14))
                         .foregroundColor(.white.opacity(0.8))
                         .fixedSize(horizontal: false, vertical: true)
@@ -359,10 +535,11 @@ struct RankSegment: View {
         }
     }
     
+    // UPDATED: More vibrant rank colors
     private func getRankColor(for score: Double) -> Color {
         switch score {
             case 0.0..<30.0:
-                return Color(red: 156/255, green: 163/255, blue: 175/255) // Gray
+                return Color(red: 156/255, green: 163/255, blue: 231/255) // Periwinkle
             case 30.0..<60.0:
                 return Color(red: 96/255, green: 165/255, blue: 250/255) // Light blue
             case 60.0..<90.0:
@@ -370,7 +547,7 @@ struct RankSegment: View {
             case 90.0..<120.0:
                 return Color(red: 16/255, green: 185/255, blue: 129/255) // Green
             case 120.0..<150.0:
-                return Color(red: 245/255, green: 158/255, blue: 11/255) // Amber
+                return Color(red: 249/255, green: 180/255, blue: 45/255) // Bright amber
             case 150.0..<180.0:
                 return Color(red: 249/255, green: 115/255, blue: 22/255) // Orange
             case 180.0..<210.0:
@@ -378,9 +555,9 @@ struct RankSegment: View {
             case 210.0..<240.0:
                 return Color(red: 236/255, green: 72/255, blue: 153/255) // Pink
             case 240.0..<270.0:
-                return Color(red: 139/255, green: 92/255, blue: 246/255) // Purple
+                return Color(red: 147/255, green: 51/255, blue: 234/255) // Vivid purple
             case 270.0...300.0:
-                return Color(red: 217/255, green: 70/255, blue: 239/255) // Fuchsia
+                return Color(red: 236/255, green: 64/255, blue: 255/255) // Bright fuchsia
             default:
                 return Color.gray
         }
@@ -435,6 +612,7 @@ struct ScoreHistoryRow: View {
 
 struct ScoreInfoView: View {
     @Environment(\.presentationMode) var presentationMode
+    @ObservedObject var scoreManager = ScoreManager.shared
     
     var body: some View {
         ZStack {
@@ -450,6 +628,7 @@ struct ScoreInfoView: View {
         VStack(alignment: .leading, spacing: 20) {
             headerSection
             overviewSection
+            streaksSection // NEW
             ranksSection
             pointsSystemSection
             philosophySection
@@ -483,10 +662,88 @@ struct ScoreInfoView: View {
                 .font(.system(size: 20, weight: .bold))
                 .foregroundColor(.white)
             
-            Text("The FLIP scoring system rewards discipline and focus. Everyone starts at 3.0 with a maximum of 300.0. Longer sessions and disabling pauses earn more points, while failures result in significant penalties.")
+            Text("The FLIP scoring system rewards discipline and focus with a balanced approach. Everyone starts at 3.0 with a maximum of 300.0. Longer sessions and disabling pauses earn more points, while streaks give additional bonuses. Failures result in smaller penalties than before, encouraging you to keep going.")
                 .font(.system(size: 16))
                 .foregroundColor(.white.opacity(0.8))
                 .padding(.bottom, 10)
+        }
+    }
+    
+    // NEW: Streaks section
+    private var streaksSection: some View {
+        Group {
+            Text("Streak System")
+                .font(.system(size: 20, weight: .bold))
+                .foregroundColor(.white)
+            
+            VStack(alignment: .leading, spacing: 12) {
+                Text("The streak system rewards consistent discipline:")
+                    .font(.system(size: 16, weight: .semibold))
+                    .foregroundColor(.white)
+                
+                HStack(spacing: 15) {
+                    ZStack {
+                        Circle()
+                            .fill(Color.orange.opacity(0.7))
+                            .frame(width: 40, height: 40)
+                        
+                        Image(systemName: "flame.fill")
+                            .font(.system(size: 20))
+                            .foregroundColor(.white)
+                    }
+                    
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("Orange Flame")
+                            .font(.system(size: 16, weight: .bold))
+                            .foregroundColor(Color.orange)
+                        
+                        Text("Requires 3+ successful sessions totaling at least 2 hours within a 48-hour period.")
+                            .font(.system(size: 14))
+                            .foregroundColor(.white.opacity(0.8))
+                    }
+                }
+                .padding()
+                .background(Color.orange.opacity(0.1))
+                .cornerRadius(10)
+                
+                HStack(spacing: 15) {
+                    ZStack {
+                        Circle()
+                            .fill(Color.red.opacity(0.7))
+                            .frame(width: 40, height: 40)
+                        
+                        Image(systemName: "flame.fill")
+                            .font(.system(size: 20))
+                            .foregroundColor(.white)
+                    }
+                    
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("Red Flame")
+                            .font(.system(size: 16, weight: .bold))
+                            .foregroundColor(Color.red)
+                        
+                        Text("Requires 7+ successful sessions totaling at least 5 hours within an active streak period.")
+                            .font(.system(size: 14))
+                            .foregroundColor(.white.opacity(0.8))
+                    }
+                }
+                .padding()
+                .background(Color.red.opacity(0.1))
+                .cornerRadius(10)
+                
+                Text("Streaks provide scoring bonuses ranging from 1.1x to 1.8x, increasing with each successful session. Failed sessions may downgrade or remove your streak status.")
+                    .font(.system(size: 14))
+                    .foregroundColor(.white.opacity(0.8))
+                    .padding(.top, 5)
+                
+                Text("A streak expires after 72 hours of inactivity.")
+                    .font(.system(size: 14, weight: .medium))
+                    .foregroundColor(.white.opacity(0.8))
+                    .padding(.top, 5)
+            }
+            .padding()
+            .background(Color.white.opacity(0.05))
+            .cornerRadius(10)
         }
     }
     
@@ -549,10 +806,11 @@ struct ScoreInfoView: View {
                 .padding(.top, 5)
             
             VStack(alignment: .leading, spacing: 8) {
-                makeExampleRow(label: "25min with pauses:", value: "+0.44", isPositive: true)
-                makeExampleRow(label: "25min without pauses:", value: "+0.66", isPositive: true)
-                makeExampleRow(label: "60min with pauses:", value: "+2.08", isPositive: true)
-                makeExampleRow(label: "60min without pauses:", value: "+3.12", isPositive: true)
+                makeExampleRow(label: "25min with pauses:", value: "+0.88", isPositive: true)
+                makeExampleRow(label: "25min without pauses:", value: "+1.58", isPositive: true)
+                makeExampleRow(label: "25min with streak bonus:", value: "+1.32", isPositive: true)
+                makeExampleRow(label: "60min with pauses:", value: "+4.16", isPositive: true)
+                makeExampleRow(label: "60min without pauses:", value: "+7.49", isPositive: true)
             }
             .padding()
             .background(Color.white.opacity(0.05))
@@ -568,10 +826,10 @@ struct ScoreInfoView: View {
                 .padding(.top, 10)
             
             VStack(alignment: .leading, spacing: 8) {
-                makeExampleRow(label: "25min with pauses:", value: "-1.25", isPositive: false)
-                makeExampleRow(label: "25min without pauses:", value: "-0.50", isPositive: false)
-                makeExampleRow(label: "60min with pauses:", value: "-3.00", isPositive: false)
-                makeExampleRow(label: "60min without pauses:", value: "-1.20", isPositive: false)
+                makeExampleRow(label: "25min with pauses:", value: "-0.45", isPositive: false)
+                makeExampleRow(label: "25min without pauses:", value: "-0.27", isPositive: false)
+                makeExampleRow(label: "60min with pauses:", value: "-1.08", isPositive: false)
+                makeExampleRow(label: "60min without pauses:", value: "-0.65", isPositive: false)
             }
             .padding()
             .background(Color.white.opacity(0.05))
@@ -586,11 +844,11 @@ struct ScoreInfoView: View {
                 .foregroundColor(.white)
                 .padding(.top, 10)
             
-            Text("This system embodies the Lee Kuan Yew approach to productivity - strict, challenging, but fair. True discipline is rewarded, while failures have significant consequences.")
+            Text("This system now takes a more balanced approach to productivity with both challenge and encouragement. Consistency is rewarded with streaks, while setbacks are less punishing to keep you motivated.")
                 .font(.system(size: 16))
                 .foregroundColor(.white.opacity(0.8))
             
-            Text("The path to Enlightened is long and requires consistent discipline over time.")
+            Text("The path to Enlightened is smoother, but still requires dedication over time.")
                 .font(.system(size: 16, weight: .regular)).italic()
                 .foregroundColor(.white.opacity(0.8))
                 .padding(.top, 10)
@@ -635,22 +893,24 @@ struct ScoreInfoView: View {
         }
     }
     
+    // UPDATED: More vibrant rank colors
     private func getRankColor(for score: Double) -> Color {
         switch score {
-            case 0.0..<30.0: return Color(red: 156/255, green: 163/255, blue: 175/255)
-            case 30.0..<60.0: return Color(red: 96/255, green: 165/255, blue: 250/255)
-            case 60.0..<90.0: return Color(red: 59/255, green: 130/255, blue: 246/255)
-            case 90.0..<120.0: return Color(red: 16/255, green: 185/255, blue: 129/255)
-            case 120.0..<150.0: return Color(red: 245/255, green: 158/255, blue: 11/255)
-            case 150.0..<180.0: return Color(red: 249/255, green: 115/255, blue: 22/255)
-            case 180.0..<210.0: return Color(red: 239/255, green: 68/255, blue: 68/255)
-            case 210.0..<240.0: return Color(red: 236/255, green: 72/255, blue: 153/255)
-            case 240.0..<270.0: return Color(red: 139/255, green: 92/255, blue: 246/255)
-            case 270.0...300.0: return Color(red: 217/255, green: 70/255, blue: 239/255)
+            case 0.0..<30.0: return Color(red: 156/255, green: 163/255, blue: 231/255) // Periwinkle
+            case 30.0..<60.0: return Color(red: 96/255, green: 165/255, blue: 250/255) // Light blue
+            case 60.0..<90.0: return Color(red: 59/255, green: 130/255, blue: 246/255) // Blue
+            case 90.0..<120.0: return Color(red: 16/255, green: 185/255, blue: 129/255) // Green
+            case 120.0..<150.0: return Color(red: 249/255, green: 180/255, blue: 45/255) // Bright amber
+            case 150.0..<180.0: return Color(red: 249/255, green: 115/255, blue: 22/255) // Orange
+            case 180.0..<210.0: return Color(red: 239/255, green: 68/255, blue: 68/255) // Red
+            case 210.0..<240.0: return Color(red: 236/255, green: 72/255, blue: 153/255) // Pink
+            case 240.0..<270.0: return Color(red: 147/255, green: 51/255, blue: 234/255) // Vivid purple
+            case 270.0...300.0: return Color(red: 236/255, green: 64/255, blue: 255/255) // Bright fuchsia
             default: return Color.gray
         }
     }
 }
+
 // Helper extension for optional SwiftUI modifiers
 extension View {
     // Helper to extract common modifiers for section titles
@@ -666,5 +926,56 @@ extension View {
             .font(.system(size: 16))
             .foregroundColor(.white.opacity(0.8))
             .padding(.bottom, 10)
+    }
+}
+
+// NEW: Profile Picture component with streak indicator
+struct ProfilePictureWithStreak: View {
+    let imageURL: String?
+    let username: String
+    let size: CGFloat
+    let streakStatus: StreakStatus
+    
+    var body: some View {
+        ZStack {
+            // Profile picture
+            ProfileAvatarView(
+                imageURL: imageURL,
+                size: size,
+                username: username
+            )
+            
+            // Streak indicator if active
+            if streakStatus != .none {
+                Circle()
+                    .stroke(
+                        streakStatus == .redFlame ?
+                            LinearGradient(
+                                colors: [Color.red.opacity(0.8), Color.red.opacity(0.6), Color.red.opacity(0.4)],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            ) :
+                            LinearGradient(
+                                colors: [Color.orange.opacity(0.8), Color.orange.opacity(0.6), Color.orange.opacity(0.4)],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            ),
+                        lineWidth: size * 0.08
+                    )
+                    .shadow(color: streakStatus == .redFlame ? Color.red.opacity(0.6) : Color.orange.opacity(0.6), radius: 6)
+                
+                // Flame icon indicator
+                ZStack {
+                    Circle()
+                        .fill(streakStatus == .redFlame ? Color.red : Color.orange)
+                        .frame(width: size * 0.25, height: size * 0.25)
+                    
+                    Image(systemName: "flame.fill")
+                        .font(.system(size: size * 0.15))
+                        .foregroundColor(.white)
+                }
+                .position(x: size * 0.8, y: size * 0.2)
+            }
+        }
     }
 }

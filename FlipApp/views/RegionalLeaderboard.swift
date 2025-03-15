@@ -224,7 +224,7 @@ struct RegionalLeaderboard: View {
                             self.selectedUserId = entry.userId
                             self.showUserProfile = true
                         }) {
-                            HStack {
+                            HStack(spacing: 8) {
                                 // Rank with medal for top 3
                                 if index < 3 {
                                     ZStack {
@@ -237,16 +237,47 @@ struct RegionalLeaderboard: View {
                                             .foregroundColor(.white)
                                             .shadow(color: Color.black.opacity(0.2), radius: 1)
                                     }
-                                    .frame(width: 50, alignment: .center)
+                                    .frame(width: 32, alignment: .center)
                                 } else {
                                     Text("\(index + 1)")
                                         .font(.system(size: 16, weight: .bold))
                                         .foregroundColor(.white)
-                                        .frame(width: 50, alignment: .center)
+                                        .frame(width: 32, alignment: .center)
                                 }
                                 
-                                // Profile picture
-                                ProfileImage(userId: entry.userId, size: 32)
+                                // NEW: Rank circle if score is available
+                                if let score = entry.score {
+                                    RankCircle(score: score, size: 26, showStreakIndicator: false)
+                                }
+                                
+                                // Profile picture with streak indicator
+                                ZStack {
+                                    ProfileImage(userId: entry.userId, size: 32)
+                                    
+                                    // Optional streak indicator
+                                    if entry.streakStatus != .none {
+                                        Circle()
+                                            .stroke(
+                                                entry.streakStatus == .redFlame ?
+                                                    Color.red.opacity(0.8) :
+                                                    Color.orange.opacity(0.8),
+                                                lineWidth: 2
+                                            )
+                                            .frame(width: 32, height: 32)
+                                        
+                                        // Flame icon
+                                        ZStack {
+                                            Circle()
+                                                .fill(entry.streakStatus == .redFlame ? Color.red : Color.orange)
+                                                .frame(width: 12, height: 12)
+                                            
+                                            Image(systemName: "flame.fill")
+                                                .font(.system(size: 8))
+                                                .foregroundColor(.white)
+                                        }
+                                        .position(x: 24, y: 8)
+                                    }
+                                }
                                 
                                 // Username with underline to indicate it's clickable
                                 Text(entry.username)
@@ -271,7 +302,7 @@ struct RegionalLeaderboard: View {
                                         .font(.system(size: 10, weight: .medium))
                                         .foregroundColor(.white.opacity(0.7))
                                 }
-                                .frame(width: 80, alignment: .trailing)
+                                .frame(width: 70, alignment: .trailing)
                             }
                             .padding(.vertical, 10)
                             .padding(.horizontal, 16)
@@ -987,17 +1018,18 @@ class RegionalLeaderboardViewModel: ObservableObject {
                     }
                     
                     // Convert aggregated data to leaderboard entries
-                    let entries = userWeeklyData.values.map { userData in
-                        RegionalLeaderboardEntry(
-                            id: UUID().uuidString,
-                            userId: userData.userId,
-                            username: userData.username,
-                            totalWeeklyTime: 0, // We'll keep this field but don't use it
-                            sessionCount: userData.sessionCount,
-                            distance: userData.distance,
-                            isFriend: userData.isFriend,
-                            isCurrentUser: userData.isCurrentUser
-                        )
+                    self.fetchUserScoresAndStreaks(Array(userIdsToFetch)) { scoresMap, streaksMap in
+                                        // Convert aggregated data to leaderboard entries with scores
+                                        let entries = userWeeklyData.values.map { userData in
+                                            LeaderboardEntry(
+                                                id: userData.userId,
+                                                username: userData.username,
+                                                totalTime: 0, // We'll keep this field but don't use it
+                                                sessionCount: userData.sessionCount,
+                                                // Add score and streak data if available
+                                                score: scoresMap[userData.userId],
+                                                streakStatus: streaksMap[userData.userId] ?? .none
+                                            )
                     // IMPORTANT: Sort by session count instead of time
                     }.sorted { $0.sessionCount > $1.sessionCount }
                     
@@ -1009,6 +1041,42 @@ class RegionalLeaderboardViewModel: ObservableObject {
                 }
             }
     }
+        
+        private func fetchUserScoresAndStreaks(_ userIds: [String], completion: @escaping ([String: Double], [String: StreakStatus]) -> Void) {
+            let db = Firestore.firestore()
+            var scores: [String: Double] = [:]
+            var streaks: [String: StreakStatus] = [:]
+            let dispatchGroup = DispatchGroup()
+            
+            for userId in userIds {
+                dispatchGroup.enter()
+                
+                // Get user score
+                db.collection("users").document(userId).getDocument { document, error in
+                    defer { dispatchGroup.leave() }
+                    
+                    if let data = document?.data() {
+                        if let score = data["score"] as? Double {
+                            scores[userId] = score
+                        }
+                    }
+                }
+                
+                // Get user streak status in a separate call
+                dispatchGroup.enter()
+                db.collection("users").document(userId).collection("streak").document("current").getDocument { document, error in
+                    defer { dispatchGroup.leave() }
+                    
+                    if let data = document?.data(), let statusString = data["streakStatus"] as? String {
+                        streaks[userId] = StreakStatus(rawValue: statusString) ?? .none
+                    }
+                }
+            }
+            
+            dispatchGroup.notify(queue: .main) {
+                completion(scores, streaks)
+            }
+        }
 
     // Add these helper functions to RegionalLeaderboardViewModel
 
@@ -1196,6 +1264,8 @@ struct RegionalLeaderboardEntry: Identifiable {
     let userId: String
     let username: String
     let totalWeeklyTime: Int // Changed from duration to totalWeeklyTime (in minutes)
+    var score: Double? = nil // Add this property for displaying rank
+    var streakStatus: StreakStatus = .none // Add streak status
     let sessionCount: Int    // New: count of sessions for this user this week
     let distance: Double     // In meters
     let isFriend: Bool

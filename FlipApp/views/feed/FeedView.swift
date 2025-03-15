@@ -1139,7 +1139,7 @@ class FeedViewModel: ObservableObject {
             "timestamp": Timestamp(date: Date()),
             "comment": comment,
             "read": false,
-            "silent": true // This makes it not vibrate/sound but still show badge & banner
+            "silent": false // This makes it not vibrate/sound but still show badge & banner
         ]
         
         // Add to the recipient's notifications collection

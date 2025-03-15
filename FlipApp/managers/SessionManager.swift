@@ -9,6 +9,10 @@ class SessionManager: ObservableObject {
     @Published var showPromotionAlert = false
     @Published var promotionRankName = ""
     @Published var promotionRankColor = Color.blue
+    @Published var showStreakAchievement = false
+    @Published var streakAchievementStatus: StreakStatus = .none
+    @Published var streakCount: Int = 0
+    
     private let userDefaults = UserDefaults.standard
     private let sessionsKey = "flipSessions"
     private let scoreManager = ScoreManager.shared
@@ -17,7 +21,7 @@ class SessionManager: ObservableObject {
         loadSessions()
     }
 
-    // Standard session method - keep this exactly as is
+    // Standard session method with streak achievement check
     func addSession(duration: Int, wasSuccessful: Bool, actualDuration: Int, sessionTitle: String? = nil, sessionNotes: String? = nil) {
         guard let userId = Auth.auth().currentUser?.uid else { return }
 
@@ -46,23 +50,12 @@ class SessionManager: ObservableObject {
 
         // Upload to Firebase
         uploadSession(newSession)
-        let pausesEnabled = AppManager.shared.allowPauses
-        if let promotionResult = scoreManager.processSessionWithPromotionCheck(
-                    duration: duration,
-                    wasSuccessful: wasSuccessful,
-                    actualDuration: actualDuration,
-                    pausesEnabled: pausesEnabled
-                ), promotionResult.0 {
-                    // User was promoted! Show the promotion alert
-                    DispatchQueue.main.async {
-                        self.promotionRankName = promotionResult.1.0
-                        self.promotionRankColor = promotionResult.1.1
-                        self.showPromotionAlert = true
-                    }
-                }
+        
+        // Process session with achievement checks
+        processCompletedSession(duration: duration, wasSuccessful: wasSuccessful, actualDuration: actualDuration)
     }
     
-    // New method for multi-user sessions
+    // New method for multi-user sessions with streak achievement check
     func addSession(
         duration: Int,
         wasSuccessful: Bool,
@@ -72,7 +65,7 @@ class SessionManager: ObservableObject {
         participants: [Session.Participant]? = nil,
         originalStarterId: String? = nil,
         wasJoinedSession: Bool? = nil,
-        liveSessionId: String? = nil  // Add this parameter
+        liveSessionId: String? = nil
     ) {
         guard let userId = Auth.auth().currentUser?.uid else { return }
 
@@ -101,20 +94,59 @@ class SessionManager: ObservableObject {
 
         // Upload to Firebase
         uploadSession(newSession)
+        
+        // Process session with achievement checks
+        processCompletedSession(duration: duration, wasSuccessful: wasSuccessful, actualDuration: actualDuration)
+    }
+    
+    // New central method to process achievements for completed sessions
+    private func processCompletedSession(duration: Int, wasSuccessful: Bool, actualDuration: Int) {
         let pausesEnabled = AppManager.shared.allowPauses
-        if let promotionResult = scoreManager.processSessionWithPromotionCheck(
-                    duration: duration,
-                    wasSuccessful: wasSuccessful,
-                    actualDuration: actualDuration,
-                    pausesEnabled: pausesEnabled
-                ), promotionResult.0 {
-                    // User was promoted! Show the promotion alert
-                    DispatchQueue.main.async {
-                        self.promotionRankName = promotionResult.1.0
-                        self.promotionRankColor = promotionResult.1.1
-                        self.showPromotionAlert = true
+        
+        // Use the new combined achievement check method
+        let result = scoreManager.processSessionWithAchievementCheck(
+            duration: duration,
+            wasSuccessful: wasSuccessful,
+            actualDuration: actualDuration,
+            pausesEnabled: pausesEnabled
+        )
+        
+        // Handle rank promotion
+        if let rankPromotion = result.rankPromotion, rankPromotion.0 {
+            DispatchQueue.main.async {
+                self.promotionRankName = rankPromotion.1.0
+                self.promotionRankColor = rankPromotion.1.1
+                self.showPromotionAlert = true
+            }
+        }
+        
+        // Handle streak achievement
+        if let streakAchievement = result.streakAchievement, streakAchievement.0 {
+            DispatchQueue.main.async {
+                self.streakAchievementStatus = streakAchievement.1
+                self.streakCount = streakAchievement.2
+                
+                // Delay showing streak achievement if there's a rank promotion
+                // to avoid multiple alerts at once
+                if self.showPromotionAlert {
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
+                        self.showStreakAchievement = true
                     }
+                } else {
+                    self.showStreakAchievement = true
                 }
+                
+                // Also post notification for other views that might need to know
+                NotificationCenter.default.post(
+                    name: Notification.Name("StreakAchievementEarned"),
+                    object: nil,
+                    userInfo: [
+                        "status": streakAchievement.1.rawValue,
+                        "count": streakAchievement.2
+                    ]
+                )
+            }
+        }
     }
     
     // This method is now redundant with the updated addSession
@@ -132,10 +164,10 @@ class SessionManager: ObservableObject {
             actualDuration: actualDuration,
             sessionTitle: sessionTitle,
             sessionNotes: sessionNotes,
-            participants: nil,  // Add these missing parameters
+            participants: nil,
             originalStarterId: nil,
             wasJoinedSession: nil,
-            liveSessionId: nil  // Add this with a default value
+            liveSessionId: nil
         )
     }
 

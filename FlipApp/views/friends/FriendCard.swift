@@ -3,6 +3,7 @@ import SwiftUI
 import FirebaseAuth
 import FirebaseCore
 
+
 struct EnhancedFriendCard: View {
     let friend: FirebaseManager.FlipUser
     @State private var isPressed = false
@@ -10,6 +11,7 @@ struct EnhancedFriendCard: View {
     @State private var elapsedSeconds: Int = 0
     @State private var timer: Timer? = nil
     @StateObject private var sessionTimer = LiveSessionTimer()
+    @State private var streakStatus: StreakStatus = .none
     
     // LiveSessionData if the friend is in an active session
     let liveSession: LiveSessionManager.LiveSessionData?
@@ -29,31 +31,33 @@ struct EnhancedFriendCard: View {
     
     // Computed real-time elapsed time string
     private var formattedElapsedTime: String {
-            guard let session = liveSession else { return "0:00" }
-            
-            // Use sessionTimer.currentTick to force update
-            let _ = sessionTimer.currentTick
-            
-            // Calculate elapsed time including drift compensation
-            let baseElapsed = session.elapsedSeconds
-            let timeSinceUpdate = Int(Date().timeIntervalSince1970 - session.lastUpdateTime.timeIntervalSince1970)
-            let adjustment = session.isPaused ? 0 : min(timeSinceUpdate, 60) // Limit adjustment to avoid huge jumps
-            
-            let totalElapsed = baseElapsed + adjustment
-            let minutes = totalElapsed / 60
-            let seconds = totalElapsed % 60
-            return String(format: "%d:%02d", minutes, seconds)
-        }
+        guard let session = liveSession else { return "0:00" }
+        
+        // Use sessionTimer.currentTick to force update
+        let _ = sessionTimer.currentTick
+        
+        // Calculate elapsed time including drift compensation
+        let baseElapsed = session.elapsedSeconds
+        let timeSinceUpdate = Int(Date().timeIntervalSince1970 - session.lastUpdateTime.timeIntervalSince1970)
+        let adjustment = session.isPaused ? 0 : min(timeSinceUpdate, 60) // Limit adjustment to avoid huge jumps
+        
+        let totalElapsed = baseElapsed + adjustment
+        let minutes = totalElapsed / 60
+        let seconds = totalElapsed % 60
+        return String(format: "%d:%02d", minutes, seconds)
+    }
 
     var body: some View {
         VStack(spacing: 0) {
             HStack {
                 // LEFT SIDE: Profile picture with Live indicator if active
                 ZStack(alignment: .topTrailing) {
-                    ProfileAvatarView(
+                    // NEW: Profile picture with streak status
+                    ProfilePictureWithStreak(
                         imageURL: friend.profileImageURL,
+                        username: friend.username,
                         size: 56,
-                        username: friend.username
+                        streakStatus: streakStatus
                     )
                     .shadow(color: isLive ? Color.green.opacity(0.6) : Color(red: 56/255, green: 189/255, blue: 248/255).opacity(0.4), radius: 8)
                     
@@ -92,6 +96,23 @@ struct EnhancedFriendCard: View {
                                 .frame(width: 6, height: 6)
                                 .opacity(isGlowing ? 0.8 : 0.4)
                                 .animation(Animation.easeInOut(duration: 0.8).repeatForever(autoreverses: true), value: isGlowing)
+                        }
+                    } else if streakStatus != .none {
+                        // NEW: Show streak status when not live
+                        HStack(spacing: 6) {
+                            Image(systemName: "flame.fill")
+                                .font(.system(size: 14, weight: .bold))
+                                .foregroundColor(streakStatus == .redFlame ? .red : .orange)
+                                .shadow(color: streakStatus == .redFlame ? Color.red.opacity(0.6) : Color.orange.opacity(0.6),
+                                       radius: isGlowing ? 4 : 2)
+                                .scaleEffect(isGlowing ? 1.05 : 1.0)
+                                .animation(Animation.easeInOut(duration: 1.5).repeatForever(autoreverses: true), value: isGlowing)
+                            
+                            Text(streakStatus == .redFlame ? "BLAZING" : "ON FIRE")
+                                .font(.system(size: 12, weight: .bold))
+                                .foregroundColor(streakStatus == .redFlame ? .red : .orange)
+                                .shadow(color: streakStatus == .redFlame ? Color.red.opacity(0.4) : Color.orange.opacity(0.4),
+                                        radius: 2)
                         }
                     }
                     
@@ -175,26 +196,26 @@ struct EnhancedFriendCard: View {
             
             // Session timing information - only shown for live sessions
             if isLive, let session = liveSession {
-                        VStack(spacing: 8) {
-                            Divider()
-                                .background(Color.white.opacity(0.2))
-                                .padding(.vertical, 10)
+                VStack(spacing: 8) {
+                    Divider()
+                        .background(Color.white.opacity(0.2))
+                        .padding(.vertical, 10)
+                    
+                    HStack {
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text("TIME")
+                                .font(.system(size: 12, weight: .medium))
+                                .tracking(1)
+                                .foregroundColor(Color(red: 56/255, green: 189/255, blue: 248/255).opacity(0.8))
                             
-                            HStack {
-                                VStack(alignment: .leading, spacing: 2) {
-                                    Text("TIME")
-                                        .font(.system(size: 12, weight: .medium))
-                                        .tracking(1)
-                                        .foregroundColor(Color(red: 56/255, green: 189/255, blue: 248/255).opacity(0.8))
-                                    
-                                    // Use our real-time updated timer here
-                                    Text(formattedElapsedTime)
-                                        .font(.system(size: 18, weight: .bold))
-                                        .monospacedDigit()
-                                        .foregroundColor(.white)
-                                        .id(sessionTimer.currentTick) // Force refresh when counter changes
-                                        .shadow(color: Color(red: 56/255, green: 189/255, blue: 248/255).opacity(0.5), radius: 4)
-                                }
+                            // Use our real-time updated timer here
+                            Text(formattedElapsedTime)
+                                .font(.system(size: 18, weight: .bold))
+                                .monospacedDigit()
+                                .foregroundColor(.white)
+                                .id(sessionTimer.currentTick) // Force refresh when counter changes
+                                .shadow(color: Color(red: 56/255, green: 189/255, blue: 248/255).opacity(0.5), radius: 4)
+                        }
                         
                         Spacer()
                         
@@ -259,41 +280,102 @@ struct EnhancedFriendCard: View {
                 RoundedRectangle(cornerRadius: 16)
                     .fill(Color.white.opacity(0.05))
                 
-                // Border with different colors for live vs normal
+                // Border with different colors based on state
                 RoundedRectangle(cornerRadius: 16)
                     .stroke(
-                        isLive && !isFull ?
-                        LinearGradient(
-                            colors: [
-                                Color.green.opacity(isGlowing ? 0.8 : 0.5),
-                                Color.white.opacity(0.1)
-                            ],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        ) :
-                        LinearGradient(
-                            colors: [
-                                Color.white.opacity(0.5),
-                                Color.white.opacity(0.1)
-                            ],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        ),
+                        getCardBorderGradient(),
                         lineWidth: 1
                     )
             }
         )
-        .shadow(color: isLive && !isFull ? Color.green.opacity(0.3) : Color.black.opacity(0.2), radius: 4, x: 0, y: 2)
+        .shadow(color: getCardShadowColor(), radius: 4, x: 0, y: 2)
         .scaleEffect(isPressed ? 0.98 : 1.0)
         .animation(.spring(response: 0.3, dampingFraction: 0.6), value: isPressed)
         .onAppear {
-                // Update the session timer with this card's session data
-                if let session = liveSession {
-                    sessionTimer.updateSession(session: session)
-                }
+            // Update the session timer with this card's session data
+            if let session = liveSession {
+                sessionTimer.updateSession(session: session)
             }
+            
+            // NEW: Load streak status from Firestore
+            loadStreakStatus()
+        }
         .onDisappear {
             stopTimer()
+        }
+    }
+    
+    // NEW: Helper to load streak status for the friend
+    private func loadStreakStatus() {
+        FirebaseManager.shared.db.collection("users").document(friend.id)
+            .collection("streak").document("current")
+            .getDocument { snapshot, error in
+                if let data = snapshot?.data(),
+                   let statusString = data["streakStatus"] as? String,
+                   let status = StreakStatus(rawValue: statusString) {
+                    
+                    DispatchQueue.main.async {
+                        self.streakStatus = status
+                    }
+                }
+            }
+    }
+    
+    // NEW: Helper to get dynamic card border gradient based on state
+    private func getCardBorderGradient() -> LinearGradient {
+        if isLive && !isFull {
+            // Live session border
+            return LinearGradient(
+                colors: [
+                    Color.green.opacity(isGlowing ? 0.8 : 0.5),
+                    Color.white.opacity(0.1)
+                ],
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            )
+        } else if streakStatus == .redFlame {
+            // Red flame streak border
+            return LinearGradient(
+                colors: [
+                    Color.red.opacity(isGlowing ? 0.7 : 0.5),
+                    Color.red.opacity(0.2)
+                ],
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            )
+        } else if streakStatus == .orangeFlame {
+            // Orange flame streak border
+            return LinearGradient(
+                colors: [
+                    Color.orange.opacity(isGlowing ? 0.7 : 0.5),
+                    Color.orange.opacity(0.2)
+                ],
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            )
+        } else {
+            // Default border
+            return LinearGradient(
+                colors: [
+                    Color.white.opacity(0.5),
+                    Color.white.opacity(0.1)
+                ],
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            )
+        }
+    }
+    
+    // NEW: Helper to get dynamic card shadow color based on state
+    private func getCardShadowColor() -> Color {
+        if isLive && !isFull {
+            return Color.green.opacity(0.3)
+        } else if streakStatus == .redFlame {
+            return Color.red.opacity(0.3)
+        } else if streakStatus == .orangeFlame {
+            return Color.orange.opacity(0.3)
+        } else {
+            return Color.black.opacity(0.2)
         }
     }
     

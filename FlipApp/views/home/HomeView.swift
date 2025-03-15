@@ -48,6 +48,15 @@ struct HomeView: View {
                 )
                 .zIndex(100) // Ensure it appears above other content
             }
+            if sessionManager.showStreakAchievement {
+                StreakAchievementAlert(
+                    isPresented: $sessionManager.showStreakAchievement,
+                    streakStatus: sessionManager.streakAchievementStatus,
+                    streakCount: sessionManager.streakCount
+                )
+            }
+            
+            
         }
         .onAppear {
             // Check if there's a pending session join request

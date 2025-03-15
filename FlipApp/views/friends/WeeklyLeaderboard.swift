@@ -133,71 +133,10 @@ struct WeeklyLeaderboard: View {
                                              Array(viewModel.leaderboardEntries.prefix(3))
                         
                         ForEach(Array(displayEntries.enumerated()), id: \.element.id) { index, entry in
-                            HStack {
-                                // Rank with medal for top 3
-                                if index < 3 {
-                                    medalView(for: index)
-                                        .frame(width: 50, alignment: .center)
-                                } else {
-                                    Text("\(index + 1)")
-                                        .font(.system(size: 16, weight: .bold))
-                                        .foregroundColor(.white)
-                                        .frame(width: 50, alignment: .center)
-                                }
-                                
-                                // Username
-                                Text(entry.username)
-                                    .font(.system(size: 16, weight: .bold))
-                                    .lineLimit(1)
-                                    .foregroundColor(.white)
-                                
-                                Spacer()
-                                
-                                // Focus time
-                                Text("\(entry.totalTime)m")
-                                    .font(.system(size: 16, weight: .bold))
-                                    .foregroundColor(.white)
-                                    .frame(width: 70, alignment: .trailing)
-                            }
-                            .padding(.vertical, 8)
-                            .padding(.horizontal, 12)
-                            .background(
-                                ZStack {
-                                    // Different background for top 3
-                                    RoundedRectangle(cornerRadius: 10)
-                                        .fill(
-                                            LinearGradient(
-                                                colors: index < 3 ? [
-                                                    Color(red: 234/255, green: 179/255, blue: 8/255).opacity(0.3),
-                                                    Color(red: 234/255, green: 179/255, blue: 8/255).opacity(0.1)
-                                                ] : [
-                                                    Color.white.opacity(0.08),
-                                                    Color.white.opacity(0.05)
-                                                ],
-                                                startPoint: .top,
-                                                endPoint: .bottom
-                                            )
-                                        )
-                                    
-                                    // Highlight for current user
-                                    if Auth.auth().currentUser?.uid == entry.id {
-                                        RoundedRectangle(cornerRadius: 10)
-                                            .stroke(
-                                                LinearGradient(
-                                                    colors: [
-                                                        Color(red: 250/255, green: 204/255, blue: 21/255).opacity(0.7),
-                                                        Color(red: 250/255, green: 204/255, blue: 21/255).opacity(0.3)
-                                                    ],
-                                                    startPoint: .topLeading,
-                                                    endPoint: .bottomTrailing
-                                                ),
-                                                lineWidth: 1.5
-                                            )
-                                    } else {
-                                        RoundedRectangle(cornerRadius: 10)
-                                            .stroke(Color.white.opacity(0.1), lineWidth: 1)
-                                    }
-                                }
+                            EnhancedLeaderboardRow(
+                                rank: index + 1,
+                                entry: entry,
+                                isCurrentUser: Auth.auth().currentUser?.uid == entry.id
                             )
                         }
                     }
@@ -308,12 +247,207 @@ struct WeeklyLeaderboard: View {
     }
 }
 
+// NEW: Enhanced leaderboard row with streak indicators
+struct EnhancedLeaderboardRow: View {
+    let rank: Int
+    let entry: LeaderboardEntry
+    let isCurrentUser: Bool
+    @State private var streakStatus: StreakStatus = .none
+    
+    var body: some View {
+        HStack {
+            // Rank with medal for top 3
+            if rank <= 3 {
+                medalView(for: rank-1)
+                    .frame(width: 40, alignment: .center)
+            } else {
+                Text("\(rank)")
+                    .font(.system(size: 16, weight: .bold))
+                    .foregroundColor(.white)
+                    .frame(width: 40, alignment: .center)
+            }
+            
+            // User info with streak
+            HStack(spacing: 10) {
+                // Score circle if available
+                if let score = entry.score {
+                    RankCircle(score: score, size: 26, showStreakIndicator: false)
+                }
+                
+                // Profile picture
+                ZStack {
+                    ProfileImage(userId: entry.id, size: 32)
+                    
+                    // Streak indicator if active
+                    if streakStatus != .none {
+                        Circle()
+                            .stroke(
+                                streakStatus == .redFlame ?
+                                    Color.red.opacity(0.8) :
+                                    Color.orange.opacity(0.8),
+                                lineWidth: 2
+                            )
+                            .frame(width: 32, height: 32)
+                        
+                        // Flame icon
+                        ZStack {
+                            Circle()
+                                .fill(streakStatus == .redFlame ? Color.red : Color.orange)
+                                .frame(width: 12, height: 12)
+                            
+                            Image(systemName: "flame.fill")
+                                .font(.system(size: 8))
+                                .foregroundColor(.white)
+                        }
+                        .position(x: 24, y: 8)
+                    }
+                }
+                
+                Text(entry.username)
+                    .font(.system(size: 14, weight: .bold))
+                    .lineLimit(1)
+                    .foregroundColor(.white)
+            }
+            
+            Spacer()
+            
+            // Focus time
+            Text("\(entry.totalTime)m")
+                .font(.system(size: 16, weight: .bold))
+                .foregroundColor(.white)
+                .frame(width: 60, alignment: .trailing)
+        }
+        .padding(.vertical, 8)
+        .padding(.horizontal, 12)
+        .background(
+            ZStack {
+                // Different background for top 3
+                RoundedRectangle(cornerRadius: 10)
+                    .fill(
+                        LinearGradient(
+                            colors: rank <= 3 ? [
+                                Color(red: 234/255, green: 179/255, blue: 8/255).opacity(0.3),
+                                Color(red: 234/255, green: 179/255, blue: 8/255).opacity(0.1)
+                            ] : [
+                                Color.white.opacity(0.08),
+                                Color.white.opacity(0.05)
+                            ],
+                            startPoint: .top,
+                            endPoint: .bottom
+                        )
+                    )
+                
+                // Highlight for current user
+                if isCurrentUser {
+                    RoundedRectangle(cornerRadius: 10)
+                        .stroke(
+                            LinearGradient(
+                                colors: [
+                                    Color(red: 250/255, green: 204/255, blue: 21/255).opacity(0.7),
+                                    Color(red: 250/255, green: 204/255, blue: 21/255).opacity(0.3)
+                                ],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            ),
+                            lineWidth: 1.5
+                        )
+                } else {
+                    RoundedRectangle(cornerRadius: 10)
+                        .stroke(Color.white.opacity(0.1), lineWidth: 1)
+                }
+            }
+        )
+        .onAppear {
+            // Load streak status when row appears
+            loadStreakStatus()
+        }
+    }
+    
+    // Helper method to load streak status
+    private func loadStreakStatus() {
+        FirebaseManager.shared.db.collection("users").document(entry.id)
+            .collection("streak").document("current")
+            .getDocument { snapshot, error in
+                if let data = snapshot?.data(),
+                   let statusString = data["streakStatus"] as? String,
+                   let status = StreakStatus(rawValue: statusString) {
+                    
+                    DispatchQueue.main.async {
+                        self.streakStatus = status
+                    }
+                }
+            }
+    }
+    
+    // Medal view for top 3
+    private func medalView(for index: Int) -> some View {
+        ZStack {
+            // Medal color based on rank
+            Image(systemName: "medal.fill")
+                .font(.system(size: 22))
+                .foregroundStyle(
+                    medalGradient(for: index)
+                )
+                .shadow(color: medalShadowColor(for: index), radius: 4)
+        }
+    }
+    
+    // Medal gradients
+    private func medalGradient(for index: Int) -> LinearGradient {
+        switch index {
+        case 0: // Gold
+            return LinearGradient(
+                colors: [
+                    Color(red: 253/255, green: 224/255, blue: 71/255),
+                    Color(red: 234/255, green: 179/255, blue: 8/255)
+                ],
+                startPoint: .top,
+                endPoint: .bottom
+            )
+        case 1: // Silver
+            return LinearGradient(
+                colors: [
+                    Color(red: 226/255, green: 232/255, blue: 240/255),
+                    Color(red: 148/255, green: 163/255, blue: 184/255)
+                ],
+                startPoint: .top,
+                endPoint: .bottom
+            )
+        case 2: // Bronze
+            return LinearGradient(
+                colors: [
+                    Color(red: 217/255, green: 119/255, blue: 6/255),
+                    Color(red: 180/255, green: 83/255, blue: 9/255)
+                ],
+                startPoint: .top,
+                endPoint: .bottom
+            )
+        default:
+            return LinearGradient(
+                colors: [Color.gray, Color.gray.opacity(0.7)],
+                startPoint: .top,
+                endPoint: .bottom
+            )
+        }
+    }
+    
+    // Medal shadow colors
+    private func medalShadowColor(for index: Int) -> Color {
+        switch index {
+        case 0: return Color(red: 234/255, green: 179/255, blue: 8/255).opacity(0.6)
+        case 1: return Color(red: 148/255, green: 163/255, blue: 184/255).opacity(0.6)
+        case 2: return Color(red: 180/255, green: 83/255, blue: 9/255).opacity(0.6)
+        default: return Color.gray.opacity(0.6)
+        }
+    }
+}
 
 // Updated data model for leaderboard entries
 struct LeaderboardEntry: Identifiable {
     let id: String
     let username: String
     let totalTime: Int
+    var score: Double? = nil // NEW: Add score for rank circle
 }
 
 // Fixed ViewModel for Leaderboard
@@ -376,8 +510,9 @@ class LeaderboardViewModel: ObservableObject {
         print("Current date: \(currentDate)")
         print("Week start: \(weekStart)")
         
-        // First fetch all users to make sure we have usernames
+        // First fetch all users to make sure we have usernames and scores
         var usernames: [String: String] = [:]
+        var userScores: [String: Double] = [:]
         let group = DispatchGroup()
         
         for userId in userIds {
@@ -386,11 +521,18 @@ class LeaderboardViewModel: ObservableObject {
             firebaseManager.db.collection("users").document(userId).getDocument { document, error in
                 defer { group.leave() }
                 
-                if let document = document, let username = document.data()?["username"] as? String {
-                    usernames[userId] = username
-                    print("Fetched username for \(userId): \(username)")
+                if let document = document, let data = document.data() {
+                    if let username = data["username"] as? String {
+                        usernames[userId] = username
+                    }
+                    
+                    if let score = data["score"] as? Double {
+                        userScores[userId] = score
+                    }
+                    
+                    print("Fetched user data for \(userId): name=\(usernames[userId] ?? "unknown"), score=\(userScores[userId] ?? 0)")
                 } else {
-                    print("Failed to fetch username for \(userId)")
+                    print("Failed to fetch user data for \(userId)")
                 }
             }
         }
@@ -475,10 +617,12 @@ class LeaderboardViewModel: ObservableObject {
                         // Use username from our cache, or fallback to user ID
                         let username = usernames[userId] ?? "User \(userId.prefix(5))"
                         
+                        // Include score if available
                         entries.append(LeaderboardEntry(
                             id: userId,
                             username: username,
-                            totalTime: totalTime
+                            totalTime: totalTime,
+                            score: userScores[userId]
                         ))
                     }
                     
