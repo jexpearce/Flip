@@ -652,6 +652,7 @@ class FeedViewModel: ObservableObject {
     @Published var sessionLikes: [String: Int] = [:] // Map session ID to like count
     @Published var likedByUser: [String: Bool] = [:] // Map session ID to whether current user liked it
     @Published var likesUsers: [String: [String]] = [:] // Map session ID to array of user IDs who liked it
+    @Published var userStreakStatus: [String: StreakStatus] = [:]
     
     private let firebaseManager = FirebaseManager.shared
     private var likesListeners: [String: ListenerRegistration] = [:]
@@ -823,7 +824,37 @@ class FeedViewModel: ObservableObject {
                 completion?()
             }
     }
-    
+    func loadUserStreakStatus(userId: String, completion: @escaping (StreakStatus) -> Void) {
+        // Check if we already have the status cached
+        if let cachedStatus = userStreakStatus[userId] {
+            completion(cachedStatus)
+            return
+        }
+        
+        // Otherwise load from Firestore
+        firebaseManager.db.collection("users").document(userId)
+            .collection("streak").document("current")
+            .getDocument { [weak self] snapshot, error in
+                var status: StreakStatus = .none
+                
+                if let data = snapshot?.data(),
+                   let statusString = data["streakStatus"] as? String,
+                   let streakStatus = StreakStatus(rawValue: statusString) {
+                    status = streakStatus
+                    
+                    // Cache the result
+                    DispatchQueue.main.async {
+                        self?.userStreakStatus[userId] = status
+                    }
+                }
+                
+                // Return the status
+                completion(status)
+            }
+    }
+    func getUserStreakStatus(userId: String) -> StreakStatus {
+        return userStreakStatus[userId] ?? .none
+    }
     func getUser(for userId: String) -> FirebaseManager.FlipUser {
         // Return the user if we have it, otherwise return a default user
         // We attempt to get the cached data first
@@ -860,6 +891,10 @@ class FeedViewModel: ObservableObject {
         
         for session in sessions {
             userIds.insert(session.userId)
+            dispatchGroup.enter()
+                    loadUserStreakStatus(userId: session.userId) { _ in
+                        dispatchGroup.leave()
+                    }
             
             if let commentorId = session.commentorId {
                 userIds.insert(commentorId)
@@ -869,6 +904,10 @@ class FeedViewModel: ObservableObject {
             if let participants = session.participants {
                 for participant in participants {
                     userIds.insert(participant.id)
+                    dispatchGroup.enter()
+                                    loadUserStreakStatus(userId: participant.id) { _ in
+                                        dispatchGroup.leave()
+                                    }
                 }
             }
         }

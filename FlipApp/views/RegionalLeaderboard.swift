@@ -1019,24 +1019,25 @@ class RegionalLeaderboardViewModel: ObservableObject {
                     
                     // Convert aggregated data to leaderboard entries
                     self.fetchUserScoresAndStreaks(Array(userIdsToFetch)) { scoresMap, streaksMap in
-                                        // Convert aggregated data to leaderboard entries with scores
-                                        let entries = userWeeklyData.values.map { userData in
-                                            LeaderboardEntry(
-                                                id: userData.userId,
-                                                username: userData.username,
-                                                totalTime: 0, // We'll keep this field but don't use it
-                                                sessionCount: userData.sessionCount,
-                                                // Add score and streak data if available
-                                                score: scoresMap[userData.userId],
-                                                streakStatus: streaksMap[userData.userId] ?? .none
-                                            )
-                    // IMPORTANT: Sort by session count instead of time
-                    }.sorted { $0.sessionCount > $1.sessionCount }
-                    
-                    // Take top 10 for display
-                    DispatchQueue.main.async {
-                        self.leaderboardEntries = entries.prefix(10).map { $0 }
-                        self.isLoading = false
+                        // Convert aggregated data to leaderboard entries with scores
+                        let entries = userWeeklyData.values.map { userData in
+                            LeaderboardEntry(
+                                id: userData.userId,
+                                username: userData.username,
+                                totalTime: 0, // We'll keep this field but don't use it
+                                sessionCount: userData.sessionCount,
+                                // Add score and streak data if available
+                                score: scoresMap[userData.userId],
+                                streakStatus: streaksMap[userData.userId] ?? .none
+                            )
+                        // IMPORTANT: Sort by session count instead of time
+                        }.sorted { $0.sessionCount > $1.sessionCount }
+                        
+                        // Take top 10 for display
+                        DispatchQueue.main.async {
+                            self.leaderboardEntries = entries.prefix(10).map { $0 }
+                            self.isLoading = false
+                        }
                     }
                 }
             }

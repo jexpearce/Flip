@@ -13,7 +13,9 @@ struct FeedSessionCard: View {
     @State private var likesCount: Int = 0
     @State private var showLikesSheet = false
     @State private var isHovering = false // For hover effect
+    @State private var userStreakStatus: StreakStatus = .none
     @FocusState private var isCommentFocused: Bool
+    
     
     // Update initializer with optional parameter
     init(session: Session, viewModel: FeedViewModel, showUserHeader: Bool = true) {
@@ -124,18 +126,19 @@ struct FeedSessionCard: View {
                     // Left side: User info - only show if requested
                     if showUserHeader {
                         NavigationLink(destination: UserProfileView(user: viewModel.getUser(for: session.userId))) {
-                            ProfileAvatarView(
-                                imageURL: userProfileImageURL,
-                                size: 44,
-                                username: session.username
-                            )
-                            .overlay(
-                                Circle()
-                                    .stroke(Color.white.opacity(0.2), lineWidth: 1.5)
-                            )
-                            .shadow(color: statusGlow.opacity(0.3), radius: 6)
-                        }
-                        .buttonStyle(PlainButtonStyle())
+                                ProfileAvatarWithStreak(
+                                    imageURL: userProfileImageURL,
+                                    size: 44,
+                                    username: session.username,
+                                    streakStatus: viewModel.getUserStreakStatus(userId: session.userId)
+                                )
+                                .overlay(
+                                    Circle()
+                                        .stroke(Color.white.opacity(0.2), lineWidth: 1.5)
+                                )
+                                .shadow(color: statusGlow.opacity(0.3), radius: 6)
+                            }
+                            .buttonStyle(PlainButtonStyle())
 
                         VStack(alignment: .leading, spacing: 2) {
                             NavigationLink(destination: UserProfileView(user: viewModel.getUser(for: session.userId))) {
@@ -443,28 +446,33 @@ struct FeedSessionCard: View {
             CompactLikesListView(sessionId: session.id.uuidString, likesCount: likesCount, viewModel: viewModel)
         }
         .onAppear {
-            // Update like state when the view appears
-            updateLikeState()
-            
-            // Set up keyboard notifications
-            NotificationCenter.default.addObserver(
-                forName: UIResponder.keyboardWillShowNotification,
-                object: nil,
-                queue: .main
-            ) { notification in
-                if let keyboardFrame = notification.userInfo?[UIResponder.keyboardFrameEndUserInfoKey] as? CGRect {
-                    keyboardHeight = keyboardFrame.height
+                // Update like state when the view appears
+                updateLikeState()
+                
+                // Load user's streak status
+                viewModel.loadUserStreakStatus(userId: session.userId) { status in
+                    self.userStreakStatus = status
+                }
+                
+                // Set up keyboard notifications
+                NotificationCenter.default.addObserver(
+                    forName: UIResponder.keyboardWillShowNotification,
+                    object: nil,
+                    queue: .main
+                ) { notification in
+                    if let keyboardFrame = notification.userInfo?[UIResponder.keyboardFrameEndUserInfoKey] as? CGRect {
+                        keyboardHeight = keyboardFrame.height
+                    }
+                }
+                
+                NotificationCenter.default.addObserver(
+                    forName: UIResponder.keyboardWillHideNotification,
+                    object: nil,
+                    queue: .main
+                ) { _ in
+                    keyboardHeight = 0
                 }
             }
-            
-            NotificationCenter.default.addObserver(
-                forName: UIResponder.keyboardWillHideNotification,
-                object: nil,
-                queue: .main
-            ) { _ in
-                keyboardHeight = 0
-            }
-        }
         .onDisappear {
             // Remove keyboard observers
             NotificationCenter.default.removeObserver(self)
