@@ -12,11 +12,16 @@ class PermissionManager: NSObject, ObservableObject {
     @Published var locationAuthStatus: CLAuthorizationStatus = .notDetermined
     @Published var showLocationAlert = false
     
+    // New properties to track specific location permission levels
+    @Published var hasFullLocationPermission = false
+    @Published var hasLimitedLocationPermission = false
+    
     // Motion
     private let motionManager = CMMotionManager()
     @Published var motionPermissionGranted = false
     @Published var showMotionAlert = false
     private var motionPromptCompleted = false
+    @Published var showMotionSettingsAlert = false
     
     // Notifications
     @Published var notificationPermissionGranted = false
@@ -42,11 +47,35 @@ class PermissionManager: NSObject, ObservableObject {
         locationManager.delegate = self
         locationAuthStatus = locationManager.authorizationStatus
         checkPermissions()
+        
+        // Add notification observers for app state changes
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(appDidBecomeActive),
+            name: UIApplication.didBecomeActiveNotification,
+            object: nil
+        )
+    }
+    
+    deinit {
+        NotificationCenter.default.removeObserver(self)
+    }
+    
+    @objc func appDidBecomeActive() {
+        // Refresh permission status when app becomes active
+        // This catches changes made in Settings app
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+            self.refreshPermissionStatus()
+        }
     }
     
     func checkPermissions() {
         // Check location
         locationAuthStatus = locationManager.authorizationStatus
+        
+        // Update location permission states
+        hasFullLocationPermission = (locationAuthStatus == .authorizedAlways)
+        hasLimitedLocationPermission = (locationAuthStatus == .authorizedWhenInUse)
         
         // Check motion
         let motionAuthStatus = CMMotionActivityManager.authorizationStatus()
@@ -68,12 +97,81 @@ class PermissionManager: NSObject, ObservableObject {
         }
     }
     
-    private func updatePermissionState() {
-        let locationGranted = locationAuthStatus == .authorizedWhenInUse || locationAuthStatus == .authorizedAlways
+    func refreshPermissionStatus() {
+        print("📱 Refreshing permission status")
         
-        allPermissionsGranted = locationGranted &&
-                                motionPermissionGranted &&
-                                notificationPermissionGranted
+        // Get current location auth status
+        locationAuthStatus = locationManager.authorizationStatus
+        
+        // Update location permission states
+        hasFullLocationPermission = (locationAuthStatus == .authorizedAlways)
+        hasLimitedLocationPermission = (locationAuthStatus == .authorizedWhenInUse)
+        
+        // Get current motion auth status
+        let motionAuthStatus = CMMotionActivityManager.authorizationStatus()
+        motionPermissionGranted = (motionAuthStatus == .authorized)
+        
+        // NEW CODE: Show motion settings alert if motion permission was previously
+        // granted but now is denied
+        if !motionPermissionGranted {
+            // Add a small delay to prevent immediate crash on app launch
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                self.showMotionSettingsAlert = true
+            }
+        }
+        // Update notification status too
+        UNUserNotificationCenter.current().getNotificationSettings { settings in
+            DispatchQueue.main.async {
+                self.notificationPermissionGranted = (settings.authorizationStatus == .authorized)
+                
+                // Update overall state
+                self.updatePermissionState()
+            }
+        }
+        
+        print("📍 Location status: \(locationAuthStatus.rawValue)")
+        print("📍 Full location: \(hasFullLocationPermission), Limited: \(hasLimitedLocationPermission)")
+    }
+    
+    // MARK: - Request Always Allow Upgrade
+    
+    // This method can be called to request an upgrade from "When in Use" to "Always Allow"
+    func requestAlwaysAllowUpgrade() {
+        // Only proceed if we currently have "When in Use" permission
+        guard locationAuthStatus == .authorizedWhenInUse else {
+            print("Cannot request upgrade: current status is not 'When in Use'")
+            return
+        }
+        
+        print("Requesting upgrade to 'Always Allow' location permission")
+        
+        // Request the always authorization
+        locationManager.requestAlwaysAuthorization()
+        
+        // The locationManagerDidChangeAuthorization delegate method will handle the response
+    }
+    
+    // Open Settings app to app-specific location settings
+    func openLocationSettings() {
+        if let url = URL(string: UIApplication.openSettingsURLString) {
+            UIApplication.shared.open(url, options: [:], completionHandler: nil)
+        }
+    }
+    
+    // Store whether we've shown the location upgrade alert
+    @AppStorage("hasShownLocationUpgradeAlert") var hasShownLocationUpgradeAlert = false
+    
+    // Open Settings app specifically for Motion settings
+    func openMotionSettings() {
+        if let url = URL(string: UIApplication.openSettingsURLString) {
+            UIApplication.shared.open(url, options: [:], completionHandler: nil)
+        }
+    }
+    
+    private func updatePermissionState() {
+        // For app functionality, only motion is truly required
+        // Location is now optional but preferred
+        allPermissionsGranted = motionPermissionGranted
     }
     
     // MARK: - Permission Flow
@@ -120,6 +218,9 @@ class PermissionManager: NSObject, ObservableObject {
         // Show our custom alert first
         print("Showing custom location alert")
         showLocationAlert = true
+        
+        // The system prompt will be triggered when the user taps Continue in the custom alert
+        // See requestLocationPermission() method
     }
     
     // Step 1b: Called when user taps Continue on location alert
@@ -133,6 +234,9 @@ class PermissionManager: NSObject, ObservableObject {
             // Request the actual system permission
             // The delegate will handle the next step after user responds
             self.locationManager.requestWhenInUseAuthorization()
+            
+            // The locationManagerDidChangeAuthorization delegate method will be called
+            // when the user responds to the system prompt, which will then call startMotionFlow()
         }
     }
     
@@ -162,6 +266,9 @@ class PermissionManager: NSObject, ObservableObject {
         // Show our custom alert
         print("Showing custom motion alert")
         showMotionAlert = true
+        
+        // The system prompt will be triggered when the user taps Continue in the custom alert
+        // See requestMotionPermission() method
     }
     
     // Step 2b: Called when user taps Continue on motion alert
@@ -194,12 +301,17 @@ class PermissionManager: NSObject, ObservableObject {
                     
                     // Add another delay before moving to next step to ensure
                     // the system prompt is fully dismissed
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
                         // Move to next step regardless of result
                         self.startNotificationFlow()
                     }
                 }
             }
+        }
+    }
+    func handleMotionPermissionDenied() {
+        DispatchQueue.main.async {
+            self.showMotionSettingsAlert = true
         }
     }
     
@@ -232,6 +344,9 @@ class PermissionManager: NSObject, ObservableObject {
                 // Show our custom alert
                 print("Showing custom notification alert")
                 self.showNotificationAlert = true
+                
+                // The system prompt will be triggered when the user taps Continue in the custom alert
+                // See requestNotificationPermission() method
             }
         }
     }
@@ -271,13 +386,28 @@ extension PermissionManager: CLLocationManagerDelegate {
     func locationManagerDidChangeAuthorization(_ manager: CLLocationManager) {
         DispatchQueue.main.async {
             print("Location authorization status changed: \(manager.authorizationStatus.rawValue)")
+            
+            // Store the previous state to detect changes
+            let previousStatus = self.locationAuthStatus
+            
+            // Update current status
             self.locationAuthStatus = manager.authorizationStatus
             
-            // Only proceed if the status is definitively resolved
-            // (not .notDetermined or .restricted)
-            if self.locationAuthStatus == .authorizedWhenInUse ||
-               self.locationAuthStatus == .authorizedAlways ||
-               self.locationAuthStatus == .denied {
+            // Update our permission tracking properties
+            self.hasFullLocationPermission = (self.locationAuthStatus == .authorizedAlways)
+            self.hasLimitedLocationPermission = (self.locationAuthStatus == .authorizedWhenInUse)
+            
+            // Only proceed if:
+            // 1. We're actively processing a permission request (isProcessingLocationPermission is true)
+            // 2. The status has changed from .notDetermined to something definitive
+            // 3. We haven't already moved to the next step
+            if self.isProcessingLocationPermission &&
+               previousStatus == .notDetermined &&
+               (self.locationAuthStatus == .authorizedWhenInUse ||
+                self.locationAuthStatus == .authorizedAlways ||
+                self.locationAuthStatus == .denied) {
+                
+                print("Location permission flow complete with status: \(self.locationAuthStatus.rawValue)")
                 
                 // Reset flag
                 self.isProcessingLocationPermission = false
@@ -287,14 +417,18 @@ extension PermissionManager: CLLocationManagerDelegate {
                 
                 // Add a delay before moving to next step to ensure
                 // the system prompt is fully dismissed
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
                     // Move to the next step in the flow
                     self.startMotionFlow()
                 }
+            } else {
+                // Just update state if not in active permission flow
+                self.updatePermissionState()
             }
         }
     }
 }
+
 
 struct MotionPermissionAlert: View {
     @Binding var isPresented: Bool
@@ -699,5 +833,137 @@ struct NotificationPermissionAlert: View {
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
+    }
+}
+struct MotionSettingsAlert: View {
+    @Binding var isPresented: Bool
+    @State private var isPrimaryCTA = false
+    @State private var isSecondaryCTA = false
+    @ObservedObject private var permissionManager = PermissionManager.shared
+    
+    var body: some View {
+        ZStack {
+            // Dimmed background
+            Color.black.opacity(0.7)
+                .edgesIgnoringSafeArea(.all)
+            
+            VStack(spacing: 20) {
+                // Warning icon
+                ZStack {
+                    Circle()
+                        .fill(Color.red.opacity(0.3))
+                        .frame(width: 80, height: 80)
+                    
+                    Image(systemName: "exclamationmark.triangle.fill")
+                        .font(.system(size: 40))
+                        .foregroundColor(.red)
+                        .shadow(color: Color.red.opacity(0.5), radius: 6)
+                }
+                
+                // Title
+                Text("MOTION ACCESS REQUIRED")
+                    .font(.system(size: 22, weight: .black))
+                    .tracking(1)
+                    .foregroundColor(.white)
+                    .shadow(color: Color.red.opacity(0.4), radius: 4)
+                    .multilineTextAlignment(.center)
+                
+                // Description
+                Text("Flip needs Motion & Fitness access to detect phone flipping. Without this permission, you cannot use Flip sessions.")
+                    .font(.system(size: 16))
+                    .foregroundColor(.white.opacity(0.9))
+                    .multilineTextAlignment(.center)
+                    .padding(.horizontal, 20)
+                
+                // Buttons
+                VStack(spacing: 12) {
+                    Button(action: {
+                        withAnimation(.spring()) { isPrimaryCTA = true }
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
+                            permissionManager.openMotionSettings()
+                            isPresented = false
+                        }
+                    }) {
+                        Text("OPEN SETTINGS")
+                            .font(.system(size: 16, weight: .bold))
+                            .foregroundColor(.white)
+                            .frame(width: 250, height: 50)
+                            .background(
+                                ZStack {
+                                    RoundedRectangle(cornerRadius: 25)
+                                        .fill(
+                                            LinearGradient(
+                                                colors: [
+                                                    Color.red,
+                                                    Color.red.opacity(0.7)
+                                                ],
+                                                startPoint: .leading,
+                                                endPoint: .trailing
+                                            )
+                                        )
+                                    
+                                    RoundedRectangle(cornerRadius: 25)
+                                        .fill(Color.white.opacity(0.1))
+                                    
+                                    RoundedRectangle(cornerRadius: 25)
+                                        .stroke(
+                                            LinearGradient(
+                                                colors: [
+                                                    Color.white.opacity(0.6),
+                                                    Color.white.opacity(0.2)
+                                                ],
+                                                startPoint: .topLeading,
+                                                endPoint: .bottomTrailing
+                                            ),
+                                            lineWidth: 1
+                                        )
+                                }
+                            )
+                            .shadow(color: Color.red.opacity(0.4), radius: 8)
+                            .scaleEffect(isPrimaryCTA ? 0.95 : 1.0)
+                    }
+                    
+                    Button(action: {
+                        withAnimation(.spring()) { isSecondaryCTA = true }
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
+                            isPresented = false
+                        }
+                    }) {
+                        Text("MAYBE LATER")
+                            .font(.system(size: 14, weight: .medium))
+                            .foregroundColor(.white.opacity(0.7))
+                            .padding(.vertical, 10)
+                            .scaleEffect(isSecondaryCTA ? 0.95 : 1.0)
+                    }
+                }
+                .padding(.top, 10)
+            }
+            .padding(25)
+            .background(
+                ZStack {
+                    RoundedRectangle(cornerRadius: 25)
+                        .fill(Theme.darkGray)
+                    
+                    RoundedRectangle(cornerRadius: 25)
+                        .fill(Color.black.opacity(0.3))
+                    
+                    RoundedRectangle(cornerRadius: 25)
+                        .stroke(
+                            LinearGradient(
+                                colors: [
+                                    Color.white.opacity(0.5),
+                                    Color.white.opacity(0.1)
+                                ],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            ),
+                            lineWidth: 1
+                        )
+                }
+            )
+            .frame(maxWidth: 350)
+            .shadow(color: Color.black.opacity(0.5), radius: 20)
+            .transition(.scale.combined(with: .opacity))
+        }
     }
 }

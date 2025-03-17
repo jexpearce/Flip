@@ -37,6 +37,7 @@ class AppManager: NSObject, ObservableObject {
     @Published var remainingPauseSeconds = 0 // Remaining seconds in current pause
     @Published var isPauseTimerActive = false // Whether pause timer is active
     @Published var sessionAlreadyRecorded: Bool = false
+    @Published var usingLimitedLocationPermission = false
 
 
     private var sessionManager = SessionManager.shared
@@ -102,6 +103,12 @@ class AppManager: NSObject, ObservableObject {
     func startCountdown(fromRestoration: Bool = false) {
         print("Starting countdown" + (fromRestoration ? " (from restoration)" : ""))
 
+        // Check permission manager for location status
+        let permissionManager = PermissionManager.shared
+        
+        // Only consider limited permission if permission is completely denied
+        usingLimitedLocationPermission = permissionManager.locationAuthStatus == .denied
+        
         startLiveActivity()
 
         // Only set the state and reset the countdown if not restoring

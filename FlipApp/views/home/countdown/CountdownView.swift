@@ -2,9 +2,11 @@ import SwiftUI
 
 struct CountdownView: View {
     @EnvironmentObject var appManager: AppManager
+    @EnvironmentObject var permissionManager: PermissionManager
     @State private var numberScale: CGFloat = 1.0
     @State private var numberOpacity: Double = 1.0
     @State private var isGlowing = false
+    @State private var showPulse = false
     
     var body: some View {
         VStack(spacing: 25) {
@@ -15,7 +17,7 @@ struct CountdownView: View {
                 .foregroundColor(.white)
                 .shadow(color: Color(red: 56/255, green: 189/255, blue: 248/255).opacity(isGlowing ? 0.7 : 0.3), radius: isGlowing ? 15 : 8)
                 .onAppear {
-                    withAnimation(.easeInOut(duration: 1.5).repeatForever()) {
+                    withAnimation(.easeInOut(duration: 1.5).repeatForever(autoreverses: true)) {
                         isGlowing = true
                     }
                 }
@@ -40,29 +42,36 @@ struct CountdownView: View {
                     }
                 }
 
+            // Warning for users without full location permission
+            if appManager.usingLimitedLocationPermission {
+                locationWarningBanner()
+                    .padding(.horizontal, 20)
+                    .padding(.vertical, 5)
+            }
+
             // Instructions
             VStack(spacing: 15) {
-                // Step 1
+                // Step 1 - Text changes based on permission level
                 instructionRow(
                     number: "1",
-                    text: "TURN OFF PHONE"
+                    text: appManager.usingLimitedLocationPermission ? "KEEP PHONE ON" : "TURN OFF PHONE"
                 )
 
                 // Step 2
                 instructionRow(
                     number: "2",
-                    text: "FLIP!"
+                    text: "FLIP PHONE"
                 )
             }
-            .padding(.top, 20)
+            .padding(.top, 15)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(
-            ZStack {                
+            ZStack {
                 // Subtle animated circles in background
                 ForEach(0..<3) { i in
                     Circle()
-                        .fill(Theme.buttonGradient)
+                        .fill(appManager.usingLimitedLocationPermission ? Theme.yellowAccentGradient : Theme.buttonGradient)
                         .frame(width: 200, height: 200)
                         .opacity(0.05)
                         .offset(x: CGFloat.random(in: -100...100),
@@ -71,6 +80,37 @@ struct CountdownView: View {
                 }
             }
         )
+        .onAppear {
+            // Start the pulse animation
+            withAnimation(Animation.easeInOut(duration: 2).repeatForever(autoreverses: true)) {
+                showPulse = true
+            }
+        }
+    }
+    
+    private func locationWarningBanner() -> some View {
+        HStack(spacing: 8) {
+            // Warning icon
+            Image(systemName: "exclamationmark.triangle.fill")
+                .font(.system(size: 18))
+                .foregroundColor(Theme.yellow)
+            
+            // Concise warning text
+            Text("Keep phone on during session")
+                .font(.system(size: 16, weight: .bold))
+                .foregroundColor(Theme.yellow)
+        }
+        .padding(.horizontal, 20)
+        .padding(.vertical, 12)
+        .background(
+            RoundedRectangle(cornerRadius: 16)
+                .fill(Color.black.opacity(0.3))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 16)
+                        .stroke(Theme.yellow.opacity(0.3), lineWidth: 1)
+                )
+        )
+        .padding(.horizontal, 30)
     }
     
     private func instructionRow(number: String, text: String) -> some View {
@@ -78,7 +118,7 @@ struct CountdownView: View {
             // Number circle with glass effect
             ZStack {
                 Circle()
-                    .fill(Theme.buttonGradient)
+                    .fill(appManager.usingLimitedLocationPermission ? Theme.yellowAccentGradient : Theme.buttonGradient)
                     .opacity(0.1)
                 
                 Circle()
@@ -104,7 +144,10 @@ struct CountdownView: View {
                 .font(.system(size: 20, weight: .heavy))
                 .tracking(2)
                 .foregroundColor(.white)
-                .shadow(color: Color(red: 56/255, green: 189/255, blue: 248/255).opacity(0.5), radius: 8)
+                .shadow(color: appManager.usingLimitedLocationPermission ?
+                        Theme.yellowShadow.opacity(0.7) :
+                        Color(red: 56/255, green: 189/255, blue: 248/255).opacity(0.5),
+                       radius: 8)
         }
     }
 }

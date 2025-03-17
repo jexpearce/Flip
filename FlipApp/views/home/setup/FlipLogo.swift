@@ -131,9 +131,9 @@ struct CurrentBuildingIndicator: View {
         .shadow(color: Color.black.opacity(0.15), radius: 4)
     }
 }
-
 struct BeginButton: View {
     let action: () -> Void
+    var joinMode: Bool = false
     @State private var isPressed = false
     @State private var isPulsing = false
     @ObservedObject private var permissionManager = PermissionManager.shared
@@ -149,63 +149,78 @@ struct BeginButton: View {
                 isPulsing = false
             }
             
-            if permissionManager.allPermissionsGranted {
+            // Only block the action if motion permission isn't granted
+            if permissionManager.motionPermissionGranted {
                 action()
             } else {
                 permissionManager.showPermissionRequiredAlert = true
             }
         }) {
             Text("BEGIN")
-                    .font(.system(size: 26, weight: .black))
-                    .tracking(6)
-                    .foregroundColor(.white)
-                    .frame(maxWidth: .infinity)
-                    .frame(height: 70)
-                    .background(
-                        ZStack {
-                            // Change gradient to teal-blue
-                            RoundedRectangle(cornerRadius: 35)
-                                .fill(
-                                    LinearGradient(
-                                        colors: permissionManager.allPermissionsGranted ?
-                                        [
-                                            Color(red: 56/255, green: 189/255, blue: 248/255), // Bright teal
-                                            Color(red: 14/255, green: 165/255, blue: 233/255)  // Deeper blue
-                                        ] :
-                                        [
-                                            Color.gray.opacity(0.5),
-                                            Color.gray.opacity(0.3)
-                                        ],
-                                        startPoint: .leading,
-                                        endPoint: .trailing
-                                    )
+                .font(.system(size: 26, weight: .black))
+                .tracking(6)
+                .foregroundColor(.white)
+                .frame(maxWidth: .infinity)
+                .frame(height: 70)
+                .background(
+                    ZStack {
+                        // Change gradient based on permission level
+                        RoundedRectangle(cornerRadius: 35)
+                            .fill(
+                                LinearGradient(
+                                    colors: !permissionManager.motionPermissionGranted ?
+                                    // No motion permission - grayed out (highest priority)
+                                    [
+                                        Color.gray.opacity(0.5),
+                                        Color.gray.opacity(0.3)
+                                    ] :
+                                    permissionManager.locationAuthStatus == .denied ?
+                                    // Location denied - orange/yellow gradient
+                                    [
+                                        Theme.yellow, // Vibrant yellow
+                                        Theme.orange  // Warm orange
+                                    ] :
+                                    // Location allowed - blue gradient
+                                    [
+                                        Color(red: 56/255, green: 189/255, blue: 248/255), // Bright teal
+                                        Color(red: 14/255, green: 165/255, blue: 233/255)  // Deeper blue
+                                    ],
+                                    startPoint: .leading,
+                                    endPoint: .trailing
                                 )
-                            
-                            // Rest stays the same
-                            RoundedRectangle(cornerRadius: 35)
-                                .fill(Color.white.opacity(0.1))
-                            
-                            RoundedRectangle(cornerRadius: 35)
-                                .stroke(
-                                    LinearGradient(
-                                        colors: [
-                                            Color.white.opacity(0.6),
-                                            Color.white.opacity(0.2)
-                                        ],
-                                        startPoint: .topLeading,
-                                        endPoint: .bottomTrailing
-                                    ),
-                                    lineWidth: 1.5
-                                )
-                        }
-                    )
-                    .shadow(
-                        color: Color(red: 56/255, green: 189/255, blue: 248/255).opacity(0.5),
-                        radius: isPulsing ? 15 : 8
-                    )
-                    .scaleEffect(isPressed ? 0.97 : 1.0)
-                    .opacity(permissionManager.allPermissionsGranted ? 1.0 : 0.6)
-            }
+                            )
+                        
+                        // Glass effect
+                        RoundedRectangle(cornerRadius: 35)
+                            .fill(Color.white.opacity(0.1))
+                        
+                        // Border
+                        RoundedRectangle(cornerRadius: 35)
+                            .stroke(
+                                LinearGradient(
+                                    colors: [
+                                        Color.white.opacity(0.6),
+                                        Color.white.opacity(0.2)
+                                    ],
+                                    startPoint: .topLeading,
+                                    endPoint: .bottomTrailing
+                                ),
+                                lineWidth: 1.5
+                            )
+                    }
+                )
+                .shadow(
+                    color: !permissionManager.motionPermissionGranted ?
+                        Color.gray.opacity(0.5) :
+                        permissionManager.locationAuthStatus == .denied ?
+                            Theme.yellowShadow :
+                            Color(red: 56/255, green: 189/255, blue: 248/255).opacity(0.5),
+                    radius: isPulsing ? 15 : 8
+                )
+                .scaleEffect(isPressed ? 0.97 : 1.0)
+                .opacity(permissionManager.motionPermissionGranted ? 1.0 : 0.6)
+        }
         .padding(.horizontal, 30)
+        .disabled(joinMode || !permissionManager.motionPermissionGranted)
     }
 }

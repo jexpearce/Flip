@@ -15,6 +15,7 @@ struct SetupView: View {
     @State private var viewRouter = ViewRouter()
     @State private var showLocationSelector = false
     @State private var showRules = false
+    @State private var showLocationUpgradeAlert = false
     
     // Check if we're navigating back from a joined session view
     @State private var joinLiveSessionMode = false
@@ -185,12 +186,25 @@ struct SetupView: View {
                     .padding(.top, 0)  // Reduced padding
                     
                     // Begin Button
-                    BeginButton {
-                        // Only start a regular session here, joining is handled in onAppear
-                        if !joinLiveSessionMode {
-                            appManager.startCountdown()
+                    // Replace the inline BeginButton action with this handler:
+                    BeginButton(action: {
+                        // Check if we have proper permissions
+                        if permissionManager.motionPermissionGranted {
+                            // Check if we're in joining mode
+                            if !joinLiveSessionMode {
+                                // Set the appropriate flag in AppManager based on permission status
+                                appManager.usingLimitedLocationPermission =
+                                    permissionManager.hasLimitedLocationPermission &&
+                                    !permissionManager.hasFullLocationPermission
+                                    
+                                // Start the countdown regardless of location permission type
+                                appManager.startCountdown()
+                            }
+                        } else {
+                            // Show permission alert if motion permission is missing
+                            permissionManager.showPermissionRequiredAlert = true
                         }
-                    }
+                    }, joinMode: joinLiveSessionMode)
                     .overlay(
                         Group {
                             if joinLiveSessionMode {
@@ -203,8 +217,7 @@ struct SetupView: View {
                             }
                         }
                     )
-                    .disabled(joinLiveSessionMode) // Disable when joining
-                    .padding(.top, 5)  // Reduced from bottom 50 to top 5
+                    .padding(.top, 5)
                 }
                 .padding(.top, 15)  // Reduced from 20 to 10
             }
@@ -263,6 +276,7 @@ struct SetupView: View {
             if showRules {
                 RulesView(showRules: $showRules)
             }
+
             
             // Custom Alert Overlay
             if showPauseDisabledWarning {
@@ -408,8 +422,32 @@ struct SetupView: View {
                     }
                 )
             }
+            if permissionManager.locationAuthStatus == .denied &&
+               !permissionManager.hasShownLocationUpgradeAlert {
+                // Check once and set the state variable
+                DispatchQueue.main.async {
+                    if !showLocationUpgradeAlert {
+                        showLocationUpgradeAlert = true
+                    }
+                }
+            }
+            if showLocationUpgradeAlert {
+                LocationUpgradeAlert(isPresented: $showLocationUpgradeAlert)
+                    .onDisappear {
+                        // Mark as shown when dismissed
+                        permissionManager.hasShownLocationUpgradeAlert = true
+                    }
+            }
+
+            // Motion Settings Alert - appears after motion permission is denied
+            if permissionManager.showMotionSettingsAlert {
+                MotionSettingsAlert(isPresented: $permissionManager.showMotionSettingsAlert)
+            }
         }
         .onAppear {
+            // Refresh permission status first to catch any changes made in Settings
+            permissionManager.refreshPermissionStatus()
+            
             // Initialize selected pause duration from AppManager
             if appManager.pauseDuration > 0 {
                 if let index = pauseDurations.firstIndex(of: appManager.pauseDuration) {

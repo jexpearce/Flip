@@ -498,7 +498,7 @@ struct UserProfileSheet: View {
         print("Loading user profile for ID: \(userId)")
         isLoading = true
         
-        FirebaseManager.shared.db.collection("users").document(userId).getDocument { snapshot, error in
+        FirebaseManager.shared.db.collection("users").document(userId).getDocument(source: .default) { snapshot, error in
             if let error = error {
                 print("Error loading user: \(error.localizedDescription)")
                 DispatchQueue.main.async {
@@ -654,7 +654,7 @@ struct ProfileImage: View {
         }
         
         // Otherwise, fetch it from Firestore
-        FirebaseManager.shared.db.collection("users").document(userId).getDocument { snapshot, error in
+        FirebaseManager.shared.db.collection("users").document(userId).getDocument(source: .default) { snapshot, error in
         
             if let data = snapshot?.data(), let profileURL = data["profileImageURL"] as? String, !profileURL.isEmpty {
                 DispatchQueue.main.async {
@@ -693,7 +693,7 @@ struct ProfileImage: View {
         let maxRetries = 2
         
         func attemptFetch() {
-            FirebaseManager.shared.db.collection("users").document(userId).getDocument { snapshot, error in
+            FirebaseManager.shared.db.collection("users").document(userId).getDocument(source: .default) { snapshot, error in
                 
                 if let error = error {
                     print("❌ Error loading user data (attempt \(retryCount+1)): \(error.localizedDescription)")
@@ -903,7 +903,7 @@ class RegionalLeaderboardViewModel: ObservableObject {
         db.collection("session_locations")
             .whereField("lastFlipWasSuccessful", isEqualTo: true)
             .whereField("sessionStartTime", isGreaterThan: Timestamp(date: weekStart))
-            .getDocuments { [weak self] snapshot, error in
+            .getDocuments(source: .default) { [weak self] snapshot, error in
                 guard let self = self else { return }
                 
                 if let error = error {
@@ -1020,22 +1020,33 @@ class RegionalLeaderboardViewModel: ObservableObject {
                     // Convert aggregated data to leaderboard entries
                     self.fetchUserScoresAndStreaks(Array(userIdsToFetch)) { scoresMap, streaksMap in
                         // Convert aggregated data to leaderboard entries with scores
-                        let entries = userWeeklyData.values.map { userData in
-                            LeaderboardEntry(
+                        var entries: [RegionalLeaderboardEntry] = []
+                        
+                        for userData in userWeeklyData.values {
+                            // Create the entry with all required fields
+                            let entry = RegionalLeaderboardEntry(
                                 id: userData.userId,
+                                userId: userData.userId,
                                 username: userData.username,
-                                totalTime: 0, // We'll keep this field but don't use it
-                                sessionCount: userData.sessionCount,
-                                // Add score and streak data if available
+                                totalWeeklyTime: 0, // We don't use this field anymore
                                 score: scoresMap[userData.userId],
-                                streakStatus: streaksMap[userData.userId] ?? .none
+                                streakStatus: streaksMap[userData.userId] ?? .none,
+                                sessionCount: userData.sessionCount,
+                                distance: userData.distance,
+                                isFriend: userData.isFriend,
+                                isCurrentUser: userData.isCurrentUser
                             )
-                        // IMPORTANT: Sort by session count instead of time
-                        }.sorted { $0.sessionCount > $1.sessionCount }
+                            entries.append(entry)
+                        }
+                        
+                        // Sort entries by session count (manually instead of using sorted with a closure)
+                        entries.sort { entry1, entry2 in
+                            return entry1.sessionCount > entry2.sessionCount
+                        }
                         
                         // Take top 10 for display
                         DispatchQueue.main.async {
-                            self.leaderboardEntries = entries.prefix(10).map { $0 }
+                            self.leaderboardEntries = Array(entries.prefix(10))
                             self.isLoading = false
                         }
                     }
@@ -1053,7 +1064,7 @@ class RegionalLeaderboardViewModel: ObservableObject {
                 dispatchGroup.enter()
                 
                 // Get user score
-                db.collection("users").document(userId).getDocument { document, error in
+                db.collection("users").document(userId).getDocument(source: .default) { document, error in
                     defer { dispatchGroup.leave() }
                     
                     if let data = document?.data() {
@@ -1148,7 +1159,7 @@ class RegionalLeaderboardViewModel: ObservableObject {
         for userId in userIds {
             dispatchGroup.enter()
             
-            db.collection("users").document(userId).getDocument { [weak self] document, error in
+            db.collection("users").document(userId).getDocument(source: .default) { [weak self] document, error in
                 defer { dispatchGroup.leave() }
                 
                 // Try to get username from document
@@ -1195,7 +1206,7 @@ class RegionalLeaderboardViewModel: ObservableObject {
                 .whereField("username", isEqualTo: "User") // Only update if username is empty/generic
                 .whereField("sessionStartTime", isGreaterThan: Timestamp(date: oneMonthAgo))
                 .limit(to: 20) // Limit the updates to avoid excessive writes
-                .getDocuments { snapshot, error in
+                .getDocuments(source: .default) { snapshot, error in
                     if let error = error {
                         print("❌ Error finding sessions to update: \(error.localizedDescription)")
                         return
