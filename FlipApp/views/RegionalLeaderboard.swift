@@ -249,7 +249,19 @@ struct RegionalLeaderboard: View {
                                 }
                                 
                                 // NEW: Rank circle if score is available
-                                if let score = entry.score {
+                                if entry.isAnonymous {
+                                    // Show question mark for anonymous users
+                                    ZStack {
+                                        Circle()
+                                            .fill(Color.gray.opacity(0.3))
+                                            .frame(width: 26, height: 26)
+                                        
+                                        Text("?")
+                                            .font(.system(size: 16, weight: .bold))
+                                            .foregroundColor(.white)
+                                    }
+                                } else if let score = entry.score {
+                                    // Show normal rank for non-anonymous users
                                     RankCircle(score: score, size: 26, showStreakIndicator: false)
                                 }
                                 

@@ -86,13 +86,6 @@ struct AuthView: View {
                                     value: isFlipAnimating
                                 )
                             
-                            // Japanese/English subtitle
-                            VStack(spacing: 4) {
-                                Text(isSignUp ? "アカウントを作成" : "おかえりなさい")
-                                    .font(.system(size: 14))
-                                    .tracking(4)
-                                    .foregroundColor(.white.opacity(0.7))
-                                
                                 Text(isSignUp ? "Create Account" : "Welcome Back")
                                     .font(.system(size: 24, weight: .bold))
                                     .foregroundColor(.white)

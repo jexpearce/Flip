@@ -70,12 +70,13 @@ struct ProfileAvatarView: View {
 }
 
 // Enhanced profile avatar with streak effects
-struct ProfileAvatarWithStreak: View {
+struct EnhancedProfileAvatarWithStreak: View {
     let imageURL: String?
     let size: CGFloat
     let username: String
     let streakStatus: StreakStatus
     @State private var isAnimating = false
+    @State private var pulseEffect = false
     
     init(imageURL: String?, size: CGFloat = 80, username: String = "", streakStatus: StreakStatus = .none) {
         self.imageURL = imageURL
@@ -86,16 +87,16 @@ struct ProfileAvatarWithStreak: View {
     
     var body: some View {
         ZStack {
-            // Use your existing ProfileAvatarView component
+            // Base profile avatar
             ProfileAvatarView(
                 imageURL: imageURL,
                 size: size,
                 username: username
             )
             
-            // Add streak effect if applicable
+            // Enhanced streak effect if applicable
             if streakStatus != .none {
-                // Animated glowing ring
+                // Outer glow effect
                 Circle()
                     .stroke(
                         streakStatus == .redFlame ?
@@ -103,45 +104,167 @@ struct ProfileAvatarWithStreak: View {
                                 colors: [
                                     Color.red.opacity(0.9),
                                     Color.red.opacity(0.7),
-                                    Color.red.opacity(0.4)
+                                    Color.red.opacity(0.5),
+                                    Color.red.opacity(0.3)
                                 ],
-                                startPoint: .topLeading,
-                                endPoint: .bottomTrailing
+                                startPoint: .top,
+                                endPoint: .bottom
                             ) :
                             LinearGradient(
                                 colors: [
                                     Color.orange.opacity(0.9),
                                     Color.orange.opacity(0.7),
-                                    Color.orange.opacity(0.4)
+                                    Color.orange.opacity(0.5),
+                                    Color.orange.opacity(0.3)
                                 ],
-                                startPoint: .topLeading,
-                                endPoint: .bottomTrailing
+                                startPoint: .top,
+                                endPoint: .bottom
                             ),
-                        lineWidth: size * 0.08
+                        lineWidth: size * 0.1
                     )
-                    .scaleEffect(isAnimating ? 1.05 : 0.95)
-                    .animation(Animation.easeInOut(duration: 1.5).repeatForever(autoreverses: true), value: isAnimating)
-                    .shadow(color: streakStatus == .redFlame ? Color.red.opacity(0.7) : Color.orange.opacity(0.7), radius: 6)
+                    .scaleEffect(isAnimating ? 1.1 : 0.95)
+                    .animation(Animation.easeInOut(duration: 1.3).repeatForever(autoreverses: true), value: isAnimating)
                 
-                // Flame indicator
+                // Second pulse ring for more dramatic effect
+                Circle()
+                    .stroke(
+                        streakStatus == .redFlame ?
+                            LinearGradient(
+                                colors: [
+                                    Color.red.opacity(0.7),
+                                    Color.orange.opacity(0.5),
+                                    Color.yellow.opacity(0.3)
+                                ],
+                                startPoint: .top,
+                                endPoint: .bottom
+                            ) :
+                            LinearGradient(
+                                colors: [
+                                    Color.orange.opacity(0.7),
+                                    Color.yellow.opacity(0.5),
+                                    Color.orange.opacity(0.3)
+                                ],
+                                startPoint: .top,
+                                endPoint: .bottom
+                            ),
+                        lineWidth: size * 0.05
+                    )
+                    .scaleEffect(pulseEffect ? 1.15 : 1.0)
+                    .animation(Animation.easeInOut(duration: 1.7).repeatForever(autoreverses: true), value: pulseEffect)
+                
+                // Fire emblems around the circle (for raging fire effect)
+                ForEach(0..<6) { index in
+                    let angle = Double(index) * (360.0 / 6.0)
+                    FireEmblems(
+                        size: size * 0.2,
+                        color: streakStatus == .redFlame ? .red : .orange,
+                        angle: angle,
+                        distance: size * 0.65,
+                        delay: Double(index) * 0.1
+                    )
+                }
+                
+                // Main flame indicator badge
                 ZStack {
                     Circle()
-                        .fill(streakStatus == .redFlame ? Color.red : Color.orange)
-                        .frame(width: size * 0.25, height: size * 0.25)
+                        .fill(
+                            streakStatus == .redFlame ?
+                                RadialGradient(
+                                    gradient: Gradient(colors: [Color.red, Color.red.opacity(0.7)]),
+                                    center: .center,
+                                    startRadius: 0,
+                                    endRadius: size * 0.2
+                                ) :
+                                RadialGradient(
+                                    gradient: Gradient(colors: [Color.orange, Color.orange.opacity(0.7)]),
+                                    center: .center,
+                                    startRadius: 0,
+                                    endRadius: size * 0.2
+                                )
+                        )
+                        .frame(width: size * 0.3, height: size * 0.3)
+                        .shadow(
+                            color: streakStatus == .redFlame ? Color.red.opacity(0.7) : Color.orange.opacity(0.7),
+                            radius: 6
+                        )
                     
                     Image(systemName: "flame.fill")
-                        .font(.system(size: size * 0.15))
-                        .foregroundColor(.white)
+                        .font(.system(size: size * 0.18, weight: .bold))
+                        .foregroundStyle(
+                            streakStatus == .redFlame ?
+                                LinearGradient(
+                                    colors: [Color.white, Color.yellow.opacity(0.8)],
+                                    startPoint: .top,
+                                    endPoint: .bottom
+                                ) :
+                                LinearGradient(
+                                    colors: [Color.white, Color.yellow.opacity(0.8)],
+                                    startPoint: .top,
+                                    endPoint: .bottom
+                                )
+                        )
+                        .shadow(color: Color.black.opacity(0.3), radius: 1)
+                        .offset(y: isAnimating ? -1 : 1)
+                        .animation(Animation.easeInOut(duration: 0.6).repeatForever(autoreverses: true), value: isAnimating)
                 }
-                .shadow(color: streakStatus == .redFlame ? Color.red.opacity(0.7) : Color.orange.opacity(0.7), radius: 4)
-                .position(x: size * 0.8, y: size * 0.2)
+                .position(x: size * 0.8, y: size * 0.15)
             }
         }
         .onAppear {
             if streakStatus != .none {
-                isAnimating = true
+                withAnimation {
+                    isAnimating = true
+                    
+                    // Slight delay for second animation to create more dynamic effect
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                        pulseEffect = true
+                    }
+                }
             }
         }
+    }
+}
+
+// Helper view for fire emblems around the streak circle
+struct FireEmblems: View {
+    let size: CGFloat
+    let color: Color
+    let angle: Double
+    let distance: CGFloat
+    let delay: Double
+    
+    @State private var isAnimating = false
+    
+    var body: some View {
+        Image(systemName: "flame.fill")
+            .font(.system(size: size, weight: .bold))
+            .foregroundStyle(
+                LinearGradient(
+                    colors: [
+                        color,
+                        color == .red ? Color.orange : Color.yellow
+                    ],
+                    startPoint: .top,
+                    endPoint: .bottom
+                )
+            )
+            .shadow(color: color.opacity(0.6), radius: 3)
+            .scaleEffect(isAnimating ? 1.0 + Double.random(in: 0.1...0.25) : 0.8)
+            .offset(
+                x: cos(angle * .pi / 180) * distance,
+                y: sin(angle * .pi / 180) * distance
+            )
+            .animation(
+                Animation.easeInOut(duration: 0.8 + Double.random(in: 0...0.4))
+                    .repeatForever(autoreverses: true)
+                    .delay(delay),
+                value: isAnimating
+            )
+            .onAppear {
+                DispatchQueue.main.asyncAfter(deadline: .now() + delay) {
+                    isAnimating = true
+                }
+            }
     }
 }
 

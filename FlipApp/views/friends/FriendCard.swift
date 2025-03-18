@@ -4,6 +4,8 @@ import FirebaseAuth
 import FirebaseCore
 
 
+
+
 struct EnhancedFriendCard: View {
     let friend: FirebaseManager.FlipUser
     @State private var isPressed = false
@@ -26,7 +28,8 @@ struct EnhancedFriendCard: View {
     }
     
     private var canJoin: Bool {
-        return liveSession?.canJoin ?? false
+        return false // Disabled joining by setting canJoin to always return false
+        // Original code: return liveSession?.canJoin ?? false
     }
     
     // Computed real-time elapsed time string
@@ -154,10 +157,11 @@ struct EnhancedFriendCard: View {
                 if isLive {
                     // Show join button or full indicator
                     if canJoin {
-                        // We'll render this from the parent view
+                        // We'll render this from the parent view - but this will be unreachable now
                         Spacer().frame(width: 90, height: 36)
-                    } else if isFull {
-                        Text("FULL")
+                    } else {
+                        // Modified to always show disabled state instead of FULL
+                        Text("DISABLED")
                             .font(.system(size: 14, weight: .bold))
                             .tracking(1)
                             .foregroundColor(.gray)
@@ -329,6 +333,7 @@ struct EnhancedFriendCard: View {
                 }
             }
     }
+    
     
     // NEW: Helper to get dynamic card border gradient based on state
     private func getCardBorderGradient() -> LinearGradient {

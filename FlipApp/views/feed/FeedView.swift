@@ -103,15 +103,17 @@ struct FeedView: View {
                 }
                 
                 ScrollView {
-                    VStack(spacing: 25) {
+                    VStack(spacing: 35) {
                         // Enhanced Header with better typography and glow
-                        VStack(spacing: 4) {
+                        VStack(spacing: 8) {
                             Text("FEED")
                                 .font(.system(size: 36, weight: .black))
                                 .tracking(8)
                                 .foregroundColor(.white)
                                 .shadow(color: Color(red: 34/255, green: 197/255, blue: 94/255).opacity(0.7), radius: 15)
-                                .padding(.top, 20)
+                                .padding(.top, 40)
+                            Spacer()
+                                .frame(height: 24) 
                             
                             if viewModel.isLoading {
                                 // Enhanced loading indicator with glass effect
@@ -199,7 +201,8 @@ struct FeedView: View {
                                         session: session,
                                         viewModel: viewModel
                                     )
-                                    .transition(.opacity)  // Proper indentation to match closing brace
+                                    .transition(.opacity)
+                                    .padding(.bottom, 16)
                                 }
                             }
                         }
@@ -226,6 +229,7 @@ struct FeedView: View {
                 } message: {
                     Text(viewModel.errorMessage)
                 }
+                .padding(.top, 20) // Add padding above the ScrollView
             }
             .navigationViewStyle(StackNavigationViewStyle())
         }
@@ -578,13 +582,13 @@ struct FeedView: View {
             .padding(.horizontal, 16)
             .background(
                 ZStack {
-                    RoundedRectangle(cornerRadius: 15)
+                    RoundedRectangle(cornerRadius: 20)
                         .fill(
                             session.wasSuccessful ?
                             LinearGradient(
                                 colors: [
-                                    Color(red: 26/255, green: 32/255, blue: 58/255).opacity(0.9),
-                                    Color(red: 17/255, green: 54/255, blue: 71/255).opacity(0.8)
+                                    Color(red: 26/255, green: 32/255, blue: 58/255).opacity(0.6),
+                                    Color(red: 17/255, green: 54/255, blue: 71/255).opacity(0.5)
                                 ],
                                 startPoint: .topLeading,
                                 endPoint: .bottomTrailing

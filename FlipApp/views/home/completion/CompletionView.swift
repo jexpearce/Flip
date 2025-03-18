@@ -25,9 +25,9 @@ struct CompletionView: View {
     
     var body: some View {
         ScrollView {
-            VStack(spacing: 30) {
+            VStack(spacing: 20) {
                 // Success content
-                VStack(spacing: 25) {
+                VStack(spacing: 18) {
                     // Success Icon with animation
                     ZStack {
                         Circle()
@@ -298,7 +298,7 @@ struct CompletionView: View {
                 .opacity(showButton ? 1 : 0)
             }
             .padding(.horizontal, 25)
-            .padding(.vertical, 40)
+            .padding(.vertical, 30)
         }
         // Make the screen scrollable only when keyboard is shown
         .offset(y: keyboardOffset)

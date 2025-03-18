@@ -78,7 +78,7 @@ struct RegionalPrivacySheet: View {
                     // Opt Out Toggle
                     VStack(alignment: .leading, spacing: 10) {
                         HStack {
-                            Text("Regional Leaderboard")
+                            Text("Visibility Control")
                                 .font(.system(size: 18, weight: .bold))
                                 .foregroundColor(.white)
                             

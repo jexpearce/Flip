@@ -26,9 +26,9 @@ struct FailureView: View {
     
     var body: some View {
         ScrollView {
-            VStack(spacing: 30) {
+            VStack(spacing: 20) {
                 // Failure content
-                VStack(spacing: 25) {
+                VStack(spacing: 18) {
                     // Failure Icon with enhanced styling
                     ZStack {
                         Circle()
@@ -84,7 +84,7 @@ struct FailureView: View {
                         .opacity(showTitle ? 1 : 0)
                     
                     // Stats card
-                    VStack(spacing: 15) {
+                    VStack(spacing: 12) {
                         Text(isFirstSession ?
                              "Your phone was moved during your first session" :
                              "Your phone was moved during the session")
@@ -427,7 +427,7 @@ struct FailureView: View {
                 .opacity(showActions ? 1 : 0)
             }
             .padding(.horizontal, 25)
-            .padding(.vertical, 40)
+            .padding(.vertical, 30)
         }
         // Make the screen scrollable when keyboard is shown
         .offset(y: keyboardOffset)

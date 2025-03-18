@@ -37,22 +37,24 @@ struct FeedSessionCard: View {
         if session.wasSuccessful {
             return LinearGradient(
                 colors: [
-                    Color(red: 17/255, green: 48/255, blue: 66/255).opacity(0.9),  // Moved this color up
-                    Color(red: 15/255, green: 35/255, blue: 55/255).opacity(0.95),
-                    Color(red: 25/255, green: 52/255, blue: 65/255).opacity(0.85)
+                    // Move lighter color to be only in the top third of the card
+                    Color(red: 25/255, green: 52/255, blue: 65/255).opacity(0.85), // Lighter color
+                    Color(red: 17/255, green: 48/255, blue: 66/255).opacity(0.9),
+                    Color(red: 15/255, green: 35/255, blue: 55/255).opacity(0.95)  // Darker colors
                 ],
-                startPoint: .topLeading,
-                endPoint: .bottomTrailing
+                startPoint: .top, // Change from .topLeading to .top
+                endPoint: .bottom // Change from .bottomTrailing to .bottom to create a more vertical gradient
             )
         } else {
             return LinearGradient(
                 colors: [
-                    Color(red: 45/255, green: 28/255, blue: 58/255).opacity(0.9),  // Moved this color up
-                    Color(red: 55/255, green: 30/255, blue: 50/255).opacity(0.95),
-                    Color(red: 35/255, green: 24/255, blue: 55/255).opacity(0.85)
+                    // Move lighter color to be only in the top third of the card
+                    Color(red: 55/255, green: 30/255, blue: 50/255).opacity(0.95), // Lighter color
+                    Color(red: 45/255, green: 28/255, blue: 58/255).opacity(0.9),
+                    Color(red: 35/255, green: 24/255, blue: 55/255).opacity(0.85)  // Darker colors
                 ],
-                startPoint: .topLeading,
-                endPoint: .bottomTrailing
+                startPoint: .top, // Change from .topLeading to .top
+                endPoint: .bottom // Change from .bottomTrailing to .bottom to create a more vertical gradient
             )
         }
     }
@@ -114,9 +116,11 @@ struct FeedSessionCard: View {
         if session.wasSuccessful {
             return "Completed \(session.duration) min session"
         } else {
+            // Use actualDuration which will be different from duration when failed
             return "Attempted \(session.duration) min session"
         }
     }
+
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
@@ -129,7 +133,7 @@ struct FeedSessionCard: View {
                         NavigationLink(destination: UserProfileView(user: viewModel.getUser(for: session.userId))) {
                             ZStack {
                                 // Layered avatar with glow effect
-                                ProfileAvatarWithStreak(
+                                EnhancedProfileAvatarWithStreak(
                                     imageURL: userProfileImageURL,
                                     size: 46,
                                     username: session.username,
@@ -207,21 +211,22 @@ struct FeedSessionCard: View {
                 
                 // Session info section - UPDATED TEXT LOGIC HERE
                 HStack {
-                    // Using the session status text computed property
-                    Text(sessionStatusText)
-                        .font(.system(size: 18, weight: .bold))
-                        .foregroundColor(.white)
-                        .shadow(color: statusGlow.opacity(0.5), radius: 4)
-                    
+                                    // Using the session status text computed property
+                                    Text(sessionStatusText)
+                                        .font(.system(size: 18, weight: .bold))
+                                        .foregroundColor(.white)
+                                        .shadow(color: statusGlow.opacity(0.5), radius: 4)
+                                    
                     if !session.wasSuccessful {
                         Text("• Lasted \(session.actualDuration) min")
                             .font(.system(size: 14))
                             .foregroundColor(.white.opacity(0.8))
                     }
                     
-                    Spacer()
-                }
-                .padding(.vertical, 6)
+                                    
+                                    Spacer()
+                                }
+                                .padding(.vertical, 6)
                 
                 // Content sections - Enhanced with better styling
                 if hasContent {
@@ -427,6 +432,17 @@ struct FeedSessionCard: View {
                 // Base gradient background
                 RoundedRectangle(cornerRadius: 20)
                     .fill(cardGradient)
+                LinearGradient(
+                            colors: [
+                                Color.white.opacity(0.1),  // More visible at top
+                                Color.white.opacity(0.0)   // Fades to invisible at 1/3 down
+                            ],
+                            startPoint: .top,
+                            endPoint: UnitPoint(x: 0.5, y: 0.2) // End at 30% down the card
+                        )
+                        .mask(
+                            RoundedRectangle(cornerRadius: 20)
+                        )
                 
                 // Subtle glass effect overlay
                 RoundedRectangle(cornerRadius: 20)

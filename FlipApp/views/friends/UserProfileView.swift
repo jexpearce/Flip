@@ -63,18 +63,27 @@ struct UserProfileView: View {
     
     var body: some View {
         ZStack {
-            // Main background with decorative elements - always show this
-            ProfileBackgroundView(
+            // Enhanced background with decorative elements
+            EnhancedProfileBackgroundView(
                 cyanBluePurpleGradient: cyanBluePurpleGradient,
                 cyanBlueAccent: cyanBlueAccent
             )
             
             if isLoading {
-                // Loading indicator overlay
-                VStack(spacing: 16) {
-                    ProgressView()
-                        .scaleEffect(1.5)
-                        .tint(cyanBlueAccent)
+                // Enhanced loading indicator overlay
+                VStack(spacing: 20) {
+                    ZStack {
+                        Circle()
+                            .stroke(cyanBlueAccent.opacity(0.2), lineWidth: 6)
+                            .frame(width: 60, height: 60)
+                        
+                        Circle()
+                            .trim(from: 0, to: 0.7)
+                            .stroke(cyanBlueAccent, lineWidth: 6)
+                            .frame(width: 60, height: 60)
+                            .rotationEffect(Angle(degrees: isLoading ? 360 : 0))
+                            .animation(Animation.linear(duration: 1).repeatForever(autoreverses: false), value: isLoading)
+                    }
                     
                     Text("Loading profile...")
                         .font(.system(size: 18, weight: .medium))
@@ -83,9 +92,9 @@ struct UserProfileView: View {
                 }
             } else {
                 // Main content after loading
-                ScrollView {
-                    VStack(spacing: 20) {
-                        // Profile Header
+                ScrollView(showsIndicators: false) {
+                    VStack(spacing: 22) {
+                        // Profile Header - using our improved version
                         ProfileHeaderView(
                             user: user,
                             userScore: userScore,
@@ -105,6 +114,7 @@ struct UserProfileView: View {
                                 isFriend: isFriend,
                                 hasSentFriendRequest: hasSentFriendRequest
                             )
+                            .padding(.horizontal)
                         }
                         
                         // Friends count button - leads to friends list
@@ -117,14 +127,14 @@ struct UserProfileView: View {
                         )
                         
                         // Stats Summary Card with button to detailed view
-                        StatsCardView(
+                        EnhancedStatsCardView(
                             user: user,
                             cyanBlueAccent: cyanBlueAccent,
                             showDetailedStats: $showDetailedStats
                         )
 
                         // Enhanced Longest Session Card - Weekly Stats
-                        WeeklyStatsView(
+                        EnhancedWeeklyStatsView(
                             user: user,
                             weeksLongestSession: weeksLongestSession,
                             cyanBlueAccent: cyanBlueAccent,
@@ -176,7 +186,7 @@ struct UserProfileView: View {
         }
     }
     
-    // New function to handle data loading
+    // Function to handle data loading
     private func loadInitialData() {
         // Start loading immediately
         Task {
@@ -286,7 +296,7 @@ struct UserProfileView: View {
         }
     }
     
-    // Function to cancel a friend request (using the mechanism from SearchManager)
+    // Function to cancel a friend request
     private func cancelFriendRequest(to userId: String) {
         guard let currentUserId = Auth.auth().currentUser?.uid else { return }
         
@@ -305,52 +315,80 @@ struct UserProfileView: View {
             ])
     }
 }
-
-// MARK: - Background View Component
-struct ProfileBackgroundView: View {
+struct EnhancedProfileBackgroundView: View {
     let cyanBluePurpleGradient: LinearGradient
     let cyanBlueAccent: Color
+    @State private var animateGlow = false
     
     var body: some View {
-        // Main background
-        cyanBluePurpleGradient
-            .edgesIgnoringSafeArea(.all)
-        
-        // Top decorative glow
-        Circle()
-            .fill(
-                RadialGradient(
-                    gradient: Gradient(colors: [
-                        cyanBlueAccent.opacity(0.2),
-                        cyanBlueAccent.opacity(0.05)
-                    ]),
-                    center: .center,
-                    startRadius: 10,
-                    endRadius: 300
+        ZStack {
+            // Main background
+            cyanBluePurpleGradient
+                .edgesIgnoringSafeArea(.all)
+            
+            // Animated top decorative glow
+            Circle()
+                .fill(
+                    RadialGradient(
+                        gradient: Gradient(colors: [
+                            cyanBlueAccent.opacity(0.3),
+                            cyanBlueAccent.opacity(0.05)
+                        ]),
+                        center: .center,
+                        startRadius: 10,
+                        endRadius: 300
+                    )
                 )
-            )
-            .frame(width: 300, height: 300)
-            .offset(x: 150, y: -150)
-            .blur(radius: 50)
-        
-        // Bottom decorative glow
-        Circle()
-            .fill(
-                RadialGradient(
-                    gradient: Gradient(colors: [
-                        cyanBlueAccent.opacity(0.15),
-                        cyanBlueAccent.opacity(0.03)
-                    ]),
-                    center: .center,
-                    startRadius: 5,
-                    endRadius: 200
+                .frame(width: 350, height: 350)
+                .offset(x: 150, y: -150)
+                .blur(radius: 40)
+                .opacity(animateGlow ? 0.8 : 0.6)
+                .animation(Animation.easeInOut(duration: 4).repeatForever(autoreverses: true), value: animateGlow)
+            
+            // Bottom decorative glow
+            Circle()
+                .fill(
+                    RadialGradient(
+                        gradient: Gradient(colors: [
+                            cyanBlueAccent.opacity(0.2),
+                            cyanBlueAccent.opacity(0.03)
+                        ]),
+                        center: .center,
+                        startRadius: 5,
+                        endRadius: 200
+                    )
                 )
-            )
-            .frame(width: 250, height: 250)
-            .offset(x: -120, y: 350)
-            .blur(radius: 40)
+                .frame(width: 300, height: 300)
+                .offset(x: -120, y: 350)
+                .blur(radius: 35)
+                .opacity(animateGlow ? 0.6 : 0.4)
+                .animation(Animation.easeInOut(duration: 3.5).repeatForever(autoreverses: true).delay(1), value: animateGlow)
+            
+            // Additional smaller accent glow
+            Circle()
+                .fill(
+                    RadialGradient(
+                        gradient: Gradient(colors: [
+                            cyanBlueAccent.opacity(0.15),
+                            cyanBlueAccent.opacity(0.01)
+                        ]),
+                        center: .center,
+                        startRadius: 5,
+                        endRadius: 150
+                    )
+                )
+                .frame(width: 200, height: 200)
+                .offset(x: 100, y: 200)
+                .blur(radius: 30)
+                .opacity(animateGlow ? 0.5 : 0.3)
+                .animation(Animation.easeInOut(duration: 5).repeatForever(autoreverses: true).delay(2), value: animateGlow)
+        }
+        .onAppear {
+            animateGlow = true
+        }
     }
 }
+
 struct ProfileHeaderView: View {
     let user: FirebaseManager.FlipUser
     let userScore: Double
@@ -393,140 +431,149 @@ struct ProfileHeaderView: View {
     }
     
     var body: some View {
-        HStack(alignment: .top, spacing: 15) {
-            // Profile Picture with Streak Indicator
-            ProfileAvatarWithStreak(
-                imageURL: user.profileImageURL,
-                size: 80,
-                username: user.username,
-                streakStatus: streakStatus
-            )
-            
-            VStack(alignment: .leading, spacing: 12) {
-                Text(user.username)
-                    .font(.system(size: 28, weight: .black))
-                    .foregroundColor(.white)
-                    .shadow(color: cyanBlueGlow, radius: 8)
+        VStack(alignment: .leading, spacing: 15) {
+            HStack(alignment: .top, spacing: 15) {
+                // Profile Picture with Streak Indicator
+                EnhancedProfileAvatarWithStreak(
+                    imageURL: user.profileImageURL,
+                    size: 80,
+                    username: user.username,
+                    streakStatus: streakStatus
+                )
                 
-                // Display rank name
-                let rank = getRank(for: userScore)
-                Text(rank.name)
-                    .font(.system(size: 18, weight: .bold))
-                    .foregroundColor(rank.color)
-                    .shadow(color: rank.color.opacity(0.5), radius: 4)
-                
-                // Display streak status if active
-                if streakStatus != .none {
-                    HStack(spacing: 8) {
-                        Image(systemName: "flame.fill")
-                            .font(.system(size: 16, weight: .bold))
-                            .foregroundColor(streakStatus == .redFlame ? .red : .orange)
-                            .shadow(color: streakStatus == .redFlame ? Color.red.opacity(0.6) : Color.orange.opacity(0.6), radius: 4)
-                        
-                        Text(streakStatus == .redFlame ? "BLAZING STREAK" : "ON FIRE")
-                            .font(.system(size: 14, weight: .bold))
-                            .foregroundColor(streakStatus == .redFlame ? .red : .orange)
-                            .shadow(color: streakStatus == .redFlame ? Color.red.opacity(0.4) : Color.orange.opacity(0.4), radius: 2)
-                    }
-                    .padding(.horizontal, 10)
-                    .padding(.vertical, 4)
-                    .background(
-                        RoundedRectangle(cornerRadius: 8)
-                            .fill(streakStatus == .redFlame ? Color.red.opacity(0.1) : Color.orange.opacity(0.1))
-                            .overlay(
-                                RoundedRectangle(cornerRadius: 8)
-                                    .stroke(streakStatus == .redFlame ? Color.red.opacity(0.2) : Color.orange.opacity(0.2), lineWidth: 1)
-                            )
-                    )
+                VStack(alignment: .leading, spacing: 8) {
+                    // Username with truncation handling
+                    Text(user.username)
+                        .font(.system(size: 28, weight: .black))
+                        .foregroundColor(.white)
+                        .shadow(color: cyanBlueGlow, radius: 8)
+                        .lineLimit(1)
+                        .truncationMode(.tail)
+                        .frame(maxWidth: 180, alignment: .leading)
+                    
+                    // Display rank name
+                    let rank = getRank(for: userScore)
+                    Text(rank.name)
+                        .font(.system(size: 18, weight: .bold))
+                        .foregroundColor(rank.color)
+                        .shadow(color: rank.color.opacity(0.5), radius: 4)
                 }
+                
+                Spacer()
+                
+                // Rank Circle
+                RankCircle(score: userScore)
+                    .frame(width: 60, height: 60)
             }
             
-            Spacer()
-            
-            // Rank Circle
-            RankCircle(score: userScore)
-                .frame(width: 60, height: 60)
+            // Display streak status if active - moved to its own row
+            if streakStatus != .none {
+                HStack(spacing: 8) {
+                    Image(systemName: "flame.fill")
+                        .font(.system(size: 16, weight: .bold))
+                        .foregroundColor(streakStatus == .redFlame ? .red : .orange)
+                        .shadow(color: streakStatus == .redFlame ? Color.red.opacity(0.6) : Color.orange.opacity(0.6), radius: 4)
+                    
+                    Text(streakStatus == .redFlame ? "BLAZING STREAK" : "ON FIRE")
+                        .font(.system(size: 14, weight: .bold))
+                        .foregroundColor(streakStatus == .redFlame ? .red : .orange)
+                        .shadow(color: streakStatus == .redFlame ? Color.red.opacity(0.4) : Color.orange.opacity(0.4), radius: 2)
+                }
+                .padding(.horizontal, 10)
+                .padding(.vertical, 5)
+                .background(
+                    RoundedRectangle(cornerRadius: 8)
+                        .fill(streakStatus == .redFlame ? Color.red.opacity(0.1) : Color.orange.opacity(0.1))
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 8)
+                                .stroke(streakStatus == .redFlame ? Color.red.opacity(0.2) : Color.orange.opacity(0.2), lineWidth: 1)
+                        )
+                )
+            }
             
             // Only show friend action buttons if this is not the current user's profile
             if !isCurrentUser {
-                if isFriend {
-                    // Remove friend button
-                    Button(action: {
-                        showRemoveFriendAlert = true
-                    }) {
-                        ZStack {
-                            Circle()
-                                .fill(Color.red.opacity(0.2))
-                                .frame(width: 44, height: 44)
-                            
-                            Image(systemName: "person.fill.badge.minus")
-                                .font(.system(size: 18))
-                                .foregroundColor(.white.opacity(0.9))
+                HStack {
+                    Spacer()
+                    if isFriend {
+                        // Remove friend button
+                        Button(action: {
+                            showRemoveFriendAlert = true
+                        }) {
+                            ZStack {
+                                Circle()
+                                    .fill(Color.red.opacity(0.2))
+                                    .frame(width: 44, height: 44)
+                                
+                                Image(systemName: "person.fill.badge.minus")
+                                    .font(.system(size: 18))
+                                    .foregroundColor(.white.opacity(0.9))
+                            }
+                            .overlay(
+                                Circle()
+                                    .stroke(Color.white.opacity(0.3), lineWidth: 1)
+                            )
+                            .shadow(color: Color.red.opacity(0.3), radius: 4)
                         }
-                        .overlay(
-                            Circle()
-                                .stroke(Color.white.opacity(0.3), lineWidth: 1)
-                        )
-                        .shadow(color: Color.red.opacity(0.3), radius: 4)
-                    }
-                } else if hasSentFriendRequest {
-                    // Pending request indicator
-                    Button(action: {
-                        showCancelRequestAlert = true
-                    }) {
-                        ZStack {
-                            Circle()
-                                .fill(Color.orange.opacity(0.2))
-                                .frame(width: 44, height: 44)
-                            
-                            Image(systemName: "clock.fill")
-                                .font(.system(size: 18))
-                                .foregroundColor(.white.opacity(0.9))
+                    } else if hasSentFriendRequest {
+                        // Pending request indicator
+                        Button(action: {
+                            showCancelRequestAlert = true
+                        }) {
+                            ZStack {
+                                Circle()
+                                    .fill(Color.orange.opacity(0.2))
+                                    .frame(width: 44, height: 44)
+                                
+                                Image(systemName: "clock.fill")
+                                    .font(.system(size: 18))
+                                    .foregroundColor(.white.opacity(0.9))
+                            }
+                            .overlay(
+                                Circle()
+                                    .stroke(Color.white.opacity(0.3), lineWidth: 1)
+                            )
+                            .shadow(color: Color.orange.opacity(0.3), radius: 4)
                         }
-                        .overlay(
-                            Circle()
-                                .stroke(Color.white.opacity(0.3), lineWidth: 1)
-                        )
-                        .shadow(color: Color.orange.opacity(0.3), radius: 4)
-                    }
-                } else {
-                    // Add friend button
-                    Button(action: {
-                        showAddFriendConfirmation = true
-                    }) {
-                        ZStack {
-                            Circle()
-                                .fill(
-                                    LinearGradient(
-                                        colors: [
-                                            cyanBlueAccent.opacity(0.7),
-                                            cyanBlueAccent.opacity(0.4)
-                                        ],
-                                        startPoint: .topLeading,
-                                        endPoint: .bottomTrailing
+                    } else {
+                        // Add friend button
+                        Button(action: {
+                            showAddFriendConfirmation = true
+                        }) {
+                            ZStack {
+                                Circle()
+                                    .fill(
+                                        LinearGradient(
+                                            colors: [
+                                                cyanBlueAccent.opacity(0.7),
+                                                cyanBlueAccent.opacity(0.4)
+                                            ],
+                                            startPoint: .topLeading,
+                                            endPoint: .bottomTrailing
+                                        )
                                     )
-                                )
-                                .frame(width: 44, height: 44)
-                            
-                            Image(systemName: "person.fill.badge.plus")
-                                .font(.system(size: 18))
-                                .foregroundColor(.white)
+                                    .frame(width: 44, height: 44)
+                                
+                                Image(systemName: "person.fill.badge.plus")
+                                    .font(.system(size: 18))
+                                    .foregroundColor(.white)
+                            }
+                            .overlay(
+                                Circle()
+                                    .stroke(
+                                        LinearGradient(
+                                            colors: [
+                                                Color.white.opacity(0.6),
+                                                Color.white.opacity(0.2)
+                                            ],
+                                            startPoint: .topLeading,
+                                            endPoint: .bottomTrailing
+                                        ),
+                                        lineWidth: 1
+                                    )
+                            )
+                            .shadow(color: cyanBlueGlow, radius: 4)
                         }
-                        .overlay(
-                            Circle()
-                                .stroke(
-                                    LinearGradient(
-                                        colors: [
-                                            Color.white.opacity(0.6),
-                                            Color.white.opacity(0.2)
-                                        ],
-                                        startPoint: .topLeading,
-                                        endPoint: .bottomTrailing
-                                    ),
-                                    lineWidth: 1
-                                )
-                        )
-                        .shadow(color: cyanBlueGlow, radius: 4)
                     }
                 }
             }
@@ -555,7 +602,6 @@ struct ProfileHeaderView: View {
             }
     }
 }
-
 
 // MARK: - Friend Status Badge Component
 struct FriendStatusBadgeView: View {
@@ -657,22 +703,24 @@ struct FriendsCountButton: View {
 }
 
 // MARK: - Stats Card Component
-struct StatsCardView: View {
+struct EnhancedStatsCardView: View {
     let user: FirebaseManager.FlipUser
     let cyanBlueAccent: Color
     @Binding var showDetailedStats: Bool
+    @State private var animatePulse = false
     
     var body: some View {
         VStack(spacing: 15) {
             // Quick Stats overview
             HStack(spacing: 30) {
-                StatBox(
+                EnhancedStatBox(
                     title: "SESSIONS",
                     value: "\(user.totalSessions)",
                     icon: "timer",
                     accentColor: cyanBlueAccent
                 )
-                StatBox(
+                
+                EnhancedStatBox(
                     title: "FOCUS TIME",
                     value: "\(user.totalFocusTime)m",
                     icon: "clock.fill",
@@ -685,39 +733,58 @@ struct StatsCardView: View {
             Button(action: {
                 showDetailedStats = true
             }) {
-                Text("VIEW DETAILED STATS")
-                    .font(.system(size: 14, weight: .bold))
-                    .tracking(1)
-                    .foregroundColor(.white.opacity(0.9))
-                    .padding(.vertical, 8)
-                    .frame(maxWidth: .infinity)
-                    .background(
-                        ZStack {
-                            RoundedRectangle(cornerRadius: 10)
-                                .fill(
-                                    LinearGradient(
-                                        colors: [
-                                            cyanBlueAccent.opacity(0.3),
-                                            cyanBlueAccent.opacity(0.1)
-                                        ],
-                                        startPoint: .topLeading,
-                                        endPoint: .bottomTrailing
-                                    )
+                HStack {
+                    Text("VIEW DETAILED STATS")
+                        .font(.system(size: 15, weight: .bold))
+                        .tracking(1)
+                        .foregroundColor(.white)
+                    
+                    Image(systemName: "chevron.right")
+                        .font(.system(size: 14, weight: .semibold))
+                        .foregroundColor(.white.opacity(0.7))
+                        .padding(.leading, 4)
+                        .offset(x: animatePulse ? 4 : 0)
+                        .animation(Animation.easeInOut(duration: 1.3).repeatForever(autoreverses: true), value: animatePulse)
+                }
+                .padding(.vertical, 9)
+                .frame(maxWidth: .infinity)
+                .background(
+                    ZStack {
+                        RoundedRectangle(cornerRadius: 12)
+                            .fill(
+                                LinearGradient(
+                                    colors: [
+                                        cyanBlueAccent.opacity(0.4),
+                                        cyanBlueAccent.opacity(0.2)
+                                    ],
+                                    startPoint: .topLeading,
+                                    endPoint: .bottomTrailing
                                 )
-                            
-                            RoundedRectangle(cornerRadius: 10)
-                                .fill(Color.white.opacity(0.1))
-                            
-                            RoundedRectangle(cornerRadius: 10)
-                                .stroke(Color.white.opacity(0.2), lineWidth: 1)
-                        }
-                    )
+                            )
+                        
+                        RoundedRectangle(cornerRadius: 12)
+                            .fill(Color.white.opacity(0.1))
+                        
+                        RoundedRectangle(cornerRadius: 12)
+                            .stroke(
+                                LinearGradient(
+                                    colors: [
+                                        Color.white.opacity(0.5),
+                                        Color.white.opacity(0.2)
+                                    ],
+                                    startPoint: .topLeading,
+                                    endPoint: .bottomTrailing
+                                ),
+                                lineWidth: 1
+                            )
+                    }
+                )
             }
         }
-        .padding()
+        .padding(18)
         .background(
             ZStack {
-                RoundedRectangle(cornerRadius: 15)
+                RoundedRectangle(cornerRadius: 18)
                     .fill(
                         LinearGradient(
                             colors: [
@@ -729,103 +796,136 @@ struct StatsCardView: View {
                         )
                     )
                 
-                RoundedRectangle(cornerRadius: 15)
+                RoundedRectangle(cornerRadius: 18)
                     .fill(Color.white.opacity(0.05))
                 
-                RoundedRectangle(cornerRadius: 15)
+                RoundedRectangle(cornerRadius: 18)
                     .stroke(
                         LinearGradient(
                             colors: [
-                                Color.white.opacity(0.5),
+                                Color.white.opacity(0.6),
                                 Color.white.opacity(0.1)
                             ],
                             startPoint: .topLeading,
                             endPoint: .bottomTrailing
                         ),
-                        lineWidth: 1
+                        lineWidth: 1.5
                     )
             }
         )
-        .shadow(color: Color.black.opacity(0.2), radius: 4, x: 0, y: 2)
+        .shadow(color: Color.black.opacity(0.2), radius: 8, x: 0, y: 4)
         .padding(.horizontal)
+        .onAppear {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
+                animatePulse = true
+            }
+        }
     }
 }
 
-// MARK: - Weekly Stats Component
-struct WeeklyStatsView: View {
+struct EnhancedWeeklyStatsView: View {
     let user: FirebaseManager.FlipUser
     let weeksLongestSession: Int?
     let cyanBlueAccent: Color
     let cyanBlueGlow: Color
+    @State private var animate = false
     
     var body: some View {
         HStack {
-            VStack(alignment: .leading, spacing: 6) {
+            VStack(alignment: .leading, spacing: 8) {
                 HStack(alignment: .center, spacing: 8) {
-                    Text("\(user.username)'s LONGEST FLIP OF THE WEEK")
-                        .font(.system(size: 12, weight: .black))
-                        .tracking(3)
+                    Text("\(user.username)'s LONGEST FLIP")
+                        .font(.system(size: 14, weight: .black))
+                        .tracking(2)
                         .foregroundColor(.white)
                     
+                    Text("THIS WEEK")
+                        .font(.system(size: 12, weight: .bold))
+                        .tracking(1)
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 3)
+                        .background(
+                            RoundedRectangle(cornerRadius: 6)
+                                .fill(cyanBlueAccent.opacity(0.3))
+                        )
+                        .foregroundColor(.white.opacity(0.9))
+                    
                     Image(systemName: "crown.fill")
-                        .font(.system(size: 12))
+                        .font(.system(size: 14))
                         .foregroundStyle(
                             LinearGradient(
                                 colors: [
-                                    cyanBlueAccent,
-                                    Color(red: 125/255, green: 211/255, blue: 252/255)
+                                    Color.yellow,
+                                    Color.orange
                                 ],
                                 startPoint: .top,
                                 endPoint: .bottom
                             )
                         )
-                        .shadow(color: cyanBlueGlow, radius: 4)
+                        .shadow(color: Color.orange.opacity(0.7), radius: 4)
+                        .rotationEffect(Angle(degrees: animate ? 5 : -5))
+                        .animation(Animation.easeInOut(duration: 1.3).repeatForever(autoreverses: true), value: animate)
                 }
 
                 Text(weeksLongestSession != nil ? "\(weeksLongestSession!) min" : "No sessions yet this week")
-                    .font(.system(size: 22, weight: .black))
+                    .font(.system(size: 32, weight: .black))
                     .foregroundColor(.white)
                     .shadow(color: cyanBlueGlow, radius: 8)
+                    .opacity(animate ? 1 : 0.7)
+                    .animation(.easeInOut(duration: 2).repeatForever(autoreverses: true), value: animate)
             }
             Spacer()
         }
-        .padding(16)
+        .padding(20)
         .background(
             ZStack {
-                RoundedRectangle(cornerRadius: 15)
+                RoundedRectangle(cornerRadius: 18)
                     .fill(
                         LinearGradient(
                             colors: [
-                                cyanBlueAccent.opacity(0.3),
-                                cyanBlueAccent.opacity(0.1)
+                                cyanBlueAccent.opacity(0.4),
+                                cyanBlueAccent.opacity(0.2)
                             ],
                             startPoint: .topLeading,
                             endPoint: .bottomTrailing
                         )
                     )
                 
-                RoundedRectangle(cornerRadius: 15)
-                    .fill(Color.white.opacity(0.05))
+                // Subtle pattern overlay
+                HStack(spacing: 0) {
+                    ForEach(0..<20) { i in
+                        Rectangle()
+                            .fill(Color.white)
+                            .frame(width: 1, height: 100)
+                            .opacity(0.03)
+                            .offset(x: CGFloat(i * 15))
+                    }
+                }
+                .mask(RoundedRectangle(cornerRadius: 18))
                 
-                RoundedRectangle(cornerRadius: 15)
+                RoundedRectangle(cornerRadius: 18)
                     .stroke(
                         LinearGradient(
                             colors: [
-                                Color.white.opacity(0.5),
+                                Color.white.opacity(0.6),
                                 Color.white.opacity(0.1)
                             ],
                             startPoint: .topLeading,
                             endPoint: .bottomTrailing
                         ),
-                        lineWidth: 1
+                        lineWidth: 1.5
                     )
             }
         )
-        .shadow(color: Color.black.opacity(0.2), radius: 4, x: 0, y: 2)
+        .shadow(color: Color.black.opacity(0.25), radius: 8, x: 0, y: 4)
         .padding(.horizontal)
+        .onAppear {
+            withAnimation {
+                animate = true
+            }
+        }
     }
 }
-
 // MARK: - Recent Sessions Component
 struct RecentSessionsView: View {
     let user: FirebaseManager.FlipUser
@@ -1690,35 +1790,56 @@ struct FriendStatCard: View {
         }
     }
 }
-
-struct StatBox: View {
+struct EnhancedStatBox: View {
     let title: String
     let value: String
     let icon: String
     let accentColor: Color
+    @State private var animateValue = false
     
     var body: some View {
-        VStack(spacing: 5) {
+        VStack(spacing: 8) {
             ZStack {
                 Circle()
-                    .fill(Theme.buttonGradient)
-                    .frame(width: 44, height: 44)
-                    .opacity(0.2)
+                    .fill(
+                        RadialGradient(
+                            gradient: Gradient(colors: [
+                                accentColor.opacity(0.3),
+                                accentColor.opacity(0.1)
+                            ]),
+                            center: .center,
+                            startRadius: 0,
+                            endRadius: 30
+                        )
+                    )
+                    .frame(width: 54, height: 54)
                 
                 Image(systemName: icon)
-                    .font(.system(size: 20))
+                    .font(.system(size: 22, weight: .semibold))
                     .foregroundColor(.white)
-                    .shadow(color: Color(red: 56/255, green: 189/255, blue: 248/255).opacity(0.5), radius: 4)
+                    .shadow(color: accentColor.opacity(0.6), radius: 4)
             }
+            .scaleEffect(animateValue ? 1.0 : 0.9)
+            .animation(.spring(response: 0.8, dampingFraction: 0.6).delay(0.2), value: animateValue)
             
             Text(value)
-                .font(.system(size: 24, weight: .black))
+                .font(.system(size: 26, weight: .black))
                 .foregroundColor(.white)
-                .shadow(color: Color(red: 56/255, green: 189/255, blue: 248/255).opacity(0.5), radius: 6)
+                .shadow(color: accentColor.opacity(0.7), radius: 4)
+                .opacity(animateValue ? 1 : 0)
+                .offset(y: animateValue ? 0 : 10)
+                .animation(.spring(response: 0.6).delay(0.3), value: animateValue)
 
             Text(title)
-                .font(.system(size: 12, weight: .bold))
-                .foregroundColor(.white.opacity(0.7))
+                .font(.system(size: 13, weight: .bold))
+                .foregroundColor(.white.opacity(0.8))
+                .opacity(animateValue ? 1 : 0)
+                .animation(.easeIn.delay(0.5), value: animateValue)
+        }
+        .onAppear {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                animateValue = true
+            }
         }
     }
 }

@@ -56,52 +56,123 @@ struct TrackingView: View {
             }
         }
     }
-
-    
-    // Status card showing flip status
-    // Alternative approach with explicit variable and type annotation
+    var flipBackTimeRemaining: Int {
+        return appManager.flipBackTimeRemaining
+    }
     private func statusCard() -> some View {
         VStack(spacing: 20) {
-            // All your existing content...
+            // First check phone position and display appropriate icon
+            ZStack {
+                // Background circle with gradient
+                Circle()
+                    .fill(
+                        LinearGradient(
+                            colors: [
+                                Color.white.opacity(0.1),
+                                Color.white.opacity(0.05)
+                            ],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        )
+                    )
+                    .frame(width: 120, height: 120)
+                
+                // Status icon
+                Image(systemName: appManager.isFaceDown ? "iphone.gen3.circle.fill" : "iphone.gen3")
+                    .font(.system(size: 60))
+                    .foregroundColor(appManager.isFaceDown ? .green : .red)
+                    .rotationEffect(.degrees(appManager.isFaceDown ? 180 : 0))
+                    .shadow(color: appManager.isFaceDown ? Color.green.opacity(0.6) : Color.red.opacity(0.6), radius: isGlowing ? 10 : 5)
+            }
+            
+            // Status text
+            Text(appManager.isFaceDown ? "Phone is face down" : "Phone is not face down")
+                .font(.system(size: 18, weight: .bold))
+                .foregroundColor(appManager.isFaceDown ? .green : .red)
+            
+            // Add flip back timer indicator when phone is face up
+            if !appManager.isFaceDown && appManager.flipBackTimeRemaining > 0 {
+                VStack(spacing: 8) {
+                    Text("FLIP BACK OR PAUSE")
+                        .font(.system(size: 16, weight: .bold))
+                        .foregroundColor(Color.red)
+                        .tracking(2)
+                    
+                    // Timer progress bar
+                    ZStack(alignment: .leading) {
+                        // Background track
+                        RoundedRectangle(cornerRadius: 10)
+                            .fill(Color.white.opacity(0.2))
+                            .frame(height: 10)
+                        
+                        // Progress indicator
+                        RoundedRectangle(cornerRadius: 10)
+                            .fill(
+                                LinearGradient(
+                                    colors: [.red, .orange],
+                                    startPoint: .leading,
+                                    endPoint: .trailing
+                                )
+                            )
+                            .frame(width: UIScreen.main.bounds.width * 0.7 * CGFloat(appManager.flipBackTimeRemaining) / 10, height: 10)
+                            .animation(.linear(duration: 1), value: appManager.flipBackTimeRemaining)
+                    }
+                    .padding(.horizontal, 10)
+                    
+                    Text("\(appManager.flipBackTimeRemaining) seconds remaining")
+                        .font(.system(size: 14, weight: .bold))
+                        .foregroundColor(.white.opacity(0.9))
+                }
+                .padding(.vertical, 10)
+                .padding(.horizontal, 20)
+                .background(
+                    RoundedRectangle(cornerRadius: 12)
+                        .fill(Color.black.opacity(0.3))
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 12)
+                                .stroke(Color.red.opacity(0.5), lineWidth: 1)
+                        )
+                )
+                .transition(.scale.combined(with: .opacity))
+                .animation(.easeInOut, value: !appManager.isFaceDown && appManager.flipBackTimeRemaining > 0)
+            }
         }
         .padding(.vertical, 24)
         .padding(.horizontal, 30)
         .background(
-            AnyView(
-                ZStack {
-                    RoundedRectangle(cornerRadius: 20)
-                        .fill(
-                            LinearGradient(
-                                colors: [
-                                    Color(red: 40/255, green: 20/255, blue: 80/255).opacity(0.5),
-                                    Color(red: 30/255, green: 15/255, blue: 60/255).opacity(0.3)
-                                ],
-                                startPoint: .top,
-                                endPoint: .bottom
-                            )
+            ZStack {
+                RoundedRectangle(cornerRadius: 20)
+                    .fill(
+                        LinearGradient(
+                            colors: [
+                                Color(red: 40/255, green: 20/255, blue: 80/255).opacity(0.5),
+                                Color(red: 30/255, green: 15/255, blue: 60/255).opacity(0.3)
+                            ],
+                            startPoint: .top,
+                            endPoint: .bottom
                         )
-                    
-                    RoundedRectangle(cornerRadius: 20)
-                        .fill(Color.white.opacity(0.05))
-                    
-                    RoundedRectangle(cornerRadius: 20)
-                        .stroke(
-                            LinearGradient(
-                                colors: [
-                                    Color.white.opacity(0.5),
-                                    Color.white.opacity(0.15)
-                                ],
-                                startPoint: .topLeading,
-                                endPoint: .bottomTrailing
-                            ),
-                            lineWidth: 1.5
-                        )
-                }
-            )
+                    )
+                
+                RoundedRectangle(cornerRadius: 20)
+                    .fill(Color.white.opacity(0.05))
+                
+                RoundedRectangle(cornerRadius: 20)
+                    .stroke(
+                        LinearGradient(
+                            colors: [
+                                Color.white.opacity(0.5),
+                                Color.white.opacity(0.15)
+                            ],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        ),
+                        lineWidth: 1.5
+                    )
+            }
         )
         .shadow(color: Color.black.opacity(0.25), radius: 12)
     }
-    
+
     // Timer card with remaining time
     private func timerCard() -> some View {
         VStack(spacing: 15) {

@@ -39,7 +39,7 @@ class AppManager: NSObject, ObservableObject {
     @Published var sessionAlreadyRecorded: Bool = false
     @Published var usingLimitedLocationPermission = false
     
-    
+    private var pauseEndTime: Date?
     private var sessionManager = SessionManager.shared
     private var notificationManager = NotificationManager.shared
     private var locationSessionSaved = false
@@ -130,15 +130,31 @@ class AppManager: NSObject, ObservableObject {
             self.saveSessionState()
             
             if self.countdownSeconds <= 0 {
-                timer.invalidate()
-                print("Countdown finished, starting session")
-                
-                // Important: Dispatch to main thread
-                DispatchQueue.main.async {
-                    self.startTrackingSession()
+                        timer.invalidate()
+                        print("Countdown finished, starting session")
+                        
+                        // IMPORTANT: Check orientation BEFORE starting session
+                        // Give the motion manager a moment to get fresh data
+                        self.startMotionUpdates() // Make sure we're getting motion data
+                        
+                        // Add a short delay to get accurate orientation data
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
+                            self.checkCurrentOrientation() // Get fresh orientation reading
+                            
+                            if let motion = self.motionManager.deviceMotion, motion.gravity.z > 0.8 {
+                                // Phone is face down, start the session
+                                self.startTrackingSession()
+                            } else {
+                                // Phone is not face down, fail the session
+                                self.notifyCountdownFailed()
+                                if #available(iOS 16.1, *) {
+                                                self.endLiveActivity()
+                                            }
+                                self.currentState = .initial
+                            }
+                        }
+                    }
                 }
-            }
-        }
         
         // Ensure timer runs even during scrolling
         if let timer = countdownTimer {
@@ -265,10 +281,15 @@ class AppManager: NSObject, ObservableObject {
         currentState = .paused
         
         // Set the pause countdown
-        remainingPauseSeconds = pauseDuration * 60
-        
-        // IMPORTANT: Record when the pause starts
-        pauseStartTime = Date()
+        let pauseDurationSeconds = pauseDuration * 60
+            pauseStartTime = Date()
+            pauseEndTime = Date().addingTimeInterval(TimeInterval(pauseDurationSeconds))
+            remainingPauseSeconds = pauseDurationSeconds
+            
+            // Save these values to UserDefaults for persistence
+            let defaults = UserDefaults.standard
+            defaults.set(pauseStartTime?.timeIntervalSince1970, forKey: "pauseStartTime")
+            defaults.set(pauseEndTime?.timeIntervalSince1970, forKey: "pauseEndTime")
         
         // Start the pause timer
         startPauseTimer()
@@ -330,43 +351,49 @@ class AppManager: NSObject, ObservableObject {
     private func startPauseTimer() {
         pauseTimer?.invalidate()
         pauseTimer = nil
-        pauseStartTime = Date()
         pauseTimer = Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { [weak self] _ in
-            guard let self = self, self.isPauseTimerActive else { return }
-            
-            if self.remainingPauseSeconds > 0 {
-                self.remainingPauseSeconds -= 1
+                guard let self = self, self.isPauseTimerActive else { return }
                 
-                // Update Live Activity every 5 seconds or at specific thresholds
-                if #available(iOS 16.1, *) {
-                    self.updateLiveActivity()
+                // Calculate remaining time based on absolute end time, not a counter
+                if let endTime = self.pauseEndTime {
+                    let now = Date()
+                    let remainingSeconds = max(0, Int(endTime.timeIntervalSince(now)))
+                    self.remainingPauseSeconds = remainingSeconds
+                    
+                    if remainingSeconds > 0 {
+                        // Normal countdown behavior
+                        self.saveSessionState()
+                        
+                        // Update Live Activity every 5 seconds or at specific thresholds
+                        if #available(iOS 16.1, *) {
+                            self.updateLiveActivity()
+                        }
+                        
+                        // Send notifications at key thresholds
+                        if self.remainingPauseSeconds == 60 {
+                            self.notificationManager.display(
+                                title: "Pause Ending Soon",
+                                body: "1 minute left in your pause."
+                            )
+                        }
+                    } else {
+                        // Pause time is up, resume the session
+                        self.isPauseTimerActive = false
+                        self.pauseTimer?.invalidate()
+                        self.pauseTimer = nil
+                        self.pauseStartTime = nil
+                        self.pauseEndTime = nil
+                        
+                        // Auto-resume the session
+                        self.autoResumeSession()
+                    }
                 }
-                
-                // Send notifications at key thresholds
-                if self.remainingPauseSeconds == 60 {
-                    self.notificationManager.display(
-                        title: "Pause Ending Soon",
-                        body: "1 minute left in your pause."
-                    )
-                }
-                
-                self.saveSessionState()
-            } else {
-                // Pause time is up, resume the session
-                self.isPauseTimerActive = false
-                self.pauseTimer?.invalidate()
-                self.pauseTimer = nil
-                self.pauseStartTime = nil
-                
-                // Auto-resume the session
-                self.autoResumeSession()
             }
-        }
-        
-        // Ensure timer runs even during scrolling
-        if let timer = pauseTimer {
-            RunLoop.current.add(timer, forMode: .common)
-        }
+            
+            // Ensure timer runs even during scrolling
+            if let timer = pauseTimer {
+                RunLoop.current.add(timer, forMode: .common)
+            }
     }
     private func autoResumeSession() {
         // Send notification that pause is over
@@ -1079,10 +1106,6 @@ class AppManager: NSObject, ObservableObject {
             }
             
             endSession()
-            
-            
-            
-            
             notifyFailure()
             notifyFriendsOfFailure()
             //
@@ -1102,7 +1125,7 @@ class AppManager: NSObject, ObservableObject {
                     sessionManager.addSession(
                         duration: selectedMinutes,
                         wasSuccessful: false,
-                        actualDuration: selectedMinutes
+                        actualDuration: actualDuration
                     )
                 }
                 
@@ -1504,11 +1527,26 @@ class AppManager: NSObject, ObservableObject {
             defaults.set(isFaceDown, forKey: "isFaceDown")
             defaults.set(pauseDuration, forKey: "pauseDuration")
             
+            let isFirstLaunch = !defaults.bool(forKey: "hasLaunchedBefore")
+                if isFirstLaunch {
+                    // This is a fresh install or reinstall, clear all state
+                    clearSessionState()
+                    defaults.set(true, forKey: "hasLaunchedBefore")
+                    print("First launch detected - starting with clean state")
+                    return
+                }
+            
             if let pauseStartTime = pauseStartTime {
-                defaults.set(pauseStartTime.timeIntervalSince1970, forKey: "pauseStartTime")
-            } else {
-                defaults.removeObject(forKey: "pauseStartTime")
-            }
+                    defaults.set(pauseStartTime.timeIntervalSince1970, forKey: "pauseStartTime")
+                } else {
+                    defaults.removeObject(forKey: "pauseStartTime")
+                }
+                
+                if let pauseEndTime = pauseEndTime {
+                    defaults.set(pauseEndTime.timeIntervalSince1970, forKey: "pauseEndTime")
+                } else {
+                    defaults.removeObject(forKey: "pauseEndTime")
+                }
             
             // Enhanced validation for live session info
             if liveSessionId != nil && isJoinedSession {
@@ -1603,7 +1641,42 @@ class AppManager: NSObject, ObservableObject {
             } else {
                 pauseStartTime = nil
             }
+            if let pauseEndTimeInterval = defaults.object(forKey: "pauseEndTime") as? TimeInterval {
+                    pauseEndTime = Date(timeIntervalSince1970: pauseEndTimeInterval)
+                } else {
+                    pauseEndTime = nil
+                }
             
+            if currentState == .paused {
+                    pausedRemainingSeconds = defaults.integer(forKey: "pausedRemainingSeconds")
+                    
+                    // Calculate remaining time based on end time
+                    let now = Date()
+                    if let endTime = pauseEndTime, endTime > now {
+                        // Pause is still valid
+                        remainingPauseSeconds = Int(endTime.timeIntervalSince(now))
+                        isPauseTimerActive = true
+                        
+                        // Start the pause timer
+                        startPauseTimer()
+                    } else if pauseEndTime != nil {
+                        // Pause has expired while app was closed
+                        isPauseTimerActive = false
+                        remainingPauseSeconds = 0
+                        
+                        // Schedule auto-resume
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
+                            self.resumeSession()
+                        }
+                    } else {
+                        // Fall back to old behavior if no end time
+                        remainingPauseSeconds = defaults.integer(forKey: "remainingPauseSeconds")
+                        isPauseTimerActive = defaults.bool(forKey: "isPauseTimerActive")
+                        if isPauseTimerActive {
+                            startPauseTimer()
+                        }
+                    }
+                }
             
             // If pauseDuration is 0 (not set previously), set it to default
             if pauseDuration == 0 {
@@ -1758,7 +1831,8 @@ class AppManager: NSObject, ObservableObject {
             defaults.removeObject(forKey: "flipBackTimeRemaining")
             defaults.removeObject(forKey: "remainingPauseSeconds")
             defaults.removeObject(forKey: "isPauseTimerActive")
-            defaults.removeObject(forKey: "pauseStartTime")  // IMPORTANT: Clear this
+            defaults.removeObject(forKey: "pauseStartTime")
+            defaults.removeObject(forKey: "pauseEndTime")
             
             // Clear live session info
             defaults.removeObject(forKey: "liveSessionId")
@@ -1774,9 +1848,10 @@ class AppManager: NSObject, ObservableObject {
             // Make sure to clean up any live session listeners
             LiveSessionManager.shared.cleanupListeners()
             // Reset pause timer state
-            isPauseTimerActive = false
-            remainingPauseSeconds = 0
-            pauseStartTime = nil  // IMPORTANT: Clear this
+            pauseStartTime = nil
+            pauseEndTime = nil
+            
+                
             sessionAlreadyRecorded = false
             // Add aggressive Live Activity cleanup to ensure widgets don't remain on lock screen
             if #available(iOS 16.1, *) {
@@ -2116,46 +2191,47 @@ class AppManager: NSObject, ObservableObject {
             }
         }
         
-        private func recalculatePauseTime() {
-            guard let pauseStartTime = pauseStartTime else {
-                print("Warning: Pause timer active but no pauseStartTime found")
-                return
-            }
-            
-            // Calculate elapsed seconds since pause started
-            let elapsedSeconds = Int(Date().timeIntervalSince(pauseStartTime))
-            let originalPauseDurationSeconds = pauseDuration * 60
-            
-            // Calculate new remaining pause time
-            let newRemainingPauseSeconds = max(0, originalPauseDurationSeconds - elapsedSeconds)
-            
-            print("Recalculating pause time: Original duration: \(originalPauseDurationSeconds)s, Elapsed: \(elapsedSeconds)s, New remaining: \(newRemainingPauseSeconds)s")
-            
-            // Update the remaining time
-            remainingPauseSeconds = newRemainingPauseSeconds
-            
-            // If time is up, auto-resume
-            if remainingPauseSeconds <= 0 {
-                isPauseTimerActive = false
-                pauseTimer?.invalidate()
-                pauseTimer = nil
-                
-                // Auto-resume the session
-                DispatchQueue.main.async {
-                    self.autoResumeSession()
-                }
-            } else {
-                // Otherwise restart the timer
-                pauseTimer?.invalidate()
-                pauseTimer = nil
-                startPauseTimer()
-            }
-            
-            // Update Activity
-            if #available(iOS 16.1, *) {
-                updateLiveActivity()
-            }
+    private func recalculatePauseTime() {
+        guard let endTime = pauseEndTime else {
+            print("Warning: Pause timer active but no pauseEndTime found")
+            return
         }
+        
+        // Calculate remaining time based on current time and end time
+        let now = Date()
+        let remainingSeconds = max(0, Int(endTime.timeIntervalSince(now)))
+        
+        print("Recalculating pause time: End time: \(endTime), Current time: \(now), Remaining: \(remainingSeconds)s")
+        
+        // Update the remaining time
+        remainingPauseSeconds = remainingSeconds
+        
+        // If time is up, auto-resume
+        if remainingPauseSeconds <= 0 {
+            isPauseTimerActive = false
+            pauseTimer?.invalidate()
+            pauseTimer = nil
+            
+            // These are already defined as vars so they can be set to nil
+            self.pauseStartTime = nil
+            self.pauseEndTime = nil
+            
+            // Auto-resume the session
+            DispatchQueue.main.async {
+                self.autoResumeSession()
+            }
+        } else {
+            // Otherwise restart the timer
+            pauseTimer?.invalidate()
+            pauseTimer = nil
+            startPauseTimer()
+        }
+        
+        // Update Activity
+        if #available(iOS 16.1, *) {
+            updateLiveActivity()
+        }
+    }
         
         // MARK: - Cleanup
         deinit {

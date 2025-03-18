@@ -255,107 +255,109 @@ struct ProfileView: View {
                     
                     // Streamlined Discipline rank card with Cyan theme
                     VStack(spacing: 15) {
-                        HStack {
-                            // Rank Display
-                            VStack(alignment: .leading, spacing: 4) {
-                                Text("DISCIPLINE RANK")
-                                    .font(.system(size: 12, weight: .bold))
-                                    .tracking(3)
-                                    .foregroundColor(.white.opacity(0.7))
-                                
-                                let rank = scoreManager.getCurrentRank()
-                                HStack(alignment: .firstTextBaseline, spacing: 8) {
-                                    Text(rank.name)
-                                        .font(.system(size: 26, weight: .black))
-                                        .foregroundColor(rank.color)
-                                        .shadow(color: rank.color.opacity(0.5), radius: 6)
-                                    
-                                    Text("\(String(format: "%.1f", scoreManager.currentScore))")
-                                        .font(.system(size: 16, weight: .bold))
-                                        .foregroundColor(.white.opacity(0.6))
-                                }
-                            }
-                            
-                            Spacer()
-                            
-                            // Progress to next rank
-                            if let pointsToNext = scoreManager.pointsToNextRank() {
-                                VStack(alignment: .trailing, spacing: 2) {
-                                    Text("NEXT RANK")
-                                        .font(.system(size: 10, weight: .bold))
-                                        .tracking(2)
-                                        .foregroundColor(.white.opacity(0.5))
-                                    
-                                    Text("\(String(format: "%.1f", pointsToNext))")
-                                        .font(.system(size: 22, weight: .black))
-                                        .foregroundColor(.white)
-                                        .shadow(color: cyanBlueGlow, radius: 6)
-                                    
-                                    Text("points needed")
-                                        .font(.system(size: 10, weight: .medium))
-                                        .foregroundColor(.white.opacity(0.5))
-                                }
-                            }
-                        }
-                        
-                        // Centered Score Details & History Button
-                        Button(action: {
-                            showStatsDetail = true
-                        }) {
-                            Text("SCORE DETAILS & HISTORY")
-                                .font(.system(size: 15, weight: .bold))
-                                .tracking(1)
-                                .foregroundColor(.white.opacity(0.9))
-                                .padding(.vertical, 8)
-                                .frame(maxWidth: .infinity)
-                                .background(
-                                    ZStack {
-                                        RoundedRectangle(cornerRadius: 10)
-                                            .fill(Color.white.opacity(0.1))
-                                        
-                                        RoundedRectangle(cornerRadius: 10)
-                                            .stroke(Color.white.opacity(0.2), lineWidth: 1)
-                                    }
-                                )
-                        }
-                    }
-                    .padding()
-                    .background(
-                        ZStack {
-                            RoundedRectangle(cornerRadius: 15)
-                                .fill(
-                                    LinearGradient(
-                                        colors: [
-                                            cyanBlueAccent.opacity(0.5),
-                                            cyanBlueAccent.opacity(0.2)
-                                        ],
-                                        startPoint: .topLeading,
-                                        endPoint: .bottomTrailing
-                                    )
-                                )
-                            
-                            RoundedRectangle(cornerRadius: 15)
-                                .fill(Color.white.opacity(0.05))
-                            
-                            RoundedRectangle(cornerRadius: 15)
-                                .stroke(
-                                    LinearGradient(
-                                        colors: [
-                                            Color.white.opacity(0.5),
-                                            Color.white.opacity(0.1)
-                                        ],
-                                        startPoint: .topLeading,
-                                        endPoint: .bottomTrailing
-                                    ),
-                                    lineWidth: 1
-                                )
-                        }
-                    )
-                    .shadow(color: Color.black.opacity(0.2), radius: 4, x: 0, y: 2)
-                    .padding(.horizontal)
-                    .sheet(isPresented: $showStatsDetail) {
-                        ScoreHistoryView()
-                    }
+                                            HStack {
+                                                // Rank Display
+                                                VStack(alignment: .leading, spacing: 4) {
+                                                    Text("DISCIPLINE RANK")
+                                                        .font(.system(size: 12, weight: .bold))
+                                                        .tracking(3)
+                                                        .foregroundColor(.white.opacity(0.7))
+                                                    
+                                                    let rank = scoreManager.getCurrentRank()
+                                                    HStack(alignment: .firstTextBaseline, spacing: 8) {
+                                                        Text(rank.name)
+                                                            .font(.system(size: 26, weight: .black))
+                                                            .foregroundColor(rank.color)
+                                                            .shadow(color: rank.color.opacity(0.5), radius: 6)
+                                                        
+                                                        Text("\(String(format: "%.1f", scoreManager.currentScore))")
+                                                            .font(.system(size: 16, weight: .bold))
+                                                            .foregroundColor(.white.opacity(0.6))
+                                                    }
+                                                }
+                                                
+                                                Spacer()
+                                                
+                                                // Progress to next rank
+                                                if let pointsToNext = scoreManager.pointsToNextRank() {
+                                                                                VStack(alignment: .trailing, spacing: 2) {
+                                                                                    Text("NEXT RANK")
+                                                                                        .font(.system(size: 10, weight: .bold))
+                                                                                        .tracking(2)
+                                                                                        .foregroundColor(.white.opacity(0.5))
+                                                                                    
+                                                                                    Text("\(String(format: "%.1f", pointsToNext))")
+                                                                                        .font(.system(size: 22, weight: .black))
+                                                                                        .foregroundColor(.white)
+                                                                                        .shadow(color: scoreManager.getCurrentRank().color.opacity(0.5), radius: 6)
+                                                                                    
+                                                                                    Text("points needed")
+                                                                                        .font(.system(size: 10, weight: .medium))
+                                                                                        .foregroundColor(.white.opacity(0.5))
+                                                                                }
+                                                                            }
+                                            }
+                                            
+                                            // Centered Score Details & History Button
+                                            Button(action: {
+                                                showStatsDetail = true
+                                            }) {
+                                                Text("SCORE DETAILS & HISTORY")
+                                                    .font(.system(size: 15, weight: .bold))
+                                                    .tracking(1)
+                                                    .foregroundColor(.white.opacity(0.9))
+                                                    .padding(.vertical, 8)
+                                                    .frame(maxWidth: .infinity)
+                                                    .background(
+                                                        ZStack {
+                                                            RoundedRectangle(cornerRadius: 10)
+                                                                .fill(Color.white.opacity(0.1))
+                                                            
+                                                            RoundedRectangle(cornerRadius: 10)
+                                                                .stroke(Color.white.opacity(0.2), lineWidth: 1)
+                                                        }
+                                                    )
+                                            }
+                                        }
+                                        .padding()
+                                        .background(
+                                            ZStack {
+                                                // Use the rank color for the background gradient with low opacity
+                                                let rank = scoreManager.getCurrentRank()
+                                                RoundedRectangle(cornerRadius: 15)
+                                                    .fill(
+                                                        LinearGradient(
+                                                            colors: [
+                                                                rank.color.opacity(0.5),
+                                                                rank.color.opacity(0.2)
+                                                            ],
+                                                            startPoint: .topLeading,
+                                                            endPoint: .bottomTrailing
+                                                        )
+                                                    )
+                                                
+                                                RoundedRectangle(cornerRadius: 15)
+                                                    .fill(Color.white.opacity(0.05))
+                                                
+                                                RoundedRectangle(cornerRadius: 15)
+                                                    .stroke(
+                                                        LinearGradient(
+                                                            colors: [
+                                                                Color.white.opacity(0.5),
+                                                                Color.white.opacity(0.1)
+                                                            ],
+                                                            startPoint: .topLeading,
+                                                            endPoint: .bottomTrailing
+                                                        ),
+                                                        lineWidth: 1
+                                                    )
+                                            }
+                                        )
+                                        .shadow(color: scoreManager.getCurrentRank().color.opacity(0.3), radius: 4, x: 0, y: 2)
+                                        .padding(.horizontal)
+                                        .sheet(isPresented: $showStatsDetail) {
+                                            ScoreHistoryView()
+                                        }
 
                     VStack(spacing: 8) {
                         // Week's longest flip

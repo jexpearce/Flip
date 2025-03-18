@@ -84,12 +84,6 @@ struct RankPromotionAlert: View {
                         .foregroundColor(.white)
                         .shadow(color: rankColor.opacity(0.8), radius: 10)
                     
-                    Text("昇進")
-                        .font(.system(size: 14))
-                        .tracking(2)
-                        .foregroundColor(.white.opacity(0.7))
-                        .padding(.bottom, 10)
-                    
                     Text("You have achieved the rank of")
                         .font(.system(size: 16))
                         .foregroundColor(.white.opacity(0.9))
