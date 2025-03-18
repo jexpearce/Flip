@@ -5,6 +5,8 @@ import SwiftUI
 import FirebaseCore
 
 class LiveSessionManager: ObservableObject {
+    private let updateQueue = DispatchQueue(label: "com.flipapp.sessionUpdateQueue", attributes: .concurrent)
+    private let updateSemaphore = DispatchSemaphore(value: 1)
     private static let _shared = LiveSessionManager()
     static var shared: LiveSessionManager {
         return _shared
@@ -176,22 +178,29 @@ class LiveSessionManager: ObservableObject {
         }
     }
     
-    private func updateExistingSession(
+    func updateExistingSession(
         sessionId: String,
         remainingSeconds: Int,
         isPaused: Bool,
         userId: String
     ) {
-        let updateData: [String: Any] = [
-            "remainingSeconds": remainingSeconds,
-            "isPaused": isPaused,
-            "participantStatus.\(userId)": isPaused ? ParticipantStatus.paused.rawValue : ParticipantStatus.active.rawValue,
-            "lastUpdateTime": FieldValue.serverTimestamp()
-        ]
-        
-        db.collection("live_sessions").document(sessionId).updateData(updateData) { error in
-            if let error = error {
-                print("Error updating live session: \(error.localizedDescription)")
+        // Use semaphore to prevent race conditions
+        updateQueue.async {
+            self.updateSemaphore.wait()
+            
+            let updateData: [String: Any] = [
+                "remainingSeconds": remainingSeconds,
+                "isPaused": isPaused,
+                "participantStatus.\(userId)": isPaused ? ParticipantStatus.paused.rawValue : ParticipantStatus.active.rawValue,
+                "lastUpdateTime": FieldValue.serverTimestamp()
+            ]
+            
+            self.db.collection("live_sessions").document(sessionId).updateData(updateData) { error in
+                self.updateSemaphore.signal()
+                
+                if let error = error {
+                    print("Error updating live session: \(error.localizedDescription)")
+                }
             }
         }
     }
@@ -437,10 +446,11 @@ class LiveSessionManager: ObservableObject {
         let staleSessions = activeFriendSessions.filter { _, session in
             // A session is stale if:
             // 1. It's over (remaining time ≤ 0)
-            // 2. Last update was more than 2 minutes ago (reduced from 3 minutes)
+            // 2. Last update was more than 1 minute ago (reduced from 2 minutes)
             // 3. If all participants have completed or failed status
+            // 4. If the session end time has passed
             
-            let timeThreshold = Date().addingTimeInterval(-120) // 2 minutes ago
+            let timeThreshold = Date().addingTimeInterval(-60) // 1 minute ago
             
             // Check if all participants have completed or failed
             let allParticipantsFinished = session.participants.allSatisfy { participantId in
@@ -449,41 +459,39 @@ class LiveSessionManager: ObservableObject {
                 }
                 return false
             }
+            
+            // Calculate if session has naturally ended based on duration
             let sessionEndTime = session.startTime.addingTimeInterval(TimeInterval(session.targetDuration * 60))
-                    let isSessionEnded = Date() > sessionEndTime
+            let isSessionEnded = Date() > sessionEndTime
             
             return session.remainingSeconds <= 0 ||
                    session.lastUpdateTime < timeThreshold ||
-                   allParticipantsFinished
+                   allParticipantsFinished ||
+                   isSessionEnded
         }
         
         // Remove stale sessions from the local map
         for (sessionId, _) in staleSessions {
-                print("Removing stale session: \(sessionId)")
-                DispatchQueue.main.async {
-                    self.activeFriendSessions.removeValue(forKey: sessionId)
-                }
-                
-                // Also remove from Firestore if all participants are done with the session
-                if let session = activeFriendSessions[sessionId],
-                   session.participants.allSatisfy({ participantId in
-                       if let status = session.participantStatus[participantId] {
-                           return status == .completed || status == .failed
-                       }
-                       return false
-                   }) {
-                    // Delete from Firestore with a slight delay
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
-                        self.db.collection("live_sessions").document(sessionId).delete { error in
-                            if let error = error {
-                                print("Error deleting stale session: \(error.localizedDescription)")
-                            } else {
-                                print("Successfully deleted stale session: \(sessionId)")
-                            }
-                        }
-                    }
+            print("Removing stale session: \(sessionId)")
+            DispatchQueue.main.async {
+                self.activeFriendSessions.removeValue(forKey: sessionId)
+            }
+            
+            // Also remove any session listeners for this session
+            if let listener = sessionListeners[sessionId] {
+                listener.remove()
+                sessionListeners.removeValue(forKey: sessionId)
+            }
+            
+            // Also remove from Firestore if it appears to be completed
+            db.collection("live_sessions").document(sessionId).delete { error in
+                if let error = error {
+                    print("Error deleting stale session: \(error.localizedDescription)")
+                } else {
+                    print("Successfully deleted stale session: \(sessionId)")
                 }
             }
+        }
         
         // Force UI update after cleaning up
         if !staleSessions.isEmpty {
@@ -679,6 +687,103 @@ class LiveSessionManager: ObservableObject {
         if let sessionId = currentJoinedSession?.id {
             listenToJoinedSession(sessionId: sessionId)
         }
+    }
+    func forceSessionStatusRefresh() {
+        guard let userId = Auth.auth().currentUser?.uid else { return }
+        
+        // First get user's friends
+        FirebaseManager.shared.db.collection("users").document(userId)
+            .getDocument { [weak self] document, error in
+                guard let userData = try? document?.data(as: FirebaseManager.FlipUser.self),
+                      let self = self else { return }
+                
+                // Get all friend IDs
+                let friendIds = userData.friends
+                
+                if friendIds.isEmpty {
+                    DispatchQueue.main.async {
+                        self.activeFriendSessions = [:]
+                        self.objectWillChange.send()
+                    }
+                    return
+                }
+                
+                // Force a direct query that ignores cache
+                self.db.collection("live_sessions")
+                    .whereField("participants", arrayContainsAny: friendIds)
+                    .getDocuments(source: .server) { querySnapshot, error in
+                        guard let documents = querySnapshot?.documents else {
+                            self.activeFriendSessions = [:]
+                            self.objectWillChange.send()
+                            return
+                        }
+                        
+                        // Process session documents
+                        DispatchQueue.main.async {
+                            var newActiveSessions: [String: LiveSessionData] = [:]
+                            
+                            for document in documents {
+                                if let sessionData = self.parseLiveSessionDocument(document) {
+                                    // Enhanced validity check
+                                    if self.isSessionValid(sessionData) {
+                                        newActiveSessions[document.documentID] = sessionData
+                                    }
+                                }
+                            }
+                            
+                            // Update sessions and notify observers
+                            self.activeFriendSessions = newActiveSessions
+                            self.objectWillChange.send()
+                        }
+                    }
+            }
+    }
+    func startJoinedSessionVerifier() {
+        // Check every 30 seconds if the joinedSession is still valid
+        Timer.scheduledTimer(withTimeInterval: 30, repeats: true) { [weak self] _ in
+            guard let self = self, let joinedSession = self.currentJoinedSession else { return }
+            
+            // If the session is invalid for any reason, notify AppManager
+            if !self.isSessionValid(joinedSession) {
+                print("Joined session \(joinedSession.id) appears to be invalid, notifying AppManager")
+                
+                // Check current app state - don't interrupt active sessions
+                let appManager = AppManager.shared
+                if appManager.currentState != .tracking && appManager.currentState != .countdown {
+                    // Reset join state if not actively tracking
+                    DispatchQueue.main.async {
+                        appManager.resetJoinState()
+                    }
+                }
+            }
+        }
+    }
+    private func isSessionValid(_ session: LiveSessionData) -> Bool {
+        // A session is valid if:
+        // 1. It has time remaining (not ended)
+        // 2. The last update was recent (within 3 minutes)
+        // 3. It hasn't gone past its expected end time
+        
+        let isSessionTooOld = Date().timeIntervalSince(session.lastUpdateTime) > 180 // 3 minutes
+        let sessionEndTime = session.startTime.addingTimeInterval(TimeInterval(session.targetDuration * 60))
+        let isSessionEnded = Date() > sessionEndTime
+        
+        return session.remainingSeconds > 0 && !isSessionTooOld && !isSessionEnded
+    }
+    
+    func stopTrackingSession(sessionId: String) {
+        // Remove the session from active tracking
+        activeFriendSessions.removeValue(forKey: sessionId)
+        currentJoinedSession = nil
+        
+        // Remove any listeners for this session
+        if let listener = sessionListeners[sessionId] {
+            listener.remove()
+            sessionListeners.removeValue(forKey: sessionId)
+        }
+        
+        // Force update UI
+        objectWillChange.send()
     }
 
     // 5. Set up notification handler for refresh

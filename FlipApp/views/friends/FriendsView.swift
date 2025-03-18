@@ -286,6 +286,8 @@ struct FriendsView: View {
             }
             .onAppear {
                 liveSessionManager.listenForFriendSessions()
+                liveSessionManager.forceSessionStatusRefresh()
+                    viewModel.loadFriends()
             }
             .onChange(of: liveSessionManager.activeFriendSessions) { _ in
                 // Force view refresh when live sessions change
@@ -385,44 +387,42 @@ struct FriendsView: View {
         // IMPORTANT: Reset any existing join state first
         appManager.resetJoinState()
         
-        // Get friend name from active sessions
-        let friendName = liveSessionManager.activeFriendSessions[sessionId]?.starterUsername ?? "Friend"
-        
-        // First, try the direct join method from LiveSessionManager
-        LiveSessionManager.shared.joinSession(sessionId: sessionId) { success, remainingSeconds, totalDuration in
-
-            DispatchQueue.main.async {
-                self.isJoiningSession = false
-                
-                if success {
-                    print("Successfully joined session \(sessionId) via LiveSessionManager")
-                    // Start the joined session directly through AppManager
-                    self.appManager.joinLiveSession(
-                        sessionId: sessionId,
-                        remainingSeconds: remainingSeconds,
-                        totalDuration: totalDuration
-                    )
-                    
-                    // Also trigger home tab switch
-                    NotificationCenter.default.post(
-                        name: Notification.Name("SwitchToHomeTab"),
-                        object: nil
-                    )
-                } else {
-                    // ONLY try backup method if direct join fails
-                    print("Direct join failed, trying via coordinator...")
-                    
-                    // Reset state before setting up new join
-                    SessionJoinCoordinator.shared.clearPendingSession()
-                    
-                    // Use the coordinator to pass session information
-                    SessionJoinCoordinator.shared.setJoinSession(id: sessionId, name: friendName)
-                    
-                    // Trigger home tab switch
-                    NotificationCenter.default.post(
-                        name: Notification.Name("SwitchToHomeTab"),
-                        object: nil
-                    )
+        // Get fresh session data
+        LiveSessionManager.shared.getSessionDetails(sessionId: sessionId) { sessionData in
+            if let data = sessionData, data.canJoin {
+                // Proceed with joining a valid session
+                LiveSessionManager.shared.joinSession(sessionId: sessionId) { success, remainingSeconds, totalDuration in
+                    DispatchQueue.main.async {
+                        self.isJoiningSession = false
+                        
+                        if success {
+                            print("Successfully joined session \(sessionId)")
+                            
+                            // Start the joined session directly through AppManager
+                            self.appManager.joinLiveSession(
+                                sessionId: sessionId,
+                                remainingSeconds: remainingSeconds,
+                                totalDuration: totalDuration
+                            )
+                            
+                            // Switch to home tab
+                            NotificationCenter.default.post(
+                                name: Notification.Name("SwitchToHomeTab"),
+                                object: nil
+                            )
+                        } else {
+                            // Failed to join
+                            self.alertMessage = "Unable to join session. It may have ended or reached maximum participants."
+                            self.showAlert = true
+                        }
+                    }
+                }
+            } else {
+                // Session not available
+                DispatchQueue.main.async {
+                    self.isJoiningSession = false
+                    self.alertMessage = "This session is no longer available for joining."
+                    self.showAlert = true
                 }
             }
         }

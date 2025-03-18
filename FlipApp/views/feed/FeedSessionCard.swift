@@ -1,6 +1,7 @@
 import SwiftUI
 import FirebaseAuth
 
+
 struct FeedSessionCard: View {
     let session: Session
     let viewModel: FeedViewModel
@@ -36,9 +37,9 @@ struct FeedSessionCard: View {
         if session.wasSuccessful {
             return LinearGradient(
                 colors: [
-                    Color(red: 10/255, green: 28/255, blue: 45/255).opacity(0.95),
-                    Color(red: 12/255, green: 40/255, blue: 60/255).opacity(0.9),
-                    Color(red: 20/255, green: 44/255, blue: 55/255).opacity(0.85)
+                    Color(red: 17/255, green: 48/255, blue: 66/255).opacity(0.9),  // Moved this color up
+                    Color(red: 15/255, green: 35/255, blue: 55/255).opacity(0.95),
+                    Color(red: 25/255, green: 52/255, blue: 65/255).opacity(0.85)
                 ],
                 startPoint: .topLeading,
                 endPoint: .bottomTrailing
@@ -46,9 +47,9 @@ struct FeedSessionCard: View {
         } else {
             return LinearGradient(
                 colors: [
-                    Color(red: 45/255, green: 25/255, blue: 40/255).opacity(0.95),
-                    Color(red: 35/255, green: 24/255, blue: 48/255).opacity(0.9),
-                    Color(red: 25/255, green: 20/255, blue: 45/255).opacity(0.85)
+                    Color(red: 45/255, green: 28/255, blue: 58/255).opacity(0.9),  // Moved this color up
+                    Color(red: 55/255, green: 30/255, blue: 50/255).opacity(0.95),
+                    Color(red: 35/255, green: 24/255, blue: 55/255).opacity(0.85)
                 ],
                 startPoint: .topLeading,
                 endPoint: .bottomTrailing
@@ -120,37 +121,57 @@ struct FeedSessionCard: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             // Card content with padding
-            VStack(alignment: .leading, spacing: 12) {
+            VStack(alignment: .leading, spacing: 14) {
                 // Top section with user info and action buttons
                 HStack(spacing: 12) {
                     // Left side: User info - only show if requested
                     if showUserHeader {
                         NavigationLink(destination: UserProfileView(user: viewModel.getUser(for: session.userId))) {
+                            ZStack {
+                                // Layered avatar with glow effect
                                 ProfileAvatarWithStreak(
                                     imageURL: userProfileImageURL,
-                                    size: 44,
+                                    size: 46,
                                     username: session.username,
                                     streakStatus: viewModel.getUserStreakStatus(userId: session.userId)
                                 )
                                 .overlay(
                                     Circle()
-                                        .stroke(Color.white.opacity(0.2), lineWidth: 1.5)
+                                        .stroke(
+                                            LinearGradient(
+                                                colors: [
+                                                    Color.white.opacity(0.7),
+                                                    Color.white.opacity(0.1)
+                                                ],
+                                                startPoint: .topLeading,
+                                                endPoint: .bottomTrailing
+                                            ),
+                                            lineWidth: 1.5
+                                        )
                                 )
-                                .shadow(color: statusGlow.opacity(0.3), radius: 6)
+                                
+                                // Subtle glow effect
+                                Circle()
+                                    .fill(statusGlow.opacity(0.15))
+                                    .frame(width: 52, height: 52)
+                                    .blur(radius: 8)
+                                    .offset(x: 0, y: 0)
+                                    .zIndex(-1)
                             }
-                            .buttonStyle(PlainButtonStyle())
+                        }
+                        .buttonStyle(PlainButtonStyle())
 
                         VStack(alignment: .leading, spacing: 2) {
                             NavigationLink(destination: UserProfileView(user: viewModel.getUser(for: session.userId))) {
                                 Text(session.username)
-                                    .font(.system(size: 16, weight: .bold))
+                                    .font(.system(size: 17, weight: .bold))
                                     .foregroundColor(.white)
                                     .shadow(color: statusGlow.opacity(0.5), radius: 4)
                             }
                             .buttonStyle(PlainButtonStyle())
 
                             Text(session.formattedStartTime)
-                                .font(.system(size: 12))
+                                .font(.system(size: 13))
                                 .foregroundColor(.white.opacity(0.7))
                         }
                     }
@@ -186,7 +207,7 @@ struct FeedSessionCard: View {
                 
                 // Session info section - UPDATED TEXT LOGIC HERE
                 HStack {
-                    // Using the new sessionStatusText computed property
+                    // Using the session status text computed property
                     Text(sessionStatusText)
                         .font(.system(size: 18, weight: .bold))
                         .foregroundColor(.white)
@@ -200,17 +221,16 @@ struct FeedSessionCard: View {
                     
                     Spacer()
                 }
-                .padding(.vertical, 4)
+                .padding(.vertical, 6)
                 
                 // Content sections - Enhanced with better styling
                 if hasContent {
-                    VStack(alignment: .leading, spacing: 6) {
+                    VStack(alignment: .leading, spacing: 8) {
                         if let title = session.sessionTitle, !title.isEmpty {
                             Text(title)
                                 .font(.system(size: 16, weight: .bold))
                                 .foregroundColor(.white)
                                 .lineLimit(2)
-                                .padding(.top, 2)
                         }
                         
                         if let notes = session.sessionNotes, !notes.isEmpty {
@@ -219,30 +239,39 @@ struct FeedSessionCard: View {
                                 .foregroundColor(.white.opacity(0.9))
                                 .multilineTextAlignment(.leading)
                                 .lineLimit(3)
-                                .padding(.bottom, 2)
                         }
                     }
-                    .padding(.vertical, 4)
-                    .padding(.horizontal, 2)
+                    .padding(.vertical, 10)
+                    .padding(.horizontal, 12)
                     .background(
-                        RoundedRectangle(cornerRadius: 8)
-                            .fill(Color.white.opacity(0.05))
-                            .overlay(
-                                RoundedRectangle(cornerRadius: 8)
-                                    .stroke(Color.white.opacity(0.1), lineWidth: 0.5)
-                            )
+                        ZStack {
+                            // Glass effect background
+                            RoundedRectangle(cornerRadius: 10)
+                                .fill(Color.white.opacity(0.05))
+                            
+                            // Highlight on top edge
+                            RoundedRectangle(cornerRadius: 10)
+                                .trim(from: 0, to: 0.5)
+                                .fill(Color.white.opacity(0.08))
+                                .rotationEffect(.degrees(180))
+                                .padding(1)
+                            
+                            // Subtle border
+                            RoundedRectangle(cornerRadius: 10)
+                                .stroke(Color.white.opacity(0.15), lineWidth: 0.5)
+                        }
                     )
                 }
                 
                 // Comment section with improved visual design
                 if hasComment || (viewModel.sessionComments[session.id.uuidString]?.count ?? 0) > 0 {
                     CommentsView(session: session, viewModel: viewModel)
-                        .padding(.vertical, 4)
+                        .padding(.vertical, 6)
                 }
                 
                 // Group session participants with enhanced visual style
                 if hasGroupParticipants {
-                    VStack(alignment: .leading, spacing: 8) {
+                    VStack(alignment: .leading, spacing: 10) {
                         // Header with subtle glow
                         Text("GROUP SESSION")
                             .font(.system(size: 12, weight: .bold))
@@ -266,14 +295,14 @@ struct FeedSessionCard: View {
                                 }
                             }
                             .padding(.horizontal, 2)
-                            .padding(.bottom, 4)
+                            .padding(.bottom, 2)
                         }
                     }
-                    .padding(.vertical, 4)
+                    .padding(.vertical, 6)
                 }
                 
                 // Action buttons and likes section with improved styling
-                VStack(spacing: 8) {
+                VStack(spacing: 10) {
                     // Like info section with enhanced styling
                     if likesCount > 0 {
                         Button(action: {
@@ -312,20 +341,16 @@ struct FeedSessionCard: View {
                             // Toggle like state via ViewModel
                             viewModel.likeSession(sessionId: session.id.uuidString)
                             
-                            
                             // Haptic feedback
                             let generator = UIImpactFeedbackGenerator(style: .medium)
                             generator.impactOccurred()
-                            
-                            // Update the count for immediate feedback
-
                         }) {
                             HStack(spacing: 8) {
                                 Image(systemName: isLiked ? "heart.fill" : "heart")
                                     .font(.system(size: 16, weight: .semibold))
                                     .foregroundColor(isLiked ?
-                                                    Color(red: 249/255, green: 115/255, blue: 22/255) :
-                                                    .white.opacity(0.9))
+                                                   Color(red: 249/255, green: 115/255, blue: 22/255) :
+                                                   .white.opacity(0.9))
                                     .shadow(color: isLiked ?
                                            Color(red: 249/255, green: 115/255, blue: 22/255).opacity(0.5) :
                                            .clear,
@@ -334,8 +359,8 @@ struct FeedSessionCard: View {
                                 Text("Like")
                                     .font(.system(size: 14, weight: .medium))
                                     .foregroundColor(isLiked ?
-                                                    Color(red: 249/255, green: 115/255, blue: 22/255) :
-                                                    .white.opacity(0.9))
+                                                   Color(red: 249/255, green: 115/255, blue: 22/255) :
+                                                   .white.opacity(0.9))
                             }
                         }
                         .buttonStyle(PlainButtonStyle())
@@ -394,29 +419,36 @@ struct FeedSessionCard: View {
                     .padding(.top, 12)
                 }
             }
-            .padding(.vertical, 16)
-            .padding(.horizontal, 16)
+            .padding(.vertical, 18)
+            .padding(.horizontal, 18)
         }
         .background(
             ZStack {
                 // Base gradient background
-                RoundedRectangle(cornerRadius: 18)
+                RoundedRectangle(cornerRadius: 20)
                     .fill(cardGradient)
                 
                 // Subtle glass effect overlay
-                RoundedRectangle(cornerRadius: 18)
+                RoundedRectangle(cornerRadius: 20)
                     .fill(Color.white.opacity(0.05))
                 
-                // Glowing border based on session status - subtler now
-                RoundedRectangle(cornerRadius: 18)
+                // Top highlight for glass effect
+                RoundedRectangle(cornerRadius: 20)
+                    .trim(from: 0, to: 0.5)
+                    .fill(Color.white.opacity(0.08))
+                    .rotationEffect(.degrees(180))
+                    .padding(1)
+                
+                // Glowing border based on session status
+                RoundedRectangle(cornerRadius: 20)
                     .stroke(
                         LinearGradient(
                             colors: [
-                                Color.white.opacity(0.6),
+                                Color.white.opacity(0.7),
                                 session.wasSuccessful ?
-                                    Color(red: 34/255, green: 197/255, blue: 94/255).opacity(0.2) :
-                                    Color(red: 239/255, green: 68/255, blue: 68/255).opacity(0.2),
-                                Color.white.opacity(0.1)
+                                    Color(red: 34/255, green: 197/255, blue: 94/255).opacity(0.3) :
+                                    Color(red: 239/255, green: 68/255, blue: 68/255).opacity(0.3),
+                                Color.white.opacity(0.2)
                             ],
                             startPoint: .topLeading,
                             endPoint: .bottomTrailing
@@ -424,7 +456,14 @@ struct FeedSessionCard: View {
                         lineWidth: 1.2
                     )
                 
-                // Subtle indicator at the top (not a thick line anymore)
+                // Subtle indicator at the top
+                RoundedRectangle(cornerRadius: 2)
+                    .fill(session.wasSuccessful ?
+                          Color(red: 34/255, green: 197/255, blue: 94/255).opacity(0.8) :
+                          Color(red: 239/255, green: 68/255, blue: 68/255).opacity(0.8))
+                    .frame(width: 40, height: 3)
+                    .padding(.top, 8)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
             }
         )
         .shadow(color: Color.black.opacity(0.2), radius: 10, x: 0, y: 5)
@@ -570,14 +609,23 @@ struct GroupParticipantBadge: View {
         .padding(.vertical, 6)
         .background(
             ZStack {
+                // Glass background
                 RoundedRectangle(cornerRadius: 12)
-                    .fill(Color.white.opacity(0.1))
+                    .fill(Color.white.opacity(0.08))
                 
+                // Top highlight
+                RoundedRectangle(cornerRadius: 12)
+                    .trim(from: 0, to: 0.5)
+                    .fill(Color.white.opacity(0.1))
+                    .rotationEffect(.degrees(180))
+                    .padding(1)
+                
+                // Subtle border
                 RoundedRectangle(cornerRadius: 12)
                     .stroke(
                         LinearGradient(
                             colors: [
-                                Color.white.opacity(0.5),
+                                Color.white.opacity(0.6),
                                 Color.white.opacity(0.1)
                             ],
                             startPoint: .topLeading,
@@ -653,17 +701,31 @@ struct CommentInputField: View {
     }
     
     private var editorBackground: some View {
-        RoundedRectangle(cornerRadius: 10)
-            .fill(Color.black.opacity(0.2))
-            .overlay(
-                RoundedRectangle(cornerRadius: 10)
-                    .stroke(
-                        isFocused ?
-                        Color(red: 34/255, green: 197/255, blue: 94/255).opacity(0.6) :
-                            Color.white.opacity(0.2),
-                        lineWidth: 1
-                    )
-            )
+        ZStack {
+            // Base background
+            RoundedRectangle(cornerRadius: 10)
+                .fill(Color.black.opacity(0.2))
+            
+            // Glass effect
+            RoundedRectangle(cornerRadius: 10)
+                .fill(Color.white.opacity(0.05))
+            
+            // Highlight on top
+            RoundedRectangle(cornerRadius: 10)
+                .trim(from: 0, to: 0.5)
+                .fill(Color.white.opacity(0.08))
+                .rotationEffect(.degrees(180))
+                .padding(1)
+                
+            // Focus/active border
+            RoundedRectangle(cornerRadius: 10)
+                .stroke(
+                    isFocused ?
+                    Color(red: 34/255, green: 197/255, blue: 94/255).opacity(0.6) :
+                        Color.white.opacity(0.2),
+                    lineWidth: 1
+                )
+        }
     }
     
     private var actionButtonsRow: some View {
@@ -700,12 +762,19 @@ struct CommentInputField: View {
                 .padding(.horizontal, 14)
                 .padding(.vertical, 8)
                 .background(
-                    Capsule()
-                        .fill(Color.black.opacity(0.3))
-                        .overlay(
-                            Capsule()
-                                .stroke(Color.white.opacity(0.2), lineWidth: 1)
-                        )
+                    ZStack {
+                        // Base shape
+                        Capsule()
+                            .fill(Color.black.opacity(0.3))
+                            
+                        // Glass effect
+                        Capsule()
+                            .fill(Color.white.opacity(0.05))
+                            
+                        // Subtle border
+                        Capsule()
+                            .stroke(Color.white.opacity(0.2), lineWidth: 1)
+                    }
                 )
         }
         .buttonStyle(PlainButtonStyle())
@@ -742,31 +811,59 @@ struct CommentInputField: View {
     }
     
     private var submitButtonBackground: some View {
-        Capsule()
-            .fill(
-                LinearGradient(
-                    colors: [
-                        Color(red: 34/255, green: 197/255, blue: 94/255).opacity(0.7),
-                        Color(red: 22/255, green: 163/255, blue: 74/255).opacity(0.7)
-                    ],
-                    startPoint: .leading,
-                    endPoint: .trailing
+        ZStack {
+            // Base gradient
+            Capsule()
+                .fill(
+                    LinearGradient(
+                        colors: [
+                            Color(red: 34/255, green: 197/255, blue: 94/255).opacity(0.7),
+                            Color(red: 22/255, green: 163/255, blue: 74/255).opacity(0.7)
+                        ],
+                        startPoint: .leading,
+                        endPoint: .trailing
+                    )
                 )
-            )
-            .overlay(
-                Capsule()
-                    .stroke(Color.white.opacity(0.3), lineWidth: 1)
-            )
-            .shadow(color: Color(red: 34/255, green: 197/255, blue: 94/255).opacity(0.4), radius: 4)
+            
+            // Glass effect
+            Capsule()
+                .fill(Color.white.opacity(0.1))
+            
+            // Highlight on top
+            Capsule()
+                .trim(from: 0, to: 0.5)
+                .fill(Color.white.opacity(0.15))
+                .rotationEffect(.degrees(180))
+                .padding(1)
+                
+            // Subtle border
+            Capsule()
+                .stroke(Color.white.opacity(0.3), lineWidth: 1)
+        }
+        .shadow(color: Color(red: 34/255, green: 197/255, blue: 94/255).opacity(0.4), radius: 4)
     }
     
     private var backgroundView: some View {
-        RoundedRectangle(cornerRadius: 14)
-            .fill(Color.black.opacity(0.3))
-            .overlay(
-                RoundedRectangle(cornerRadius: 14)
-                    .stroke(Color.white.opacity(0.2), lineWidth: 1)
-            )
+        ZStack {
+            // Base shape
+            RoundedRectangle(cornerRadius: 14)
+                .fill(Color.black.opacity(0.3))
+            
+            // Glass effect
+            RoundedRectangle(cornerRadius: 14)
+                .fill(Color.white.opacity(0.05))
+            
+            // Highlight on top
+            RoundedRectangle(cornerRadius: 14)
+                .trim(from: 0, to: 0.5)
+                .fill(Color.white.opacity(0.08))
+                .rotationEffect(.degrees(180))
+                .padding(1)
+                
+            // Subtle border
+            RoundedRectangle(cornerRadius: 14)
+                .stroke(Color.white.opacity(0.2), lineWidth: 1)
+        }
     }
 }
 
@@ -816,12 +913,31 @@ struct CompactLikesListView: View {
                 // Enhanced loading indicator
                 HStack {
                     Spacer()
-                    VStack(spacing: 8) {
-                        ProgressView()
-                            .tint(Color(red: 249/255, green: 115/255, blue: 22/255))
-                            .scaleEffect(1.2)
+                    VStack(spacing: 10) {
+                        ZStack {
+                            // Glowing circle behind spinner
+                            Circle()
+                                .fill(
+                                    RadialGradient(
+                                        gradient: Gradient(colors: [
+                                            Color(red: 249/255, green: 115/255, blue: 22/255).opacity(0.3),
+                                            Color(red: 249/255, green: 115/255, blue: 22/255).opacity(0.0)
+                                        ]),
+                                        center: .center,
+                                        startRadius: 1,
+                                        endRadius: 30
+                                    )
+                                )
+                                .frame(width: 60, height: 60)
+                                .blur(radius: 8)
+                            
+                            // Spinner
+                            ProgressView()
+                                .tint(Color(red: 249/255, green: 115/255, blue: 22/255))
+                                .scaleEffect(1.2)
+                        }
                         
-                        Text("Loading...")
+                        Text("Loading likes...")
                             .font(.system(size: 14))
                             .foregroundColor(.white.opacity(0.7))
                     }
@@ -830,14 +946,22 @@ struct CompactLikesListView: View {
                 }
             } else if users.isEmpty {
                 // Enhanced empty state
-                VStack(spacing: 8) {
-                    Image(systemName: "heart.slash")
-                        .font(.system(size: 24))
-                        .foregroundColor(.white.opacity(0.5))
-                        .padding(.bottom, 4)
+                VStack(spacing: 10) {
+                    ZStack {
+                        // Faded heart background
+                        Circle()
+                            .fill(Color(red: 249/255, green: 115/255, blue: 22/255).opacity(0.15))
+                            .frame(width: 60, height: 60)
+                            .blur(radius: 10)
+                        
+                        Image(systemName: "heart.slash")
+                            .font(.system(size: 28))
+                            .foregroundColor(.white.opacity(0.7))
+                    }
+                    .padding(.bottom, 4)
                     
                     Text("No likes yet")
-                        .font(.system(size: 14, weight: .medium))
+                        .font(.system(size: 16, weight: .medium))
                         .foregroundColor(.white.opacity(0.7))
                 }
                 .frame(maxWidth: .infinity, alignment: .center)
@@ -857,7 +981,17 @@ struct CompactLikesListView: View {
                                     )
                                     .overlay(
                                         Circle()
-                                            .stroke(Color.white.opacity(0.2), lineWidth: 1)
+                                            .stroke(
+                                                LinearGradient(
+                                                    colors: [
+                                                        Color.white.opacity(0.6),
+                                                        Color.white.opacity(0.1)
+                                                    ],
+                                                    startPoint: .topLeading,
+                                                    endPoint: .bottomTrailing
+                                                ),
+                                                lineWidth: 1
+                                            )
                                     )
                                     
                                     // Username with subtle shadow
@@ -876,10 +1010,20 @@ struct CompactLikesListView: View {
                                 .padding(.horizontal, 16)
                                 .padding(.vertical, 12)
                                 .background(
-                                    Color.white.opacity(0.05)
-                                        .cornerRadius(8)
-                                        .padding(.horizontal, 8)
-                                        .padding(.vertical, 2)
+                                    ZStack {
+                                        // Glass background
+                                        RoundedRectangle(cornerRadius: 10)
+                                            .fill(Color.white.opacity(0.05))
+                                        
+                                        // Highlight on top
+                                        RoundedRectangle(cornerRadius: 10)
+                                            .trim(from: 0, to: 0.5)
+                                            .fill(Color.white.opacity(0.08))
+                                            .rotationEffect(.degrees(180))
+                                            .padding(1)
+                                    }
+                                    .padding(.horizontal, 8)
+                                    .padding(.vertical, 2)
                                 )
                             }
                             .buttonStyle(PlainButtonStyle())
@@ -897,30 +1041,36 @@ struct CompactLikesListView: View {
             }
         }
         .background(
-            LinearGradient(
-                colors: [
-                    Color(red: 15/255, green: 23/255, blue: 42/255), // Dark blue-green
-                    Color(red: 20/255, green: 36/255, blue: 50/255), // Midnight teal
-                ],
-                startPoint: .top,
-                endPoint: .bottom
-            )
+            ZStack {
+                // Base gradient
+                LinearGradient(
+                    colors: [
+                        Color(red: 17/255, green: 24/255, blue: 39/255), // Dark blue-green
+                        Color(red: 24/255, green: 45/255, blue: 60/255), // Midnight teal
+                    ],
+                    startPoint: .top,
+                    endPoint: .bottom
+                )
+                
+                // Glass effect
+                Color.white.opacity(0.05)
+                
+                // Border
+                RoundedRectangle(cornerRadius: 16)
+                    .stroke(
+                        LinearGradient(
+                            colors: [
+                                Color.white.opacity(0.6),
+                                Color.white.opacity(0.1)
+                            ],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        ),
+                        lineWidth: 1
+                    )
+            }
         )
         .cornerRadius(16)
-        .overlay(
-            RoundedRectangle(cornerRadius: 16)
-                .stroke(
-                    LinearGradient(
-                        colors: [
-                            Color.white.opacity(0.5),
-                            Color.white.opacity(0.1)
-                        ],
-                        startPoint: .topLeading,
-                        endPoint: .bottomTrailing
-                    ),
-                    lineWidth: 1
-                )
-        )
         .shadow(color: Color.black.opacity(0.3), radius: 20)
         .frame(width: 300)
         .onAppear {
@@ -944,7 +1094,7 @@ struct CommentsView: View {
     let viewModel: FeedViewModel
     
     var body: some View {
-        VStack(alignment: .leading, spacing: 6) {
+        VStack(alignment: .leading, spacing: 8) {
             // Display existing comments from sessionComments
             if let comments = viewModel.sessionComments[session.id.uuidString], !comments.isEmpty {
                 ForEach(comments) { comment in
@@ -955,19 +1105,26 @@ struct CommentsView: View {
             // For backward compatibility, handle legacy comment field
             else if let comment = session.comment, !comment.isEmpty {
                 // Legacy comment handling with enhanced styling
-                HStack(alignment: .top, spacing: 8) {
-                    Image(systemName: "text.bubble.fill")
-                        .font(.system(size: 14))
-                        .foregroundColor(.white.opacity(0.7))
-                        .padding(.top, 2)
+                HStack(alignment: .top, spacing: 10) {
+                    // Comment icon bubble with glow
+                    ZStack {
+                        Circle()
+                            .fill(Color(red: 56/255, green: 189/255, blue: 248/255).opacity(0.2))
+                            .frame(width: 28, height: 28)
+                        
+                        Image(systemName: "text.bubble.fill")
+                            .font(.system(size: 14))
+                            .foregroundColor(Color(red: 56/255, green: 189/255, blue: 248/255).opacity(0.8))
+                            .shadow(color: Color(red: 56/255, green: 189/255, blue: 248/255).opacity(0.6), radius: 4)
+                    }
                     
-                    VStack(alignment: .leading, spacing: 2) {
+                    VStack(alignment: .leading, spacing: 4) {
                         // Check if we have commentor information
                         if let commentorId = session.commentorId, let commentorName = session.commentorName {
                             // Display the comment with the correct user
                             NavigationLink(destination: UserProfileView(user: viewModel.getUser(for: commentorId))) {
                                 Text(commentorName)
-                                    .font(.system(size: 12, weight: .semibold))
+                                    .font(.system(size: 13, weight: .bold))
                                     .foregroundColor(Color(red: 56/255, green: 189/255, blue: 248/255).opacity(0.9))
                                     .shadow(color: Color(red: 56/255, green: 189/255, blue: 248/255).opacity(0.4), radius: 4)
                             }
@@ -977,6 +1134,7 @@ struct CommentsView: View {
                                 .font(.system(size: 14))
                                 .foregroundColor(.white.opacity(0.9))
                                 .lineLimit(3)
+                                .padding(.vertical, 2)
                             
                             // Show comment time if available
                             if let commentTime = session.commentTime {
@@ -989,7 +1147,7 @@ struct CommentsView: View {
                             // Legacy comments without user info - show session owner
                             NavigationLink(destination: UserProfileView(user: viewModel.getUser(for: session.userId))) {
                                 Text(session.username)
-                                    .font(.system(size: 12, weight: .semibold))
+                                    .font(.system(size: 13, weight: .bold))
                                     .foregroundColor(Color(red: 56/255, green: 189/255, blue: 248/255).opacity(0.9))
                                     .shadow(color: Color(red: 56/255, green: 189/255, blue: 248/255).opacity(0.4), radius: 4)
                             }
@@ -999,10 +1157,11 @@ struct CommentsView: View {
                                 .font(.system(size: 14))
                                 .foregroundColor(.white.opacity(0.9))
                                 .lineLimit(3)
+                                .padding(.vertical, 2)
                         }
                     }
                 }
-                .padding(.vertical, 2)
+                .padding(.vertical, 4)
             }
         }
         .onAppear {
@@ -1039,13 +1198,31 @@ struct CommentBubble: View {
         HStack(alignment: .top, spacing: 10) {
             // Comment icon with enhanced styling
             ZStack {
+                // Glow effect
                 Circle()
-                    .fill(Color(red: 56/255, green: 189/255, blue: 248/255).opacity(0.2))
+                    .fill(Color(red: 56/255, green: 189/255, blue: 248/255).opacity(0.15))
+                    .frame(width: 32, height: 32)
+                    .blur(radius: 4)
+                
+                // Icon background
+                Circle()
+                    .fill(
+                        LinearGradient(
+                            colors: [
+                                Color(red: 56/255, green: 189/255, blue: 248/255).opacity(0.3),
+                                Color(red: 14/255, green: 165/255, blue: 233/255).opacity(0.2)
+                            ],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        )
+                    )
                     .frame(width: 28, height: 28)
                 
+                // Icon
                 Image(systemName: "text.bubble.fill")
                     .font(.system(size: 14))
-                    .foregroundColor(Color(red: 56/255, green: 189/255, blue: 248/255).opacity(0.8))
+                    .foregroundColor(Color(red: 56/255, green: 189/255, blue: 248/255).opacity(0.9))
+                    .shadow(color: Color(red: 56/255, green: 189/255, blue: 248/255).opacity(0.5), radius: 3)
             }
             
             VStack(alignment: .leading, spacing: 4) {
@@ -1083,12 +1260,15 @@ struct CommentBubble: View {
                         .foregroundColor(Color.red.opacity(0.8))
                         .padding(6)
                         .background(
-                            Circle()
-                                .fill(Color.black.opacity(0.3))
-                                .overlay(
-                                    Circle()
-                                        .stroke(Color.red.opacity(0.3), lineWidth: 1)
-                                )
+                            ZStack {
+                                // Glass background
+                                Circle()
+                                    .fill(Color.black.opacity(0.3))
+                                
+                                // Subtle border
+                                Circle()
+                                    .stroke(Color.red.opacity(0.3), lineWidth: 1)
+                            }
                         )
                 }
                 .transition(.scale.combined(with: .opacity))

@@ -303,6 +303,15 @@ struct EnhancedFriendCard: View {
         .onDisappear {
             stopTimer()
         }
+        .onReceive(NotificationCenter.default.publisher(for: Notification.Name("RefreshLiveSessions"))) { _ in
+            // Update session timer with fresh data
+            if let session = liveSession {
+                sessionTimer.updateSession(session: session)
+            }
+            
+            // Force UI update
+            //self.objectWillChange.send()
+        }
     }
     
     // NEW: Helper to load streak status for the friend

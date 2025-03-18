@@ -137,10 +137,6 @@ struct ProfileView: View {
                                 .foregroundColor(.white)
                                 .shadow(color: cyanBlueGlow, radius: 8)
                             
-                            Text("プロフィール")
-                                .font(.system(size: 12, weight: .medium))
-                                .tracking(4)
-                                .foregroundColor(.white.opacity(0.7))
                         }
                         
                         Spacer()
@@ -475,10 +471,6 @@ struct ProfileView: View {
                                 .foregroundColor(.white)
                                 .shadow(color: cyanBlueGlow, radius: 8)
 
-                            Text("セッション履歴")
-                                .font(.system(size: 12))
-                                .tracking(2)
-                                .foregroundColor(.white.opacity(0.7))
                         }
                         .padding(.horizontal)
 

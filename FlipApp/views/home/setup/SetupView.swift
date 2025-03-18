@@ -16,6 +16,8 @@ struct SetupView: View {
     @State private var showLocationSelector = false
     @State private var showRules = false
     @State private var showLocationUpgradeAlert = false
+    @State private var showFirstSessionAlert: Bool = false
+    
     
     // Check if we're navigating back from a joined session view
     @State private var joinLiveSessionMode = false
@@ -422,14 +424,12 @@ struct SetupView: View {
                     }
                 )
             }
-            if permissionManager.locationAuthStatus == .denied &&
-               !permissionManager.hasShownLocationUpgradeAlert {
-                // Check once and set the state variable
-                DispatchQueue.main.async {
-                    if !showLocationUpgradeAlert {
-                        showLocationUpgradeAlert = true
+            if showLocationUpgradeAlert {
+                LocationUpgradeAlert(isPresented: $showLocationUpgradeAlert)
+                    .onDisappear {
+                        // Mark as shown when dismissed
+                        permissionManager.hasShownLocationUpgradeAlert = true
                     }
-                }
             }
             if showLocationUpgradeAlert {
                 LocationUpgradeAlert(isPresented: $showLocationUpgradeAlert)
@@ -443,10 +443,24 @@ struct SetupView: View {
             if permissionManager.showMotionSettingsAlert {
                 MotionSettingsAlert(isPresented: $permissionManager.showMotionSettingsAlert)
             }
+            if SessionJoinCoordinator.shared.showFirstSessionRequiredAlert {
+                FirstSessionRequiredAlert(
+                    isPresented: Binding<Bool>(
+                        get: { SessionJoinCoordinator.shared.showFirstSessionRequiredAlert },
+                        set: { newValue in
+                            SessionJoinCoordinator.shared.showFirstSessionRequiredAlert = newValue
+                        }
+                    )
+                )
+            }
         }
         .onAppear {
             // Refresh permission status first to catch any changes made in Settings
             permissionManager.refreshPermissionStatus()
+            if permissionManager.locationAuthStatus == .denied &&
+                   !permissionManager.hasShownLocationUpgradeAlert {
+                    showLocationUpgradeAlert = true
+                }
             
             // Initialize selected pause duration from AppManager
             if appManager.pauseDuration > 0 {
@@ -461,6 +475,18 @@ struct SetupView: View {
             
             // Check if infinite pauses are set
             isInfinitePauses = appManager.maxPauses > 10
+            FirebaseManager.shared.hasCompletedFirstSession { hasCompleted in
+                    DispatchQueue.main.async {
+                        // If user hasn't completed first session, don't allow joining
+                        if !hasCompleted && joinLiveSessionMode {
+                            withAnimation {
+                                joinLiveSessionMode = false
+                                sessionToJoin = nil
+                                SessionJoinCoordinator.shared.showFirstSessionRequiredAlert = true
+                            }
+                        }
+                    }
+                }
             
             // Check if we're being called to join a session
             if let sessionData = SessionJoinCoordinator.shared.getJoinSession() {

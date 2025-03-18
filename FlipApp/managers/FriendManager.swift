@@ -18,6 +18,11 @@ class FriendManager: ObservableObject {
     func loadFriends() {
         guard let userId = Auth.auth().currentUser?.uid else { return }
 
+        // Clear existing friends before reloading to avoid duplicates
+        DispatchQueue.main.async {
+            self.friends = []
+        }
+
         firebaseManager.db.collection("users").document(userId)
             .getDocument { [weak self] document, error in
                 guard let document = document,
@@ -25,15 +30,13 @@ class FriendManager: ObservableObject {
                         as: FirebaseManager.FlipUser.self)
                 else { return }
 
-                // Clear existing friends before reloading
-                DispatchQueue.main.async {
-                    self?.friends = []
-                }
-
                 // Load friend details
                 for friendId in userData.friends {
                     self?.loadFriendDetails(friendId: friendId)
                 }
+                
+                // Also force refresh live sessions to keep everything in sync
+                LiveSessionManager.shared.refreshLiveSessions()
             }
     }
 

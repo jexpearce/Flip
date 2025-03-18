@@ -2,6 +2,7 @@
 import Foundation
 import SwiftUI
 
+
 // This class coordinates joining live sessions between different parts of the app
 class SessionJoinCoordinator: ObservableObject {
     // Singleton instance
@@ -12,6 +13,7 @@ class SessionJoinCoordinator: ObservableObject {
     @Published var pendingSessionName: String? = nil
     @Published var shouldJoinSession = false
     @Published var pendingTimestamp: Date? = nil  // Track when the request was made for timeout
+    @Published var showFirstSessionRequiredAlert = false
     
     // Timeout constants
     private let joinTimeout: TimeInterval = 60 // 60 seconds timeout for joining
@@ -23,17 +25,30 @@ class SessionJoinCoordinator: ObservableObject {
         startCleanupTimer()
     }
     
-    // Set a pending session to join
+    // Set a pending session to join with first-time user check
     func setJoinSession(id: String, name: String) {
-        // Clear any existing pending session first
-        clearPendingSession()
-        
-        pendingSessionId = id
-        pendingSessionName = name
-        pendingTimestamp = Date()
-        shouldJoinSession = true
-        
-        print("Set pending join for session: \(id) (user: \(name))")
+        // Check if this is the user's first session
+        FirebaseManager.shared.hasCompletedFirstSession { hasCompleted in
+            DispatchQueue.main.async {
+                if hasCompleted {
+                    // Clear any existing pending session first
+                    self.clearPendingSession()
+                    
+                    self.pendingSessionId = id
+                    self.pendingSessionName = name
+                    self.pendingTimestamp = Date()
+                    self.shouldJoinSession = true
+                    
+                    print("Set pending join for session: \(id) (user: \(name))")
+                    
+                    // Switch to home tab to show the join UI
+                    NotificationCenter.default.post(name: Notification.Name("SwitchToHomeTab"), object: nil)
+                } else {
+                    // User needs to complete their first session
+                    self.showFirstSessionRequiredAlert = true
+                }
+            }
+        }
     }
     
     // Clear the pending session

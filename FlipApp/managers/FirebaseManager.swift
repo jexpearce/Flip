@@ -409,6 +409,82 @@ extension FirebaseManager {
             }
     }
 }
+// Add this extension to FirebaseManager.swift
+
+extension FirebaseManager {
+    // Check if the user has already completed their first session
+    func hasCompletedFirstSession(completion: @escaping (Bool) -> Void) {
+        guard let userId = Auth.auth().currentUser?.uid else {
+            completion(false)
+            return
+        }
+        
+        // Check first_sessions collection first
+        db.collection("first_sessions")
+            .document(userId)
+            .getDocument { document, error in
+                if let error = error {
+                    print("Error checking first session: \(error.localizedDescription)")
+                    completion(false)
+                    return
+                }
+                
+                if let document = document, document.exists {
+                    // User already has a first session record
+                    completion(true)
+                    return
+                }
+                
+                // Also check sessions collection as a backup
+                self.db.collection("sessions")
+                    .whereField("userId", isEqualTo: userId)
+                    .limit(to: 1)
+                    .getDocuments { snapshot, error in
+                        if let error = error {
+                            print("Error checking regular sessions: \(error.localizedDescription)")
+                            completion(false)
+                            return
+                        }
+                        
+                        // If there are any documents, the user has completed at least one session
+                        completion(!(snapshot?.documents.isEmpty ?? true))
+                    }
+            }
+    }
+    
+    // Create a first session entry in the leaderboard
+    func recordFirstSession(duration: Int, wasSuccessful: Bool, completion: @escaping (Bool) -> Void) {
+        guard let userId = Auth.auth().currentUser?.uid else {
+            completion(false)
+            return
+        }
+        
+        let username = self.currentUser?.username ?? "User"
+        
+        // Create first session document
+        let firstSessionData: [String: Any] = [
+            "userId": userId,
+            "username": username,
+            "duration": duration,
+            "wasSuccessful": wasSuccessful,
+            "timestamp": FieldValue.serverTimestamp()
+        ]
+        
+        // Save to first_sessions collection
+        db.collection("first_sessions")
+            .document(userId)
+            .setData(firstSessionData) { error in
+                if let error = error {
+                    print("Error saving first session: \(error.localizedDescription)")
+                    completion(false)
+                    return
+                }
+                
+                print("First session recorded successfully")
+                completion(true)
+            }
+    }
+}
 
 struct CompletedSession {
     let userId: String

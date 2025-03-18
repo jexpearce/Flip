@@ -74,6 +74,9 @@ struct RegionalView: View {
     @State private var showMap = false
     @StateObject private var locationPermissionManager = LocationPermissionManager.shared
     
+    // Add this state variable for the privacy sheet
+    @State private var showPrivacySettings = false
+    
     // Regional view deep midnight purple gradient with subtle red
     private let regionalGradient = LinearGradient(
         colors: [
@@ -136,7 +139,7 @@ struct RegionalView: View {
                     }
                     
                     VStack(spacing: 20) {
-                        // Title with enhanced visual style
+                        // Title with enhanced visual style and privacy button
                         HStack {
                             Text("REGIONAL")
                                 .font(.system(size: 28, weight: .black))
@@ -146,6 +149,12 @@ struct RegionalView: View {
                                 .padding(.leading)
                             
                             Spacer()
+                            
+                            // Add privacy button
+                            RegionalPrivacyButton(showSettings: $showPrivacySettings) {
+                                showPrivacySettings = true
+                            }
+                            .padding(.trailing)
                         }
                         .padding(.top, 50)
                         .padding(.bottom, 10)
@@ -267,6 +276,10 @@ struct RegionalView: View {
                         viewModel.selectBuilding(building)
                     }
                 )
+            }
+            // Add privacy settings sheet
+            .sheet(isPresented: $showPrivacySettings) {
+                RegionalPrivacySheet()
             }
         }
         .fullScreenCover(isPresented: $showMap) {

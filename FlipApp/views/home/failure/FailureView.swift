@@ -15,6 +15,11 @@ struct FailureView: View {
     @State private var showActions = false
     @State private var isGlowing = false
     
+    // State variables for first-time session
+    @State private var isFirstSession = false
+    @State private var isCheckingFirstSession = true
+    @State private var showLeaderboard = false
+    
     // Session notes state variables
     @State private var sessionTitle: String = ""
     @State private var sessionNotes: String = ""
@@ -70,7 +75,7 @@ struct FailureView: View {
                     .scaleEffect(showIcon ? 1 : 0)
                     
                     // Title
-                    Text("SESSION FAILED")
+                    Text(isFirstSession ? "FIRST SESSION FAILED" : "SESSION FAILED")
                         .font(.system(size: 28, weight: .black))
                         .tracking(6)
                         .foregroundColor(.white)
@@ -80,7 +85,9 @@ struct FailureView: View {
                     
                     // Stats card
                     VStack(spacing: 15) {
-                        Text("Your phone was moved during the session")
+                        Text(isFirstSession ?
+                             "Your phone was moved during your first session" :
+                             "Your phone was moved during the session")
                             .font(.system(size: 18, weight: .medium))
                             .foregroundColor(.white)
                             .multilineTextAlignment(.center)
@@ -144,8 +151,30 @@ struct FailureView: View {
                     .opacity(showStats ? 1 : 0)
                 }
                 
-                // Session Notes section
-                if showNotes {
+                // Conditional content: First-time leaderboard or session notes
+                if isCheckingFirstSession {
+                    // Loading placeholder
+                    ProgressView()
+                        .scaleEffect(1.5)
+                        .tint(.white)
+                        .frame(height: 150)
+                        .transition(.opacity)
+                } else if isFirstSession {
+                    // First-time leaderboard
+                    if showLeaderboard, let userId = Auth.auth().currentUser?.uid {
+                        // Calculate the actual duration
+                        let actualDuration = (appManager.selectedMinutes * 60 - appManager.remainingSeconds) / 60
+                        
+                        FirstTimeLeaderboardView(
+                            userId: userId,
+                            username: FirebaseManager.shared.currentUser?.username ?? "User",
+                            duration: actualDuration,
+                            wasSuccessful: false
+                        )
+                        .transition(.scale.combined(with: .opacity))
+                    }
+                } else if showNotes {
+                    // Regular session notes for returning users
                     SessionNotesView(
                         sessionTitle: $sessionTitle,
                         sessionNotes: $sessionNotes
@@ -164,6 +193,13 @@ struct FailureView: View {
                         
                         // Hide keyboard first
                         hideKeyboard()
+                        
+                        // For first-time users, set a default title
+                        if isFirstSession {
+                            let rank = FirstTimeLeaderboardManager.shared.userRank
+                            let total = FirstTimeLeaderboardManager.shared.totalUsers
+                            sessionTitle = "My First Session!: Ranked \(rank)th of \(total)"
+                        }
                         
                         // FIXED: Only save NEW session if it hasn't been recorded already
                         if !appManager.sessionAlreadyRecorded {
@@ -287,6 +323,13 @@ struct FailureView: View {
                         // Hide keyboard first
                         hideKeyboard()
                         
+                        // For first-time users, set a default title
+                        if isFirstSession {
+                            let rank = FirstTimeLeaderboardManager.shared.userRank
+                            let total = FirstTimeLeaderboardManager.shared.totalUsers
+                            sessionTitle = "My First Session!: Ranked \(rank)th of \(total)"
+                        }
+                        
                         // FIXED: Only save NEW session if it hasn't been recorded already
                         if !appManager.sessionAlreadyRecorded {
                             // Save session with notes before going back
@@ -404,6 +447,9 @@ struct FailureView: View {
                 }
             }
             
+            // Check if this is the user's first session
+            checkFirstSession()
+            
             // Stagger animations for a nice effect
             withAnimation(.spring(response: 0.6, dampingFraction: 0.7)) {
                 showIcon = true
@@ -418,7 +464,9 @@ struct FailureView: View {
             }
             
             withAnimation(.spring(response: 0.6, dampingFraction: 0.8).delay(0.6)) {
-                showNotes = true
+                if !isFirstSession {
+                    showNotes = true
+                }
             }
             
             withAnimation(.spring(response: 0.6, dampingFraction: 0.8).delay(0.8)) {
@@ -432,6 +480,49 @@ struct FailureView: View {
         .background(Theme.mainGradient.edgesIgnoringSafeArea(.all))
         .onTapGesture {
             hideKeyboard()
+        }
+    }
+    
+    private func checkFirstSession() {
+        guard let userId = Auth.auth().currentUser?.uid else {
+            isCheckingFirstSession = false
+            return
+        }
+        
+        FirebaseManager.shared.hasCompletedFirstSession { hasCompleted in
+            // This is a first session if the user hasn't completed one before
+            self.isFirstSession = !hasCompleted
+            
+            // If this is their first session, record it
+            if self.isFirstSession {
+                // Calculate actual duration for the failed session
+                let actualDuration = (self.appManager.selectedMinutes * 60 - self.appManager.remainingSeconds) / 60
+                
+                // Record the first session to the first_sessions collection
+                FirebaseManager.shared.recordFirstSession(
+                    duration: actualDuration,
+                    wasSuccessful: false
+                ) { success in
+                    DispatchQueue.main.async {
+                        self.isCheckingFirstSession = false
+                        
+                        // Show the leaderboard with animation
+                        withAnimation(.spring()) {
+                            self.showLeaderboard = true
+                        }
+                    }
+                }
+            } else {
+                // Not a first-time user
+                DispatchQueue.main.async {
+                    self.isCheckingFirstSession = false
+                    
+                    // Show notes section instead
+                    withAnimation(.spring()) {
+                        self.showNotes = true
+                    }
+                }
+            }
         }
     }
     

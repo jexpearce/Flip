@@ -14,7 +14,6 @@ struct CircularTime: View {
                 TickMarks()
                 InnerGradientCircle()
                 ProgressIndicator(progressValue: progressValue)
-                ProgressDot(progressValue: progressValue, circleSize: circleSize)
                 CenterCircle()
                 TimePicker(selectedMinutes: $selectedMinutes, timeIntervals: timeIntervals)
                     .onChange(of: selectedMinutes) { newValue in
@@ -107,41 +106,6 @@ private struct ProgressIndicator: View {
             .shadow(color: Theme.yellowShadow, radius: 4)
     }
 }
-
-private struct ProgressDot: View {
-    let progressValue: Double
-    let circleSize: CGFloat
-    
-    // Split position calculations into computed properties
-    private var radius: CGFloat {
-        (circleSize - 20) / 2
-    }
-    
-    private var angleInRadians: Double {
-        2 * .pi * progressValue - .pi/2
-    }
-    
-    private var xPosition: CGFloat {
-        circleSize/2 + radius * CGFloat(cos(angleInRadians))
-    }
-    
-    private var yPosition: CGFloat {
-        circleSize/2 + radius * CGFloat(sin(angleInRadians))
-    }
-
-    var body: some View {
-        Circle()
-            .fill(Theme.yellow)
-            .frame(width: 12, height: 12)
-            .overlay(
-                Circle()
-                    .stroke(Color.white, lineWidth: 1)
-            )
-            .shadow(color: Theme.yellowShadow, radius: 4)
-            .position(x: xPosition, y: yPosition)
-    }
-}
-
 private struct CenterCircle: View {
     var body: some View {
         Circle()

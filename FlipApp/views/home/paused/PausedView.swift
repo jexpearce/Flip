@@ -56,10 +56,6 @@ struct PausedView: View {
                             .foregroundColor(.white)
                             .shadow(color: Color(red: 250/255, green: 204/255, blue: 21/255).opacity(0.4), radius: 6)
 
-                        Text("一時停止中")
-                            .font(.system(size: 14))
-                            .tracking(3)
-                            .foregroundColor(.white.opacity(0.7))
                     }
                 }
                 

@@ -7,6 +7,8 @@ class SettingsViewModel: ObservableObject {
     @Published var visibilityLevel: LocationVisibilityLevel = .friendsOnly
     @Published var showSessionHistory = true
     @Published var commentNotifications = true
+    @Published var regionalDisplayMode: RegionalDisplayMode = .normal
+    @Published var regionalOptOut = false
     
     private let db = Firestore.firestore()
     
@@ -36,12 +38,23 @@ class SettingsViewModel: ObservableObject {
                 
                 // Load session history setting (default to ON if not set)
                 self.showSessionHistory = data["showSessionHistory"] as? Bool ?? true
+                
+                // Load regional display mode (default to normal if not set)
+                if let modeString = data["regionalDisplayMode"] as? String,
+                   let mode = RegionalDisplayMode(rawValue: modeString) {
+                    self.regionalDisplayMode = mode
+                }
+                
+                // Load regional opt out setting (default to OFF if not set)
+                self.regionalOptOut = data["regionalOptOut"] as? Bool ?? false
             } else {
                 // Set defaults and save them
                 self.friendFailureNotifications = true
                 self.commentNotifications = true
                 self.visibilityLevel = .friendsOnly
                 self.showSessionHistory = true
+                self.regionalDisplayMode = .normal
+                self.regionalOptOut = false
                 self.saveSettings()
             }
         }
@@ -55,6 +68,8 @@ class SettingsViewModel: ObservableObject {
             "commentNotifications": commentNotifications,
             "visibilityLevel": visibilityLevel.rawValue,
             "showSessionHistory": showSessionHistory,
+            "regionalDisplayMode": regionalDisplayMode.rawValue,
+            "regionalOptOut": regionalOptOut,
             "updatedAt": FieldValue.serverTimestamp()
         ]
         
@@ -64,6 +79,7 @@ class SettingsViewModel: ObservableObject {
             }
         }
     }
+    
     func toggleCommentNotifications() {
         commentNotifications.toggle()
         saveSettings()
@@ -82,6 +98,23 @@ class SettingsViewModel: ObservableObject {
     func toggleShowSessionHistory() {
         showSessionHistory.toggle()
         saveSettings()
+    }
+    
+    // New methods for regional privacy settings
+    func updateRegionalDisplayMode(_ mode: RegionalDisplayMode) {
+        regionalDisplayMode = mode
+        saveSettings()
+        
+        // Update in UserSettingsManager too for immediate effect
+        UserSettingsManager.shared.setRegionalDisplayMode(mode)
+    }
+    
+    func toggleRegionalOptOut() {
+        regionalOptOut.toggle()
+        saveSettings()
+        
+        // Update in UserSettingsManager too for immediate effect
+        UserSettingsManager.shared.setRegionalOptOut(regionalOptOut)
     }
 }
 
@@ -213,6 +246,11 @@ struct SettingsView: View {
                                 .onChange(of: viewModel.showSessionHistory) { _ in
                                     viewModel.saveSettings()
                                 }
+                                Divider()
+                                    .background(Color.white.opacity(0.2))
+                                    .padding(.vertical, 5)
+
+                                RegionalPrivacySection(viewModel: viewModel)
                                 
                                 // Privacy Information
                                 VStack(alignment: .leading, spacing: 10) {
@@ -375,6 +413,118 @@ struct SettingsView: View {
         }
     }
 }
+
+struct RegionalPrivacySection: View {
+    @ObservedObject var viewModel: SettingsViewModel
+    private let cyanBlueAccent = Color(red: 56/255, green: 189/255, blue: 248/255)
+    
+    var body: some View {
+        VStack(alignment: .leading, spacing: 15) {
+            Text("REGIONAL LEADERBOARD PRIVACY")
+                .font(.system(size: 14, weight: .bold))
+                .tracking(2)
+                .foregroundColor(.white.opacity(0.7))
+            
+            // Opt Out Toggle
+            Toggle(isOn: $viewModel.regionalOptOut) {
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("Opt Out of Leaderboard")
+                        .font(.system(size: 16, weight: .semibold))
+                        .foregroundColor(.white)
+                    
+                    Text("When enabled, your sessions won't appear on any regional leaderboards")
+                        .font(.system(size: 14))
+                        .foregroundColor(.white.opacity(0.7))
+                }
+            }
+            .toggleStyle(SwitchToggleStyle(tint: cyanBlueAccent))
+            .onChange(of: viewModel.regionalOptOut) { _ in
+                viewModel.toggleRegionalOptOut()
+            }
+            .padding()
+            .background(
+                RoundedRectangle(cornerRadius: 12)
+                    .fill(Color.white.opacity(0.05))
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 12)
+                            .stroke(Color.white.opacity(0.2), lineWidth: 1)
+                    )
+            )
+            
+            // Display Mode Selection (only visible if not opted out)
+            if !viewModel.regionalOptOut {
+                VStack(alignment: .leading, spacing: 12) {
+                    Text("Display Name Option")
+                        .font(.system(size: 16, weight: .semibold))
+                        .foregroundColor(.white)
+                    
+                    HStack(spacing: 20) {
+                        // Normal display mode
+                        VStack {
+                            ZStack {
+                                Circle()
+                                    .stroke(Color.white.opacity(0.5), lineWidth: 2)
+                                    .frame(width: 24, height: 24)
+                                
+                                if viewModel.regionalDisplayMode == .normal {
+                                    Circle()
+                                        .fill(cyanBlueAccent)
+                                        .frame(width: 16, height: 16)
+                                }
+                            }
+                            .onTapGesture {
+                                viewModel.updateRegionalDisplayMode(.normal)
+                            }
+                            
+                            Text("Normal")
+                                .font(.system(size: 14))
+                                .foregroundColor(.white)
+                        }
+                        
+                        // Anonymous display mode
+                        VStack {
+                            ZStack {
+                                Circle()
+                                    .stroke(Color.white.opacity(0.5), lineWidth: 2)
+                                    .frame(width: 24, height: 24)
+                                
+                                if viewModel.regionalDisplayMode == .anonymous {
+                                    Circle()
+                                        .fill(cyanBlueAccent)
+                                        .frame(width: 16, height: 16)
+                                }
+                            }
+                            .onTapGesture {
+                                viewModel.updateRegionalDisplayMode(.anonymous)
+                            }
+                            
+                            Text("Anonymous")
+                                .font(.system(size: 14))
+                                .foregroundColor(.white)
+                        }
+                    }
+                    
+                    Text(viewModel.regionalDisplayMode == .normal ?
+                        "Your username and profile picture will be visible on regional leaderboards" :
+                        "You'll appear as 'Anonymous' with a default profile image on regional leaderboards")
+                        .font(.system(size: 14))
+                        .foregroundColor(.white.opacity(0.7))
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+                .padding()
+                .background(
+                    RoundedRectangle(cornerRadius: 12)
+                        .fill(Color.white.opacity(0.05))
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 12)
+                                .stroke(Color.white.opacity(0.2), lineWidth: 1)
+                        )
+                )
+            }
+        }
+    }
+}
+
 
 struct ToggleSettingRow: View {
     let title: String

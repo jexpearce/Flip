@@ -221,8 +221,11 @@ struct RegionalLeaderboard: View {
                     // Only show first 10 entries without any "Show more" button
                     ForEach(Array(viewModel.leaderboardEntries.prefix(10).enumerated()), id: \.element.id) { index, entry in
                         Button(action: {
-                            self.selectedUserId = entry.userId
-                            self.showUserProfile = true
+                            // Only show profile for non-anonymous users
+                            if !entry.isAnonymous {
+                                self.selectedUserId = entry.userId
+                                self.showUserProfile = true
+                            }
                         }) {
                             HStack(spacing: 8) {
                                 // Rank with medal for top 3
@@ -252,40 +255,45 @@ struct RegionalLeaderboard: View {
                                 
                                 // Profile picture with streak indicator
                                 ZStack {
-                                    ProfileImage(userId: entry.userId, size: 32)
-                                    
-                                    // Optional streak indicator
-                                    if entry.streakStatus != .none {
-                                        Circle()
-                                            .stroke(
-                                                entry.streakStatus == .redFlame ?
-                                                    Color.red.opacity(0.8) :
-                                                    Color.orange.opacity(0.8),
-                                                lineWidth: 2
-                                            )
-                                            .frame(width: 32, height: 32)
+                                    // Use anonymous profile picture for anonymous users
+                                    if entry.isAnonymous {
+                                        DefaultProfileImage(username: "A", size: 32)
+                                    } else {
+                                        ProfileImage(userId: entry.userId, size: 32)
                                         
-                                        // Flame icon
-                                        ZStack {
+                                        // Optional streak indicator - only for non-anonymous users
+                                        if entry.streakStatus != .none {
                                             Circle()
-                                                .fill(entry.streakStatus == .redFlame ? Color.red : Color.orange)
-                                                .frame(width: 12, height: 12)
+                                                .stroke(
+                                                    entry.streakStatus == .redFlame ?
+                                                        Color.red.opacity(0.8) :
+                                                        Color.orange.opacity(0.8),
+                                                    lineWidth: 2
+                                                )
+                                                .frame(width: 32, height: 32)
                                             
-                                            Image(systemName: "flame.fill")
-                                                .font(.system(size: 8))
-                                                .foregroundColor(.white)
+                                            // Flame icon
+                                            ZStack {
+                                                Circle()
+                                                    .fill(entry.streakStatus == .redFlame ? Color.red : Color.orange)
+                                                    .frame(width: 12, height: 12)
+                                                
+                                                Image(systemName: "flame.fill")
+                                                    .font(.system(size: 8))
+                                                    .foregroundColor(.white)
+                                            }
+                                            .position(x: 24, y: 8)
                                         }
-                                        .position(x: 24, y: 8)
                                     }
                                 }
                                 
-                                // Username with underline to indicate it's clickable
+                                // Username with underline to indicate it's clickable (only for non-anonymous)
                                 Text(entry.username)
                                     .font(.system(size: 16, weight: .bold))
                                     .foregroundColor(.white)
                                     .lineLimit(1)
                                     .frame(maxWidth: .infinity, alignment: .leading)
-                                    .underline(color: .white.opacity(0.3))
+                                    .underline(color: entry.isAnonymous ? .clear : .white.opacity(0.3))
                                 
                                 // Duration
                                 VStack(alignment: .trailing, spacing: 2) {
@@ -349,6 +357,8 @@ struct RegionalLeaderboard: View {
                         }
                         .buttonStyle(PlainButtonStyle())
                         .padding(.vertical, 2)
+                        // Disable the button for anonymous users
+                        .disabled(entry.isAnonymous)
                     }
                     
                     // Radius control
@@ -925,129 +935,143 @@ class RegionalLeaderboardViewModel: ObservableObject {
                 // Collection of user IDs we need to fetch usernames for
                 var userIdsToFetch = Set<String>()
                 
-                // Process each session document
-                for document in documents {
-                    let data = document.data()
-                    
-                    // Extract basic session info
-                    guard let userId = data["userId"] as? String,
-                          let geoPoint = data["location"] as? GeoPoint else {
-                        continue
-                    }
-                    
-                    // Add this user ID to the list we need to fetch
-                    userIdsToFetch.insert(userId)
-                    
-                    // Check if this session is in or near our target building
-                    // Either by exact buildingId match OR by proximity
-                    let isExactBuildingMatch = (data["buildingId"] as? String) == buildingId
-                    
-                    if !isExactBuildingMatch {
-                        // Not an exact match, check proximity
+                // First, fetch all user privacy settings to filter out opted-out users
+                self.fetchUserPrivacySettings(userIds: documents.compactMap { $0.data()["userId"] as? String }) { privacySettings in
+                    // Process each session document
+                    for document in documents {
+                        let data = document.data()
+                        
+                        // Extract basic session info
+                        guard let userId = data["userId"] as? String,
+                              let geoPoint = data["location"] as? GeoPoint else {
+                            continue
+                        }
+                        
+                        // Check if user has opted out of the leaderboard
+                        if let userPrivacy = privacySettings[userId], userPrivacy.optOut {
+                            // Skip this user entirely if they've opted out
+                            continue
+                        }
+                        
+                        // Add this user ID to the list we need to fetch
+                        userIdsToFetch.insert(userId)
+                        
+                        // Check if this session is in or near our target building
+                        // Either by exact buildingId match OR by proximity
+                        let isExactBuildingMatch = (data["buildingId"] as? String) == buildingId
+                        
+                        if !isExactBuildingMatch {
+                            // Not an exact match, check proximity
+                            let sessionLocation = CLLocation(
+                                latitude: geoPoint.latitude,
+                                longitude: geoPoint.longitude
+                            )
+                            let distance = sessionLocation.distance(from: buildingLocation)
+                            
+                            // Skip if not within radius
+                            if distance > radius {
+                                continue
+                            }
+                        }
+                        
+                        // Get session data like duration
+                        let sessionDuration = data["actualDuration"] as? Int ?? 0
+                        
+                        // Check if user is anonymous in privacy settings
+                        var tempUsername = data["username"] as? String ?? "User"
+                        if let userPrivacy = privacySettings[userId], userPrivacy.isAnonymous {
+                            tempUsername = "Anonymous"
+                        }
+                        
+                        // Calculate distance for display
                         let sessionLocation = CLLocation(
                             latitude: geoPoint.latitude,
                             longitude: geoPoint.longitude
                         )
                         let distance = sessionLocation.distance(from: buildingLocation)
                         
-                        // Skip if not within radius
-                        if distance > radius {
-                            continue
-                        }
-                    }
-                    
-                    // Get session data like duration
-                    let sessionDuration = data["actualDuration"] as? Int ?? 0
-                    
-                    // Get username safely - but only as temporary placeholder
-                    let tempUsername = data["username"] as? String ?? "User"
-                    
-                    // Calculate distance for display
-                    let sessionLocation = CLLocation(
-                        latitude: geoPoint.latitude,
-                        longitude: geoPoint.longitude
-                    )
-                    let distance = sessionLocation.distance(from: buildingLocation)
-                    
-                    // Only show distance for friends and current user
-                    let showDistance = userId == currentUserId || friendIds.contains(userId)
-                    let displayDistance = showDistance ? distance : 0
-                    
-                    // Update the user's total time
-                    if let existingData = userWeeklyData[userId] {
-                        // Add to existing record - keep existing username
-                        userWeeklyData[userId] = (
-                            userId: userId,
-                            username: existingData.username,
-                            sessionCount: existingData.sessionCount + 1,
-                            distance: displayDistance,
-                            isFriend: friendIds.contains(userId),
-                            isCurrentUser: userId == currentUserId
-                        )
-                    } else {
-                        // Create new record with temporary username - we'll update this later
-                        userWeeklyData[userId] = (
-                            userId: userId,
-                            username: tempUsername,
-                            sessionCount: 1,
-                            distance: displayDistance,
-                            isFriend: friendIds.contains(userId),
-                            isCurrentUser: userId == currentUserId
-                        )
-                    }
-                }
-                
-                // No data found - update UI now
-                if userWeeklyData.isEmpty {
-                    DispatchQueue.main.async {
-                        self.leaderboardEntries = []
-                        self.isLoading = false
-                    }
-                    return
-                }
-                
-                // Now fetch all usernames in a single batch for better performance
-                self.fetchUsernames(Array(userIdsToFetch)) { usernameMap in
-                    // Update the usernames in our data
-                    for userId in userWeeklyData.keys {
-                        if let fetchedUsername = usernameMap[userId], !fetchedUsername.isEmpty {
-                            var userData = userWeeklyData[userId]!
-                            userData.username = fetchedUsername
-                            userWeeklyData[userId] = userData
-                        }
-                    }
-                    
-                    // Convert aggregated data to leaderboard entries
-                    self.fetchUserScoresAndStreaks(Array(userIdsToFetch)) { scoresMap, streaksMap in
-                        // Convert aggregated data to leaderboard entries with scores
-                        var entries: [RegionalLeaderboardEntry] = []
+                        // Only show distance for friends and current user
+                        let showDistance = userId == currentUserId || friendIds.contains(userId)
+                        let displayDistance = showDistance ? distance : 0
                         
-                        for userData in userWeeklyData.values {
-                            // Create the entry with all required fields
-                            let entry = RegionalLeaderboardEntry(
-                                id: userData.userId,
-                                userId: userData.userId,
-                                username: userData.username,
-                                totalWeeklyTime: 0, // We don't use this field anymore
-                                score: scoresMap[userData.userId],
-                                streakStatus: streaksMap[userData.userId] ?? .none,
-                                sessionCount: userData.sessionCount,
-                                distance: userData.distance,
-                                isFriend: userData.isFriend,
-                                isCurrentUser: userData.isCurrentUser
+                        // Update the user's total time
+                        if let existingData = userWeeklyData[userId] {
+                            // Add to existing record - keep existing username
+                            userWeeklyData[userId] = (
+                                userId: userId,
+                                username: existingData.username,
+                                sessionCount: existingData.sessionCount + 1,
+                                distance: displayDistance,
+                                isFriend: friendIds.contains(userId),
+                                isCurrentUser: userId == currentUserId
                             )
-                            entries.append(entry)
+                        } else {
+                            // Create new record with temporary username - we'll update this later
+                            userWeeklyData[userId] = (
+                                userId: userId,
+                                username: tempUsername,
+                                sessionCount: 1,
+                                distance: displayDistance,
+                                isFriend: friendIds.contains(userId),
+                                isCurrentUser: userId == currentUserId
+                            )
                         }
-                        
-                        // Sort entries by session count (manually instead of using sorted with a closure)
-                        entries.sort { entry1, entry2 in
-                            return entry1.sessionCount > entry2.sessionCount
-                        }
-                        
-                        // Take top 10 for display
+                    }
+                    
+                    // No data found - update UI now
+                    if userWeeklyData.isEmpty {
                         DispatchQueue.main.async {
-                            self.leaderboardEntries = Array(entries.prefix(10))
+                            self.leaderboardEntries = []
                             self.isLoading = false
+                        }
+                        return
+                    }
+                    
+                    // Now fetch all usernames in a single batch for better performance
+                    self.fetchUsernamesRespectingPrivacy(Array(userIdsToFetch), privacySettings: privacySettings) { usernameMap in
+                        // Update the usernames in our data
+                        for userId in userWeeklyData.keys {
+                            if let fetchedUsername = usernameMap[userId], !fetchedUsername.isEmpty {
+                                var userData = userWeeklyData[userId]!
+                                userData.username = fetchedUsername
+                                userWeeklyData[userId] = userData
+                            }
+                        }
+                        
+                        // Convert aggregated data to leaderboard entries
+                        self.fetchUserScoresAndStreaks(Array(userIdsToFetch)) { scoresMap, streaksMap in
+                            // Convert aggregated data to leaderboard entries with scores
+                            var entries: [RegionalLeaderboardEntry] = []
+                            
+                            for userData in userWeeklyData.values {
+                                // Create the entry with all required fields
+                                let entry = RegionalLeaderboardEntry(
+                                    id: userData.userId,
+                                    userId: userData.userId,
+                                    username: userData.username,
+                                    totalWeeklyTime: 0, // We don't use this field anymore
+                                    score: scoresMap[userData.userId],
+                                    streakStatus: streaksMap[userData.userId] ?? .none,
+                                    sessionCount: userData.sessionCount,
+                                    distance: userData.distance,
+                                    isFriend: userData.isFriend,
+                                    isCurrentUser: userData.isCurrentUser,
+                                    // Add this property to track if user is anonymous
+                                    isAnonymous: userData.username == "Anonymous"
+                                )
+                                entries.append(entry)
+                            }
+                            
+                            // Sort entries by session count (manually instead of using sorted with a closure)
+                            entries.sort { entry1, entry2 in
+                                return entry1.sessionCount > entry2.sessionCount
+                            }
+                            
+                            // Take top 10 for display
+                            DispatchQueue.main.async {
+                                self.leaderboardEntries = Array(entries.prefix(10))
+                                self.isLoading = false
+                            }
                         }
                     }
                 }
@@ -1093,7 +1117,7 @@ class RegionalLeaderboardViewModel: ObservableObject {
     // Add these helper functions to RegionalLeaderboardViewModel
 
     // New helper function to fetch usernames efficiently
-    private func fetchUsernames(_ userIds: [String], completion: @escaping ([String: String]) -> Void) {
+    private func fetchUsernamesRespectingPrivacy(_ userIds: [String], privacySettings: [String: (optOut: Bool, isAnonymous: Bool)], completion: @escaping ([String: String]) -> Void) {
         guard !userIds.isEmpty else {
             completion([:])
             return
@@ -1106,6 +1130,12 @@ class RegionalLeaderboardViewModel: ObservableObject {
         var idsToFetch: [String] = []
         
         for userId in userIds {
+            // Check if user is anonymous based on privacy settings
+            if let privacySetting = privacySettings[userId], privacySetting.isAnonymous {
+                result[userId] = "Anonymous"
+                continue
+            }
+            
             if let cachedUser = userCache[userId], !cachedUser.username.isEmpty && cachedUser.username != "User" {
                 result[userId] = cachedUser.username
             } else if let currentUser = FirebaseManager.shared.currentUser, currentUser.id == userId, !currentUser.username.isEmpty {
@@ -1139,7 +1169,12 @@ class RegionalLeaderboardViewModel: ObservableObject {
             fetchUserBatch(batch) { batchResult in
                 // Add this batch to our results
                 for (id, username) in batchResult {
-                    result[id] = username
+                    // Apply privacy settings - override with "Anonymous" if needed
+                    if let privacySetting = privacySettings[id], privacySetting.isAnonymous {
+                        result[id] = "Anonymous"
+                    } else {
+                        result[id] = username
+                    }
                 }
                 dispatchGroup.leave()
             }
@@ -1186,6 +1221,42 @@ class RegionalLeaderboardViewModel: ObservableObject {
         
         dispatchGroup.notify(queue: .main) {
             completion(batchResult)
+        }
+    }
+    private func fetchUserPrivacySettings(userIds: [String], completion: @escaping ([String: (optOut: Bool, isAnonymous: Bool)]) -> Void) {
+        guard !userIds.isEmpty else {
+            completion([:])
+            return
+        }
+
+        let db = Firestore.firestore()
+        var result: [String: (optOut: Bool, isAnonymous: Bool)] = [:]
+        let dispatchGroup = DispatchGroup()
+        
+        for userId in userIds {
+            dispatchGroup.enter()
+            
+            db.collection("user_settings").document(userId).getDocument { document, error in
+                defer { dispatchGroup.leave() }
+                
+                if let data = document?.data() {
+                    // Get opt-out setting (default to false)
+                    let optOut = data["regionalOptOut"] as? Bool ?? false
+                    
+                    // Get display mode (default to normal)
+                    let displayModeString = data["regionalDisplayMode"] as? String ?? "normal"
+                    let isAnonymous = displayModeString == "anonymous"
+                    
+                    result[userId] = (optOut: optOut, isAnonymous: isAnonymous)
+                } else {
+                    // Use defaults if no settings document
+                    result[userId] = (optOut: false, isAnonymous: false)
+                }
+            }
+        }
+        
+        dispatchGroup.notify(queue: .main) {
+            completion(result)
         }
     }
 
@@ -1282,6 +1353,7 @@ struct RegionalLeaderboardEntry: Identifiable {
     let distance: Double     // In meters
     let isFriend: Bool
     let isCurrentUser: Bool
+    var isAnonymous: Bool = false // Add this property
     
     var formattedDistance: String {
         if isCurrentUser {
