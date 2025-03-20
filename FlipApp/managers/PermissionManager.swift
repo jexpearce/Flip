@@ -113,12 +113,11 @@ class PermissionManager: NSObject, ObservableObject {
         
         // NEW CODE: Show motion settings alert if motion permission was previously
         // granted but now is denied
-        if !motionPermissionGranted {
-            // Add a small delay to prevent immediate crash on app launch
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-                self.showMotionSettingsAlert = true
+        if !motionPermissionGranted && motionPromptCompleted {
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                    self.showMotionSettingsAlert = true
+                }
             }
-        }
         // Update notification status too
         UNUserNotificationCenter.current().getNotificationSettings { settings in
             DispatchQueue.main.async {
@@ -176,23 +175,6 @@ class PermissionManager: NSObject, ObservableObject {
     
     // MARK: - Permission Flow
     
-    // Start the permission flow sequence
-    func requestAllPermissions() {
-        print("Starting permission flow sequence")
-        // First, check if we already have all permissions
-        if allPermissionsGranted {
-            print("All permissions already granted")
-            return
-        }
-        
-        // Reset flow state flags
-        isProcessingLocationPermission = false
-        isProcessingMotionPermission = false
-        isProcessingNotificationPermission = false
-        
-        // Start with the first permission in the flow: location
-        startLocationFlow()
-    }
     
     // MARK: - Location Flow
     
@@ -222,7 +204,16 @@ class PermissionManager: NSObject, ObservableObject {
         // The system prompt will be triggered when the user taps Continue in the custom alert
         // See requestLocationPermission() method
     }
-    
+    func requestAllPermissions() {
+        print("Starting permission flow sequence")
+        // Reset flow state flags
+        isProcessingLocationPermission = false
+        isProcessingMotionPermission = false
+        isProcessingNotificationPermission = false
+        
+        // Start with location
+        startLocationFlow()
+    }
     // Step 1b: Called when user taps Continue on location alert
     func requestLocationPermission() {
         print("User tapped Continue on location alert")
@@ -274,35 +265,33 @@ class PermissionManager: NSObject, ObservableObject {
     // Step 2b: Called when user taps Continue on motion alert
     func requestMotionPermission() {
         print("User tapped Continue on motion alert")
-        // Important: mark that we've shown the custom prompt
         motionPromptCompleted = true
         
-        // Add a delay to make sure the custom alert is fully dismissed
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) { [weak self] in
             guard let self = self else { return }
             
-            print("Requesting system motion permission after delay")
-            // Now prompt for the actual system permission
+            // Request the system motion permission
             let motionManager = CMMotionActivityManager()
             let today = Date()
             
-            // This will trigger the system prompt
             motionManager.queryActivityStarting(from: today, to: today, to: .main) { [weak self] _, _ in
                 DispatchQueue.main.async {
                     guard let self = self else { return }
                     
-                    // Check if permission was granted
+                    // Check current status after prompt
                     let currentStatus = CMMotionActivityManager.authorizationStatus()
                     self.motionPermissionGranted = (currentStatus == .authorized)
-                    print("Motion permission status after request: \(currentStatus == .authorized ? "granted" : "denied")")
                     
-                    // Reset flag
+                    // IMPORTANT: Only show settings alert if permission was DENIED
+                    // NOT before requesting permission!
+                    if currentStatus == .denied {
+                        // Then it's appropriate to show settings alert
+                        self.showMotionSettingsAlert = true
+                    }
+                    
+                    // Reset flag and continue to next permission
                     self.isProcessingMotionPermission = false
-                    
-                    // Add another delay before moving to next step to ensure
-                    // the system prompt is fully dismissed
                     DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
-                        // Move to next step regardless of result
                         self.startNotificationFlow()
                     }
                 }

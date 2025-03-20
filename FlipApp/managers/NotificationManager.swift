@@ -8,13 +8,7 @@ class NotificationManager {
     static let shared = NotificationManager()
 
     private init() {
-        UNUserNotificationCenter.current().requestAuthorization(options: [
-            .alert, .sound, .badge,
-        ]) {
-            [weak self] granted, _ in
-            guard granted else { return }
-            self?.setupNotificationCategories()
-        }
+        setupNotificationCategories()
     }
 
     private func setupNotificationCategories() {
@@ -56,6 +50,14 @@ class NotificationManager {
             body: "\(username) failed to complete the session",
             categoryIdentifier: "LIVE_SESSION"
         )
+    }
+    func requestNotificationPermissions() {
+        UNUserNotificationCenter.current().requestAuthorization(options: [
+            .alert, .sound, .badge,
+        ]) { [weak self] granted, _ in
+            guard granted else { return }
+            self?.setupNotificationCategories()
+        }
     }
 
     func display(title: String, body: String, categoryIdentifier: String = "FLIP_ALERT", silent: Bool = false) {

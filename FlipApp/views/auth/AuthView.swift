@@ -515,6 +515,12 @@ struct AuthView: View {
                     showSuccessOverlay = true
                     isLoading = false
                 }
+                
+                // Start the permission flow after successful sign-up (with delay)
+                DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
+                    // This gives time for user to see success overlay before permissions start
+                    PermissionManager.shared.requestAllPermissions()
+                }
             }
         }
     }

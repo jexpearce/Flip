@@ -172,23 +172,29 @@ class MapViewModel: NSObject, ObservableObject, CLLocationManagerDelegate {
     }
     
     func startLocationTracking() {
-        // Request authorization first
-        if locationManager.authorizationStatus == .notDetermined {
-            locationManager.requestWhenInUseAuthorization()
+        // ONLY start tracking if we already have permission
+        let authStatus = locationManager.authorizationStatus
+        
+        if authStatus == .authorizedWhenInUse || authStatus == .authorizedAlways {
+            // Configure and start location updates
+            locationManager.desiredAccuracy = kCLLocationAccuracyHundredMeters
+            locationManager.distanceFilter = 50
+            locationManager.startUpdatingLocation()
+            
+            // Setup refresh timer
+            locationUpdateTimer = Timer.scheduledTimer(withTimeInterval: 60, repeats: true) { [weak self] _ in
+                self?.refreshLocations()
+            }
+            
+            // Start listening for friend locations
+            startListeningForLocationUpdates()
+        } else {
+            // Don't request permission here - log it instead
+            print("Map location tracking deferred until permission is granted")
+            
+            // Optional: you could set up a NotificationCenter observer to be notified
+            // when permission is granted by PermissionManager
         }
-        
-        // Start location updates but with limited accuracy for the map view
-        locationManager.desiredAccuracy = kCLLocationAccuracyHundredMeters
-        locationManager.distanceFilter = 50 // Only update after significant movement
-        locationManager.startUpdatingLocation()
-        
-        // Setup a timer to refresh locations periodically - less frequent to save battery
-        locationUpdateTimer = Timer.scheduledTimer(withTimeInterval: 60, repeats: true) { [weak self] _ in
-            self?.refreshLocations()
-        }
-        
-        // Start listening for friend locations
-        startListeningForLocationUpdates()
     }
     
     func stopLocationTracking() {

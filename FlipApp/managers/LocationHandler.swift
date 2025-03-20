@@ -43,26 +43,21 @@ import SwiftUI
     }
 
     func startLocationUpdates() {
-        if self.locationManager.authorizationStatus == .notDetermined {
-            self.locationManager.requestWhenInUseAuthorization()
-        }
+        // First check permission status without requesting
+        let authStatus = self.locationManager.authorizationStatus
         
         let appManager = AppManager.shared
         let isInSession = appManager.currentState == .tracking || appManager.currentState == .countdown
         
-        // Configure background mode only for active sessions
+        // Configure the location manager
         self.locationManager.allowsBackgroundLocationUpdates = isInSession
         self.locationManager.showsBackgroundLocationIndicator = isInSession
         
         if isInSession {
-            // Much lower accuracy during sessions since phone won't be moving
             self.locationManager.desiredAccuracy = kCLLocationAccuracyKilometer
-            // Very large distance filter since phone won't move during sessions
-            self.locationManager.distanceFilter = 1000 // Only update for major movement
-            // Let system pause updates automatically to save battery
+            self.locationManager.distanceFilter = 1000
             self.locationManager.pausesLocationUpdatesAutomatically = true
         } else {
-            // Higher accuracy when browsing map
             self.locationManager.desiredAccuracy = kCLLocationAccuracyNearestTenMeters
             self.locationManager.distanceFilter = 10
             self.locationManager.pausesLocationUpdatesAutomatically = false
@@ -71,23 +66,29 @@ import SwiftUI
         self.motionManager.deviceMotionUpdateInterval = isInSession ? 1.0 : 3.0
         self.motionManager.startDeviceMotionUpdates()
 
-        print("Starting location updates - background mode: \(isInSession)")
-        Task {
-            do {
-                self.updatesStarted = true
-                let updates = CLLocationUpdate.liveUpdates()
-                for try await update in updates {
-                    if !self.updatesStarted { break }
-                    if let loc = update.location {
-                        self.lastLocation = loc
-                        self.isStationary = update.isStationary
-                        self.count += 1
+        // ONLY start actual location updates if we have permission
+        if authStatus == .authorizedWhenInUse || authStatus == .authorizedAlways {
+            print("Starting location updates - background mode: \(isInSession)")
+            Task {
+                do {
+                    self.updatesStarted = true
+                    let updates = CLLocationUpdate.liveUpdates()
+                    for try await update in updates {
+                        if !self.updatesStarted { break }
+                        if let loc = update.location {
+                            self.lastLocation = loc
+                            self.isStationary = update.isStationary
+                            self.count += 1
+                        }
                     }
+                } catch {
+                    print("Could not start location updates: \(error)")
                 }
-            } catch {
-                print("Could not start location updates: \(error)")
+                return
             }
-            return
+        } else {
+            print("Cannot start location updates: No permission")
+            // Don't request here - let PermissionManager handle it
         }
     }
 

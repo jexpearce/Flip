@@ -199,6 +199,15 @@ class AuthManager: ObservableObject {
             
             // Load user data from Firestore
             self.loadUserData(userId: user.uid) {
+                // Check if this is a first-time user AFTER loading data
+                if UserDefaults.standard.bool(forKey: "isPotentialFirstTimeUser") {
+                    // Start permission flow for new users
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+                        PermissionManager.shared.requestAllPermissions()
+                        // Reset the flag
+                        UserDefaults.standard.set(false, forKey: "isPotentialFirstTimeUser")
+                    }
+                }
                 completion(true)
             }
         }
