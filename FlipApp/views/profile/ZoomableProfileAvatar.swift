@@ -28,7 +28,49 @@ struct ZoomableProfileAvatar: View {
         }) {
             // Profile with streak indicators
             ZStack {
-                // Regular profile avatar
+                // Streak fire effect behind the profile picture
+                if streakStatus != .none {
+                    // Large background fire effect
+                    ZStack {
+                        // Radial gradient for glow effect
+                        Circle()
+                            .fill(
+                                streakStatus == .redFlame ?
+                                    RadialGradient(
+                                        gradient: Gradient(colors: [
+                                            Color.red.opacity(0.7),
+                                            Color.red.opacity(0.0)
+                                        ]),
+                                        center: .center,
+                                        startRadius: 1,
+                                        endRadius: size * 0.8
+                                    ) :
+                                    RadialGradient(
+                                        gradient: Gradient(colors: [
+                                            Color.orange.opacity(0.7),
+                                            Color.orange.opacity(0.0)
+                                        ]),
+                                        center: .center,
+                                        startRadius: 1,
+                                        endRadius: size * 0.8
+                                    )
+                            )
+                            .frame(width: size * 1.2, height: size * 1.2)
+                            .scaleEffect(isGlowing ? 1.1 : 1.0)
+                            .animation(Animation.easeInOut(duration: 1.5).repeatForever(autoreverses: true), value: isGlowing)
+                        
+                        // Single flame icon that appears to be behind the profile pic
+                        Image(systemName: "flame.fill")
+                            .font(.system(size: size * 0.8))
+                            .foregroundColor(streakStatus == .redFlame ? .red.opacity(0.7) : .orange.opacity(0.7))
+                            .shadow(color: streakStatus == .redFlame ? Color.red.opacity(0.7) : Color.orange.opacity(0.7), radius: 8)
+                            .offset(y: size * 0.05) // Slight offset to position flame
+                            .scaleEffect(isGlowing ? 1.05 : 0.95)
+                            .animation(Animation.easeInOut(duration: 1.2).repeatForever(autoreverses: true), value: isGlowing)
+                    }
+                }
+                
+                // Regular profile avatar - always on top of the flame
                 if let urlString = imageURL, !urlString.isEmpty, let url = URL(string: urlString) {
                     KFImage(url)
                         .placeholder {
@@ -61,37 +103,8 @@ struct ZoomableProfileAvatar: View {
                     placeholderView
                 }
                 
-                // Streak indicator if active
+                // Small indicator badge showing streak status
                 if streakStatus != .none {
-                    // Animated glowing ring
-                    Circle()
-                        .stroke(
-                            streakStatus == .redFlame ?
-                                LinearGradient(
-                                    colors: [
-                                        Color.red.opacity(0.9),
-                                        Color.red.opacity(0.7),
-                                        Color.red.opacity(0.4)
-                                    ],
-                                    startPoint: .topLeading,
-                                    endPoint: .bottomTrailing
-                                ) :
-                                LinearGradient(
-                                    colors: [
-                                        Color.orange.opacity(0.9),
-                                        Color.orange.opacity(0.7),
-                                        Color.orange.opacity(0.4)
-                                    ],
-                                    startPoint: .topLeading,
-                                    endPoint: .bottomTrailing
-                                ),
-                            lineWidth: size * 0.08
-                        )
-                        .scaleEffect(isGlowing ? 1.05 : 0.95)
-                        .animation(Animation.easeInOut(duration: 1.5).repeatForever(autoreverses: true), value: isGlowing)
-                        .shadow(color: streakStatus == .redFlame ? Color.red.opacity(0.7) : Color.orange.opacity(0.7), radius: 6)
-                    
-                    // Flame indicator
                     ZStack {
                         Circle()
                             .fill(streakStatus == .redFlame ? Color.red : Color.orange)
@@ -102,7 +115,7 @@ struct ZoomableProfileAvatar: View {
                             .foregroundColor(.white)
                     }
                     .shadow(color: streakStatus == .redFlame ? Color.red.opacity(0.7) : Color.orange.opacity(0.7), radius: 4)
-                    .position(x: size * 0.8, y: size * 0.2)
+                    .position(x: size * 0.8, y: size * 0.2) // Position in top-right corner
                 }
             }
         }
@@ -126,6 +139,50 @@ struct ZoomableProfileAvatar: View {
                 
                 // Enlarged image with gestures
                 ZStack {
+                    // For streak status, show fire effect in full screen view too
+                    if streakStatus != .none {
+                        // Fire effect scaled with the image
+                        ZStack {
+                            // Large radial gradient
+                            Circle()
+                                .fill(
+                                    streakStatus == .redFlame ?
+                                        RadialGradient(
+                                            gradient: Gradient(colors: [
+                                                Color.red.opacity(0.5),
+                                                Color.red.opacity(0.0)
+                                            ]),
+                                            center: .center,
+                                            startRadius: 5,
+                                            endRadius: 200
+                                        ) :
+                                        RadialGradient(
+                                            gradient: Gradient(colors: [
+                                                Color.orange.opacity(0.5),
+                                                Color.orange.opacity(0.0)
+                                            ]),
+                                            center: .center,
+                                            startRadius: 5,
+                                            endRadius: 200
+                                        )
+                                )
+                                .frame(width: 400, height: 400)
+                                .scaleEffect(isGlowing ? 1.1 : 1.0)
+                                .scaleEffect(scale)
+                                .offset(dragAmount)
+                                
+                            // Single large flame
+                            Image(systemName: "flame.fill")
+                                .font(.system(size: 200))
+                                .foregroundColor(streakStatus == .redFlame ? .red.opacity(0.5) : .orange.opacity(0.5))
+                                .shadow(color: streakStatus == .redFlame ? Color.red.opacity(0.7) : Color.orange.opacity(0.7), radius: 15)
+                                .scaleEffect(isGlowing ? 1.05 : 0.95)
+                                .scaleEffect(scale)
+                                .offset(dragAmount)
+                        }
+                    }
+                    
+                    // Image on top
                     if let urlString = imageURL, !urlString.isEmpty, let url = URL(string: urlString) {
                         KFImage(url)
                             .placeholder {
@@ -181,41 +238,6 @@ struct ZoomableProfileAvatar: View {
                             )
                     } else {
                         largePlaceholderView
-                    }
-                    
-                    // Large streak indicator if active
-                    if streakStatus != .none {
-                        // Adding streak indicator to enlarged view
-                        let largeSize: CGFloat = UIScreen.main.bounds.width * 0.7
-                        
-                        Circle()
-                            .stroke(
-                                streakStatus == .redFlame ?
-                                    LinearGradient(
-                                        colors: [
-                                            Color.red.opacity(0.9),
-                                            Color.red.opacity(0.7),
-                                            Color.red.opacity(0.4)
-                                        ],
-                                        startPoint: .topLeading,
-                                        endPoint: .bottomTrailing
-                                    ) :
-                                    LinearGradient(
-                                        colors: [
-                                            Color.orange.opacity(0.9),
-                                            Color.orange.opacity(0.7),
-                                            Color.orange.opacity(0.4)
-                                        ],
-                                        startPoint: .topLeading,
-                                        endPoint: .bottomTrailing
-                                    ),
-                                lineWidth: largeSize * 0.05
-                            )
-                            .frame(width: largeSize, height: largeSize)
-                            .scaleEffect(isGlowing ? 1.05 : 0.95)
-                            .shadow(color: streakStatus == .redFlame ? Color.red.opacity(0.7) : Color.orange.opacity(0.7), radius: 10)
-                            .scaleEffect(scale)
-                            .offset(dragAmount)
                     }
                 }
                 

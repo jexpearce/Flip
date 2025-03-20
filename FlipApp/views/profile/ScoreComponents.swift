@@ -435,7 +435,7 @@ struct ScoreHistoryView: View {
                         .tracking(2)
                         .foregroundColor(.white.opacity(0.7))
                     
-                    Text("The FLIP scoring system rewards discipline and focus with a more balanced approach. Longer sessions and disabling pauses earn more points, while maintaining streaks gives additional bonuses.")
+                    Text("The FLIP scoring system rewards discipline and focus. Longer sessions and disabling pauses earn more points, and maintaining streaks gives additional bonuses.")
                         .font(.system(size: 14))
                         .foregroundColor(.white.opacity(0.8))
                         .fixedSize(horizontal: false, vertical: true)
@@ -662,7 +662,7 @@ struct ScoreInfoView: View {
                 .font(.system(size: 20, weight: .bold))
                 .foregroundColor(.white)
             
-            Text("The FLIP scoring system rewards discipline and focus with a balanced approach. Everyone starts at 3.0 with a maximum of 300.0. Longer sessions and disabling pauses earn more points, while streaks give additional bonuses. Failures result in smaller penalties than before, encouraging you to keep going.")
+            Text("The FLIP scoring system rewards discipline and focus. All flippers start at 3.0, and with dedication, can reach a maximum of 300.0. Longer sessions and disabling pauses earn more points, and streaks give additional bonuses. Failures result in penalties, increasing the higher you climb in the ranks. Work hard to show off your rank in the leaderboards!")
                 .font(.system(size: 16))
                 .foregroundColor(.white.opacity(0.8))
                 .padding(.bottom, 10)
@@ -677,7 +677,7 @@ struct ScoreInfoView: View {
                 .foregroundColor(.white)
             
             VStack(alignment: .leading, spacing: 12) {
-                Text("The streak system rewards consistent discipline:")
+                Text("The streak system rewards consistency")
                     .font(.system(size: 16, weight: .semibold))
                     .foregroundColor(.white)
                 
@@ -844,11 +844,11 @@ struct ScoreInfoView: View {
                 .foregroundColor(.white)
                 .padding(.top, 10)
             
-            Text("This system now takes a more balanced approach to productivity with both challenge and encouragement. Consistency is rewarded with streaks, while setbacks are less punishing to keep you motivated.")
+            Text("Competition fuels productivity. Consistency is rewarded with streaks, while setbacks are punishing to keep you motivated.")
                 .font(.system(size: 16))
                 .foregroundColor(.white.opacity(0.8))
             
-            Text("The path to Enlightened is smoother, but still requires dedication over time.")
+            Text("The path to Enlightenment requires dedication.")
                 .font(.system(size: 16, weight: .regular)).italic()
                 .foregroundColor(.white.opacity(0.8))
                 .padding(.top, 10)

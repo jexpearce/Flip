@@ -414,6 +414,11 @@ extension FirebaseManager {
 extension FirebaseManager {
     // Check if the user has already completed their first session
     func hasCompletedFirstSession(completion: @escaping (Bool) -> Void) {
+        if UserDefaults.standard.bool(forKey: "isPotentialFirstTimeUser") {
+                print("🏆 FIRST SESSION OVERRIDE: Fresh install with new account, forcing first-time experience")
+                completion(false)
+                return
+            }
         guard let userId = Auth.auth().currentUser?.uid else {
             completion(false)
             return
@@ -483,6 +488,26 @@ extension FirebaseManager {
                 print("First session recorded successfully")
                 completion(true)
             }
+    }
+    // For a truly fresh install, ensure first time experience
+    func ensureFirstTimeExperience() {
+        let defaults = UserDefaults.standard
+        if defaults.bool(forKey: "isPotentialFirstTimeUser") {
+            defaults.set(false, forKey: "isPotentialFirstTimeUser")
+            
+            guard let userId = Auth.auth().currentUser?.uid else { return }
+            
+            // ONLY clear first_sessions entry to ensure proper first-time experience
+            print("🧹 FRESH INSTALL: Clearing first_sessions record if it exists")
+            
+            db.collection("first_sessions").document(userId).delete { error in
+                if let error = error {
+                    print("⚠️ Error clearing first session: \(error.localizedDescription)")
+                } else {
+                    print("✅ Successfully cleared first_sessions record")
+                }
+            }
+        }
     }
 }
 

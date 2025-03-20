@@ -38,7 +38,7 @@ struct RulesView: View {
                     )
                 
                 // Subtitle
-                Text("A Different Kind of Productivity")
+                Text("True Productivity")
                     .font(.system(size: 16, weight: .bold))
                     .italic()
                     .foregroundColor(.white.opacity(0.8))
@@ -69,7 +69,7 @@ struct RulesView: View {
                             Text("• After pausing, you can resume anytime. You'll have 5 seconds to flip your phone back down.")
                                 .ruleText()
                             
-                            Text("• You can set how many pauses you get per session (0-10).")
+                            Text("• You can set how many pauses you get per session (0-10), and their duration.")
                                 .ruleText()
                                 .padding(.bottom, 5)
                         }
@@ -77,8 +77,8 @@ struct RulesView: View {
                         
                         RuleSection(
                             number: "03",
-                            title: "Ruthless Mode",
-                            content: "With pauses disabled, any flip will instantly fail your session. For the disciplined only, but will earn you more points. Ensure you are in Do Not Disturb."
+                            title: "Challenge Mode",
+                            content: "With pauses disabled, any flip will instantly fail your session. For the disciplined only, but will earn you significantly more points. Ensure you are in Do Not Disturb."
                         )
                         
                         RuleSection(

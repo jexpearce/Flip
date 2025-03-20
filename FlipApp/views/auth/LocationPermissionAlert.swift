@@ -141,7 +141,7 @@ struct EnhancedLocationPermissionAlert: View {
                             .shadow(color: Color.white.opacity(0.5), radius: 4)
                     }
                     
-                    Text("LOCATION REQUIRED")
+                    Text("LOCATION REQUESTED")
                         .font(.system(size: 20, weight: .black))
                         .tracking(4)
                         .foregroundColor(.white)
@@ -150,16 +150,16 @@ struct EnhancedLocationPermissionAlert: View {
                 .padding(.top, 10)
                 
                 // Explanation text
-                Text("Regional features require location access to show nearby focus sessions and buildings.")
+                Text("Regional features require location access to show nearby focus sessions and buildings, and for the FlipMap.")
                     .font(.system(size: 16))
                     .foregroundColor(.white)
                     .multilineTextAlignment(.center)
                     .padding(.horizontal, 20)
                 
                 VStack(alignment: .leading, spacing: 15) {
-                    privacyPoint(icon: "checkmark.shield.fill", text: "Your privacy is protected")
+                    privacyPoint(icon: "checkmark.shield.fill", text: "Your privacy is protected, never sold to third party services")
                     privacyPoint(icon: "checkmark.shield.fill", text: "Location used only during active app use")
-                    privacyPoint(icon: "checkmark.shield.fill", text: "Only your last 3 sessions are stored")
+                    privacyPoint(icon: "checkmark.shield.fill", text: "Location visibility can be adjusted in app.")
                 }
                 .padding(.horizontal, 20)
                 
@@ -314,10 +314,6 @@ struct LocationPermissionAlert: View {
                         .foregroundColor(.white)
                         .shadow(color: Color(red: 56/255, green: 189/255, blue: 248/255).opacity(0.6), radius: 8)
                     
-                    Text("位置情報へのアクセス")
-                        .font(.system(size: 12))
-                        .tracking(2)
-                        .foregroundColor(.white.opacity(0.7))
                 }
                 .padding(.top, 10)
                 
@@ -332,13 +328,13 @@ struct LocationPermissionAlert: View {
                     infoRow(
                         icon: "location.circle.fill",
                         title: "Location Challenges",
-                        description: "Participate in location-based focus challenges with friends"
+                        description: "Participate in location-based leaderboards with friends"
                     )
                     
                     infoRow(
                         icon: "bell.fill",
                         title: "Privacy Focused",
-                        description: "Location is only tracked during active focus sessions"
+                        description: "Location is only during active sessions. Stored securely, and NEVER sent to third party services"
                     )
                 }
                 .padding(.horizontal, 5)

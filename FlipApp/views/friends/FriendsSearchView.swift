@@ -55,7 +55,7 @@ struct FriendsSearchView: View {
         .fullScreenCover(isPresented: $showUserProfile) {
             if let user = selectedUser {
                 NavigationView {
-                    UserProfileView(user: user)
+                    UserProfileLoader(userId: user.id)
                         .navigationBarItems(leading: Button("Back") {
                             showUserProfile = false
                         })

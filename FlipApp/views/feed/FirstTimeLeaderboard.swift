@@ -1,10 +1,3 @@
-//
-//  FirstTimeLeaderboard.swift
-//  FlipApp
-//
-//  Created by Jex Pearce on 3/17/25.
-//
-
 import Foundation
 import SwiftUI
 import FirebaseFirestore
@@ -49,27 +42,46 @@ class FirstTimeLeaderboardManager: ObservableObject {
     
     // Save first session to leaderboard
     func saveFirstSession(userId: String, username: String, duration: Int, wasSuccessful: Bool, completion: @escaping (Bool) -> Void) {
-        let firstSessionData: [String: Any] = [
-            "userId": userId,
-            "username": username,
-            "duration": duration,
-            "wasSuccessful": wasSuccessful,
-            "timestamp": FieldValue.serverTimestamp()
-        ]
-        
+        // First check if a first session already exists to prevent duplicates
         db.collection("first_sessions")
             .document(userId)
-            .setData(firstSessionData) { error in
-                if let error = error {
-                    print("Error saving first session: \(error)")
+            .getDocument { [weak self] document, error in
+                guard let self = self else {
                     completion(false)
                     return
                 }
                 
-                completion(true)
+                // If document already exists, we don't need to save it again
+                if let document = document, document.exists {
+                    print("First session already exists, not saving again")
+                    completion(true)
+                    return
+                }
                 
-                // After saving, recalculate the rankings in the background
-                self.recalculateRankings()
+                // Proceed with saving since it doesn't exist yet
+                let firstSessionData: [String: Any] = [
+                    "userId": userId,
+                    "username": username,
+                    "duration": duration,
+                    "wasSuccessful": wasSuccessful,
+                    "timestamp": FieldValue.serverTimestamp()
+                ]
+                
+                self.db.collection("first_sessions")
+                    .document(userId)
+                    .setData(firstSessionData) { error in
+                        if let error = error {
+                            print("Error saving first session: \(error)")
+                            completion(false)
+                            return
+                        }
+                        
+                        print("First session saved successfully to leaderboard")
+                        completion(true)
+                        
+                        // After saving, recalculate the rankings in the background
+                        self.recalculateRankings()
+                    }
             }
     }
     
@@ -112,6 +124,7 @@ class FirstTimeLeaderboardManager: ObservableObject {
     // Fetch leaderboard entries surrounding the user's position
     func fetchLeaderboardAroundUser(userId: String, range: Int = 3, completion: @escaping (Bool) -> Void) {
         self.isLoading = true
+        print("Fetching leaderboard data for user: \(userId)")
         
         // First get the user's entry to find their rank
         db.collection("first_sessions")
@@ -130,10 +143,13 @@ class FirstTimeLeaderboardManager: ObservableObject {
                       let duration = data["duration"] as? Int,
                       let username = data["username"] as? String,
                       let wasSuccessful = data["wasSuccessful"] as? Bool else {
+                    print("No user data found in first_sessions or missing required fields")
                     self.isLoading = false
                     completion(false)
                     return
                 }
+                
+                print("Found user data in first_sessions: \(data)")
                 
                 // Query to get the total count of users
                 self.db.collection("first_sessions").getDocuments { [weak self] countSnapshot, countError in
@@ -143,6 +159,7 @@ class FirstTimeLeaderboardManager: ObservableObject {
                         print("Error getting total count: \(countError)")
                     } else {
                         self.totalUsers = countSnapshot?.documents.count ?? 0
+                        print("Total users in leaderboard: \(self.totalUsers)")
                     }
                     
                     // If we don't have a rank calculated yet, we need to calculate based on duration
@@ -165,6 +182,7 @@ class FirstTimeLeaderboardManager: ObservableObject {
                             let higherCount = higherSnapshot?.documents.count ?? 0
                             let userRank = higherCount + 1
                             self.userRank = userRank
+                            print("Calculated user rank: \(userRank)")
                             
                             // Create the user's entry
                             let timestamp = (data["timestamp"] as? Timestamp)?.dateValue() ?? Date()
@@ -207,9 +225,12 @@ class FirstTimeLeaderboardManager: ObservableObject {
                 }
                 
                 guard let documents = snapshot?.documents else {
+                    print("No documents found in leaderboard query")
                     completion(false)
                     return
                 }
+                
+                print("Fetched \(documents.count) entries for leaderboard")
                 
                 var entries: [FirstTimeLeaderboard] = []
                 var userIndex = -1
@@ -252,9 +273,11 @@ class FirstTimeLeaderboardManager: ObservableObject {
                     let endIndex = min(entries.count - 1, userIndex + range)
                     
                     self.leaderboardEntries = Array(entries[startIndex...endIndex])
+                    print("Found user at index \(userIndex), showing entries \(startIndex) to \(endIndex)")
                 } else if !entries.isEmpty {
                     // If we didn't find the user but have entries, just take the top ones
                     self.leaderboardEntries = Array(entries.prefix(range * 2 + 1))
+                    print("User not found in entries, showing top \(self.leaderboardEntries.count) entries")
                 }
                 
                 completion(true)
@@ -289,7 +312,7 @@ struct FirstTimeLeaderboardView: View {
                     .tracking(2)
                     .foregroundColor(Color(red: 250/255, green: 204/255, blue: 21/255))
                 
-                Text("GLOBAL LEADERBOARD")
+                Text("GLOBAL FIRST FLIP LEADERBOARD")
                     .font(.system(size: 14, weight: .bold))
                     .tracking(2)
                     .foregroundColor(Color.white.opacity(0.7))
@@ -426,58 +449,33 @@ struct FirstTimeLeaderboardView: View {
         )
         .shadow(color: Color.black.opacity(0.15), radius: 8)
         .onAppear {
-            // Save the first session data if it's not already loaded
-            if leaderboardManager.leaderboardEntries.isEmpty {
-                leaderboardManager.saveFirstSession(
-                    userId: userId,
-                    username: username,
-                    duration: duration,
-                    wasSuccessful: wasSuccessful
-                ) { success in
-                    if success {
-                        // Fetch the leaderboard for display
-                        leaderboardManager.fetchLeaderboardAroundUser(userId: userId) { success in
-                            if success {
-                                // Animate the entries in sequence
-                                withAnimation(.easeOut(duration: 0.5)) {
-                                    showEntries = true
-                                }
-                                
-                                // Add a slight delay before animating the user's entry
-                                DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-                                    withAnimation(.spring(response: 0.6, dampingFraction: 0.6)) {
-                                        slideInUser = true
-                                    }
-                                    
-                                    // Start the glow animation after sliding in
-                                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-                                        withAnimation(.easeInOut(duration: 1.2).repeatForever(autoreverses: true)) {
-                                            glowUser = true
-                                        }
-                                    }
-                                }
+            print("FirstTimeLeaderboardView appeared for user \(userId)")
+            
+            // Only fetch leaderboard data, don't try to save session again
+            // Session has already been saved by FirebaseManager.recordFirstSession in the parent view
+            leaderboardManager.fetchLeaderboardAroundUser(userId: userId) { success in
+                if success {
+                    print("Successfully fetched leaderboard data")
+                    // Animate the entries in sequence
+                    withAnimation(.easeOut(duration: 0.5)) {
+                        showEntries = true
+                    }
+                    
+                    // Add a slight delay before animating the user's entry
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                        withAnimation(.spring(response: 0.6, dampingFraction: 0.6)) {
+                            slideInUser = true
+                        }
+                        
+                        // Start the glow animation after sliding in
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                            withAnimation(.easeInOut(duration: 1.2).repeatForever(autoreverses: true)) {
+                                glowUser = true
                             }
                         }
                     }
-                }
-            } else {
-                // If we already have data loaded, just animate the display
-                withAnimation(.easeOut(duration: 0.5)) {
-                    showEntries = true
-                }
-                
-                // Animate the user's entry
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-                    withAnimation(.spring(response: 0.6, dampingFraction: 0.6)) {
-                        slideInUser = true
-                    }
-                    
-                    // Start the glow animation
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-                        withAnimation(.easeInOut(duration: 1.2).repeatForever(autoreverses: true)) {
-                            glowUser = true
-                        }
-                    }
+                } else {
+                    print("Failed to fetch leaderboard data")
                 }
             }
         }

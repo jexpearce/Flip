@@ -11,6 +11,7 @@
 		4250012D2D5932DB00230E1B /* FirebaseAuth in Frameworks */ = {isa = PBXBuildFile; productRef = 4250012C2D5932DB00230E1B /* FirebaseAuth */; };
 		4250012F2D5932DB00230E1B /* FirebaseFirestore in Frameworks */ = {isa = PBXBuildFile; productRef = 4250012E2D5932DB00230E1B /* FirebaseFirestore */; };
 		425001312D5932DB00230E1B /* FirebaseStorage in Frameworks */ = {isa = PBXBuildFile; productRef = 425001302D5932DB00230E1B /* FirebaseStorage */; };
+		425EF16E2D8B0B2D00AE7AD4 /* GoogleSignIn in Frameworks */ = {isa = PBXBuildFile; productRef = 425EF16D2D8B0B2D00AE7AD4 /* GoogleSignIn */; };
 		42CADCBA2D52A75A00D41EB9 /* WidgetKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 42CADCB92D52A75900D41EB9 /* WidgetKit.framework */; };
 		42CADCBC2D52A75A00D41EB9 /* SwiftUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 42CADCBB2D52A75A00D41EB9 /* SwiftUI.framework */; };
 		42CADCCB2D52A7A400D41EB9 /* FlipWidget.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 42CADCB72D52A75900D41EB9 /* FlipWidget.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
@@ -112,6 +113,7 @@
 				42D52EEF2D8337D000E9EDD2 /* FirebaseMessaging in Frameworks */,
 				4250012F2D5932DB00230E1B /* FirebaseFirestore in Frameworks */,
 				425001312D5932DB00230E1B /* FirebaseStorage in Frameworks */,
+				425EF16E2D8B0B2D00AE7AD4 /* GoogleSignIn in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -184,6 +186,7 @@
 				425001302D5932DB00230E1B /* FirebaseStorage */,
 				42263CD92D738E0A00856008 /* Kingfisher */,
 				42D52EEE2D8337D000E9EDD2 /* FirebaseMessaging */,
+				425EF16D2D8B0B2D00AE7AD4 /* GoogleSignIn */,
 			);
 			productName = test;
 			productReference = 42CADC862D52A72500D41EB9 /* FlipApp.app */;
@@ -241,6 +244,7 @@
 			packageReferences = (
 				4250012B2D5932DB00230E1B /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */,
 				42263CD82D738C6900856008 /* XCRemoteSwiftPackageReference "Kingfisher" */,
+				425EF16C2D8B0B2D00AE7AD4 /* XCRemoteSwiftPackageReference "GoogleSignIn-iOS" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 42CADC872D52A72500D41EB9 /* Products */;
@@ -429,7 +433,7 @@
 				INFOPLIST_FILE = FlipApp/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = Flip;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.productivity";
-				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "Needed to track phone's position";
+				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "Flip uses location for Regional Leaderboards and Building specific leaderboards, so players can compete with others productivity times in places like libraries, coffee shops, etc. A big part of the apps identity, additionally it enhances core features, and allows for FlipMaps, allowing you to see friends currently in a productivity session and their last 3 historical sessions. Users have complete control over their privacy, with the option to opt out of these regional leaderboards, or remain anonymous. FlipMaps session location mapping only begins once the user views the privacy statement, and selects their preferred visibility settings when the maps is first opened. ";
 				INFOPLIST_KEY_NSMotionUsageDescription = "Motion detection is required to track when the phone is flipped";
 				INFOPLIST_KEY_NSSupportsLiveActivities = YES;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
@@ -465,7 +469,7 @@
 				INFOPLIST_FILE = FlipApp/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = Flip;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.productivity";
-				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "Needed to track phone's position";
+				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "Flip uses location for Regional Leaderboards and Building specific leaderboards, so players can compete with others productivity times in places like libraries, coffee shops, etc. A big part of the apps identity, additionally it enhances core features, and allows for FlipMaps, allowing you to see friends currently in a productivity session and their last 3 historical sessions. Users have complete control over their privacy, with the option to opt out of these regional leaderboards, or remain anonymous. FlipMaps session location mapping only begins once the user views the privacy statement, and selects their preferred visibility settings when the maps is first opened. ";
 				INFOPLIST_KEY_NSMotionUsageDescription = "Motion detection is required to track when the phone is flipped";
 				INFOPLIST_KEY_NSSupportsLiveActivities = YES;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
@@ -594,6 +598,14 @@
 				minimumVersion = 11.8.1;
 			};
 		};
+		425EF16C2D8B0B2D00AE7AD4 /* XCRemoteSwiftPackageReference "GoogleSignIn-iOS" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/google/GoogleSignIn-iOS";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 8.0.0;
+			};
+		};
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
@@ -616,6 +628,11 @@
 			isa = XCSwiftPackageProductDependency;
 			package = 4250012B2D5932DB00230E1B /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
 			productName = FirebaseStorage;
+		};
+		425EF16D2D8B0B2D00AE7AD4 /* GoogleSignIn */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 425EF16C2D8B0B2D00AE7AD4 /* XCRemoteSwiftPackageReference "GoogleSignIn-iOS" */;
+			productName = GoogleSignIn;
 		};
 		42D52EEE2D8337D000E9EDD2 /* FirebaseMessaging */ = {
 			isa = XCSwiftPackageProductDependency;

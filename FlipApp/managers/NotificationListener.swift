@@ -150,7 +150,8 @@ class NotificationListener {
                     NotificationManager.shared.display(
                         title: "Friend Alert",
                         body: message,
-                        categoryIdentifier: "FRIEND_ALERT"
+                        categoryIdentifier: "FRIEND_ALERT",
+                        silent: true
                     )
                     print("Displayed session failure notification: \(message)")
                 }
@@ -165,7 +166,8 @@ class NotificationListener {
                     NotificationManager.shared.display(
                         title: "New Comment",
                         body: "\(fromUsername): \(comment)",
-                        categoryIdentifier: "COMMENT"
+                        categoryIdentifier: "COMMENT",
+                        silent: true
                     )
                     print("Displayed comment notification from: \(fromUsername)")
                 }
@@ -179,7 +181,8 @@ class NotificationListener {
                 NotificationManager.shared.display(
                     title: "Friend Request",
                     body: "\(fromUsername) wants to add you as a friend",
-                    categoryIdentifier: "FRIEND_REQUEST"
+                    categoryIdentifier: "FRIEND_REQUEST",
+                    silent: true
                 )
                 print("Displayed friend request notification from: \(fromUsername)")
             }

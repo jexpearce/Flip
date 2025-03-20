@@ -9,6 +9,13 @@ struct BuildingSelectorButton: View {
     let action: () -> Void
     let refreshAction: () -> Void
     @Binding var isRefreshing: Bool
+    @State private var isPulsing = false
+    @State private var hasAppeared = false
+    
+    // Check if this is the first time showing the button
+    private var shouldPulse: Bool {
+        !hasAppeared && (buildingName == nil || !hasAppeared)
+    }
     
     var body: some View {
         HStack {
@@ -62,10 +69,29 @@ struct BuildingSelectorButton: View {
                     .fill(Color.white.opacity(0.08))
                 
                 RoundedRectangle(cornerRadius: 12)
-                    .stroke(Color.white.opacity(0.2), lineWidth: 1)
+                    .stroke(Color.white.opacity(isPulsing ? 0.6 : 0.2), lineWidth: isPulsing ? 2 : 1)
+                    .animation(isPulsing ? Animation.easeInOut(duration: 1.2).repeatForever(autoreverses: true) : .default, value: isPulsing)
             }
         )
         .padding(.horizontal)
+        .onAppear {
+            // Only pulse if we should (first time or no building selected)
+            if shouldPulse {
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                    withAnimation {
+                        isPulsing = true
+                    }
+                }
+                
+                // Turn off pulsing after the user has seen it
+                DispatchQueue.main.asyncAfter(deadline: .now() + 10) {
+                    withAnimation {
+                        isPulsing = false
+                        hasAppeared = true
+                    }
+                }
+            }
+        }
     }
 }
 
@@ -78,12 +104,17 @@ struct RegionalView: View {
     // Add this state variable for the privacy sheet
     @State private var showPrivacySettings = false
     
-    // Add state to track which leaderboard is currently visible
-    @State private var currentLeaderboard: LeaderboardType = .regional
+    // Add state to track which leaderboard is currently visible - default to building
+    @State private var currentLeaderboard: LeaderboardType = .building
     
-    // Create our ViewModels for the global leaderboards
+    // Create our ViewModels for all leaderboards
+    @StateObject private var regionalWeeklyViewModel = RegionalWeeklyLeaderboardViewModel()
+    @StateObject private var regionalAllTimeViewModel = RegionalAllTimeLeaderboardViewModel()
     @StateObject private var globalWeeklyViewModel = GlobalWeeklyLeaderboardViewModel()
     @StateObject private var globalAllTimeViewModel = GlobalAllTimeLeaderboardViewModel()
+    
+    // Flag to track if this is first launch
+    @State private var isFirstLaunch = UserDefaults.standard.bool(forKey: "hasShownRegionalView") == false
     
     // Regional view deep midnight purple gradient with subtle red
     private let regionalGradient = LinearGradient(
@@ -191,8 +222,8 @@ struct RegionalView: View {
                         
                         // Leaderboard container with animated transitions
                         ZStack {
-                            // Original Regional Leaderboard
-                            if currentLeaderboard == .regional {
+                            // Building Leaderboard (default)
+                            if currentLeaderboard == .building {
                                 // Modified RegionalLeaderboard with navigation arrow
                                 VStack {
                                     RegionalLeaderboard(viewModel: viewModel.leaderboardViewModel)
@@ -200,10 +231,10 @@ struct RegionalView: View {
                                             HStack {
                                                 Spacer()
                                                 
-                                                // Right arrow to global weekly
+                                                // Right arrow to regional weekly
                                                 Button(action: {
                                                     withAnimation(.easeInOut(duration: 0.3)) {
-                                                        currentLeaderboard = .globalWeekly
+                                                        currentLeaderboard = .regionalWeekly
                                                     }
                                                 }) {
                                                     Image(systemName: "chevron.right")
@@ -224,6 +255,34 @@ struct RegionalView: View {
                                 .transition(
                                     .asymmetric(
                                         insertion: .move(edge: .leading),
+                                        removal: .move(edge: .leading)
+                                    )
+                                )
+                            }
+                            
+                            // Regional Weekly Leaderboard
+                            if currentLeaderboard == .regionalWeekly {
+                                RegionalWeeklyLeaderboard(
+                                    viewModel: regionalWeeklyViewModel,
+                                    currentLeaderboard: $currentLeaderboard
+                                )
+                                .transition(
+                                    .asymmetric(
+                                        insertion: .move(edge: .trailing),
+                                        removal: .move(edge: .leading)
+                                    )
+                                )
+                            }
+                            
+                            // Regional All Time Leaderboard
+                            if currentLeaderboard == .regionalAllTime {
+                                RegionalAllTimeLeaderboard(
+                                    viewModel: regionalAllTimeViewModel,
+                                    currentLeaderboard: $currentLeaderboard
+                                )
+                                .transition(
+                                    .asymmetric(
+                                        insertion: .move(edge: .trailing),
                                         removal: .move(edge: .leading)
                                     )
                                 )
@@ -321,7 +380,7 @@ struct RegionalView: View {
                                             .foregroundColor(.white)
                                             .shadow(color: Color.black.opacity(0.3), radius: 1)
                                         
-                                        Text("See past and live flip session locations!")
+                                        Text("See past and live flip session locations! (Beta)")
                                             .font(.system(size: 12, weight: .medium))
                                             .foregroundColor(.white.opacity(0.9))
                                     }
@@ -368,10 +427,17 @@ struct RegionalView: View {
             viewModel.loadCurrentBuilding()
             
             // Initialize all leaderboards when the view appears
-            if currentLeaderboard == .globalWeekly {
+            switch currentLeaderboard {
+            case .regionalWeekly:
+                regionalWeeklyViewModel.loadRegionalWeeklyLeaderboard()
+            case .regionalAllTime:
+                regionalAllTimeViewModel.loadRegionalAllTimeLeaderboard()
+            case .globalWeekly:
                 globalWeeklyViewModel.loadGlobalWeeklyLeaderboard()
-            } else if currentLeaderboard == .globalAllTime {
+            case .globalAllTime:
                 globalAllTimeViewModel.loadGlobalAllTimeLeaderboard()
+            default:
+                break
             }
         }
         // Show "Open Settings" alert when location permission is denied
@@ -389,9 +455,13 @@ struct RegionalView: View {
         // Load appropriate leaderboard data when switching tabs
         .onChange(of: currentLeaderboard) { newValue in
             switch newValue {
-            case .regional:
-                // RegionalLeaderboard handles its own data loading
+            case .building:
+                // Building leaderboard handles its own data loading
                 break
+            case .regionalWeekly:
+                regionalWeeklyViewModel.loadRegionalWeeklyLeaderboard()
+            case .regionalAllTime:
+                regionalAllTimeViewModel.loadRegionalAllTimeLeaderboard()
             case .globalWeekly:
                 globalWeeklyViewModel.loadGlobalWeeklyLeaderboard()
             case .globalAllTime:

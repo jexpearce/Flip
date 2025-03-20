@@ -202,7 +202,7 @@ struct FriendsView: View {
                                     // Create a ZStack where the NavigationLink is behind but covers most of the card
                                     ZStack(alignment: .topTrailing) {
                                         // NavigationLink for profile view - make it disabled when joining
-                                        NavigationLink(destination: UserProfileView(user: friend.user)) {
+                                        NavigationLink(destination: UserProfileLoader(userId: friend.id)) {
                                             // Enhanced friend card with vibrant colors for live sessions
                                             EnhancedFriendCard(
                                                 friend: friend.user,

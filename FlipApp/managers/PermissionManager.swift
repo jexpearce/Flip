@@ -479,10 +479,6 @@ struct MotionPermissionAlert: View {
                         .foregroundColor(.white)
                         .shadow(color: Color(red: 139/255, green: 92/255, blue: 246/255).opacity(0.6), radius: 8)
                     
-                    Text("モーションアクセス")
-                        .font(.system(size: 12))
-                        .tracking(2)
-                        .foregroundColor(.white.opacity(0.7))
                 }
                 .padding(.top, 10)
                 
@@ -679,10 +675,6 @@ struct NotificationPermissionAlert: View {
                         .foregroundColor(.white)
                         .shadow(color: Color(red: 56/255, green: 189/255, blue: 248/255).opacity(0.6), radius: 8)
                     
-                    Text("通知へのアクセス")
-                        .font(.system(size: 12))
-                        .tracking(2)
-                        .foregroundColor(.white.opacity(0.7))
                 }
                 .padding(.top, 10)
                 
@@ -691,19 +683,18 @@ struct NotificationPermissionAlert: View {
                     infoRow(
                         icon: "clock.fill",
                         title: "Session Alerts",
-                        description: "Get notified about your focus session status and results"
-                    )
-                    
-                    infoRow(
-                        icon: "person.2.fill",
-                        title: "Friend Activity",
-                        description: "Know when friends join your sessions or invite you"
+                        description: "Get notified when you finish or fail your Flip session"
                     )
                     
                     infoRow(
                         icon: "bell.badge.fill",
                         title: "Session Reminders",
-                        description: "Receive gentle reminders to flip your phone back over"
+                        description: "Receive reminders on pause durations"
+                    )
+                    infoRow(
+                        icon: "bell.badge.fill",
+                        title: "Social",
+                        description: "Know when someone comments on your session, or fails!"
                     )
                 }
                 .padding(.horizontal, 5)
@@ -755,7 +746,7 @@ struct NotificationPermissionAlert: View {
                 .padding(.top, 10)
                 
                 // Small print
-                Text("You can change notification settings later in your device settings")
+                Text("You can change notification settings later in settings")
                     .font(.system(size: 12))
                     .foregroundColor(.white.opacity(0.5))
                     .padding(.bottom, 15)

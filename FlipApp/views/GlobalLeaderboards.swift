@@ -1,6 +1,7 @@
 import SwiftUI
 import FirebaseAuth
 import FirebaseFirestore
+import CoreLocation
 
 // Enum for tracking which leaderboard is currently displayed
 enum LeaderboardType {
@@ -64,7 +65,7 @@ struct GlobalWeeklyLeaderboard: View {
                     // Left arrow to go back to regional
                     Button(action: {
                         withAnimation(.easeInOut(duration: 0.3)) {
-                            currentLeaderboard = .regional
+                            currentLeaderboard = .regionalAllTime
                         }
                     }) {
                         Image(systemName: "chevron.left")
@@ -2102,114 +2103,115 @@ class RegionalWeeklyLeaderboardViewModel: ObservableObject {
     
     func loadRegionalWeeklyLeaderboard() {
         isLoading = true
-        
-        // Get the current user's location
-        let location = LocationHandler.shared.lastLocation
-        
-        // Determine the county name for display
-        determineCountyName(from: location) { [weak self] countyName in
-            guard let self = self else { return }
+        Task { @MainActor in
+            // Get the current user's location
+            let location = LocationHandler.shared.lastLocation
             
-            // Update the county name for display
-            DispatchQueue.main.async {
-                self.countyName = countyName
-            }
-            
-            // Calculate the current week's start date
-            let calendar = Calendar.current
-            let currentDate = Date()
-            var components = calendar.dateComponents([.yearForWeekOfYear, .weekOfYear], from: currentDate)
-            components.weekday = 2  // Monday
-            components.hour = 0
-            components.minute = 0
-            components.second = 0
-            
-            guard let weekStart = calendar.date(from: components) else {
-                self.isLoading = false
-                return
-            }
-            
-            print("🗓️ Regional Weekly leaderboard from: \(weekStart)")
-            
-            // Convert miles to meters for geoqueries
-            let regionRadiusInMeters = self.regionRadiusInMiles * 1609.34
-            
-            // First, fetch all sessions from this week in the region
-            self.db.collection("sessions")
-                .whereField("wasSuccessful", isEqualTo: true)
-                .whereField("startTime", isGreaterThan: Timestamp(date: weekStart))
-                .getDocuments(source: .default) { [weak self] snapshot, error in
-                    guard let self = self else { return }
-                    
-                    if let error = error {
-                        print("Error fetching regional sessions: \(error.localizedDescription)")
-                        DispatchQueue.main.async {
-                            self.isLoading = false
-                        }
-                        return
-                    }
-                    
-                    guard let documents = snapshot?.documents else {
-                        DispatchQueue.main.async {
-                            self.isLoading = false
-                        }
-                        return
-                    }
-                    
-                    print("📊 Found \(documents.count) total sessions this week")
-                    
-                    // Filter sessions by distance if location is available
-                    var filteredDocuments = documents
-                    
-                    // If we have valid location, filter by distance using session_locations collection
-                    if location.horizontalAccuracy > 0 {
-                        // We'll need to fetch location data for each session to filter by region
-                        let dispatchGroup = DispatchGroup()
-                        var sessionsInRegion: Set<String> = []
+            // Determine the county name for display
+            determineCountyName(from: location) { [weak self] countyName in
+                guard let self = self else { return }
+                
+                // Update the county name for display
+                DispatchQueue.main.async {
+                    self.countyName = countyName
+                }
+                
+                // Calculate the current week's start date
+                let calendar = Calendar.current
+                let currentDate = Date()
+                var components = calendar.dateComponents([.yearForWeekOfYear, .weekOfYear], from: currentDate)
+                components.weekday = 2  // Monday
+                components.hour = 0
+                components.minute = 0
+                components.second = 0
+                
+                guard let weekStart = calendar.date(from: components) else {
+                    self.isLoading = false
+                    return
+                }
+                
+                print("🗓️ Regional Weekly leaderboard from: \(weekStart)")
+                
+                // Convert miles to meters for geoqueries
+                let regionRadiusInMeters = self.regionRadiusInMiles * 1609.34
+                
+                // First, fetch all sessions from this week in the region
+                self.db.collection("sessions")
+                    .whereField("wasSuccessful", isEqualTo: true)
+                    .whereField("startTime", isGreaterThan: Timestamp(date: weekStart))
+                    .getDocuments(source: .default) { [weak self] snapshot, error in
+                        guard let self = self else { return }
                         
-                        for document in documents {
-                            if let userId = document.data()["userId"] as? String {
-                                dispatchGroup.enter()
-                                
-                                // Use session_locations collection to get location data
-                                self.db.collection("session_locations")
-                                    .whereField("userId", isEqualTo: userId)
-                                    .getDocuments { snapshot, error in
-                                        defer { dispatchGroup.leave() }
-                                        
-                                        if let locationDocs = snapshot?.documents {
-                                            for locationDoc in locationDocs {
-                                                if let geoPoint = locationDoc.data()["location"] as? GeoPoint {
-                                                    let sessionLocation = CLLocation(
-                                                        latitude: geoPoint.latitude,
-                                                        longitude: geoPoint.longitude
-                                                    )
-                                                    
-                                                    // Check if within region radius
-                                                    let distance = location.distance(from: sessionLocation)
-                                                    if distance <= regionRadiusInMeters {
-                                                        sessionsInRegion.insert(document.documentID)
+                        if let error = error {
+                            print("Error fetching regional sessions: \(error.localizedDescription)")
+                            DispatchQueue.main.async {
+                                self.isLoading = false
+                            }
+                            return
+                        }
+                        
+                        guard let documents = snapshot?.documents else {
+                            DispatchQueue.main.async {
+                                self.isLoading = false
+                            }
+                            return
+                        }
+                        
+                        print("📊 Found \(documents.count) total sessions this week")
+                        
+                        // Filter sessions by distance if location is available
+                        var filteredDocuments = documents
+                        
+                        // If we have valid location, filter by distance using session_locations collection
+                        if location.horizontalAccuracy > 0 {
+                            // We'll need to fetch location data for each session to filter by region
+                            let dispatchGroup = DispatchGroup()
+                            var sessionsInRegion: Set<String> = []
+                            
+                            for document in documents {
+                                if let userId = document.data()["userId"] as? String {
+                                    dispatchGroup.enter()
+                                    
+                                    // Use session_locations collection to get location data
+                                    self.db.collection("session_locations")
+                                        .whereField("userId", isEqualTo: userId)
+                                        .getDocuments { snapshot, error in
+                                            defer { dispatchGroup.leave() }
+                                            
+                                            if let locationDocs = snapshot?.documents {
+                                                for locationDoc in locationDocs {
+                                                    if let geoPoint = locationDoc.data()["location"] as? GeoPoint {
+                                                        let sessionLocation = CLLocation(
+                                                            latitude: geoPoint.latitude,
+                                                            longitude: geoPoint.longitude
+                                                        )
+                                                        
+                                                        // Check if within region radius
+                                                        let distance = location.distance(from: sessionLocation)
+                                                        if distance <= regionRadiusInMeters {
+                                                            sessionsInRegion.insert(document.documentID)
+                                                        }
                                                     }
                                                 }
                                             }
                                         }
-                                    }
+                                }
                             }
-                        }
-                        
-                        dispatchGroup.notify(queue: .main) {
-                            // Filter documents to only those in region
-                            filteredDocuments = documents.filter { sessionsInRegion.contains($0.documentID) }
-                            print("📍 Found \(filteredDocuments.count) sessions in \(self.regionRadiusInMiles) mile radius")
                             
-                            // Process the filtered sessions
+                            dispatchGroup.notify(queue: .main) {
+                                // Filter documents to only those in region
+                                filteredDocuments = documents.filter { sessionsInRegion.contains($0.documentID) }
+                                print("📍 Found \(filteredDocuments.count) sessions in \(self.regionRadiusInMiles) mile radius")
+                                
+                                // Process the filtered sessions
+                                self.processSessions(documents: filteredDocuments)
+                            }
+                        } else {
+                            // If location is not available, just use all sessions
                             self.processSessions(documents: filteredDocuments)
                         }
-                    } else {
-                        // If location is not available, just use all sessions
-                        self.processSessions(documents: filteredDocuments)
                     }
-                }
+            }
         }
     }
     
@@ -2513,7 +2515,7 @@ class RegionalAllTimeLeaderboardViewModel: ObservableObject {
     private let db = Firestore.firestore()
     var userCache: [String: UserCacheItem] = [:]
     
-    func loadRegionalAllTimeLeaderboard() {
+    @MainActor func loadRegionalAllTimeLeaderboard() {
         isLoading = true
         
         // Get the current user's location

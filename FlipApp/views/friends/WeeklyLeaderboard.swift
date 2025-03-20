@@ -308,6 +308,7 @@ struct EnhancedLeaderboardRow: View {
                     .lineLimit(1)
                     .foregroundColor(.white)
             }
+            .frame(width: 150, alignment: .leading)
             
             Spacer()
             

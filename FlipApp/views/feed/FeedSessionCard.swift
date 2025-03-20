@@ -1,7 +1,6 @@
 import SwiftUI
 import FirebaseAuth
 
-
 struct FeedSessionCard: View {
     let session: Session
     let viewModel: FeedViewModel
@@ -17,7 +16,6 @@ struct FeedSessionCard: View {
     @State private var userStreakStatus: StreakStatus = .none
     @FocusState private var isCommentFocused: Bool
     
-    
     // Update initializer with optional parameter
     init(session: Session, viewModel: FeedViewModel, showUserHeader: Bool = true) {
         self.session = session
@@ -32,96 +30,10 @@ struct FeedSessionCard: View {
         self._likesCount = State(initialValue: viewModel.getLikesForSession(sessionId: sessionId))
     }
     
-    // Enhanced gradient based on session success/failure
-    private var cardGradient: LinearGradient {
-        if session.wasSuccessful {
-            return LinearGradient(
-                colors: [
-                    // Move lighter color to be only in the top third of the card
-                    Color(red: 25/255, green: 52/255, blue: 65/255).opacity(0.85), // Lighter color
-                    Color(red: 17/255, green: 48/255, blue: 66/255).opacity(0.9),
-                    Color(red: 15/255, green: 35/255, blue: 55/255).opacity(0.95)  // Darker colors
-                ],
-                startPoint: .top, // Change from .topLeading to .top
-                endPoint: .bottom // Change from .bottomTrailing to .bottom to create a more vertical gradient
-            )
-        } else {
-            return LinearGradient(
-                colors: [
-                    // Move lighter color to be only in the top third of the card
-                    Color(red: 55/255, green: 30/255, blue: 50/255).opacity(0.95), // Lighter color
-                    Color(red: 45/255, green: 28/255, blue: 58/255).opacity(0.9),
-                    Color(red: 35/255, green: 24/255, blue: 55/255).opacity(0.85)  // Darker colors
-                ],
-                startPoint: .top, // Change from .topLeading to .top
-                endPoint: .bottom // Change from .bottomTrailing to .bottom to create a more vertical gradient
-            )
-        }
-    }
-    
-    // Enhanced status indicator colors
-    private var statusColor: LinearGradient {
-        session.wasSuccessful ?
-            LinearGradient(
-                colors: [
-                    Color(red: 34/255, green: 197/255, blue: 94/255),
-                    Color(red: 22/255, green: 163/255, blue: 74/255)
-                ],
-                startPoint: .top,
-                endPoint: .bottom
-            ) :
-            LinearGradient(
-                colors: [
-                    Color(red: 239/255, green: 68/255, blue: 68/255),
-                    Color(red: 185/255, green: 28/255, blue: 28/255)
-                ],
-                startPoint: .top,
-                endPoint: .bottom
-            )
-    }
-    
-    // Status glow color
-    private var statusGlow: Color {
-        session.wasSuccessful ?
-            Color(red: 34/255, green: 197/255, blue: 94/255).opacity(0.6) :
-            Color(red: 239/255, green: 68/255, blue: 68/255).opacity(0.6)
-    }
-    
-    // Helper properties for content checks
-    private var hasContent: Bool {
-        return (session.sessionTitle != nil && !session.sessionTitle!.isEmpty) ||
-               (session.sessionNotes != nil && !session.sessionNotes!.isEmpty)
-    }
-    
-    private var hasComment: Bool {
-        return (session.comment != nil && !session.comment!.isEmpty) ||
-               (viewModel.sessionComments[session.id.uuidString]?.count ?? 0) > 0
-    }
-    
-    private var hasGroupParticipants: Bool {
-        return session.participants != nil && !session.participants!.isEmpty && session.participants!.count > 1
-    }
-    
     private var userProfileImageURL: String? {
         return viewModel.users[session.userId]?.profileImageURL
     }
     
-    private var currentUserName: String {
-        guard let userId = Auth.auth().currentUser?.uid else { return "You" }
-        return viewModel.users[userId]?.username ?? "You"
-    }
-    
-    // Session status text - UPDATED as requested
-    private var sessionStatusText: String {
-        if session.wasSuccessful {
-            return "Completed \(session.duration) min session"
-        } else {
-            // Use actualDuration which will be different from duration when failed
-            return "Attempted \(session.duration) min session"
-        }
-    }
-
-
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             // Card content with padding
@@ -130,47 +42,22 @@ struct FeedSessionCard: View {
                 HStack(spacing: 12) {
                     // Left side: User info - only show if requested
                     if showUserHeader {
-                        NavigationLink(destination: UserProfileView(user: viewModel.getUser(for: session.userId))) {
-                            ZStack {
-                                // Layered avatar with glow effect
-                                EnhancedProfileAvatarWithStreak(
-                                    imageURL: userProfileImageURL,
-                                    size: 46,
-                                    username: session.username,
-                                    streakStatus: viewModel.getUserStreakStatus(userId: session.userId)
-                                )
-                                .overlay(
-                                    Circle()
-                                        .stroke(
-                                            LinearGradient(
-                                                colors: [
-                                                    Color.white.opacity(0.7),
-                                                    Color.white.opacity(0.1)
-                                                ],
-                                                startPoint: .topLeading,
-                                                endPoint: .bottomTrailing
-                                            ),
-                                            lineWidth: 1.5
-                                        )
-                                )
-                                
-                                // Subtle glow effect
-                                Circle()
-                                    .fill(statusGlow.opacity(0.15))
-                                    .frame(width: 52, height: 52)
-                                    .blur(radius: 8)
-                                    .offset(x: 0, y: 0)
-                                    .zIndex(-1)
-                            }
+                        NavigationLink(destination: UserProfileLoader(userId: session.userId)) {
+                            // UPDATED: Simplified avatar with streak - no outer ring
+                            EnhancedProfileAvatarWithStreak(
+                                imageURL: userProfileImageURL,
+                                size: 46,
+                                username: session.username,
+                                streakStatus: viewModel.getUserStreakStatus(userId: session.userId)
+                            )
                         }
                         .buttonStyle(PlainButtonStyle())
 
                         VStack(alignment: .leading, spacing: 2) {
-                            NavigationLink(destination: UserProfileView(user: viewModel.getUser(for: session.userId))) {
+                            NavigationLink(destination: UserProfileLoader(userId: session.userId))  {
                                 Text(session.username)
                                     .font(.system(size: 17, weight: .bold))
                                     .foregroundColor(.white)
-                                    .shadow(color: statusGlow.opacity(0.5), radius: 4)
                             }
                             .buttonStyle(PlainButtonStyle())
 
@@ -182,15 +69,8 @@ struct FeedSessionCard: View {
 
                     Spacer()
                     
-                    // Right side: Status icon with enhanced design
+                    // Right side: Status icon
                     ZStack {
-                        // Larger glow behind the status icon
-                        Circle()
-                            .fill(statusGlow.opacity(0.3))
-                            .frame(width: 48, height: 48)
-                            .blur(radius: 8)
-                        
-                        // Status background with gradient
                         Circle()
                             .fill(statusColor)
                             .frame(width: 40, height: 40)
@@ -204,29 +84,28 @@ struct FeedSessionCard: View {
                         Image(systemName: session.wasSuccessful ? "checkmark" : "xmark")
                             .font(.system(size: 16, weight: .black))
                             .foregroundColor(.white)
-                            .shadow(color: Color.black.opacity(0.2), radius: 1)
                     }
                 }
-                .padding(.bottom, 4)
                 
-                // Session info section - UPDATED TEXT LOGIC HERE
+                // Rest of the card content remains the same
+                // ... (existing code for session info, content sections, etc.)
+                
+                // Session info section
                 HStack {
-                                    // Using the session status text computed property
-                                    Text(sessionStatusText)
-                                        .font(.system(size: 18, weight: .bold))
-                                        .foregroundColor(.white)
-                                        .shadow(color: statusGlow.opacity(0.5), radius: 4)
-                                    
+                    Text(sessionStatusText)
+                        .font(.system(size: 18, weight: .bold))
+                        .foregroundColor(.white)
+                        .shadow(color: statusGlow.opacity(0.5), radius: 4)
+                    
                     if !session.wasSuccessful {
                         Text("• Lasted \(session.actualDuration) min")
                             .font(.system(size: 14))
                             .foregroundColor(.white.opacity(0.8))
                     }
                     
-                                    
-                                    Spacer()
-                                }
-                                .padding(.vertical, 6)
+                    Spacer()
+                }
+                .padding(.vertical, 6)
                 
                 // Content sections - Enhanced with better styling
                 if hasContent {
@@ -290,7 +169,7 @@ struct FeedSessionCard: View {
                         ScrollView(.horizontal, showsIndicators: false) {
                             HStack(spacing: 8) {
                                 ForEach(session.participants!) { participant in
-                                    NavigationLink(destination: UserProfileView(user: viewModel.getUser(for: participant.id))) {
+                                    NavigationLink(destination: UserProfileLoader(userId: participant.id)) {
                                         GroupParticipantBadge(
                                             username: participant.username,
                                             wasSuccessful: participant.wasSuccessful
@@ -317,7 +196,6 @@ struct FeedSessionCard: View {
                                 Image(systemName: "heart.fill")
                                     .font(.system(size: 12))
                                     .foregroundColor(Color(red: 249/255, green: 115/255, blue: 22/255).opacity(0.9))
-                                    .shadow(color: Color(red: 249/255, green: 115/255, blue: 22/255).opacity(0.5), radius: 4)
                                 
                                 if likesCount == 1 {
                                     Text("1 like")
@@ -356,10 +234,6 @@ struct FeedSessionCard: View {
                                     .foregroundColor(isLiked ?
                                                    Color(red: 249/255, green: 115/255, blue: 22/255) :
                                                    .white.opacity(0.9))
-                                    .shadow(color: isLiked ?
-                                           Color(red: 249/255, green: 115/255, blue: 22/255).opacity(0.5) :
-                                           .clear,
-                                           radius: isLiked ? 4 : 0)
                                 
                                 Text("Like")
                                     .font(.system(size: 14, weight: .medium))
@@ -501,33 +375,33 @@ struct FeedSessionCard: View {
             CompactLikesListView(sessionId: session.id.uuidString, likesCount: likesCount, viewModel: viewModel)
         }
         .onAppear {
-                // Update like state when the view appears
-                updateLikeState()
-                
-                // Load user's streak status
-                viewModel.loadUserStreakStatus(userId: session.userId) { status in
-                    self.userStreakStatus = status
-                }
-                
-                // Set up keyboard notifications
-                NotificationCenter.default.addObserver(
-                    forName: UIResponder.keyboardWillShowNotification,
-                    object: nil,
-                    queue: .main
-                ) { notification in
-                    if let keyboardFrame = notification.userInfo?[UIResponder.keyboardFrameEndUserInfoKey] as? CGRect {
-                        keyboardHeight = keyboardFrame.height
-                    }
-                }
-                
-                NotificationCenter.default.addObserver(
-                    forName: UIResponder.keyboardWillHideNotification,
-                    object: nil,
-                    queue: .main
-                ) { _ in
-                    keyboardHeight = 0
+            // Update like state when the view appears
+            updateLikeState()
+            
+            // Load user's streak status
+            viewModel.loadUserStreakStatus(userId: session.userId) { status in
+                self.userStreakStatus = status
+            }
+            
+            // Set up keyboard notifications
+            NotificationCenter.default.addObserver(
+                forName: UIResponder.keyboardWillShowNotification,
+                object: nil,
+                queue: .main
+            ) { notification in
+                if let keyboardFrame = notification.userInfo?[UIResponder.keyboardFrameEndUserInfoKey] as? CGRect {
+                    keyboardHeight = keyboardFrame.height
                 }
             }
+            
+            NotificationCenter.default.addObserver(
+                forName: UIResponder.keyboardWillHideNotification,
+                object: nil,
+                queue: .main
+            ) { _ in
+                keyboardHeight = 0
+            }
+        }
         .onDisappear {
             // Remove keyboard observers
             NotificationCenter.default.removeObserver(self)
@@ -540,6 +414,92 @@ struct FeedSessionCard: View {
         }
     }
     
+    // MARK: - Helper Properties
+    
+    // Enhanced gradient based on session success/failure
+    private var cardGradient: LinearGradient {
+        if session.wasSuccessful {
+            return LinearGradient(
+                colors: [
+                    Color(red: 25/255, green: 52/255, blue: 65/255).opacity(0.85),
+                    Color(red: 17/255, green: 48/255, blue: 66/255).opacity(0.9),
+                    Color(red: 15/255, green: 35/255, blue: 55/255).opacity(0.95)
+                ],
+                startPoint: .top,
+                endPoint: .bottom
+            )
+        } else {
+            return LinearGradient(
+                colors: [
+                    Color(red: 55/255, green: 30/255, blue: 50/255).opacity(0.95),
+                    Color(red: 45/255, green: 28/255, blue: 58/255).opacity(0.9),
+                    Color(red: 35/255, green: 24/255, blue: 55/255).opacity(0.85)
+                ],
+                startPoint: .top,
+                endPoint: .bottom
+            )
+        }
+    }
+    
+    // Enhanced status indicator colors
+    private var statusColor: LinearGradient {
+        session.wasSuccessful ?
+            LinearGradient(
+                colors: [
+                    Color(red: 34/255, green: 197/255, blue: 94/255),
+                    Color(red: 22/255, green: 163/255, blue: 74/255)
+                ],
+                startPoint: .top,
+                endPoint: .bottom
+            ) :
+            LinearGradient(
+                colors: [
+                    Color(red: 239/255, green: 68/255, blue: 68/255),
+                    Color(red: 185/255, green: 28/255, blue: 28/255)
+                ],
+                startPoint: .top,
+                endPoint: .bottom
+            )
+    }
+    
+    // Status glow color
+    private var statusGlow: Color {
+        session.wasSuccessful ?
+            Color(red: 34/255, green: 197/255, blue: 94/255).opacity(0.6) :
+            Color(red: 239/255, green: 68/255, blue: 68/255).opacity(0.6)
+    }
+    
+    // Helper properties for content checks
+    private var hasContent: Bool {
+        return (session.sessionTitle != nil && !session.sessionTitle!.isEmpty) ||
+               (session.sessionNotes != nil && !session.sessionNotes!.isEmpty)
+    }
+    
+    private var hasComment: Bool {
+        return (session.comment != nil && !session.comment!.isEmpty) ||
+               (viewModel.sessionComments[session.id.uuidString]?.count ?? 0) > 0
+    }
+    
+    private var hasGroupParticipants: Bool {
+        return session.participants != nil && !session.participants!.isEmpty && session.participants!.count > 1
+    }
+    
+    private var currentUserName: String {
+        guard let userId = Auth.auth().currentUser?.uid else { return "You" }
+        return viewModel.users[userId]?.username ?? "You"
+    }
+    
+    // Session status text
+    private var sessionStatusText: String {
+        if session.wasSuccessful {
+            return "Completed \(session.duration) min session"
+        } else {
+            return "Attempted \(session.duration) min session"
+        }
+    }
+    
+    // MARK: - Helper Methods
+    
     private func updateLikeState() {
         let sessionId = session.id.uuidString
         
@@ -547,7 +507,6 @@ struct FeedSessionCard: View {
         isLiked = viewModel.isLikedByUser(sessionId: sessionId)
         likesCount = viewModel.getLikesForSession(sessionId: sessionId)
     }
-    
     
     private func saveComment(_ newComment: String) {
         guard !comment.isEmpty else { return }
@@ -587,17 +546,12 @@ struct FeedSessionCard: View {
         DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
             withAnimation {
                 showSavedIndicator = false
-                
-                // Important: This allows the comment button to be clicked again
                 showCommentField = false
                 isCommentFocused = false
-                
-                print("Comment field reset after submission")
             }
         }
     }
 }
-
 // Enhanced individual participant badge
 struct GroupParticipantBadge: View {
     let username: String
@@ -987,7 +941,7 @@ struct CompactLikesListView: View {
                 ScrollView {
                     LazyVStack(spacing: 0) {
                         ForEach(users) { user in
-                            NavigationLink(destination: UserProfileView(user: user)) {
+                            NavigationLink(destination: UserProfileLoader(userId: user.id)) {
                                 HStack(spacing: 12) {
                                     // Enhanced profile image
                                     ProfileAvatarView(
@@ -1137,8 +1091,8 @@ struct CommentsView: View {
                     VStack(alignment: .leading, spacing: 4) {
                         // Check if we have commentor information
                         if let commentorId = session.commentorId, let commentorName = session.commentorName {
-                            // Display the comment with the correct user
-                            NavigationLink(destination: UserProfileView(user: viewModel.getUser(for: commentorId))) {
+                            // Keep the NavigationLink inside this scope where commentorId is defined
+                            NavigationLink(destination: UserProfileLoader(userId: commentorId)) {
                                 Text(commentorName)
                                     .font(.system(size: 13, weight: .bold))
                                     .foregroundColor(Color(red: 56/255, green: 189/255, blue: 248/255).opacity(0.9))
@@ -1161,7 +1115,7 @@ struct CommentsView: View {
                             }
                         } else {
                             // Legacy comments without user info - show session owner
-                            NavigationLink(destination: UserProfileView(user: viewModel.getUser(for: session.userId))) {
+                            NavigationLink(destination: UserProfileLoader(userId: session.userId)) {
                                 Text(session.username)
                                     .font(.system(size: 13, weight: .bold))
                                     .foregroundColor(Color(red: 56/255, green: 189/255, blue: 248/255).opacity(0.9))
@@ -1243,7 +1197,7 @@ struct CommentBubble: View {
             
             VStack(alignment: .leading, spacing: 4) {
                 // Username with enhanced styling
-                NavigationLink(destination: UserProfileView(user: viewModel.getUser(for: comment.userId))) {
+                NavigationLink(destination: UserProfileLoader(userId: comment.userId)) {
                     Text(comment.username)
                         .font(.system(size: 13, weight: .bold))
                         .foregroundColor(Color(red: 56/255, green: 189/255, blue: 248/255).opacity(0.9))

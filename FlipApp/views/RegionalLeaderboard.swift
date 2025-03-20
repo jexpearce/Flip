@@ -464,87 +464,26 @@ struct RegionalLeaderboard: View {
         .shadow(color: Color.black.opacity(0.25), radius: 8, x: 0, y: 3)
         .sheet(isPresented: $showUserProfile, content: {
             if let userId = selectedUserId {
-                UserProfileSheet(userId: userId)
+                UserProfileLoader(userId: userId)
             }
         })
     }
 }
 
-// In UserProfileSheet (RegionalLeaderboard.swift)
 struct UserProfileSheet: View {
     let userId: String
-    @State private var user: FirebaseManager.FlipUser?
-    @State private var isLoading = true
-    @State private var hasAppeared = false
     @Environment(\.presentationMode) var presentationMode
     
     var body: some View {
         NavigationView {
-            ZStack {
-                // Add a background color to prevent the black screen
-                Color(red: 20/255, green: 10/255, blue: 40/255) // Deep midnight purple
-                    .ignoresSafeArea()
-                
-                if isLoading {
-                    ProgressView("Loading profile...")
-                        .tint(.white)
-                } else if let user = user {
-                    UserProfileView(user: user)
-                } else {
-                    Text("Could not load user profile")
-                        .foregroundColor(.white)
-                }
-            }
-            .navigationBarItems(trailing: Button("Close") {
-                presentationMode.wrappedValue.dismiss()
-            })
-            .navigationBarTitleDisplayMode(.inline)
-            // Force the view to refresh after appearing
-            .onAppear {
-                loadUser()
-                
-                // This helps with the black screen issue
-                if !hasAppeared {
-                    hasAppeared = true
-                    // Force a redraw after a short delay
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-                        self.isLoading = true
-                        loadUser()
-                    }
-                }
-            }
-        }
-    }
-    
-    private func loadUser() {
-        print("Loading user profile for ID: \(userId)")
-        isLoading = true
-        
-        FirebaseManager.shared.db.collection("users").document(userId).getDocument(source: .default) { snapshot, error in
-            if let error = error {
-                print("Error loading user: \(error.localizedDescription)")
-                DispatchQueue.main.async {
-                    self.isLoading = false
-                }
-                return
-            }
-            
-            if let userData = try? snapshot?.data(as: FirebaseManager.FlipUser.self) {
-                print("Successfully loaded user: \(userData.username)")
-                DispatchQueue.main.async {
-                    self.user = userData
-                    self.isLoading = false
-                }
-            } else {
-                print("Failed to decode user data for ID: \(userId)")
-                DispatchQueue.main.async {
-                    self.isLoading = false
-                }
-            }
+            UserProfileLoader(userId: userId)
+                .navigationBarItems(trailing: Button("Close") {
+                    presentationMode.wrappedValue.dismiss()
+                })
+                .navigationBarTitleDisplayMode(.inline)
         }
     }
 }
-
 
 // Profile image component that loads user profile pictures
 struct ProfileImage: View {

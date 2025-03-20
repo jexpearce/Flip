@@ -20,21 +20,43 @@
 			<array>
 				<string>com.apple.maps.directionsrequest</string>
 			</array>
+            <key>LSHandlerRank</key>
+            <string>Alternate</string>
+		</dict>
+	</array>
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleTypeRole</key>
+			<string>Editor</string>
+			<key>CFBundleURLName</key>
+			<string>GoogleSignIn</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>com.jexpearce.flip</string>
+				<string>com.googleusercontent.apps.195757800963-kn8fbl6m67j3jeucclq16q30ta1h66tc</string>
+			</array>
 		</dict>
 	</array>
 	<key>FirebaseAppDelegateProxyEnabled</key>
 	<false/>
+    <key>LSSupportsOpeningDocumentsInPlace</key>
+    <false/>
+	<key>GIDClientID</key>
+	<string>195757800963-kn8fbl6m67j3jeucclq16q30ta1h66tc.apps.googleusercontent.com</string>
 	<key>MKDirectionsApplicationSupportedModes</key>
 	<array>
 		<string>MKDirectionsModeOther</string>
 	</array>
+    <key>NSLocationWhenInUseUsageDescription</key>
+        <string>Flip uses location for Regional Leaderboards and Building specific leaderboards, so players can compete with others productivity times in places like libraries, coffee shops, etc. A big part of the apps identity, additionally it enhances core features, and allows for FlipMaps, allowing you to see friends currently in a productivity session and their last 3 historical sessions. Users have complete control over their privacy, with the option to opt out of these regional leaderboards, or remain anonymous. FlipMaps session location mapping only begins once the user views the privacy statement, and selects their preferred visibility settings when the maps is first opened. </string>
 	<key>NSLiveActivitiesUsageDescription</key>
-	<string>Used to show current timer status on lock screen</string>
+	<string>Used to show current timer status on lock screen. Allows you to pause, resume, see the pause duration left etc.</string>
 	<key>UIBackgroundModes</key>
 	<array>
 		<string>location</string>
 		<string>fetch</string>
-        <string>remote-notification</string>
+		<string>remote-notification</string>
 		<string>processing</string>
 	</array>
 </dict>

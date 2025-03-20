@@ -337,61 +337,39 @@ struct EnhancedFriendCard: View {
     
     // NEW: Helper to get dynamic card border gradient based on state
     private func getCardBorderGradient() -> LinearGradient {
-        if isLive && !isFull {
-            // Live session border
-            return LinearGradient(
-                colors: [
-                    Color.green.opacity(isGlowing ? 0.8 : 0.5),
-                    Color.white.opacity(0.1)
-                ],
-                startPoint: .topLeading,
-                endPoint: .bottomTrailing
-            )
-        } else if streakStatus == .redFlame {
-            // Red flame streak border
-            return LinearGradient(
-                colors: [
-                    Color.red.opacity(isGlowing ? 0.7 : 0.5),
-                    Color.red.opacity(0.2)
-                ],
-                startPoint: .topLeading,
-                endPoint: .bottomTrailing
-            )
-        } else if streakStatus == .orangeFlame {
-            // Orange flame streak border
-            return LinearGradient(
-                colors: [
-                    Color.orange.opacity(isGlowing ? 0.7 : 0.5),
-                    Color.orange.opacity(0.2)
-                ],
-                startPoint: .topLeading,
-                endPoint: .bottomTrailing
-            )
-        } else {
-            // Default border
-            return LinearGradient(
-                colors: [
-                    Color.white.opacity(0.5),
-                    Color.white.opacity(0.1)
-                ],
-                startPoint: .topLeading,
-                endPoint: .bottomTrailing
-            )
+            if isLive && !isFull {
+                // Live session border
+                return LinearGradient(
+                    colors: [
+                        Color.green.opacity(isGlowing ? 0.8 : 0.5),
+                        Color.white.opacity(0.1)
+                    ],
+                    startPoint: .topLeading,
+                    endPoint: .bottomTrailing
+                )
+            } else {
+                // Default border regardless of streak (since streak is shown on avatar now)
+                return LinearGradient(
+                    colors: [
+                        Color.white.opacity(0.5),
+                        Color.white.opacity(0.1)
+                    ],
+                    startPoint: .topLeading,
+                    endPoint: .bottomTrailing
+                )
+            }
         }
-    }
     
     // NEW: Helper to get dynamic card shadow color based on state
     private func getCardShadowColor() -> Color {
-        if isLive && !isFull {
-            return Color.green.opacity(0.3)
-        } else if streakStatus == .redFlame {
-            return Color.red.opacity(0.3)
-        } else if streakStatus == .orangeFlame {
-            return Color.orange.opacity(0.3)
-        } else {
-            return Color.black.opacity(0.2)
+            if isLive && !isFull {
+                return Color.green.opacity(0.3)
+            } else {
+                // Consistent shadow regardless of streak status
+                return Color.black.opacity(0.2)
+            }
         }
-    }
+    
     
     // Start timer to update the elapsed time every second
     private func startTimer() {

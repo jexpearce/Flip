@@ -82,10 +82,11 @@ struct AuthView: View {
                                 .rotationEffect(.degrees(isFlipAnimating ? 360 : 0))
                                 .animation(
                                     .spring(response: 2.0, dampingFraction: 0.6)
-                                        .repeatForever(autoreverses: false),
+                                    .repeatForever(autoreverses: false),
                                     value: isFlipAnimating
                                 )
-                            
+                            VStack(spacing: 4) {
+                                
                                 Text(isSignUp ? "Create Account" : "Welcome Back")
                                     .font(.system(size: 24, weight: .bold))
                                     .foregroundColor(.white)
@@ -96,7 +97,7 @@ struct AuthView: View {
                         }
                         .scaleEffect(isKeyboardVisible ? 0.8 : 1.0)
                         .padding(.top, isKeyboardVisible ? 20 : 60)
-
+                        
                         // Auth fields with enhanced styling
                         VStack(spacing: 20) {
                             if isSignUp {
@@ -110,7 +111,7 @@ struct AuthView: View {
                                 )
                                 .transition(.move(edge: .trailing).combined(with: .opacity))
                             }
-
+                            
                             EnhancedAuthField(
                                 text: $email,
                                 icon: "envelope.fill",
@@ -120,7 +121,7 @@ struct AuthView: View {
                                 accentColor: indigoAccent,
                                 onTap: { selectedField = .email }
                             )
-
+                            
                             // Password field with show/hide toggle
                             HStack(spacing: 15) {
                                 Image(systemName: "lock.fill")
@@ -161,7 +162,7 @@ struct AuthView: View {
                                 ZStack {
                                     RoundedRectangle(cornerRadius: 15)
                                         .fill(Color.white.opacity(0.05))
-
+                                    
                                     RoundedRectangle(cornerRadius: 15)
                                         .stroke(
                                             LinearGradient(
@@ -186,7 +187,7 @@ struct AuthView: View {
                             .animation(.spring(), value: selectedField)
                         }
                         .padding(.horizontal, 30)
-
+                        
                         // Enhanced Sign In/Up Button with animations
                         Button(action: {
                             withAnimation(.spring()) {
@@ -205,7 +206,7 @@ struct AuthView: View {
                                     .tracking(4)
                                     .foregroundColor(.white)
                                     .opacity(isLoading ? 0 : 1)
-
+                                
                                 if isLoading {
                                     ProgressView()
                                         .progressViewStyle(
@@ -228,10 +229,10 @@ struct AuthView: View {
                                                 endPoint: .bottomTrailing
                                             )
                                         )
-
+                                    
                                     RoundedRectangle(cornerRadius: 30)
                                         .fill(Color.white.opacity(0.1))
-
+                                    
                                     RoundedRectangle(cornerRadius: 30)
                                         .stroke(
                                             LinearGradient(
@@ -251,7 +252,7 @@ struct AuthView: View {
                         }
                         .disabled(isLoading)
                         .padding(.horizontal, 30)
-
+                        
                         // Toggle Sign In/Up with indigo glow effect
                         Button(action: {
                             withAnimation(.spring()) {
@@ -261,20 +262,35 @@ struct AuthView: View {
                         }) {
                             Text(
                                 isSignUp
-                                    ? "Already have an account? Sign In"
-                                    : "Don't have an account? Sign Up"
+                                ? "Already have an account? Sign In"
+                                : "Don't have an account? Sign Up"
                             )
                             .font(.system(size: 16, weight: .medium))
                             .foregroundColor(.white.opacity(0.8))
                             .shadow(color: indigoGlow, radius: 4)
                         }
-                        .padding(.bottom, 30)
+                        .padding(.bottom, 20)
+                        
+                        // Google Sign-In Button
+                        Button(action: {
+                            authManager.signInWithGoogle { success in
+                                if !success {
+                                    isLoading = false
+                                }
+                            }
+                        }) {
+                            Image("google-logo") // Ensure this matches the name in Assets.xcassets
+                                .resizable()
+                                .aspectRatio(contentMode: .fit)
+                                .frame(height: 50) // Adjust as needed
+                        }
+                        .padding(.horizontal, 30)
                     }
                     .padding(.horizontal)
                     .frame(minHeight: geometry.size.height)
                 }
             }
-            .onTapGesture {
+                                .onTapGesture {
                 selectedField = nil
                 UIApplication.shared.sendAction(
                     #selector(UIResponder.resignFirstResponder),
@@ -355,9 +371,16 @@ struct AuthView: View {
                                 withAnimation(.spring()) {
                                     showSuccessOverlay = false
                                     authManager.signUpSuccess = false
-                                    // Now proceed to sign in automatically instead of requiring manual sign in
-                                    authManager.signIn(email: email, password: password) { _ in
-                                        // This will auto-route to MainView when successful
+                                    
+                                    // Add a slight delay before sign in to ensure state is updated
+                                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                                        authManager.signIn(email: email, password: password) { success in
+                                            // Only proceed if sign in was successful
+                                            if !success {
+                                                // Handle sign in failure
+                                                print("Auto sign-in failed after account creation")
+                                            }
+                                        }
                                     }
                                 }
                             }) {

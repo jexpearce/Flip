@@ -58,13 +58,13 @@ class NotificationManager {
         )
     }
 
-    func display(
-        title: String, body: String, categoryIdentifier: String = "FLIP_ALERT"
-    ) {
+    func display(title: String, body: String, categoryIdentifier: String = "FLIP_ALERT", silent: Bool = false) {
         let content = UNMutableNotificationContent()
         content.title = title
         content.body = body
-        content.sound = .default
+        if !silent {
+            content.sound = .default
+        }
         content.categoryIdentifier = categoryIdentifier
         UNUserNotificationCenter.current().add(
             UNNotificationRequest(

@@ -316,8 +316,10 @@ struct SettingsView: View {
                         // Sign Out Button - Destructive Action
                         VStack(spacing: 10) {
                             Button(action: {
-                                AuthManager.shared.signOut()
                                 presentationMode.wrappedValue.dismiss()
+                                DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                                        AuthManager.shared.signOut()
+                                    }
                             }) {
                                 Text("Sign Out")
                                     .font(.system(size: 16, weight: .bold))

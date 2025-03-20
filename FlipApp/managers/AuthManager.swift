@@ -1,6 +1,8 @@
 import FirebaseAuth
 import FirebaseFirestore
 import SwiftUI
+import GoogleSignIn
+import Firebase
 
 class AuthManager: ObservableObject {
     static let shared = AuthManager()
@@ -147,6 +149,8 @@ class AuthManager: ObservableObject {
                             } else {
                                 // Set the success flag for custom notification
                                 self.signUpSuccess = true
+                                // After success (where you set self.signUpSuccess = true)
+                                FirebaseManager.shared.ensureFirstTimeExperience()
                                 print("User created successfully with ID: \(user.uid)")
                                 
                                 // Store the current user in FirebaseManager
@@ -202,6 +206,9 @@ class AuthManager: ObservableObject {
     
     func signOut() {
         UserSettingsManager.shared.onUserSignOut()
+        // Add this line to reset the sign up success state
+        self.signUpSuccess = false
+        
         do {
             try Auth.auth().signOut()
             DispatchQueue.main.async {
@@ -295,5 +302,110 @@ class AuthManager: ObservableObject {
         default:
             return "An error occurred: \(error.localizedDescription)"
         }
+    }
+}
+
+extension AuthManager {
+    func signInWithGoogle(completion: @escaping (Bool) -> Void) {
+        guard let rootViewController = UIApplication.shared.topViewController() else {
+            alertMessage = "Could not get root view controller"
+            showAlert = true
+            completion(false)
+            return
+        }
+        
+        GIDSignIn.sharedInstance.signIn(withPresenting: rootViewController) { [weak self] result, error in
+            guard let self = self else { return }
+            
+            if let error = error {
+                self.alertMessage = "Google Sign-In failed: \(error.localizedDescription)"
+                self.showAlert = true
+                completion(false)
+                return
+            }
+            
+            guard let user = result?.user,
+                  let idToken = user.idToken?.tokenString else {
+                self.alertMessage = "Missing authentication data"
+                self.showAlert = true
+                completion(false)
+                return
+            }
+            
+            let credential = GoogleAuthProvider.credential(
+                withIDToken: idToken,
+                accessToken: user.accessToken.tokenString
+            )
+            
+            Auth.auth().signIn(with: credential) { [weak self] authResult, error in
+                guard let self = self else { return }
+                
+                if let error = error {
+                    self.alertMessage = self.handleAuthError(error)
+                    self.showAlert = true
+                    completion(false)
+                    return
+                }
+                
+                guard let user = authResult?.user else {
+                    self.alertMessage = "Authentication failed"
+                    self.showAlert = true
+                    completion(false)
+                    return
+                }
+                
+                // Handle new users
+                if authResult?.additionalUserInfo?.isNewUser == true {
+                    self.createGoogleUserDocument(user: user) {
+                        self.loadUserData(userId: user.uid) {
+                            completion(true)
+                        }
+                    }
+                } else {
+                    self.loadUserData(userId: user.uid) {
+                        completion(true)
+                    }
+                }
+            }
+        }
+    }
+    
+    private func createGoogleUserDocument(user: User, completion: @escaping () -> Void) {
+        let db = Firestore.firestore()
+        let userData: [String: Any] = [
+            "id": user.uid,
+            "username": user.displayName ?? "User\(Int.random(in: 1000...9999))",
+            "email": user.email ?? "",
+            "totalFocusTime": 0,
+            "totalSessions": 0,
+            "longestSession": 0,
+            "friends": [],
+            "friendRequests": [],
+            "sentRequests": [],
+            "createdAt": FieldValue.serverTimestamp()
+        ]
+        
+        db.collection("users").document(user.uid).setData(userData) { error in
+            if let error = error {
+                print("Error creating user document: \(error.localizedDescription)")
+            }
+            completion()
+        }
+    }
+}
+
+extension UIApplication {
+    func topViewController() -> UIViewController? {
+        guard let windowScene = connectedScenes.first as? UIWindowScene,
+              let rootViewController = windowScene.windows.first(where: { $0.isKeyWindow })?.rootViewController
+        else {
+            return nil
+        }
+        
+        var topController = rootViewController
+        while let presentedViewController = topController.presentedViewController {
+            topController = presentedViewController
+        }
+        return topController
     }
 }

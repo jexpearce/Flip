@@ -26,7 +26,7 @@ class AppManager: NSObject, ObservableObject {
     @Published var isPaused = false
     @Published var pausedRemainingSeconds = 0
     @Published var pausedRemainingFlips = 0
-    @Published var allowPauses = false
+    @Published var allowPauses = true
     @Published var maxPauses = 10
     @Published var remainingPauses = 0
     @Published var liveSessionId: String?
@@ -344,7 +344,8 @@ class AppManager: NSObject, ObservableObject {
         let plural = remainingPauses == 1 ? "" : "s"
         notificationManager.display(
             title: "Session Paused",
-            body: "Pause timer started for \(pauseDuration) minutes. \(remainingPauses) pause\(plural) remaining."
+            body: "Pause timer started for \(pauseDuration) minutes. \(remainingPauses) pause\(plural) remaining.",
+            silent: true
         )
     }
     private var pauseStartTime: Date?
@@ -373,7 +374,8 @@ class AppManager: NSObject, ObservableObject {
                         if self.remainingPauseSeconds == 60 {
                             self.notificationManager.display(
                                 title: "Pause Ending Soon",
-                                body: "1 minute left in your pause."
+                                body: "1 minute left in your pause.",
+                                silent: true
                             )
                         }
                     } else {
