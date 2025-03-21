@@ -135,6 +135,7 @@ class AppManager: NSObject, ObservableObject {
                         
                         // IMPORTANT: Check orientation BEFORE starting session
                         // Give the motion manager a moment to get fresh data
+                        currentState = .tracking
                         self.startMotionUpdates() // Make sure we're getting motion data
                         
                         // Add a short delay to get accurate orientation data
