@@ -1299,7 +1299,7 @@ class AppManager: NSObject, ObservableObject {
             
             // Invalidate all timers
             invalidateAllTimers()
-            
+            cancelPendingNotifications()
             endBackgroundTask()
             
             // Reset join state when ending a session
@@ -1861,6 +1861,11 @@ class AppManager: NSObject, ObservableObject {
                 }
             }
         }
+    // Add this function to AppManager.swift
+    private func cancelPendingNotifications() {
+        // Cancel specifically the pause notification instead of all notifications
+        UNUserNotificationCenter.current().removePendingNotificationRequests(withIdentifiers: ["pauseEndNotification"])
+    }
         
         private func clearSessionState() {
             let defaults = UserDefaults.standard
@@ -2059,6 +2064,7 @@ class AppManager: NSObject, ObservableObject {
                     }
                 }
         }
+    
         
         @MainActor
         func updateLocationDuringSession() {
