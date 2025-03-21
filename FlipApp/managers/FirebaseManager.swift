@@ -488,6 +488,7 @@ extension FirebaseManager {
                 print("First session recorded successfully")
                 completion(true)
             }
+        UserDefaults.standard.set(false, forKey: "isPotentialFirstTimeUser")
     }
     // For a truly fresh install, ensure first time experience
     func ensureFirstTimeExperience() {
