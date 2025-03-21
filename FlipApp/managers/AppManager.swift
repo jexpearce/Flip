@@ -39,8 +39,6 @@ class AppManager: NSObject, ObservableObject {
     @Published var sessionAlreadyRecorded: Bool = false
     @Published var usingLimitedLocationPermission = false
     
-    private var pauseWatchdogTimer: Timer?
-    
     private var pauseEndTime: Date?
     private var sessionManager = SessionManager.shared
     private var notificationManager = NotificationManager.shared
@@ -289,14 +287,12 @@ class AppManager: NSObject, ObservableObject {
             remainingPauseSeconds = pauseDurationSeconds
             
             // Save these values to UserDefaults for persistence
-        let defaults = UserDefaults.standard
+            let defaults = UserDefaults.standard
             defaults.set(pauseStartTime?.timeIntervalSince1970, forKey: "pauseStartTime")
             defaults.set(pauseEndTime?.timeIntervalSince1970, forKey: "pauseEndTime")
-            defaults.synchronize() // Force immediate save
         
         // Start the pause timer
         startPauseTimer()
-        startPauseWatchdogTimer()
         
         saveSessionState()
         
@@ -557,60 +553,6 @@ class AppManager: NSObject, ObservableObject {
             self.updateLocationDuringSession()
         }
     }
-    private func forceSyncWidgetWithApp() {
-        if #available(iOS 16.1, *) {
-            // Force update all Live Activities to ensure they have latest state
-            for activity in Activity<FlipActivityAttributes>.activities {
-                Task {
-                    // Re-calculate remaining pause time based on absolute end time
-                    let updatedPauseTimeRemaining: String?
-                    if isPauseTimerActive, let endTime = pauseEndTime {
-                        let now = Date()
-                        let remainingSeconds = max(0, Int(endTime.timeIntervalSince(now)))
-                        self.remainingPauseSeconds = remainingSeconds
-                        updatedPauseTimeRemaining = formatPauseTimeRemaining()
-                        
-                        // If pause should be over, queue auto-resume
-                        if remainingSeconds <= 0 {
-                            DispatchQueue.main.async {
-                                self.isPauseTimerActive = false
-                                self.pauseTimer?.invalidate()
-                                self.pauseTimer = nil
-                                self.pauseStartTime = nil
-                                self.pauseEndTime = nil
-                                self.autoResumeSession()
-                            }
-                        }
-                    } else {
-                        updatedPauseTimeRemaining = nil
-                    }
-                    
-                    // Create up-to-date state for the widget
-                    let state = FlipActivityAttributes.ContentState(
-                        remainingTime: remainingTimeString,
-                        remainingPauses: remainingPauses,
-                        isPaused: currentState == .paused,
-                        isFailed: currentState == .failed,
-                        wasSuccessful: currentState == .completed,
-                        flipBackTimeRemaining: (currentState == .tracking && !isFaceDown) ?
-                            flipBackTimeRemaining : nil,
-                        pauseTimeRemaining: updatedPauseTimeRemaining,
-                        countdownMessage: currentState == .countdown ?
-                            "\(countdownSeconds) seconds to flip phone" : nil,
-                        lastUpdate: Date()
-                    )
-                    
-                    let content = ActivityContent(
-                        state: state,
-                        staleDate: Calendar.current.date(
-                            byAdding: .minute, value: 1, to: Date())
-                    )
-                    
-                    await activity.update(content)
-                }
-            }
-        }
-    }
     
     // MARK: - Timer Management
     private func invalidateAllTimers() {
@@ -620,7 +562,6 @@ class AppManager: NSObject, ObservableObject {
         flipBackTimer?.invalidate()
         backgroundCheckTimer?.invalidate()
         pauseTimer?.invalidate()
-        pauseWatchdogTimer?.invalidate()
         
         // Set all timers to nil to prevent memory leaks
         countdownTimer = nil
@@ -628,7 +569,6 @@ class AppManager: NSObject, ObservableObject {
         flipBackTimer = nil
         backgroundCheckTimer = nil
         pauseTimer = nil
-        pauseWatchdogTimer = nil
         
         print("All timers invalidated and set to nil")
     }
@@ -1538,34 +1478,6 @@ class AppManager: NSObject, ObservableObject {
                 }
             }
         }
-    private func startPauseWatchdogTimer() {
-        pauseWatchdogTimer?.invalidate()
-        pauseWatchdogTimer = Timer.scheduledTimer(withTimeInterval: 30, repeats: true) { [weak self] _ in
-            guard let self = self,
-                  self.currentState == .paused,
-                  self.isPauseTimerActive,
-                  let endTime = self.pauseEndTime else {
-                return
-            }
-            
-            let now = Date()
-            if now >= endTime {
-                print("Pause watchdog detected expired pause - auto-resuming")
-                DispatchQueue.main.async {
-                    self.isPauseTimerActive = false
-                    self.pauseTimer?.invalidate()
-                    self.pauseTimer = nil
-                    self.pauseStartTime = nil
-                    self.pauseEndTime = nil
-                    self.autoResumeSession()
-                }
-            }
-        }
-        
-        if let timer = pauseWatchdogTimer {
-            RunLoop.current.add(timer, forMode: .common)
-        }
-    }
         
         // MARK: - Notifications
         private func notifyFlipUsed() {
@@ -1626,28 +1538,16 @@ class AppManager: NSObject, ObservableObject {
                     return
                 }
             
-            if isPauseTimerActive {
-                    // Save absolute timestamps instead of remaining seconds
-                    if pauseStartTime == nil {
-                        pauseStartTime = Date().addingTimeInterval(-Double(pauseDuration * 60 - remainingPauseSeconds))
-                    }
-                    
-                    if pauseEndTime == nil {
-                        pauseEndTime = Date().addingTimeInterval(Double(remainingPauseSeconds))
-                    }
-                    
-                    defaults.set(pauseStartTime?.timeIntervalSince1970, forKey: "pauseStartTime")
-                    defaults.set(pauseEndTime?.timeIntervalSince1970, forKey: "pauseEndTime")
-                    defaults.set(remainingPauseSeconds, forKey: "remainingPauseSeconds")
-                    defaults.set(isPauseTimerActive, forKey: "isPauseTimerActive")
-                    
-                    // Force an immediate sync to disk
-                    defaults.synchronize()
+            if let pauseStartTime = pauseStartTime {
+                    defaults.set(pauseStartTime.timeIntervalSince1970, forKey: "pauseStartTime")
                 } else {
                     defaults.removeObject(forKey: "pauseStartTime")
+                }
+                
+                if let pauseEndTime = pauseEndTime {
+                    defaults.set(pauseEndTime.timeIntervalSince1970, forKey: "pauseEndTime")
+                } else {
                     defaults.removeObject(forKey: "pauseEndTime")
-                    defaults.removeObject(forKey: "remainingPauseSeconds")
-                    defaults.removeObject(forKey: "isPauseTimerActive")
                 }
             
             // Enhanced validation for live session info
@@ -2270,15 +2170,6 @@ class AppManager: NSObject, ObservableObject {
             checkCurrentOrientation()
             if currentState == .paused && isPauseTimerActive {
                 recalculatePauseTime()
-                if let endTime = pauseEndTime, Date() > endTime {
-                            print("Pause end time passed while app was inactive - auto-resuming")
-                            DispatchQueue.main.async {
-                                self.autoResumeSession()
-                            }
-                        }
-                        
-                        // Force widget sync after pause time recalculation
-                        forceSyncWidgetWithApp()
             }
             
             // Start or restart location updates with appropriate settings
@@ -2296,7 +2187,7 @@ class AppManager: NSObject, ObservableObject {
             if currentState == .tracking || currentState == .paused {
                 if #available(iOS 16.1, *) {
                     Task {
-                        forceSyncWidgetWithApp()
+                        updateLiveActivity()
                     }
                 }
             }
@@ -2319,32 +2210,29 @@ class AppManager: NSObject, ObservableObject {
         
         // If time is up, auto-resume
         if remainingPauseSeconds <= 0 {
-                isPauseTimerActive = false
-                pauseTimer?.invalidate()
-                pauseTimer = nil
-                
-                // These are already defined as vars so they can be set to nil
-                self.pauseStartTime = nil
-                self.pauseEndTime = nil
-                
-                // Auto-resume the session
-                DispatchQueue.main.async {
-                    self.autoResumeSession()
-                }
-            } else {
-                // Otherwise restart the timer
-                pauseTimer?.invalidate()
-                pauseTimer = nil
-                startPauseTimer()
-            }
+            isPauseTimerActive = false
+            pauseTimer?.invalidate()
+            pauseTimer = nil
             
-            // Update Activity
-            if #available(iOS 16.1, *) {
-                updateLiveActivity()
-            }
+            // These are already defined as vars so they can be set to nil
+            self.pauseStartTime = nil
+            self.pauseEndTime = nil
             
-            // Save updated state to ensure it persists
-            saveSessionState()
+            // Auto-resume the session
+            DispatchQueue.main.async {
+                self.autoResumeSession()
+            }
+        } else {
+            // Otherwise restart the timer
+            pauseTimer?.invalidate()
+            pauseTimer = nil
+            startPauseTimer()
+        }
+        
+        // Update Activity
+        if #available(iOS 16.1, *) {
+            updateLiveActivity()
+        }
     }
         
         // MARK: - Cleanup
