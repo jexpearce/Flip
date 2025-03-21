@@ -518,8 +518,10 @@ struct AuthView: View {
                 
                 // Start the permission flow after successful sign-up (with delay)
                 DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
-                    // This gives time for user to see success overlay before permissions start
-                    PermissionManager.shared.requestAllPermissions()
+                    // Make sure isPotentialFirstTimeUser is true to trigger InitialView
+                    UserDefaults.standard.set(true, forKey: "isPotentialFirstTimeUser")
+                    // Post notification to app to check and show permission flow
+                    NotificationCenter.default.post(name: NSNotification.Name("ShowPermissionsFlow"), object: nil)
                 }
             }
         }

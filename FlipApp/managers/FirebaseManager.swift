@@ -493,7 +493,6 @@ extension FirebaseManager {
     func ensureFirstTimeExperience() {
         let defaults = UserDefaults.standard
         if defaults.bool(forKey: "isPotentialFirstTimeUser") {
-            defaults.set(false, forKey: "isPotentialFirstTimeUser")
             
             guard let userId = Auth.auth().currentUser?.uid else { return }
             
