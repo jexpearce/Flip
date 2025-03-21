@@ -96,12 +96,12 @@ class LocationPermissionManager: NSObject, ObservableObject, CLLocationManagerDe
     }
 }
 
-
 struct LocationPermissionAlert: View {
     @Binding var isPresented: Bool
     let onContinue: () -> Void
     @State private var animateContent = false
     @State private var animateButton = false
+    @State private var showPrivacyPolicy = false
     
     var body: some View {
         ZStack {
@@ -113,129 +113,151 @@ struct LocationPermissionAlert: View {
                 }
             
             // Alert content
-            VStack(spacing: 25) {
+            VStack(spacing: 20) {
                 // Header with icon
-                VStack(spacing: 12) {
-                    // Location pin with pulse animation
-                    ZStack {
-                        // Outer pulse
-                        Circle()
-                            .fill(Color(red: 56/255, green: 189/255, blue: 248/255).opacity(0.3))
-                            .frame(width: 90, height: 90)
-                            .scaleEffect(animateContent ? 1.3 : 0.8)
-                            .opacity(animateContent ? 0.0 : 0.5)
-                        
-                        // Inner circle
-                        Circle()
-                            .fill(LinearGradient(
+                ZStack {
+                    Circle()
+                        .fill(Color(red: 56/255, green: 189/255, blue: 248/255).opacity(0.2))
+                        .frame(width: 90, height: 90)
+                        .scaleEffect(animateContent ? 1.3 : 0.8)
+                        .opacity(animateContent ? 0.0 : 0.5)
+                    
+                    Circle()
+                        .fill(
+                            LinearGradient(
                                 colors: [
                                     Color(red: 56/255, green: 189/255, blue: 248/255),
                                     Color(red: 14/255, green: 165/255, blue: 233/255)
                                 ],
                                 startPoint: .top,
                                 endPoint: .bottom
-                            ))
-                            .frame(width: 70, height: 70)
-                        
-                        // Icon
-                        Image(systemName: "location.fill")
-                            .font(.system(size: 32))
-                            .foregroundColor(.white)
-                            .shadow(color: Color.white.opacity(0.5), radius: 4)
-                    }
-                    
-                    Text("LOCATION ACCESS")
-                        .font(.system(size: 20, weight: .black))
-                        .tracking(4)
-                        .foregroundColor(.white)
-                        .shadow(color: Color(red: 56/255, green: 189/255, blue: 248/255).opacity(0.6), radius: 8)
-                    
-                }
-                .padding(.top, 10)
-                
-                // Explanation text
-                VStack(spacing: 15) {
-                    infoRow(
-                        icon: "map.fill",
-                        title: "Friend Maps",
-                        description: "See where your friends are focusing in real-time on the map"
-                    )
-                    
-                    infoRow(
-                        icon: "location.circle.fill",
-                        title: "Location Challenges",
-                        description: "Participate in location-based leaderboards with friends"
-                    )
-                    
-                    infoRow(
-                        icon: "bell.fill",
-                        title: "Privacy Focused",
-                        description: "Location is only during active sessions. Stored securely, and NEVER sent to third party services"
-                    )
-                }
-                .padding(.horizontal, 5)
-                
-                // Important note
-                Text("FLIP requires location access to enable these social features. You can change this permission later in your device settings.")
-                    .font(.system(size: 14))
-                    .foregroundColor(.white.opacity(0.8))
-                    .multilineTextAlignment(.center)
-                    .padding(.horizontal, 10)
-                    .padding(.top, 5)
-                
-                // Continue button
-                Button(action: {
-                    withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
-                        animateButton = true
-                    }
-                    
-                    // Add small delay before closing and requesting permission
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
-                                            isPresented = false
-                                            // Add another delay before continuing to ensure the animation has time to complete
-                                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) {
-                                                onContinue()
-                                            }
-                                        }
-                }) {
-                    Text("CONTINUE")
-                        .font(.system(size: 18, weight: .bold))
-                        .foregroundColor(.white)
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 15)
-                        .background(
-                            ZStack {
-                                RoundedRectangle(cornerRadius: 15)
-                                    .fill(Theme.buttonGradient)
-                                
-                                RoundedRectangle(cornerRadius: 15)
-                                    .fill(Color.white.opacity(0.1))
-                                
-                                RoundedRectangle(cornerRadius: 15)
-                                    .stroke(
-                                        LinearGradient(
-                                            colors: [
-                                                Color.white.opacity(0.6),
-                                                Color.white.opacity(0.2)
-                                            ],
-                                            startPoint: .topLeading,
-                                            endPoint: .bottomTrailing
-                                        ),
-                                        lineWidth: 1
-                                    )
-                            }
+                            )
                         )
-                        .shadow(color: Color(red: 56/255, green: 189/255, blue: 248/255).opacity(0.5), radius: 8)
-                        .scaleEffect(animateButton ? 0.95 : 1.0)
+                        .frame(width: 70, height: 70)
+                    
+                    Image(systemName: "location.fill")
+                        .font(.system(size: 32))
+                        .foregroundColor(.white)
+                        .shadow(color: Color.white.opacity(0.5), radius: 4)
                 }
-                .padding(.horizontal, 20)
+                
+                Text("LOCATION ACCESS")
+                    .font(.system(size: 22, weight: .black))
+                    .tracking(4)
+                    .foregroundColor(.white)
+                    .shadow(color: Color(red: 56/255, green: 189/255, blue: 248/255).opacity(0.6), radius: 8)
+                
+                // Privacy explanation
+                Text("Flip protects your privacy. Location data is only used during active sessions and only your last 3 session locations are stored.")
+                    .font(.system(size: 16))
+                    .foregroundColor(.white)
+                    .multilineTextAlignment(.center)
+                    .padding(.horizontal)
+                
+                // Feature explanation
+                VStack(spacing: 15) {
+                    featureRow(
+                        icon: "map.fill",
+                        title: "FlipMaps",
+                        description: "See where friends are focusing in real-time"
+                    )
+                    
+                    featureRow(
+                        icon: "building.2.fill",
+                        title: "Building Leaderboards",
+                        description: "Compete with others in the same location"
+                    )
+                    
+                    featureRow(
+                        icon: "moon.stars.fill",
+                        title: "Background Sessions",
+                        description: "Keep sessions running with screen off"
+                    )
+                }
+                .padding(.vertical, 5)
+                
+                // Privacy policy link
+                Button(action: {
+                    showPrivacyPolicy = true
+                }) {
+                    HStack {
+                        Image(systemName: "doc.text")
+                            .font(.system(size: 14))
+                        Text("View Full Privacy Policy")
+                            .font(.system(size: 14, weight: .medium))
+                    }
+                    .foregroundColor(Color(red: 56/255, green: 189/255, blue: 248/255))
+                    .padding(.vertical, 8)
+                }
+                
+                // Buttons
+                HStack(spacing: 15) {
+                    // Skip button
+                    Button(action: {
+                        isPresented = false
+                    }) {
+                        Text("Skip")
+                            .font(.system(size: 16, weight: .medium))
+                            .foregroundColor(.white.opacity(0.7))
+                            .frame(width: 100, height: 48)
+                            .background(
+                                RoundedRectangle(cornerRadius: 12)
+                                    .fill(Color.white.opacity(0.1))
+                                    .overlay(
+                                        RoundedRectangle(cornerRadius: 12)
+                                            .stroke(Color.white.opacity(0.2), lineWidth: 1)
+                                    )
+                            )
+                    }
+                    
+                    // Continue button
+                    Button(action: {
+                        withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
+                            animateButton = true
+                        }
+                        
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
+                            isPresented = false
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) {
+                                onContinue()
+                            }
+                        }
+                    }) {
+                        Text("Allow")
+                            .font(.system(size: 16, weight: .bold))
+                            .foregroundColor(.white)
+                            .frame(width: 160, height: 48)
+                            .background(
+                                ZStack {
+                                    RoundedRectangle(cornerRadius: 12)
+                                        .fill(
+                                            LinearGradient(
+                                                colors: [
+                                                    Color(red: 56/255, green: 189/255, blue: 248/255),
+                                                    Color(red: 14/255, green: 165/255, blue: 233/255)
+                                                ],
+                                                startPoint: .leading,
+                                                endPoint: .trailing
+                                            )
+                                        )
+                                    
+                                    RoundedRectangle(cornerRadius: 12)
+                                        .fill(Color.white.opacity(0.1))
+                                    
+                                    RoundedRectangle(cornerRadius: 12)
+                                        .stroke(Color.white.opacity(0.3), lineWidth: 1)
+                                }
+                            )
+                            .shadow(color: Color(red: 56/255, green: 189/255, blue: 248/255).opacity(0.5), radius: 8)
+                            .scaleEffect(animateButton ? 0.95 : 1.0)
+                    }
+                }
                 .padding(.top, 10)
                 
-                // Small print
-                Text("While limited, you can still use core features if you deny location access")
+                Text("You can change this later in Settings")
                     .font(.system(size: 12))
                     .foregroundColor(.white.opacity(0.5))
-                    .padding(.bottom, 15)
+                    .padding(.bottom, 10)
             }
             .padding(25)
             .background(
@@ -252,11 +274,9 @@ struct LocationPermissionAlert: View {
                             )
                         )
                     
-                    // Glass effect
                     RoundedRectangle(cornerRadius: 25)
                         .fill(Color.white.opacity(0.05))
                     
-                    // Border
                     RoundedRectangle(cornerRadius: 25)
                         .stroke(
                             LinearGradient(
@@ -277,17 +297,18 @@ struct LocationPermissionAlert: View {
             .opacity(isPresented ? 1 : 0)
             .animation(.spring(response: 0.5, dampingFraction: 0.8), value: isPresented)
         }
+        .sheet(isPresented: $showPrivacyPolicy) {
+            PrivacyPolicyView()
+        }
         .onAppear {
-            // Start the pulse animation
             withAnimation(Animation.easeInOut(duration: 2).repeatForever(autoreverses: true)) {
                 animateContent = true
             }
         }
     }
     
-    private func infoRow(icon: String, title: String, description: String) -> some View {
+    private func featureRow(icon: String, title: String, description: String) -> some View {
         HStack(alignment: .top, spacing: 15) {
-            // Icon in circle
             ZStack {
                 Circle()
                     .fill(Color.white.opacity(0.1))
@@ -312,5 +333,4 @@ struct LocationPermissionAlert: View {
         .frame(maxWidth: .infinity, alignment: .leading)
     }
 }
-
 
