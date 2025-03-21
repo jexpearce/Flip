@@ -201,10 +201,9 @@ class AuthManager: ObservableObject {
             self.loadUserData(userId: user.uid) {
                 // Check if this is a first-time user AFTER loading data
                 if UserDefaults.standard.bool(forKey: "isPotentialFirstTimeUser") {
-                    // Don't reset the flag or request permissions immediately
-                    // Let App.swift handle showing the InitialView first
-                    print("First time user detected - will show permission flow")
-                    // Potentially show a notification to the user about needing to set up permissions
+                    // DON'T trigger permissions directly - let the InitialView do it
+                    // DON'T reset the flag here
+                    print("First-time user detected after login - InitialView will handle permissions")
                 }
                 completion(true)
             }

@@ -231,6 +231,9 @@ struct InitialView: View {
         .sheet(isPresented: $showPrivacyPolicy) {
             PrivacyPolicyView()
         }
+        .onReceive(NotificationCenter.default.publisher(for: NSNotification.Name("ShowEnhancedLocationAlert"))) { _ in
+            showLocationPermission = true
+        }
         .onAppear {
             // Automatically start with first non-granted permission
             startFirstMissingPermission()

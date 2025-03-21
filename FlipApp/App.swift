@@ -32,6 +32,12 @@ struct FlipApp: App {
         // Schedule background refresh
         AppManager.shared.scheduleBackgroundRefresh()
         
+        if !UserDefaults.standard.bool(forKey: "hasLaunchedBefore") {
+                UserDefaults.standard.set(true, forKey: "isPotentialFirstTimeUser")
+                UserDefaults.standard.set(false, forKey: "hasCompletedPermissionFlow")
+                print("New installation - forcing permission flow")
+            }
+        
         // Determine if we should show permissions flow
         let hasCompletedPermissions = UserDefaults.standard.bool(forKey: "hasCompletedPermissionFlow")
         let isFirstTimeUser = UserDefaults.standard.bool(forKey: "isPotentialFirstTimeUser")

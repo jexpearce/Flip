@@ -24,20 +24,21 @@ class LocationPermissionManager: NSObject, ObservableObject, CLLocationManagerDe
     }
     
     func requestPermissionWithCustomAlert() {
-        // Check if we've already shown the alert and user denied
-        if hasShownCustomAlert && authorizationStatus == .denied {
-            // Show settings alert instead
-            showSettingsAlert = true
-            return
+            // Check if we've already shown the alert and user denied
+            if hasShownCustomAlert && authorizationStatus == .denied {
+                // Show settings alert instead
+                showSettingsAlert = true
+                return
+            }
+            
+            // Show our enhanced alert first (NotificationCenter will handle it)
+            NotificationCenter.default.post(name: NSNotification.Name("ShowEnhancedLocationAlert"), object: nil)
+            showCustomAlert = true
+            
+            // Mark that we've shown the alert
+            hasShownCustomAlert = true
+            UserDefaults.standard.set(true, forKey: "hasShownLocationAlert")
         }
-        
-        // Show our custom alert first
-        showCustomAlert = true
-        
-        // Mark that we've shown the alert
-        hasShownCustomAlert = true
-        UserDefaults.standard.set(true, forKey: "hasShownLocationAlert")
-    }
     
     func checkRegionalAvailability(completion: @escaping (Bool) -> Void) {
         // If permissions are already granted, return true

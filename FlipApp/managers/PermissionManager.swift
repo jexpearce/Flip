@@ -200,6 +200,11 @@ class PermissionManager: NSObject, ObservableObject {
         // Show our custom alert first
         print("Showing custom location alert")
         showLocationAlert = true
+        print("Showing enhanced location alert")
+            NotificationCenter.default.post(
+                name: NSNotification.Name("ShowEnhancedLocationAlert"),
+                object: nil
+            )
         
         // The system prompt will be triggered when the user taps Continue in the custom alert
         // See requestLocationPermission() method
