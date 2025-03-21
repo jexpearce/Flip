@@ -347,6 +347,9 @@ struct InitialView: View {
     
     // Helper to check if permission is granted
     private func isPermissionGranted(_ permission: PermissionType) -> Bool {
+        if UserDefaults.standard.bool(forKey: "isResettingPermissions") {
+                return false
+            }
         switch permission {
         case .location:
             return permissionManager.locationAuthStatus == .authorizedWhenInUse ||

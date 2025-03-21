@@ -54,7 +54,7 @@ struct PrivacyPolicyView: View {
                         policySection(
                             emoji: "3️⃣",
                             title: "Location Tracking (Optional)",
-                            content: "Location tracking is not required to use Flip, but enabling it enhances core features, allowing sessions to run while your screen is off, and unlocks additional features:\n✅ Regional & Building-Specific Leaderboards – Compete with others in the same location (e.g., libraries, cafés).\n✅ FlipMaps – See friends' live Flip sessions and their last 3 historical sessions.\nWithout location tracking, Flip works normally, but you won't have access to leaderboards or FlipMaps."
+                            content: "Location tracking is not required to use Flip, but enabling it enhances core features, allowing sessions to run while your screen is off, and primarily allowing additional features:\n✅ Regional & Building-Specific Leaderboards – Compete with others in the same location (e.g., libraries, cafés).\n✅ FlipMaps – See friends' live Flip sessions and their last 3 historical sessions.\nWithout location tracking, Flip works normally, but you won't have access to leaderboards or FlipMaps. Location is sparingly triggered, putting battery health as the first priority."
                         )
                         
                         policySection(

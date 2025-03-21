@@ -455,6 +455,7 @@ struct SettingsView: View {
                     message: Text("This will restart the permission setup process. Continue?"),
                     primaryButton: .default(Text("Reset")) {
                         // Reset permission flow flag
+                        UserDefaults.standard.set(true, forKey: "isResettingPermissions")
                         UserDefaults.standard.set(false, forKey: "hasCompletedPermissionFlow")
                         // Restart app with InitialView
                         NotificationCenter.default.post(name: NSNotification.Name("ShowPermissionsFlow"), object: nil)

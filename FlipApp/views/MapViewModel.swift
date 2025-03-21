@@ -172,6 +172,10 @@ class MapViewModel: NSObject, ObservableObject, CLLocationManagerDelegate {
     }
     
     func startLocationTracking() {
+        if !UserDefaults.standard.bool(forKey: "hasCompletedPermissionFlow") {
+                print("⛔️ Blocking MapViewModel location tracking until permission flow completed")
+                return
+            }
         // ONLY start tracking if we already have permission
         let authStatus = locationManager.authorizationStatus
         

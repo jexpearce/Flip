@@ -529,9 +529,15 @@ class RegionalViewModel: NSObject, ObservableObject, CLLocationManagerDelegate {
     }
     
     private func setupLocationManager() {
-        locationManager.delegate = self // Critical: Set the delegate
-        locationManager.desiredAccuracy = kCLLocationAccuracyHundredMeters
-        locationManager.requestWhenInUseAuthorization()
+        locationManager.delegate = self
+            locationManager.desiredAccuracy = kCLLocationAccuracyHundredMeters
+            
+            // CRITICAL: Only request if permission flow is complete
+            if UserDefaults.standard.bool(forKey: "hasCompletedPermissionFlow") {
+                locationManager.requestWhenInUseAuthorization()
+            } else {
+                print("⛔️ Blocking RegionalViewModel location request until permission flow completed")
+            }
         
         // Listen for location updates from LocationHandler
         NotificationCenter.default.addObserver(
