@@ -117,11 +117,12 @@ class SettingsViewModel: ObservableObject {
         UserSettingsManager.shared.setRegionalOptOut(regionalOptOut)
     }
 }
-
 struct SettingsView: View {
     @Environment(\.presentationMode) var presentationMode
     @StateObject private var viewModel = SettingsViewModel()
     @State private var showHelpSheet = false
+    @State private var showPrivacyPolicy = false
+    @State private var showPermissionResetAlert = false
     @State private var animateSettings = false
     
     // Colors from the app's theme
@@ -278,6 +279,89 @@ struct SettingsView: View {
                                                 .stroke(cyanBlueAccent.opacity(0.3), lineWidth: 1)
                                         )
                                 )
+                                
+                                // Privacy Policy Button
+                                Button(action: {
+                                    showPrivacyPolicy = true
+                                }) {
+                                    HStack {
+                                        Image(systemName: "doc.text")
+                                            .font(.system(size: 18))
+                                            .foregroundColor(cyanBlueAccent)
+                                        
+                                        Text("Privacy Policy")
+                                            .font(.system(size: 16, weight: .semibold))
+                                            .foregroundColor(.white)
+                                        
+                                        Spacer()
+                                        
+                                        Image(systemName: "chevron.right")
+                                            .font(.system(size: 14))
+                                            .foregroundColor(.white.opacity(0.5))
+                                    }
+                                    .padding()
+                                    .background(
+                                        RoundedRectangle(cornerRadius: 12)
+                                            .fill(Color.white.opacity(0.05))
+                                    )
+                                }
+                                .buttonStyle(PlainButtonStyle())
+                                
+                                // Data Deletion Request Button
+                                Button(action: {
+                                    if let emailURL = URL(string: "mailto:jex@jajajeev.com?subject=Data%20Deletion%20Request") {
+                                        UIApplication.shared.open(emailURL)
+                                    }
+                                }) {
+                                    HStack {
+                                        Image(systemName: "trash.fill")
+                                            .font(.system(size: 18))
+                                            .foregroundColor(Color.red.opacity(0.8))
+                                        
+                                        Text("Request Data Deletion")
+                                            .font(.system(size: 16, weight: .semibold))
+                                            .foregroundColor(.white)
+                                        
+                                        Spacer()
+                                        
+                                        Image(systemName: "envelope")
+                                            .font(.system(size: 14))
+                                            .foregroundColor(.white.opacity(0.5))
+                                    }
+                                    .padding()
+                                    .background(
+                                        RoundedRectangle(cornerRadius: 12)
+                                            .fill(Color.white.opacity(0.05))
+                                    )
+                                }
+                                .buttonStyle(PlainButtonStyle())
+                                
+                                // Reset Permissions Button
+                                Button(action: {
+                                    showPermissionResetAlert = true
+                                }) {
+                                    HStack {
+                                        Image(systemName: "arrow.triangle.2.circlepath")
+                                            .font(.system(size: 18))
+                                            .foregroundColor(Color.orange)
+                                        
+                                        Text("Reset Permissions")
+                                            .font(.system(size: 16, weight: .semibold))
+                                            .foregroundColor(.white)
+                                        
+                                        Spacer()
+                                        
+                                        Image(systemName: "chevron.right")
+                                            .font(.system(size: 14))
+                                            .foregroundColor(.white.opacity(0.5))
+                                    }
+                                    .padding()
+                                    .background(
+                                        RoundedRectangle(cornerRadius: 12)
+                                            .fill(Color.white.opacity(0.05))
+                                    )
+                                }
+                                .buttonStyle(PlainButtonStyle())
                             }
                         }
                         .offset(x: animateSettings ? 0 : 300)
@@ -361,6 +445,22 @@ struct SettingsView: View {
             })
             .sheet(isPresented: $showHelpSheet) {
                 HelpSupportView()
+            }
+            .sheet(isPresented: $showPrivacyPolicy) {
+                PrivacyPolicyView()
+            }
+            .alert(isPresented: $showPermissionResetAlert) {
+                Alert(
+                    title: Text("Reset Permissions"),
+                    message: Text("This will restart the permission setup process. Continue?"),
+                    primaryButton: .default(Text("Reset")) {
+                        // Reset permission flow flag
+                        UserDefaults.standard.set(false, forKey: "hasCompletedPermissionFlow")
+                        // Restart app with InitialView
+                        NotificationCenter.default.post(name: NSNotification.Name("ShowPermissionsFlow"), object: nil)
+                    },
+                    secondaryButton: .cancel()
+                )
             }
             .onAppear {
                 withAnimation(.spring(response: 0.6, dampingFraction: 0.7)) {
