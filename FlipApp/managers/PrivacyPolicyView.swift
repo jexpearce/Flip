@@ -66,7 +66,7 @@ struct PrivacyPolicyView: View {
                         policySection(
                             emoji: "5️⃣",
                             title: "Leaderboards & Privacy Controls",
-                            content: "Building-Specific Leaderboards – Tracks weekly session counts for individual buildings.\nRegional & Global Leaderboards – Compete based on total weekly session time.\nAnonymity & Opt-Out – Users can remain anonymous or disable leaderboard visibility entirely.\n\n🏆 Leaderboard Resets:\nWeekly Leaderboards reset every Monday at 3 AM.\nAll-Time Regional Leaderboards do not store individual session locations—rankings are based on weekly session time within a given region."
+                            content: "Building-Specific Leaderboards – Tracks weekly session counts for individual buildings.\nRegional & Global Leaderboards – Compete based on total weekly session time. The Regional specific leaderboard contains your entire total weekly time, not the sessions you have only done in that area. It moves you to the new regional leaderboard only when you have done your first session there. Global Leaderboards do not use location. \nAnonymity & Opt-Out – Users can remain anonymous or disable leaderboard visibility entirely.\n\n🏆 Leaderboard Resets:\nWeekly Leaderboards reset every Monday at 3 AM.\nAll-Time"
                         )
                         
                         VStack(alignment: .leading, spacing: 15) {
@@ -84,7 +84,7 @@ struct PrivacyPolicyView: View {
                                 .foregroundColor(.white.opacity(0.9))
                                 .padding(.top, 5)
                             
-                            Text("Last Updated: March 20, 2025")
+                            Text("Last Updated: March 22, 2025")
                                 .font(.system(size: 14, weight: .medium))
                                 .foregroundColor(.white.opacity(0.7))
                                 .padding(.top, 10)

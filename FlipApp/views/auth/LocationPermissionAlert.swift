@@ -148,7 +148,7 @@ struct LocationPermissionAlert: View {
                     .shadow(color: Color(red: 56/255, green: 189/255, blue: 248/255).opacity(0.6), radius: 8)
                 
                 // Privacy explanation
-                Text("Flip protects your privacy. Location data is only used during active sessions and only your last 3 session locations are stored.")
+                Text("Flip protects your privacy. Location data is only during active sessions and your last 3 sessions. Visibility can be changed anytime in the Regional tab.")
                     .font(.system(size: 16))
                     .foregroundColor(.white)
                     .multilineTextAlignment(.center)
@@ -165,13 +165,13 @@ struct LocationPermissionAlert: View {
                     featureRow(
                         icon: "building.2.fill",
                         title: "Building Leaderboards",
-                        description: "Compete with others in the same location"
+                        description: "Compete with others in the same location (ex. coffee shops, libraries)"
                     )
                     
                     featureRow(
                         icon: "moon.stars.fill",
-                        title: "Background Sessions",
-                        description: "Keep sessions running with screen off"
+                        title: "Enhances Functionality",
+                        description: "Enables continuous session tracking even when your phone is idle"
                     )
                 }
                 .padding(.vertical, 5)

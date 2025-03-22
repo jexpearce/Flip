@@ -39,7 +39,7 @@ class PermissionManager: NSObject, ObservableObject {
     
     // Flags to track permission flow state
     private var isProcessingLocationPermission = false
-    private var isProcessingMotionPermission = false
+    var isProcessingMotionPermission = false
     private var isProcessingNotificationPermission = false
     
     override init() {
@@ -65,9 +65,27 @@ class PermissionManager: NSObject, ObservableObject {
         // Refresh permission status when app becomes active
         // This catches changes made in Settings app
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+            let previousMotionStatus = self.motionPermissionGranted
             self.refreshPermissionStatus()
+            
+            // Check if we were processing motion permission and now it's granted
+            if self.isProcessingMotionPermission &&
+               !previousMotionStatus && self.motionPermissionGranted {
+                print("Motion permission granted via Settings!")
+                
+                // Reset processing flag
+                self.isProcessingMotionPermission = false
+                
+                // Continue to notification flow after a short delay
+                DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+                    self.showMotionAlert = false
+                    self.showMotionSettingsAlert = false
+                    self.startNotificationFlow()
+                }
+            }
         }
     }
+
     
     func checkPermissions() {
         // Check location
@@ -312,7 +330,7 @@ class PermissionManager: NSObject, ObservableObject {
     // MARK: - Notification Flow
     
     // Step 3: Start the notification permission flow
-    private func startNotificationFlow() {
+    func startNotificationFlow() {
         print("Starting notification permission flow")
         // First check if we already have notification permission
         UNUserNotificationCenter.current().getNotificationSettings { [weak self] settings in
@@ -912,6 +930,10 @@ struct MotionSettingsAlert: View {
                         withAnimation(.spring()) { isSecondaryCTA = true }
                         DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
                             isPresented = false
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                                                permissionManager.isProcessingMotionPermission = false
+                                                permissionManager.startNotificationFlow()
+                                            }
                         }
                     }) {
                         Text("MAYBE LATER")
