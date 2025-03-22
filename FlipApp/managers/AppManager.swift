@@ -459,6 +459,7 @@ class AppManager: NSObject, ObservableObject {
         pauseTimer?.invalidate()
         pauseTimer = nil
         isPauseTimerActive = false
+        cancelPendingNotifications()
         
         // Start motion updates first to get accurate device orientation
         startMotionUpdates()
@@ -770,9 +771,7 @@ class AppManager: NSObject, ObservableObject {
         
         Task { @MainActor in
             // Only start if permission flow is complete
-            if UserDefaults.standard.bool(forKey: "hasCompletedPermissionFlow") {
-                LocationHandler.shared.startLocationUpdates()
-            }
+            LocationHandler.shared.startLocationUpdates()
         }
     }
         
@@ -2218,15 +2217,13 @@ class AppManager: NSObject, ObservableObject {
             // Start or restart location updates with appropriate settings
             Task { @MainActor in
                 // Only proceed if permission flow is complete
-                if UserDefaults.standard.bool(forKey: "hasCompletedPermissionFlow") {
-                    if currentState == .tracking || currentState == .countdown {
-                        // We're in a session, start with session settings
-                        LocationHandler.shared.startLocationUpdates()
-                    } else {
-                        // We're just browsing the app, start with regular settings
-                        LocationHandler.shared.startLocationUpdates()
-                    }
-                }
+                if currentState == .tracking || currentState == .countdown {
+                            // We're in a session, start with session settings
+                            LocationHandler.shared.startLocationUpdates()
+                        } else {
+                            // We're just browsing the app, start with regular settings
+                            LocationHandler.shared.startLocationUpdates()
+                        }
             }
             
             // Update UI appropriately

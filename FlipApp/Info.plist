@@ -49,7 +49,7 @@
 		<string>MKDirectionsModeOther</string>
 	</array>
     <key>NSLocationWhenInUseUsageDescription</key>
-        <string>Flip uses location for Regional Leaderboards and Building specific leaderboards, so players can compete with others productivity times in places like libraries, coffee shops, etc. A big part of the apps identity, additionally it enhances core features, and allows for FlipMaps, allowing you to see friends currently in a productivity session and their last 3 historical sessions. Users have complete control over their privacy, with the option to opt out of these regional leaderboards, or remain anonymous. FlipMaps session location mapping only begins once the user views the privacy statement, and selects their preferred visibility settings when the maps is first opened. </string>
+        <string>Flip uses location for Regional & Building Leaderboards, letting you compete in places like libraries & cafés. It also powers FlipMaps, showing friends in productivity sessions. You have full control over privacy, with options to opt out or stay anonymous. </string>
 	<key>NSLiveActivitiesUsageDescription</key>
 	<string>Used to show current timer status on lock screen. Allows you to pause, resume, see the pause duration left etc.</string>
 	<key>UIBackgroundModes</key>

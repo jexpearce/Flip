@@ -43,10 +43,6 @@ import SwiftUI
     }
 
     func startLocationUpdates() {
-        if !UserDefaults.standard.bool(forKey: "hasCompletedPermissionFlow") {
-                print("⛔️ Blocking location updates until permission flow completed")
-                return
-            }
         // First check permission status without requesting
         let authStatus = self.locationManager.authorizationStatus
         

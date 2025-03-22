@@ -533,10 +533,17 @@ class RegionalViewModel: NSObject, ObservableObject, CLLocationManagerDelegate {
             locationManager.desiredAccuracy = kCLLocationAccuracyHundredMeters
             
             // CRITICAL: Only request if permission flow is complete
-            if UserDefaults.standard.bool(forKey: "hasCompletedPermissionFlow") {
-                locationManager.requestWhenInUseAuthorization()
-            } else {
-                print("⛔️ Blocking RegionalViewModel location request until permission flow completed")
+        let authStatus = locationManager.authorizationStatus
+            let isFirstLaunch = UserDefaults.standard.bool(forKey: "isPotentialFirstTimeUser")
+            
+            // Only request permissions automatically if:
+            // 1. Not the first launch (to allow your sequence to run)
+            // 2. Or permissions are already determined (already granted or denied)
+            if !isFirstLaunch || authStatus != .notDetermined {
+                // Safe to request permissions here
+                if authStatus == .notDetermined {
+                    locationManager.requestWhenInUseAuthorization()
+                }
             }
         
         // Listen for location updates from LocationHandler
