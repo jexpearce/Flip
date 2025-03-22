@@ -211,53 +211,6 @@ struct FriendsView: View {
                                         }
                                         .buttonStyle(PlainButtonStyle())
                                         .disabled(isNavigationBlocked)
-                                        
-                                        // If this friend has a live session, add the join button on top
-                                        if friend.sessionData != nil && friend.sessionData?.canJoin == true {
-                                            // Enhanced join button with better visuals
-                                            Button {
-                                                handleJoinSession(sessionId: friend.sessionId)
-                                            } label: {
-                                                HStack(spacing: 6) {
-                                                    Image(systemName: "play.fill")
-                                                        .font(.system(size: 12, weight: .bold))
-                                                    
-                                                    Text("JOIN")
-                                                        .font(.system(size: 14, weight: .black))
-                                                        .tracking(1)
-                                                }
-                                                .foregroundColor(.white)
-                                                .padding(.vertical, 8)
-                                                .padding(.horizontal, 16)
-                                                .background(
-                                                    ZStack {
-                                                        // Vibrant green gradient
-                                                        RoundedRectangle(cornerRadius: 12)
-                                                            .fill(
-                                                                LinearGradient(
-                                                                    colors: [
-                                                                        Color(red: 22/255, green: 163/255, blue: 74/255),
-                                                                        Color(red: 21/255, green: 128/255, blue: 61/255)
-                                                                    ],
-                                                                    startPoint: .top,
-                                                                    endPoint: .bottom
-                                                                )
-                                                            )
-                                                        
-                                                        // Glass effect
-                                                        RoundedRectangle(cornerRadius: 12)
-                                                            .fill(Color.white.opacity(0.1))
-                                                        
-                                                        // Subtle border
-                                                        RoundedRectangle(cornerRadius: 12)
-                                                            .stroke(Color.white.opacity(0.3), lineWidth: 1)
-                                                    }
-                                                )
-                                                .shadow(color: Color.green.opacity(0.5), radius: 6)
-                                            }
-                                            .padding(.trailing, 20)
-                                            .padding(.top, 16)
-                                        }
                                     }
                                     .transition(.opacity)
                                 }
