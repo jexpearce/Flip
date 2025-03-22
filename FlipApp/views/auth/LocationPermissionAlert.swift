@@ -192,25 +192,6 @@ struct LocationPermissionAlert: View {
                 
                 // Buttons
                 HStack(spacing: 15) {
-                    // Skip button
-                    Button(action: {
-                        isPresented = false
-                    }) {
-                        Text("Skip")
-                            .font(.system(size: 16, weight: .medium))
-                            .foregroundColor(.white.opacity(0.7))
-                            .frame(width: 100, height: 48)
-                            .background(
-                                RoundedRectangle(cornerRadius: 12)
-                                    .fill(Color.white.opacity(0.1))
-                                    .overlay(
-                                        RoundedRectangle(cornerRadius: 12)
-                                            .stroke(Color.white.opacity(0.2), lineWidth: 1)
-                                    )
-                            )
-                    }
-                    
-                    // Continue button
                     Button(action: {
                         withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
                             animateButton = true
@@ -223,7 +204,7 @@ struct LocationPermissionAlert: View {
                             }
                         }
                     }) {
-                        Text("Allow")
+                        Text("Continue")
                             .font(.system(size: 16, weight: .bold))
                             .foregroundColor(.white)
                             .frame(width: 160, height: 48)
