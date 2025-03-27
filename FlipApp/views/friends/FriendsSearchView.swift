@@ -207,8 +207,8 @@ struct SearchBarView: View {
                 .foregroundColor(.white)
                 .accentColor(orangeAccent)
                 .padding(.vertical, 12)
-                .onChange(of: searchText) { newValue in
-                    onSearchTextChanged(newValue)
+                .onChange(of: searchText) {
+                    onSearchTextChanged(searchText)
                 }
                 .autocapitalization(.none)
                 .disableAutocorrection(true)

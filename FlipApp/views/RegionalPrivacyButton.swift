@@ -88,8 +88,8 @@ struct RegionalPrivacySheet: View {
 
                             Toggle("", isOn: $regionalOptOut)
                                 .toggleStyle(SwitchToggleStyle(tint: redAccent))
-                                .onChange(of: regionalOptOut) { newValue in
-                                    userSettings.setRegionalOptOut(newValue)
+                                .onChange(of: regionalOptOut) {
+                                    userSettings.setRegionalOptOut(regionalOptOut)
                                 }
                         }
 

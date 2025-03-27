@@ -381,7 +381,7 @@ extension ScoreManager {
         duration: Int, wasSuccessful: Bool, actualDuration: Int,
         pausesEnabled: Bool
     ) -> (Bool, (String, Color))? {
-        guard let userId = Auth.auth().currentUser?.uid else { return nil }
+        guard let _userId = Auth.auth().currentUser?.uid else { return nil }
 
         let oldScore = currentScore
 

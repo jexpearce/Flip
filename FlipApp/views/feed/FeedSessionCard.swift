@@ -482,11 +482,9 @@ struct FeedSessionCard: View {
             NotificationCenter.default.removeObserver(self)
         }
         .onChange(of: viewModel.likedByUser[session.id.uuidString]) {
-            newValue in
             updateLikeState()
         }
         .onChange(of: viewModel.sessionLikes[session.id.uuidString]) {
-            newValue in
             updateLikeState()
         }
     }
@@ -757,9 +755,9 @@ struct CommentInputField: View {
             .focused($isFocused)
             .scrollContentBackground(.hidden)
             .background(Color.clear)
-            .onChange(of: comment) { newValue in
-                if newValue.count > maxChars {
-                    comment = String(newValue.prefix(maxChars))
+            .onChange(of: comment) {
+                if comment.count > maxChars {
+                    comment = String(comment.prefix(maxChars))
                 }
             }
     }

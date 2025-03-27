@@ -337,14 +337,14 @@ class SearchManager: ObservableObject {
         // Force UI update
         DispatchQueue.main.async {
             // If we have search results, update the status in those
-            if let index = self.searchResults.firstIndex(where: {
+            if let _index = self.searchResults.firstIndex(where: {
                 $0.id == userId
             }) {
                 self.objectWillChange.send()
             }
 
             // If we have recommendations, update the status in those
-            if let index = self.recommendations.firstIndex(where: {
+            if let _index = self.recommendations.firstIndex(where: {
                 $0.id == userId
             }) {
                 self.objectWillChange.send()

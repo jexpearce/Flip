@@ -756,11 +756,9 @@ struct NavigationFeedSessionCard: View {
             updateLikeState()
         }
         .onChange(of: viewModel.likedByUser[session.id.uuidString]) {
-            newValue in
             updateLikeState()
         }
         .onChange(of: viewModel.sessionLikes[session.id.uuidString]) {
-            newValue in
             updateLikeState()
         }
     }
@@ -1245,7 +1243,6 @@ class FeedViewModel: ObservableObject {
         sessionListener?.remove()
 
         print("Loading sessions for user: \(userId)")
-        var localProcessedSessionIds = Set<String>()  // This was missing!
 
         // Create a Set to track unique session IDs we've already processed
         var processedSessionIds = Set<String>()
@@ -1482,7 +1479,7 @@ class FeedViewModel: ObservableObject {
 
     // Original comment method - kept for backward compatibility
     func saveComment(sessionId: String, comment: String) {
-        guard !comment.isEmpty, let currentUserId = Auth.auth().currentUser?.uid
+        guard !comment.isEmpty, let _currentUserId = Auth.auth().currentUser?.uid
         else { return }
 
         // Update the Firestore document

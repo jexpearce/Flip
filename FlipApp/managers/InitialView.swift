@@ -507,7 +507,7 @@ struct InitialView: View {
         let requiredGranted = permissionManager.motionPermissionGranted
 
         // Check if all permissions are granted
-        let allGranted = PermissionType.allCases.allSatisfy {
+        _ = PermissionType.allCases.allSatisfy {
             isPermissionGranted($0)
         }
 

@@ -817,7 +817,7 @@ struct ProfileImage: View {
     // Helper method to just fetch the profile image for a user we already know the username for
     private func fetchProfileImage() {
         // Check if we already have a cached image
-        if let cachedImage = ProfileImageCache.shared.getCachedImage(
+        if let _cachedImage = ProfileImageCache.shared.getCachedImage(
             for: userId)
         {
             self.imageURL = "cached"  // Just a placeholder, we won't use this value

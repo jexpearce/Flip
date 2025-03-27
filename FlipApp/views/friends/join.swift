@@ -105,7 +105,7 @@ struct JoinedSessionIndicator: View {
             .onDisappear {
                 stopTimer()
             }
-            .onChange(of: appManager.isPaused) { _ in
+            .onChange(of: appManager.isPaused) {
                 // Reset the timer when pause state changes
                 stopTimer()
                 elapsedSeconds = 0

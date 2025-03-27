@@ -289,9 +289,9 @@ struct MapPrivacyAlert: View {
             }
         }
         .opacity(isVisible ? 1 : 0)
-        .onChange(of: isPresented) { newValue in
-            print("MapPrivacyAlert isPresented changed to: \(newValue)")
-            if newValue {
+        .onChange(of: isPresented) { 
+            print("MapPrivacyAlert isPresented changed to: \(isPresented)")
+            if isPresented {
                 showAlert()
             } else {
                 hideAlert()

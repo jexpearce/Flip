@@ -22,10 +22,10 @@ struct CircularTime: View {
                     selectedMinutes: $selectedMinutes,
                     timeIntervals: timeIntervals
                 )
-                .onChange(of: selectedMinutes) { newValue in
+                .onChange(of: selectedMinutes) { 
                     withAnimation(.spring(response: 0.5, dampingFraction: 0.7))
                     {
-                        rotationProgress = Double(newValue) / 120.0
+                        rotationProgress = Double(selectedMinutes) / 120.0
                     }
                 }
             }

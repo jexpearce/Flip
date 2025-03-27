@@ -588,7 +588,7 @@ struct FriendMapMarker: View {
             loadProfileImage()
         }
         .id(friend.id)  // Force view refresh when friend.id changes
-        .onChange(of: friend.id) { _ in
+        .onChange(of: friend.id) {
             // Reset and reload when ID changes
             profileImage = nil
             isLoading = true

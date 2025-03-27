@@ -311,7 +311,7 @@ struct FriendsView: View {
                 liveSessionManager.forceSessionStatusRefresh()
                 viewModel.loadFriends()
             }
-            .onChange(of: liveSessionManager.activeFriendSessions) { _ in
+            .onChange(of: liveSessionManager.activeFriendSessions) {
                 // Force view refresh when live sessions change
                 viewModel.objectWillChange.send()
             }

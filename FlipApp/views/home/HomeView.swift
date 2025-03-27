@@ -69,7 +69,7 @@ struct HomeView: View {
                 // First get session details
                 liveSessionManager.getSessionDetails(sessionId: sessionId) {
                     sessionData in
-                    if let session = sessionData {
+                    if let _session = sessionData {
                         // Join the session
                         liveSessionManager.joinSession(sessionId: sessionId) {
                             success, remainingSeconds, totalDuration in

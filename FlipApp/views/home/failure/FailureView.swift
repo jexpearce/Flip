@@ -587,7 +587,7 @@ struct FailureView: View {
     }
 
     private func checkFirstSession() {
-        guard let userId = Auth.auth().currentUser?.uid else {
+        guard let _userId = Auth.auth().currentUser?.uid else {
             isCheckingFirstSession = false
             return
         }

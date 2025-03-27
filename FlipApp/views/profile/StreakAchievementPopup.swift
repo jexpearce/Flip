@@ -338,7 +338,7 @@ extension ScoreManager {
         rankPromotion: (Bool, (String, Color))?,
         streakAchievement: (Bool, StreakStatus, Int)?
     ) {
-        guard let userId = Auth.auth().currentUser?.uid else {
+        guard let _userId = Auth.auth().currentUser?.uid else {
             return (nil, nil)
         }
 

@@ -495,7 +495,7 @@ struct JoinedCompletionView: View {
     }
 
     private func loadSessionNotes() {
-        guard let sessionId = appManager.liveSessionId,
+        guard let _sessionId = appManager.liveSessionId,
             let originalStarterId = appManager.originalSessionStarter
         else { return }
 

@@ -81,13 +81,13 @@ struct SessionNotesView: View {
                     .onSubmit {
                         isTitleFocused = false
                     }
-                    .onChange(of: sessionTitle) { newValue in
-                        let words = newValue.split(separator: " ")
+                    .onChange(of: sessionTitle) {
+                        let words = sessionTitle.split(separator: " ")
                         if words.count > titleLimit && words.count > 0 {
                             DispatchQueue.main.async {
                                 sessionTitle = words.prefix(titleLimit).joined(
                                     separator: " ")
-                                if newValue.hasSuffix(" ") {
+                                if sessionTitle.hasSuffix(" ") {
                                     sessionTitle += " "
                                 }
                             }
@@ -136,8 +136,8 @@ struct SessionNotesView: View {
                             isTitleFocused = false
                             isNotesFocused = true
                         }
-                        .onChange(of: sessionNotes) { newValue in
-                            let words = newValue.split(separator: " ")
+                        .onChange(of: sessionNotes) {
+                            let words = sessionNotes.split(separator: " ")
                             if words.count > notesLimit && words.count > 0 {
                                 // Use a small delay to not interfere with typing
                                 DispatchQueue.main.asyncAfter(
@@ -145,7 +145,7 @@ struct SessionNotesView: View {
                                 ) {
                                     sessionNotes = words.prefix(notesLimit)
                                         .joined(separator: " ")
-                                    if newValue.hasSuffix(" ") {
+                                    if sessionNotes.hasSuffix(" ") {
                                         sessionNotes += " "
                                     }
                                 }

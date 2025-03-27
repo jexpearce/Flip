@@ -277,7 +277,6 @@ struct SettingsView: View {
                                     SwitchToggleStyle(tint: cyanBlueAccent)
                                 )
                                 .onChange(of: viewModel.showSessionHistory) {
-                                    _ in
                                     viewModel.saveSettings()
                                 }
                                 Divider()
@@ -625,7 +624,7 @@ struct RegionalPrivacySection: View {
                 }
             }
             .toggleStyle(SwitchToggleStyle(tint: cyanBlueAccent))
-            .onChange(of: viewModel.regionalOptOut) { _ in
+            .onChange(of: viewModel.regionalOptOut) {
                 viewModel.toggleRegionalOptOut()
             }
             .padding()
@@ -740,7 +739,7 @@ struct ToggleSettingRow: View {
 
                 Toggle("", isOn: $isOn)
                     .toggleStyle(SwitchToggleStyle(tint: cyanBlueAccent))
-                    .onChange(of: isOn) { _ in
+                    .onChange(of: isOn) {
                         action()
                     }
             }

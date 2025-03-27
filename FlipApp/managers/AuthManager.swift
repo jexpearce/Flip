@@ -17,7 +17,7 @@ class AuthManager: ObservableObject {
         updateAuthState()
 
         // Listen for auth state changes
-        Auth.auth().addStateDidChangeListener { [weak self] _, user in
+        _ = Auth.auth().addStateDidChangeListener { [weak self] _, user in
             self?.updateAuthState()
         }
     }

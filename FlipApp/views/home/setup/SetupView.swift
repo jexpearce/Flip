@@ -145,8 +145,7 @@ struct SetupView: View {
                                     .toggleStyle(ModernToggleStyle())
                                     .disabled(joinLiveSessionMode)  // Disable in join mode
                                     .onChange(of: appManager.allowPauses) {
-                                        newValue in
-                                        if !newValue {
+                                        if !appManager.allowPauses {
                                             // Only show the warning if it hasn't been shown before
                                             if !hasShownPauseWarning {
                                                 showPauseDisabledWarning = true
@@ -174,8 +173,8 @@ struct SetupView: View {
                                     isDisabled: !appManager.allowPauses
                                         || joinLiveSessionMode
                                 )
-                                .onChange(of: isInfinitePauses) { newValue in
-                                    if newValue {
+                                .onChange(of: isInfinitePauses) {
+                                    if isInfinitePauses {
                                         // Set to a high number when infinite is selected
                                         appManager.maxPauses = 999
                                     } else {
@@ -200,9 +199,8 @@ struct SetupView: View {
                                     || joinLiveSessionMode
                             )
                             .onChange(of: selectedPauseDurationIndex) {
-                                newValue in
                                 appManager.pauseDuration =
-                                    pauseDurations[newValue]
+                                    pauseDurations[selectedPauseDurationIndex]
                             }
                         }
                     }

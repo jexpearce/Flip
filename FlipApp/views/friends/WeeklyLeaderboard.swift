@@ -687,10 +687,6 @@ class LeaderboardViewModel: ObservableObject {
                                     "Failed to decode session: \(document.documentID)"
                                 )
                             }
-                        } catch {
-                            print(
-                                "Error decoding session: \(error.localizedDescription)"
-                            )
                         }
                     }
 

@@ -146,7 +146,7 @@ struct UserProfileView: View {
 
     // Check if we've sent a friend request to this user
     private var hasSentFriendRequest: Bool {
-        guard let currentUserId = Auth.auth().currentUser?.uid else {
+        guard let _currentUserId = Auth.auth().currentUser?.uid else {
             return false
         }
         // Check both local state and user data

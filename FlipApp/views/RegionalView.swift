@@ -528,8 +528,8 @@ struct RegionalView: View {
         }
         .background(regionalGradient.edgesIgnoringSafeArea(.all))
         // Load appropriate leaderboard data when switching tabs
-        .onChange(of: currentLeaderboard) { newValue in
-            switch newValue {
+        .onChange(of: currentLeaderboard) {
+            switch currentLeaderboard {
             case .building:
                 // Building leaderboard handles its own data loading
                 break

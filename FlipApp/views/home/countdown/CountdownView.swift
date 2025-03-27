@@ -40,7 +40,7 @@ struct CountdownView: View {
                         red: 56 / 255, green: 189 / 255, blue: 248 / 255
                     ).opacity(0.6), radius: 15
                 )
-                .onChange(of: appManager.countdownSeconds) { _ in
+                .onChange(of: appManager.countdownSeconds) {
                     withAnimation(.spring(response: 0.3, dampingFraction: 0.6))
                     {
                         numberScale = 1.4

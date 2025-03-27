@@ -1476,8 +1476,6 @@ class AppManager: NSObject, ObservableObject {
                         dismissalPolicy: .immediate
                     )
                     print("Successfully ended current Live Activity")
-                } catch {
-                    print("Error ending Live Activity: \(error)")
                 }
 
                 // Reset our activity reference
@@ -1492,8 +1490,6 @@ class AppManager: NSObject, ObservableObject {
                         dismissalPolicy: .immediate
                     )
                     print("Successfully ended stale Live Activity")
-                } catch {
-                    print("Error ending stale Live Activity: \(error)")
                 }
             }
 
