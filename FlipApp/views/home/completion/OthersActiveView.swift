@@ -1,5 +1,5 @@
-import SwiftUI
 import FirebaseAuth
+import SwiftUI
 
 struct OthersActiveView: View {
     @EnvironmentObject var appManager: AppManager
@@ -12,26 +12,27 @@ struct OthersActiveView: View {
     @State private var isGlowing = false
     @State private var isButtonPressed = false
     @State private var showSavingIndicator = false
-    
+
     // State variables for participants
     @State private var participantDetails: [ParticipantDetail] = []
     @State private var loadingParticipants = true
-    
+
     // Current user's success status
     private var currentUserSucceeded: Bool {
         guard let userId = Auth.auth().currentUser?.uid else { return false }
-        return participantDetails.first(where: { $0.id == userId })?.wasSuccessful ?? false
+        return participantDetails.first(where: { $0.id == userId })?
+            .wasSuccessful ?? false
     }
-    
+
     struct ParticipantDetail: Identifiable {
         let id: String
         let username: String
         let wasSuccessful: Bool?  // Optional because some may still be active
-        let isActive: Bool        // Whether this participant is still in session
+        let isActive: Bool  // Whether this participant is still in session
         let duration: Int
         let remainingSeconds: Int?
     }
-    
+
     var body: some View {
         ScrollView {
             VStack(spacing: 30) {
@@ -40,27 +41,39 @@ struct OthersActiveView: View {
                     Circle()
                         .fill(
                             LinearGradient(
-                                colors: currentUserSucceeded ?
-                                    [
-                                        Color(red: 34/255, green: 197/255, blue: 94/255).opacity(0.3),
-                                        Color(red: 22/255, green: 163/255, blue: 74/255).opacity(0.2)
-                                    ] :
-                                    [
-                                        Color(red: 239/255, green: 68/255, blue: 68/255).opacity(0.3),
-                                        Color(red: 185/255, green: 28/255, blue: 28/255).opacity(0.2)
+                                colors: currentUserSucceeded
+                                    ? [
+                                        Color(
+                                            red: 34 / 255, green: 197 / 255,
+                                            blue: 94 / 255
+                                        ).opacity(0.3),
+                                        Color(
+                                            red: 22 / 255, green: 163 / 255,
+                                            blue: 74 / 255
+                                        ).opacity(0.2),
+                                    ]
+                                    : [
+                                        Color(
+                                            red: 239 / 255, green: 68 / 255,
+                                            blue: 68 / 255
+                                        ).opacity(0.3),
+                                        Color(
+                                            red: 185 / 255, green: 28 / 255,
+                                            blue: 28 / 255
+                                        ).opacity(0.2),
                                     ],
                                 startPoint: .topLeading,
                                 endPoint: .bottomTrailing
                             )
                         )
                         .frame(width: 110, height: 110)
-                    
+
                     Circle()
                         .stroke(
                             LinearGradient(
                                 colors: [
                                     Color.white.opacity(0.6),
-                                    Color.white.opacity(0.1)
+                                    Color.white.opacity(0.1),
                                 ],
                                 startPoint: .topLeading,
                                 endPoint: .bottomTrailing
@@ -68,43 +81,65 @@ struct OthersActiveView: View {
                             lineWidth: 1
                         )
                         .frame(width: 110, height: 110)
-                    
-                    Image(systemName: currentUserSucceeded ? "checkmark.circle.fill" : "xmark.circle.fill")
-                        .font(.system(size: 60))
-                        .foregroundStyle(
-                            LinearGradient(
-                                colors: currentUserSucceeded ?
-                                    [
-                                        Color(red: 34/255, green: 197/255, blue: 94/255),
-                                        Color(red: 22/255, green: 163/255, blue: 74/255)
-                                    ] :
-                                    [
-                                        Color(red: 239/255, green: 68/255, blue: 68/255),
-                                        Color(red: 185/255, green: 28/255, blue: 28/255)
-                                    ],
-                                startPoint: .top,
-                                endPoint: .bottom
-                            )
+
+                    Image(
+                        systemName: currentUserSucceeded
+                            ? "checkmark.circle.fill" : "xmark.circle.fill"
+                    )
+                    .font(.system(size: 60))
+                    .foregroundStyle(
+                        LinearGradient(
+                            colors: currentUserSucceeded
+                                ? [
+                                    Color(
+                                        red: 34 / 255, green: 197 / 255,
+                                        blue: 94 / 255),
+                                    Color(
+                                        red: 22 / 255, green: 163 / 255,
+                                        blue: 74 / 255),
+                                ]
+                                : [
+                                    Color(
+                                        red: 239 / 255, green: 68 / 255,
+                                        blue: 68 / 255),
+                                    Color(
+                                        red: 185 / 255, green: 28 / 255,
+                                        blue: 28 / 255),
+                                ],
+                            startPoint: .top,
+                            endPoint: .bottom
                         )
-                        .shadow(color: currentUserSucceeded ?
-                               Color(red: 34/255, green: 197/255, blue: 94/255).opacity(isGlowing ? 0.6 : 0.3) :
-                               Color(red: 239/255, green: 68/255, blue: 68/255).opacity(isGlowing ? 0.6 : 0.3),
-                               radius: isGlowing ? 15 : 8)
+                    )
+                    .shadow(
+                        color: currentUserSucceeded
+                            ? Color(
+                                red: 34 / 255, green: 197 / 255, blue: 94 / 255
+                            ).opacity(isGlowing ? 0.6 : 0.3)
+                            : Color(
+                                red: 239 / 255, green: 68 / 255, blue: 68 / 255
+                            ).opacity(isGlowing ? 0.6 : 0.3),
+                        radius: isGlowing ? 15 : 8)
                 }
                 .scaleEffect(showIcon ? 1 : 0)
-                
+
                 // Title with animation
                 Text(currentUserSucceeded ? "YOU SUCCEEDED" : "SESSION FAILED")
                     .font(.system(size: 28, weight: .black))
                     .tracking(6)
                     .foregroundColor(.white)
-                    .shadow(color: currentUserSucceeded ?
-                           Color(red: 34/255, green: 197/255, blue: 94/255).opacity(0.5) :
-                           Color(red: 239/255, green: 68/255, blue: 68/255).opacity(0.5),
-                           radius: 8)
+                    .shadow(
+                        color: currentUserSucceeded
+                            ? Color(
+                                red: 34 / 255, green: 197 / 255, blue: 94 / 255
+                            ).opacity(0.5)
+                            : Color(
+                                red: 239 / 255, green: 68 / 255, blue: 68 / 255
+                            ).opacity(0.5),
+                        radius: 8
+                    )
                     .offset(y: showTitle ? 0 : 50)
                     .opacity(showTitle ? 1 : 0)
-                
+
                 // Results section
                 VStack(spacing: 15) {
                     if loadingParticipants {
@@ -116,24 +151,32 @@ struct OthersActiveView: View {
                         // Group status message with yellow highlighting
                         Text("Others still in session")
                             .font(.system(size: 18, weight: .medium))
-                            .foregroundColor(Color(red: 250/255, green: 204/255, blue: 21/255))
+                            .foregroundColor(
+                                Color(
+                                    red: 250 / 255, green: 204 / 255,
+                                    blue: 21 / 255)
+                            )
                             .multilineTextAlignment(.center)
                             .padding(.horizontal)
-                        
+
                         // Your outcome info
                         if currentUserSucceeded {
                             HStack(alignment: .firstTextBaseline, spacing: 10) {
                                 Text("\(appManager.selectedMinutes)")
                                     .font(.system(size: 50, weight: .black))
                                     .foregroundColor(.white)
-                                    .shadow(color: Color(red: 56/255, green: 189/255, blue: 248/255).opacity(0.6), radius: 10)
-                                
+                                    .shadow(
+                                        color: Color(
+                                            red: 56 / 255, green: 189 / 255,
+                                            blue: 248 / 255
+                                        ).opacity(0.6), radius: 10)
+
                                 Text("minutes")
                                     .font(.system(size: 18, weight: .medium))
                                     .foregroundColor(.white.opacity(0.8))
                                     .padding(.leading, 4)
                             }
-                            
+
                             Text("of successful focus time")
                                 .font(.system(size: 16, weight: .medium))
                                 .foregroundColor(.white.opacity(0.8))
@@ -142,33 +185,46 @@ struct OthersActiveView: View {
                                 .font(.system(size: 18, weight: .medium))
                                 .foregroundColor(.white)
                                 .multilineTextAlignment(.center)
-                                
+
                             // Calculate actual duration in minutes
-                            let actualDuration = (appManager.selectedMinutes * 60 - appManager.remainingSeconds) / 60
-                            
+                            let actualDuration =
+                                (appManager.selectedMinutes * 60
+                                    - appManager.remainingSeconds) / 60
+
                             if actualDuration > 0 {
-                                HStack(alignment: .firstTextBaseline, spacing: 10) {
+                                HStack(
+                                    alignment: .firstTextBaseline, spacing: 10
+                                ) {
                                     Text("\(actualDuration)")
                                         .font(.system(size: 42, weight: .black))
                                         .foregroundColor(.white)
-                                        .shadow(color: Color(red: 56/255, green: 189/255, blue: 248/255).opacity(0.6), radius: 10)
-                                    
-                                    Text(actualDuration == 1 ? "minute" : "minutes")
-                                        .font(.system(size: 18, weight: .medium))
-                                        .foregroundColor(.white.opacity(0.8))
-                                        .padding(.leading, 4)
+                                        .shadow(
+                                            color: Color(
+                                                red: 56 / 255, green: 189 / 255,
+                                                blue: 248 / 255
+                                            ).opacity(0.6), radius: 10)
+
+                                    Text(
+                                        actualDuration == 1
+                                            ? "minute" : "minutes"
+                                    )
+                                    .font(.system(size: 18, weight: .medium))
+                                    .foregroundColor(.white.opacity(0.8))
+                                    .padding(.leading, 4)
                                 }
-                                
+
                                 Text("completed before failure")
                                     .font(.system(size: 16, weight: .medium))
                                     .foregroundColor(.white.opacity(0.8))
                             }
                         }
-                        
+
                         // Participant list with active status
                         if !participantDetails.isEmpty {
-                             ActiveParticipantsList(participants: participantDetails)
-                                 .padding(.top, 15)
+                            ActiveParticipantsList(
+                                participants: participantDetails
+                            )
+                            .padding(.top, 15)
                         }
                     }
                 }
@@ -180,23 +236,29 @@ struct OthersActiveView: View {
                             .fill(
                                 LinearGradient(
                                     colors: [
-                                        Color(red: 60/255, green: 30/255, blue: 110/255).opacity(0.5),
-                                        Color(red: 40/255, green: 20/255, blue: 80/255).opacity(0.3)
+                                        Color(
+                                            red: 60 / 255, green: 30 / 255,
+                                            blue: 110 / 255
+                                        ).opacity(0.5),
+                                        Color(
+                                            red: 40 / 255, green: 20 / 255,
+                                            blue: 80 / 255
+                                        ).opacity(0.3),
                                     ],
                                     startPoint: .topLeading,
                                     endPoint: .bottomTrailing
                                 )
                             )
-                        
+
                         RoundedRectangle(cornerRadius: 20)
                             .fill(Color.white.opacity(0.05))
-                        
+
                         RoundedRectangle(cornerRadius: 20)
                             .stroke(
                                 LinearGradient(
                                     colors: [
                                         Color.white.opacity(0.5),
-                                        Color.white.opacity(0.1)
+                                        Color.white.opacity(0.1),
                                     ],
                                     startPoint: .topLeading,
                                     endPoint: .bottomTrailing
@@ -208,37 +270,39 @@ struct OthersActiveView: View {
                 .shadow(color: Color.black.opacity(0.2), radius: 10)
                 .offset(y: showStats ? 0 : 50)
                 .opacity(showStats ? 1 : 0)
-                
+
                 // Back Button
                 Button(action: {
                     withAnimation(.spring()) {
                         isButtonPressed = true
                         showSavingIndicator = true
                     }
-                    
+
                     // Save session if needed before exiting
                     if !appManager.sessionAlreadyRecorded {
-                        let actualDuration = (appManager.selectedMinutes * 60 - appManager.remainingSeconds) / 60
-                        
+                        let actualDuration =
+                            (appManager.selectedMinutes * 60
+                                - appManager.remainingSeconds) / 60
+
                         sessionManager.addSession(
                             duration: appManager.selectedMinutes,
                             wasSuccessful: currentUserSucceeded,
                             actualDuration: actualDuration
                         )
-                        
+
                         // Mark as recorded to prevent duplicates
                         appManager.sessionAlreadyRecorded = true
                     }
-                    
+
                     DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) {
                         appManager.currentState = .initial
-                        appManager.isJoinedSession = false // IMPORTANT: Reset joined status
-                        appManager.liveSessionId = nil     // IMPORTANT: Clear session ID
+                        appManager.isJoinedSession = false  // IMPORTANT: Reset joined status
+                        appManager.liveSessionId = nil  // IMPORTANT: Clear session ID
                         appManager.originalSessionStarter = nil
                         appManager.sessionParticipants = []
                         isButtonPressed = false
                         showSavingIndicator = false
-                        appManager.sessionAlreadyRecorded = false // Reset for next session
+                        appManager.sessionAlreadyRecorded = false  // Reset for next session
                     }
                 }) {
                     HStack {
@@ -248,7 +312,7 @@ struct OthersActiveView: View {
                                 .scaleEffect(0.8)
                                 .padding(.trailing, 8)
                         }
-                        
+
                         Text(showSavingIndicator ? "SAVING..." : "RETURN HOME")
                             .font(.system(size: 18, weight: .black))
                             .tracking(2)
@@ -262,23 +326,27 @@ struct OthersActiveView: View {
                                 .fill(
                                     LinearGradient(
                                         colors: [
-                                            Color(red: 168/255, green: 85/255, blue: 247/255),
-                                            Color(red: 88/255, green: 28/255, blue: 135/255)
+                                            Color(
+                                                red: 168 / 255, green: 85 / 255,
+                                                blue: 247 / 255),
+                                            Color(
+                                                red: 88 / 255, green: 28 / 255,
+                                                blue: 135 / 255),
                                         ],
                                         startPoint: .topLeading,
                                         endPoint: .bottomTrailing
                                     )
                                 )
-                            
+
                             RoundedRectangle(cornerRadius: 16)
                                 .fill(Color.white.opacity(0.1))
-                            
+
                             RoundedRectangle(cornerRadius: 16)
                                 .stroke(
                                     LinearGradient(
                                         colors: [
                                             Color.white.opacity(0.6),
-                                            Color.white.opacity(0.2)
+                                            Color.white.opacity(0.2),
                                         ],
                                         startPoint: .topLeading,
                                         endPoint: .bottomTrailing
@@ -287,7 +355,11 @@ struct OthersActiveView: View {
                                 )
                         }
                     )
-                    .shadow(color: Color(red: 168/255, green: 85/255, blue: 247/255).opacity(0.5), radius: 8)
+                    .shadow(
+                        color: Color(
+                            red: 168 / 255, green: 85 / 255, blue: 247 / 255
+                        ).opacity(0.5), radius: 8
+                    )
                     .scaleEffect(isButtonPressed ? 0.97 : 1.0)
                 }
                 .padding(.horizontal, 30)
@@ -299,81 +371,106 @@ struct OthersActiveView: View {
         }
         .onAppear {
             loadParticipantDetails()
-            
+
             // Stagger animations
             withAnimation(.spring(response: 0.6, dampingFraction: 0.7)) {
                 showIcon = true
             }
-            
-            withAnimation(.spring(response: 0.6, dampingFraction: 0.8).delay(0.2)) {
+
+            withAnimation(
+                .spring(response: 0.6, dampingFraction: 0.8).delay(0.2)
+            ) {
                 showTitle = true
             }
-            
-            withAnimation(.spring(response: 0.6, dampingFraction: 0.8).delay(0.4)) {
+
+            withAnimation(
+                .spring(response: 0.6, dampingFraction: 0.8).delay(0.4)
+            ) {
                 showStats = true
             }
-            
-            withAnimation(.spring(response: 0.6, dampingFraction: 0.8).delay(0.6)) {
+
+            withAnimation(
+                .spring(response: 0.6, dampingFraction: 0.8).delay(0.6)
+            ) {
                 showButton = true
             }
-            
+
             withAnimation(.easeInOut(duration: 1.5).repeatForever()) {
                 isGlowing = true
             }
         }
         .background(Theme.mainGradient.edgesIgnoringSafeArea(.all))
     }
-    
+
     struct ActiveParticipantsList: View {
         let participants: [ParticipantDetail]
         @State private var timeString: String = ""
-        private let timer = Timer.publish(every: 1, on: .main, in: .common).autoconnect()
-        
+        private let timer = Timer.publish(every: 1, on: .main, in: .common)
+            .autoconnect()
+
         var body: some View {
             VStack(alignment: .leading, spacing: 10) {
                 Text("PARTICIPANTS")
                     .font(.system(size: 14, weight: .bold))
                     .tracking(2)
-                    .foregroundColor(Color(red: 250/255, green: 204/255, blue: 21/255))
+                    .foregroundColor(
+                        Color(red: 250 / 255, green: 204 / 255, blue: 21 / 255)
+                    )
                     .frame(maxWidth: .infinity, alignment: .center)
-                
+
                 ForEach(participants) { participant in
                     HStack {
                         Text(participant.username)
                             .font(.system(size: 14, weight: .medium))
                             .foregroundColor(.white)
-                        
+
                         Spacer()
-                        
+
                         HStack(spacing: 6) {
                             // Different status indicators based on participant state
                             if participant.isActive {
                                 // Active participant with timer
-                                if let remaining = participant.remainingSeconds {
+                                if let remaining = participant.remainingSeconds
+                                {
                                     let minutes = remaining / 60
                                     let seconds = remaining % 60
-                                    
+
                                     Text("ACTIVE")
                                         .font(.system(size: 10, weight: .bold))
-                                        .foregroundColor(Color.green.opacity(0.9))
+                                        .foregroundColor(
+                                            Color.green.opacity(0.9)
+                                        )
                                         .padding(.trailing, 4)
-                                    
-                                    Text("\(minutes):\(seconds < 10 ? "0" : "")\(seconds)")
-                                        .font(.system(size: 12, weight: .medium))
-                                        .foregroundColor(.white.opacity(0.8))
-                                        .monospacedDigit()
-                                        .onReceive(timer) { _ in
-                                            // Update time here if needed
-                                        }
+
+                                    Text(
+                                        "\(minutes):\(seconds < 10 ? "0" : "")\(seconds)"
+                                    )
+                                    .font(.system(size: 12, weight: .medium))
+                                    .foregroundColor(.white.opacity(0.8))
+                                    .monospacedDigit()
+                                    .onReceive(timer) { _ in
+                                        // Update time here if needed
+                                    }
                                 }
                             } else {
                                 // Completed or failed participant
-                                Image(systemName: participant.wasSuccessful ?? false ? "checkmark.circle.fill" : "xmark.circle.fill")
-                                    .foregroundColor(participant.wasSuccessful ?? false ?
-                                                    Color(red: 34/255, green: 197/255, blue: 94/255) :
-                                                    Color(red: 239/255, green: 68/255, blue: 68/255))
-                                    .font(.system(size: 14))
-                                
+                                Image(
+                                    systemName: participant.wasSuccessful
+                                        ?? false
+                                        ? "checkmark.circle.fill"
+                                        : "xmark.circle.fill"
+                                )
+                                .foregroundColor(
+                                    participant.wasSuccessful ?? false
+                                        ? Color(
+                                            red: 34 / 255, green: 197 / 255,
+                                            blue: 94 / 255)
+                                        : Color(
+                                            red: 239 / 255, green: 68 / 255,
+                                            blue: 68 / 255)
+                                )
+                                .font(.system(size: 14))
+
                                 Text("\(participant.duration) min")
                                     .font(.system(size: 12, weight: .medium))
                                     .foregroundColor(.white.opacity(0.8))
@@ -399,58 +496,79 @@ struct OthersActiveView: View {
                 ZStack {
                     RoundedRectangle(cornerRadius: 16)
                         .fill(Color.white.opacity(0.05))
-                    
+
                     RoundedRectangle(cornerRadius: 16)
                         .stroke(Color.white.opacity(0.2), lineWidth: 1)
                 }
             )
         }
     }
-    
+
     private func loadParticipantDetails() {
         guard let sessionId = appManager.liveSessionId else {
             loadingParticipants = false
             return
         }
-        
-        FirebaseManager.shared.db.collection("live_sessions").document(sessionId).getDocument { document, error in
+
+        FirebaseManager.shared.db.collection("live_sessions").document(
+            sessionId
+        ).getDocument { document, error in
             guard let data = document?.data(),
-                  let participants = data["participants"] as? [String],
-                  let participantStatus = data["participantStatus"] as? [String: String],
-                  let remainingSeconds = data["remainingSeconds"] as? Int else {
+                let participants = data["participants"] as? [String],
+                let participantStatus = data["participantStatus"]
+                    as? [String: String],
+                let remainingSeconds = data["remainingSeconds"] as? Int
+            else {
                 self.loadingParticipants = false
                 return
             }
-            
+
             // Load user details for each participant
             let group = DispatchGroup()
             var details: [ParticipantDetail] = []
-            
+
             for participantId in participants {
                 group.enter()
-                
-                FirebaseManager.shared.db.collection("users").document(participantId).getDocument { userDoc, userError in
-                    if let userData = try? userDoc?.data(as: FirebaseManager.FlipUser.self) {
+
+                FirebaseManager.shared.db.collection("users").document(
+                    participantId
+                ).getDocument { userDoc, userError in
+                    if let userData = try? userDoc?.data(
+                        as: FirebaseManager.FlipUser.self)
+                    {
                         let status = participantStatus[participantId]
-                        let isActive = status != LiveSessionManager.ParticipantStatus.completed.rawValue &&
-                                       status != LiveSessionManager.ParticipantStatus.failed.rawValue
-                        
-                        let wasSuccessful = status == LiveSessionManager.ParticipantStatus.completed.rawValue ? true :
-                                          status == LiveSessionManager.ParticipantStatus.failed.rawValue ? false : nil
-                        
-                        details.append(ParticipantDetail(
-                            id: participantId,
-                            username: userData.username,
-                            wasSuccessful: wasSuccessful,
-                            isActive: isActive,
-                            duration: appManager.selectedMinutes,
-                            remainingSeconds: isActive ? remainingSeconds : nil
-                        ))
+                        let isActive =
+                            status
+                            != LiveSessionManager.ParticipantStatus.completed
+                            .rawValue
+                            && status
+                                != LiveSessionManager.ParticipantStatus.failed
+                                .rawValue
+
+                        let wasSuccessful =
+                            status
+                                == LiveSessionManager.ParticipantStatus
+                                .completed.rawValue
+                            ? true
+                            : status
+                                == LiveSessionManager.ParticipantStatus.failed
+                                .rawValue ? false : nil
+
+                        details.append(
+                            ParticipantDetail(
+                                id: participantId,
+                                username: userData.username,
+                                wasSuccessful: wasSuccessful,
+                                isActive: isActive,
+                                duration: appManager.selectedMinutes,
+                                remainingSeconds: isActive
+                                    ? remainingSeconds : nil
+                            ))
                     }
                     group.leave()
                 }
             }
-            
+
             group.notify(queue: .main) {
                 self.participantDetails = details.sorted(by: { a, b in
                     // Sort active participants first, then by name
@@ -458,7 +576,7 @@ struct OthersActiveView: View {
                     if !a.isActive && b.isActive { return false }
                     return a.username < b.username
                 })
-                
+
                 self.loadingParticipants = false
             }
         }

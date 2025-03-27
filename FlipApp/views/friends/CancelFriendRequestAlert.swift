@@ -14,7 +14,7 @@
 //    let onConfirm: () -> Void
 //    @State private var isConfirmPressed = false
 //    @State private var isCancelPressed = false
-//    
+//
 //    var body: some View {
 //        ZStack {
 //            // Dimmed background
@@ -25,7 +25,7 @@
 //                        isPresented = false
 //                    }
 //                }
-//            
+//
 //            // Alert card
 //            VStack(spacing: 20) {
 //                // Icon
@@ -34,8 +34,12 @@
 //                        .fill(
 //                            LinearGradient(
 //                                colors: [
-//                                    Color(red: 239/255, green: 68/255, blue: 68/255),
-//                                    Color(red: 185/255, green: 28/255, blue: 28/255)
+//                                    Color(
+//                                        red: 239 / 255, green: 68 / 255,
+//                                        blue: 68 / 255),
+//                                    Color(
+//                                        red: 185 / 255, green: 28 / 255,
+//                                        blue: 28 / 255),
 //                                ],
 //                                startPoint: .top,
 //                                endPoint: .bottom
@@ -43,14 +47,18 @@
 //                        )
 //                        .frame(width: 70, height: 70)
 //                        .opacity(0.2)
-//                    
+//
 //                    Image(systemName: "person.fill.xmark")
 //                        .font(.system(size: 36))
 //                        .foregroundStyle(
 //                            LinearGradient(
 //                                colors: [
-//                                    Color(red: 239/255, green: 68/255, blue: 68/255),
-//                                    Color(red: 185/255, green: 28/255, blue: 28/255)
+//                                    Color(
+//                                        red: 239 / 255, green: 68 / 255,
+//                                        blue: 68 / 255),
+//                                    Color(
+//                                        red: 185 / 255, green: 28 / 255,
+//                                        blue: 28 / 255),
 //                                ],
 //                                startPoint: .top,
 //                                endPoint: .bottom
@@ -59,7 +67,7 @@
 //                        .shadow(color: Color.red.opacity(0.5), radius: 8)
 //                }
 //                .padding(.top, 20)
-//                
+//
 //                // Title
 //                VStack(spacing: 4) {
 //                    Text("CANCEL REQUEST?")
@@ -67,21 +75,23 @@
 //                        .tracking(2)
 //                        .foregroundColor(.white)
 //                        .shadow(color: Color.red.opacity(0.5), radius: 6)
-//                    
+//
 //                    Text("友達リクエストをキャンセル")
 //                        .font(.system(size: 12))
 //                        .tracking(2)
 //                        .foregroundColor(.white.opacity(0.7))
 //                }
-//                
+//
 //                // Message
-//                Text("Are you sure you want to cancel your friend request to \(username)?")
-//                    .font(.system(size: 16, weight: .medium))
-//                    .multilineTextAlignment(.center)
-//                    .foregroundColor(.white)
-//                    .padding(.horizontal, 20)
-//                    .padding(.top, 10)
-//                
+//                Text(
+//                    "Are you sure you want to cancel your friend request to \(username)?"
+//                )
+//                .font(.system(size: 16, weight: .medium))
+//                .multilineTextAlignment(.center)
+//                .foregroundColor(.white)
+//                .padding(.horizontal, 20)
+//                .padding(.top, 10)
+//
 //                // Buttons
 //                HStack(spacing: 15) {
 //                    // Keep Request button
@@ -103,14 +113,16 @@
 //                                ZStack {
 //                                    RoundedRectangle(cornerRadius: 22)
 //                                        .fill(Color.white.opacity(0.1))
-//                                    
+//
 //                                    RoundedRectangle(cornerRadius: 22)
-//                                        .stroke(Color.white.opacity(0.3), lineWidth: 1)
+//                                        .stroke(
+//                                            Color.white.opacity(0.3),
+//                                            lineWidth: 1)
 //                                }
 //                            )
 //                            .scaleEffect(isCancelPressed ? 0.95 : 1.0)
 //                    }
-//                    
+//
 //                    // Cancel Request button
 //                    Button(action: {
 //                        withAnimation(.spring()) {
@@ -133,24 +145,30 @@
 //                                        .fill(
 //                                            LinearGradient(
 //                                                colors: [
-//                                                    Color(red: 239/255, green: 68/255, blue: 68/255),
-//                                                    Color(red: 185/255, green: 28/255, blue: 28/255)
+//                                                    Color(
+//                                                        red: 239 / 255,
+//                                                        green: 68 / 255,
+//                                                        blue: 68 / 255),
+//                                                    Color(
+//                                                        red: 185 / 255,
+//                                                        green: 28 / 255,
+//                                                        blue: 28 / 255),
 //                                                ],
 //                                                startPoint: .top,
 //                                                endPoint: .bottom
 //                                            )
 //                                        )
 //                                        .opacity(0.8)
-//                                    
+//
 //                                    RoundedRectangle(cornerRadius: 22)
 //                                        .fill(Color.white.opacity(0.1))
-//                                    
+//
 //                                    RoundedRectangle(cornerRadius: 22)
 //                                        .stroke(
 //                                            LinearGradient(
 //                                                colors: [
 //                                                    Color.white.opacity(0.5),
-//                                                    Color.white.opacity(0.2)
+//                                                    Color.white.opacity(0.2),
 //                                                ],
 //                                                startPoint: .top,
 //                                                endPoint: .bottom
@@ -171,16 +189,16 @@
 //                ZStack {
 //                    RoundedRectangle(cornerRadius: 20)
 //                        .fill(Theme.darkGray)
-//                    
+//
 //                    RoundedRectangle(cornerRadius: 20)
 //                        .fill(Color.black.opacity(0.3))
-//                    
+//
 //                    RoundedRectangle(cornerRadius: 20)
 //                        .stroke(
 //                            LinearGradient(
 //                                colors: [
 //                                    Color.white.opacity(0.5),
-//                                    Color.white.opacity(0.1)
+//                                    Color.white.opacity(0.1),
 //                                ],
 //                                startPoint: .topLeading,
 //                                endPoint: .bottomTrailing
@@ -195,3 +213,4 @@
 //        .transition(.opacity)
 //    }
 //}
+////

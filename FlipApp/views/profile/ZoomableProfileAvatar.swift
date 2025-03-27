@@ -1,25 +1,28 @@
 import Foundation
-import SwiftUI
 import Kingfisher
+import SwiftUI
 
 struct ZoomableProfileAvatar: View {
     let imageURL: String?
     let size: CGFloat
     let username: String
     var streakStatus: StreakStatus = .none
-    
+
     @State private var showEnlarged = false
     @State private var dragAmount = CGSize.zero
     @State private var scale: CGFloat = 1.0
     @State private var isGlowing = false
-    
-    init(imageURL: String?, size: CGFloat = 80, username: String = "", streakStatus: StreakStatus = .none) {
+
+    init(
+        imageURL: String?, size: CGFloat = 80, username: String = "",
+        streakStatus: StreakStatus = .none
+    ) {
         self.imageURL = imageURL
         self.size = size
         self.username = username
         self.streakStatus = streakStatus
     }
-    
+
     var body: some View {
         Button(action: {
             withAnimation(.spring()) {
@@ -35,20 +38,20 @@ struct ZoomableProfileAvatar: View {
                         // Radial gradient for glow effect
                         Circle()
                             .fill(
-                                streakStatus == .redFlame ?
-                                    RadialGradient(
+                                streakStatus == .redFlame
+                                    ? RadialGradient(
                                         gradient: Gradient(colors: [
                                             Color.red.opacity(0.7),
-                                            Color.red.opacity(0.0)
+                                            Color.red.opacity(0.0),
                                         ]),
                                         center: .center,
                                         startRadius: 1,
                                         endRadius: size * 0.8
-                                    ) :
-                                    RadialGradient(
+                                    )
+                                    : RadialGradient(
                                         gradient: Gradient(colors: [
                                             Color.orange.opacity(0.7),
-                                            Color.orange.opacity(0.0)
+                                            Color.orange.opacity(0.0),
                                         ]),
                                         center: .center,
                                         startRadius: 1,
@@ -57,28 +60,46 @@ struct ZoomableProfileAvatar: View {
                             )
                             .frame(width: size * 1.2, height: size * 1.2)
                             .scaleEffect(isGlowing ? 1.1 : 1.0)
-                            .animation(Animation.easeInOut(duration: 1.5).repeatForever(autoreverses: true), value: isGlowing)
-                        
+                            .animation(
+                                Animation.easeInOut(duration: 1.5)
+                                    .repeatForever(autoreverses: true),
+                                value: isGlowing)
+
                         // Single flame icon that appears to be behind the profile pic
                         Image(systemName: "flame.fill")
                             .font(.system(size: size * 0.8))
-                            .foregroundColor(streakStatus == .redFlame ? .red.opacity(0.7) : .orange.opacity(0.7))
-                            .shadow(color: streakStatus == .redFlame ? Color.red.opacity(0.7) : Color.orange.opacity(0.7), radius: 8)
-                            .offset(y: size * 0.05) // Slight offset to position flame
+                            .foregroundColor(
+                                streakStatus == .redFlame
+                                    ? .red.opacity(0.7) : .orange.opacity(0.7)
+                            )
+                            .shadow(
+                                color: streakStatus == .redFlame
+                                    ? Color.red.opacity(0.7)
+                                    : Color.orange.opacity(0.7), radius: 8
+                            )
+                            .offset(y: size * 0.05)  // Slight offset to position flame
                             .scaleEffect(isGlowing ? 1.05 : 0.95)
-                            .animation(Animation.easeInOut(duration: 1.2).repeatForever(autoreverses: true), value: isGlowing)
+                            .animation(
+                                Animation.easeInOut(duration: 1.2)
+                                    .repeatForever(autoreverses: true),
+                                value: isGlowing)
                     }
                 }
-                
+
                 // Regular profile avatar - always on top of the flame
-                if let urlString = imageURL, !urlString.isEmpty, let url = URL(string: urlString) {
+                if let urlString = imageURL, !urlString.isEmpty,
+                    let url = URL(string: urlString)
+                {
                     KFImage(url)
                         .placeholder {
                             placeholderView
                         }
                         .cacheMemoryOnly()
                         .fade(duration: 0.25)
-                        .setProcessor(DownsamplingImageProcessor(size: CGSize(width: size * 2, height: size * 2)))
+                        .setProcessor(
+                            DownsamplingImageProcessor(
+                                size: CGSize(width: size * 2, height: size * 2))
+                        )
                         .scaleFactor(UIScreen.main.scale)
                         .resizable()
                         .aspectRatio(contentMode: .fill)
@@ -90,7 +111,7 @@ struct ZoomableProfileAvatar: View {
                                     LinearGradient(
                                         colors: [
                                             Color.white.opacity(0.5),
-                                            Color.white.opacity(0.1)
+                                            Color.white.opacity(0.1),
                                         ],
                                         startPoint: .topLeading,
                                         endPoint: .bottomTrailing
@@ -102,20 +123,27 @@ struct ZoomableProfileAvatar: View {
                 } else {
                     placeholderView
                 }
-                
+
                 // Small indicator badge showing streak status
                 if streakStatus != .none {
                     ZStack {
                         Circle()
-                            .fill(streakStatus == .redFlame ? Color.red : Color.orange)
+                            .fill(
+                                streakStatus == .redFlame
+                                    ? Color.red : Color.orange
+                            )
                             .frame(width: size * 0.25, height: size * 0.25)
-                        
+
                         Image(systemName: "flame.fill")
                             .font(.system(size: size * 0.15))
                             .foregroundColor(.white)
                     }
-                    .shadow(color: streakStatus == .redFlame ? Color.red.opacity(0.7) : Color.orange.opacity(0.7), radius: 4)
-                    .position(x: size * 0.8, y: size * 0.2) // Position in top-right corner
+                    .shadow(
+                        color: streakStatus == .redFlame
+                            ? Color.red.opacity(0.7)
+                            : Color.orange.opacity(0.7), radius: 4
+                    )
+                    .position(x: size * 0.8, y: size * 0.2)  // Position in top-right corner
                 }
             }
         }
@@ -136,7 +164,7 @@ struct ZoomableProfileAvatar: View {
                             showEnlarged = false
                         }
                     }
-                
+
                 // Enlarged image with gestures
                 ZStack {
                     // For streak status, show fire effect in full screen view too
@@ -146,20 +174,20 @@ struct ZoomableProfileAvatar: View {
                             // Large radial gradient
                             Circle()
                                 .fill(
-                                    streakStatus == .redFlame ?
-                                        RadialGradient(
+                                    streakStatus == .redFlame
+                                        ? RadialGradient(
                                             gradient: Gradient(colors: [
                                                 Color.red.opacity(0.5),
-                                                Color.red.opacity(0.0)
+                                                Color.red.opacity(0.0),
                                             ]),
                                             center: .center,
                                             startRadius: 5,
                                             endRadius: 200
-                                        ) :
-                                        RadialGradient(
+                                        )
+                                        : RadialGradient(
                                             gradient: Gradient(colors: [
                                                 Color.orange.opacity(0.5),
-                                                Color.orange.opacity(0.0)
+                                                Color.orange.opacity(0.0),
                                             ]),
                                             center: .center,
                                             startRadius: 5,
@@ -170,20 +198,30 @@ struct ZoomableProfileAvatar: View {
                                 .scaleEffect(isGlowing ? 1.1 : 1.0)
                                 .scaleEffect(scale)
                                 .offset(dragAmount)
-                                
+
                             // Single large flame
                             Image(systemName: "flame.fill")
                                 .font(.system(size: 200))
-                                .foregroundColor(streakStatus == .redFlame ? .red.opacity(0.5) : .orange.opacity(0.5))
-                                .shadow(color: streakStatus == .redFlame ? Color.red.opacity(0.7) : Color.orange.opacity(0.7), radius: 15)
+                                .foregroundColor(
+                                    streakStatus == .redFlame
+                                        ? .red.opacity(0.5)
+                                        : .orange.opacity(0.5)
+                                )
+                                .shadow(
+                                    color: streakStatus == .redFlame
+                                        ? Color.red.opacity(0.7)
+                                        : Color.orange.opacity(0.7), radius: 15
+                                )
                                 .scaleEffect(isGlowing ? 1.05 : 0.95)
                                 .scaleEffect(scale)
                                 .offset(dragAmount)
                         }
                     }
-                    
+
                     // Image on top
-                    if let urlString = imageURL, !urlString.isEmpty, let url = URL(string: urlString) {
+                    if let urlString = imageURL, !urlString.isEmpty,
+                        let url = URL(string: urlString)
+                    {
                         KFImage(url)
                             .placeholder {
                                 largePlaceholderView
@@ -240,12 +278,12 @@ struct ZoomableProfileAvatar: View {
                         largePlaceholderView
                     }
                 }
-                
+
                 // Close button
                 VStack {
                     HStack {
                         Spacer()
-                        
+
                         Button(action: {
                             withAnimation(.spring()) {
                                 showEnlarged = false
@@ -257,21 +295,21 @@ struct ZoomableProfileAvatar: View {
                                 .padding(20)
                         }
                     }
-                    
+
                     Spacer()
                 }
             }
             .statusBar(hidden: true)
         }
     }
-    
+
     private var placeholderView: some View {
         ZStack {
             Circle()
                 .fill(Theme.buttonGradient)
                 .frame(width: size, height: size)
                 .opacity(0.2)
-            
+
             if !username.isEmpty && username.count >= 1 {
                 Text(String(username.prefix(1)).uppercased())
                     .font(.system(size: size * 0.4, weight: .bold))
@@ -282,18 +320,20 @@ struct ZoomableProfileAvatar: View {
                     .foregroundColor(.white)
             }
         }
-        .shadow(color: Color(red: 56/255, green: 189/255, blue: 248/255).opacity(0.5), radius: size * 0.075)
+        .shadow(
+            color: Color(red: 56 / 255, green: 189 / 255, blue: 248 / 255)
+                .opacity(0.5), radius: size * 0.075)
     }
-    
+
     private var largePlaceholderView: some View {
         let largeSize: CGFloat = 200
-        
+
         return ZStack {
             Circle()
                 .fill(Theme.buttonGradient)
                 .frame(width: largeSize, height: largeSize)
                 .opacity(0.2)
-            
+
             if !username.isEmpty && username.count >= 1 {
                 Text(String(username.prefix(1)).uppercased())
                     .font(.system(size: largeSize * 0.4, weight: .bold))
@@ -304,7 +344,9 @@ struct ZoomableProfileAvatar: View {
                     .foregroundColor(.white)
             }
         }
-        .shadow(color: Color(red: 56/255, green: 189/255, blue: 248/255).opacity(0.5), radius: 15)
+        .shadow(
+            color: Color(red: 56 / 255, green: 189 / 255, blue: 248 / 255)
+                .opacity(0.5), radius: 15)
     }
 }
 

@@ -1,7 +1,7 @@
-import SwiftUI
 import FirebaseAuth
 import FirebaseFirestore
 import Foundation
+import SwiftUI
 
 class FriendManager: ObservableObject {
     @Published var friends: [FirebaseManager.FlipUser] = []
@@ -34,7 +34,7 @@ class FriendManager: ObservableObject {
                 for friendId in userData.friends {
                     self?.loadFriendDetails(friendId: friendId)
                 }
-                
+
                 // Also force refresh live sessions to keep everything in sync
                 LiveSessionManager.shared.refreshLiveSessions()
             }
@@ -70,18 +70,21 @@ class FriendManager: ObservableObject {
     }
     // Add to your FriendManager class
 
-    func joinFriendSession(friendId: String, friendName: String, sessionId: String) {
+    func joinFriendSession(
+        friendId: String, friendName: String, sessionId: String
+    ) {
         // Check if the user is already in a session
         if AppManager.shared.currentState != .initial {
             showError = true
-            errorMessage = "You're already in a session. Please complete or cancel it before joining another."
+            errorMessage =
+                "You're already in a session. Please complete or cancel it before joining another."
             return
         }
-        
-        
+
         // Use the coordinator to pass session information
-        SessionJoinCoordinator.shared.setJoinSession(id: sessionId, name: friendName)
-        
+        SessionJoinCoordinator.shared.setJoinSession(
+            id: sessionId, name: friendName)
+
         // Use the view router to switch to home tab
         // Note: This approach doesn't use UIHostingController directly
         NotificationCenter.default.post(
@@ -109,7 +112,6 @@ class FriendManager: ObservableObject {
                 }
         }
     }
-    
 
     func acceptFriendRequest(from userId: String) {
         guard let currentUserId = Auth.auth().currentUser?.uid else { return }
@@ -155,22 +157,22 @@ class FriendManager: ObservableObject {
             self.friendRequests.removeAll { $0.id == userId }
         }
     }
-    
+
     func removeFriend(friendId: String) {
         guard let currentUserId = Auth.auth().currentUser?.uid else { return }
-        
+
         // Remove from current user's friends list
         firebaseManager.db.collection("users").document(currentUserId)
             .updateData([
                 "friends": FieldValue.arrayRemove([friendId])
             ])
-        
+
         // Remove current user from friend's friends list
         firebaseManager.db.collection("users").document(friendId)
             .updateData([
                 "friends": FieldValue.arrayRemove([currentUserId])
             ])
-        
+
         // Update local state
         DispatchQueue.main.async {
             self.friends.removeAll { $0.id == friendId }

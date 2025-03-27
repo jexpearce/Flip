@@ -5,16 +5,16 @@ import WidgetKit
 struct FailedLockView: View {
     private let gradientBackground = LinearGradient(
         colors: [
-            Color(red: 20/255, green: 10/255, blue: 40/255),
-            Color(red: 35/255, green: 20/255, blue: 90/255)
+            Color(red: 20 / 255, green: 10 / 255, blue: 40 / 255),
+            Color(red: 35 / 255, green: 20 / 255, blue: 90 / 255),
         ],
         startPoint: .top,
         endPoint: .bottom
     )
-    
+
     @State private var scale: CGFloat = 0.8
     @State private var opacity: Double = 0
-    
+
     var body: some View {
         VStack(spacing: 15) {
             // Failed Icon with gradient
@@ -23,8 +23,12 @@ struct FailedLockView: View {
                     .fill(
                         LinearGradient(
                             colors: [
-                                Color(red: 239/255, green: 68/255, blue: 68/255),
-                                Color(red: 185/255, green: 28/255, blue: 28/255)
+                                Color(
+                                    red: 239 / 255, green: 68 / 255,
+                                    blue: 68 / 255),
+                                Color(
+                                    red: 185 / 255, green: 28 / 255,
+                                    blue: 28 / 255),
                             ],
                             startPoint: .top,
                             endPoint: .bottom
@@ -32,18 +36,22 @@ struct FailedLockView: View {
                     )
                     .frame(width: 60, height: 60)
                     .opacity(0.2)
-                
+
                 Circle()
                     .fill(Color.white.opacity(0.1))
                     .frame(width: 65, height: 65)
-                
+
                 Image(systemName: "xmark.circle.fill")
                     .font(.system(size: 40, weight: .bold))
                     .foregroundStyle(
                         LinearGradient(
                             colors: [
-                                Color(red: 239/255, green: 68/255, blue: 68/255),
-                                Color(red: 185/255, green: 28/255, blue: 28/255)
+                                Color(
+                                    red: 239 / 255, green: 68 / 255,
+                                    blue: 68 / 255),
+                                Color(
+                                    red: 185 / 255, green: 28 / 255,
+                                    blue: 28 / 255),
                             ],
                             startPoint: .top,
                             endPoint: .bottom
@@ -60,8 +68,10 @@ struct FailedLockView: View {
                 .foregroundStyle(
                     LinearGradient(
                         colors: [
-                            Color(red: 239/255, green: 68/255, blue: 68/255),
-                            Color(red: 185/255, green: 28/255, blue: 28/255)
+                            Color(
+                                red: 239 / 255, green: 68 / 255, blue: 68 / 255),
+                            Color(
+                                red: 185 / 255, green: 28 / 255, blue: 28 / 255),
                         ],
                         startPoint: .top,
                         endPoint: .bottom
@@ -89,13 +99,16 @@ struct FailedLockView: View {
             ZStack {
                 gradientBackground
                 Color.white.opacity(0.05)  // Glass effect
-                
+
                 // Subtle pattern
                 GeometryReader { geometry in
                     Path { path in
-                        for i in stride(from: 0, to: geometry.size.width, by: 20) {
+                        for i in stride(
+                            from: 0, to: geometry.size.width, by: 20)
+                        {
                             path.move(to: CGPoint(x: i, y: 0))
-                            path.addLine(to: CGPoint(x: i, y: geometry.size.height))
+                            path.addLine(
+                                to: CGPoint(x: i, y: geometry.size.height))
                         }
                     }
                     .stroke(Color.white.opacity(0.05), lineWidth: 1)

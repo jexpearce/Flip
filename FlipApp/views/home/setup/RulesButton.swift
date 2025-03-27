@@ -10,7 +10,7 @@ import SwiftUI
 
 struct RulesButtonView: View {
     @Binding var showRules: Bool
-    
+
     var body: some View {
         Button(action: {
             withAnimation(.spring()) {
@@ -27,7 +27,7 @@ struct RulesButtonView: View {
                                 LinearGradient(
                                     colors: [
                                         Color.white.opacity(0.6),
-                                        Color.white.opacity(0.2)
+                                        Color.white.opacity(0.2),
                                     ],
                                     startPoint: .topLeading,
                                     endPoint: .bottomTrailing
@@ -35,8 +35,11 @@ struct RulesButtonView: View {
                                 lineWidth: 1
                             )
                     )
-                    .shadow(color: Color(red: 56/255, green: 189/255, blue: 248/255).opacity(0.3), radius: 4)
-                
+                    .shadow(
+                        color: Color(
+                            red: 56 / 255, green: 189 / 255, blue: 248 / 255
+                        ).opacity(0.3), radius: 4)
+
                 Text("?")
                     .font(.system(size: 18, weight: .bold))
                     .foregroundColor(.white)

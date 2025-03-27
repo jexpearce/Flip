@@ -60,7 +60,10 @@ class NotificationManager {
         }
     }
 
-    func display(title: String, body: String, categoryIdentifier: String = "FLIP_ALERT", silent: Bool = false) {
+    func display(
+        title: String, body: String, categoryIdentifier: String = "FLIP_ALERT",
+        silent: Bool = false
+    ) {
         let content = UNMutableNotificationContent()
         content.title = title
         content.body = body

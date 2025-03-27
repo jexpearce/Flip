@@ -1,10 +1,11 @@
-import FirebaseFirestore
 //
 //  SessionListView.swift
 //  FlipApp
 //
 //  Created by Jex Pearce on 2/11/25.
 //
+
+import FirebaseFirestore
 import Foundation
 
 class SessionListViewModel: ObservableObject {

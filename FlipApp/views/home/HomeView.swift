@@ -3,10 +3,11 @@ import SwiftUI
 struct HomeView: View {
     @EnvironmentObject var appManager: AppManager
     @EnvironmentObject var sessionManager: SessionManager
-    @ObservedObject private var sessionJoinCoordinator = SessionJoinCoordinator.shared
+    @ObservedObject private var sessionJoinCoordinator = SessionJoinCoordinator
+        .shared
     @ObservedObject private var liveSessionManager = LiveSessionManager.shared
     @State private var showRules = false
-    
+
     var body: some View {
         ZStack {
             // Main content based on app state
@@ -32,13 +33,12 @@ struct HomeView: View {
                     OthersActiveView()
                 }
             }
-            
-            
+
             // Rules overlay
             if showRules {
                 RulesView(showRules: $showRules)
             }
-            
+
             // Rank Promotion Alert
             if sessionManager.showPromotionAlert {
                 RankPromotionAlert(
@@ -46,7 +46,7 @@ struct HomeView: View {
                     rankName: sessionManager.promotionRankName,
                     rankColor: sessionManager.promotionRankColor
                 )
-                .zIndex(100) // Ensure it appears above other content
+                .zIndex(100)  // Ensure it appears above other content
             }
             if sessionManager.showStreakAchievement {
                 StreakAchievementAlert(
@@ -55,22 +55,24 @@ struct HomeView: View {
                     streakCount: sessionManager.streakCount
                 )
             }
-            
-            
+
         }
         .onAppear {
             // Check if there's a pending session join request
             if sessionJoinCoordinator.shouldJoinSession,
-               let sessionId = sessionJoinCoordinator.pendingSessionId {
-                
+                let sessionId = sessionJoinCoordinator.pendingSessionId
+            {
+
                 // Start the joining process
                 liveSessionManager.isJoiningSession = true
-                
+
                 // First get session details
-                liveSessionManager.getSessionDetails(sessionId: sessionId) { sessionData in
+                liveSessionManager.getSessionDetails(sessionId: sessionId) {
+                    sessionData in
                     if let session = sessionData {
                         // Join the session
-                        liveSessionManager.joinSession(sessionId: sessionId) { success, remainingSeconds, totalDuration in
+                        liveSessionManager.joinSession(sessionId: sessionId) {
+                            success, remainingSeconds, totalDuration in
                             if success {
                                 // Actually join the live session with proper timing values
                                 DispatchQueue.main.async {
@@ -82,7 +84,7 @@ struct HomeView: View {
                                     )
                                 }
                             }
-                            
+
                             // Clear pending session either way
                             DispatchQueue.main.async {
                                 sessionJoinCoordinator.clearPendingSession()

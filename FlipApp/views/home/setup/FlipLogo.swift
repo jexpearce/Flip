@@ -2,7 +2,7 @@ import SwiftUI
 
 struct FlipLogo: View {
     @State private var isButtonPressed = false
-    
+
     var body: some View {
         HStack(spacing: 15) {
             HStack(spacing: 2) {
@@ -10,26 +10,26 @@ struct FlipLogo: View {
                     .font(.system(size: 80, weight: .black))
                     .tracking(2)
                     .foregroundColor(.white)
-                
+
                 Text("l")
                     .font(.system(size: 80, weight: .black))
                     .tracking(2)
                     .foregroundColor(.white)
-                
+
                 // Upside-down "i"
                 Text("i")
                     .font(.system(size: 80, weight: .black))
                     .tracking(2)
                     .foregroundColor(.white)
                     .rotationEffect(.degrees(180))
-                
+
                 Text("P")
                     .font(.system(size: 80, weight: .black))
                     .tracking(2)
                     .foregroundColor(.white)
             }
             .shadow(color: Theme.yellow.opacity(0.5), radius: 10)
-  
+
             Image(systemName: "arrow.2.squarepath")
                 .font(.system(size: 55, weight: .bold))
                 .foregroundColor(Color.white.opacity(1.0))
@@ -47,7 +47,7 @@ struct FlipLogo: View {
                     value: isButtonPressed
                 )
         }
-        .padding(.top, 0) // Reduced from 20 to 5
+        .padding(.top, 0)  // Reduced from 20 to 5
         .onAppear { isButtonPressed = true }
     }
 }
@@ -56,7 +56,7 @@ struct FlipLogo: View {
 struct CurrentBuildingIndicator: View {
     let buildingName: String
     let action: () -> Void
-    
+
     var body: some View {
         HStack(spacing: 10) {
             VStack(alignment: .leading, spacing: 2) {
@@ -64,21 +64,21 @@ struct CurrentBuildingIndicator: View {
                     .font(.system(size: 10, weight: .bold))
                     .tracking(1)
                     .foregroundColor(Theme.yellow.opacity(0.9))
-                
+
                 Text(buildingName)
                     .font(.system(size: 14, weight: .bold))
                     .foregroundColor(.white)
                     .lineLimit(1)
             }
-            
+
             Spacer()
-            
+
             Button(action: action) {
                 HStack(spacing: 4) {
                     Text("CHANGE")
                         .font(.system(size: 10, weight: .bold))
                         .tracking(1)
-                    
+
                     Image(systemName: "chevron.right")
                         .font(.system(size: 8, weight: .bold))
                 }
@@ -103,23 +103,29 @@ struct CurrentBuildingIndicator: View {
                     .fill(
                         LinearGradient(
                             colors: [
-                                Color(red: 60/255, green: 30/255, blue: 110/255).opacity(0.3),
-                                Color(red: 40/255, green: 20/255, blue: 80/255).opacity(0.2)
+                                Color(
+                                    red: 60 / 255, green: 30 / 255,
+                                    blue: 110 / 255
+                                ).opacity(0.3),
+                                Color(
+                                    red: 40 / 255, green: 20 / 255,
+                                    blue: 80 / 255
+                                ).opacity(0.2),
                             ],
                             startPoint: .topLeading,
                             endPoint: .bottomTrailing
                         )
                     )
-                
+
                 RoundedRectangle(cornerRadius: 16)
                     .fill(Color.white.opacity(0.05))
-                
+
                 RoundedRectangle(cornerRadius: 16)
                     .stroke(
                         LinearGradient(
                             colors: [
                                 Color.white.opacity(0.4),
-                                Color.white.opacity(0.1)
+                                Color.white.opacity(0.1),
                             ],
                             startPoint: .topLeading,
                             endPoint: .bottomTrailing
@@ -137,7 +143,7 @@ struct BeginButton: View {
     @State private var isPressed = false
     @State private var isPulsing = false
     @ObservedObject private var permissionManager = PermissionManager.shared
-    
+
     var body: some View {
         Button(action: {
             isPressed = true
@@ -148,7 +154,7 @@ struct BeginButton: View {
                 isPressed = false
                 isPulsing = false
             }
-            
+
             // Only block the action if motion permission isn't granted
             if permissionManager.motionPermissionGranted {
                 action()
@@ -168,39 +174,47 @@ struct BeginButton: View {
                         RoundedRectangle(cornerRadius: 35)
                             .fill(
                                 LinearGradient(
-                                    colors: !permissionManager.motionPermissionGranted ?
-                                    // No motion permission - grayed out (highest priority)
-                                    [
-                                        Color.gray.opacity(0.5),
-                                        Color.gray.opacity(0.3)
-                                    ] :
-                                    permissionManager.locationAuthStatus == .denied ?
-                                    // Location denied - orange/yellow gradient
-                                    [
-                                        Theme.yellow, // Vibrant yellow
-                                        Theme.orange  // Warm orange
-                                    ] :
-                                    // Location allowed - blue gradient
-                                    [
-                                        Color(red: 56/255, green: 189/255, blue: 248/255), // Bright teal
-                                        Color(red: 14/255, green: 165/255, blue: 233/255)  // Deeper blue
-                                    ],
+                                    colors: !permissionManager
+                                        .motionPermissionGranted
+                                        ? // No motion permission - grayed out (highest priority)
+                                        [
+                                            Color.gray.opacity(0.5),
+                                            Color.gray.opacity(0.3),
+                                        ]
+                                        : permissionManager.locationAuthStatus
+                                            == .denied
+                                            ? // Location denied - orange/yellow gradient
+                                            [
+                                                Theme.yellow,  // Vibrant yellow
+                                                Theme.orange,  // Warm orange
+                                            ]
+                                            : // Location allowed - blue gradient
+                                            [
+                                                Color(
+                                                    red: 56 / 255,
+                                                    green: 189 / 255,
+                                                    blue: 248 / 255),  // Bright teal
+                                                Color(
+                                                    red: 14 / 255,
+                                                    green: 165 / 255,
+                                                    blue: 233 / 255),  // Deeper blue
+                                            ],
                                     startPoint: .leading,
                                     endPoint: .trailing
                                 )
                             )
-                        
+
                         // Glass effect
                         RoundedRectangle(cornerRadius: 35)
                             .fill(Color.white.opacity(0.1))
-                        
+
                         // Border
                         RoundedRectangle(cornerRadius: 35)
                             .stroke(
                                 LinearGradient(
                                     colors: [
                                         Color.white.opacity(0.6),
-                                        Color.white.opacity(0.2)
+                                        Color.white.opacity(0.2),
                                     ],
                                     startPoint: .topLeading,
                                     endPoint: .bottomTrailing
@@ -210,11 +224,13 @@ struct BeginButton: View {
                     }
                 )
                 .shadow(
-                    color: !permissionManager.motionPermissionGranted ?
-                        Color.gray.opacity(0.5) :
-                        permissionManager.locationAuthStatus == .denied ?
-                            Theme.yellowShadow :
-                            Color(red: 56/255, green: 189/255, blue: 248/255).opacity(0.5),
+                    color: !permissionManager.motionPermissionGranted
+                        ? Color.gray.opacity(0.5)
+                        : permissionManager.locationAuthStatus == .denied
+                            ? Theme.yellowShadow
+                            : Color(
+                                red: 56 / 255, green: 189 / 255, blue: 248 / 255
+                            ).opacity(0.5),
                     radius: isPulsing ? 15 : 8
                 )
                 .scaleEffect(isPressed ? 0.97 : 1.0)

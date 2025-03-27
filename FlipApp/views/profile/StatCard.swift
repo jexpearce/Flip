@@ -10,7 +10,10 @@ struct StatCard: View {
             Text(value)
                 .font(.system(size: 28, weight: .black))
                 .foregroundColor(.white)
-                .shadow(color: Color(red: 56/255, green: 189/255, blue: 248/255).opacity(0.5), radius: 8)
+                .shadow(
+                    color: Color(
+                        red: 56 / 255, green: 189 / 255, blue: 248 / 255
+                    ).opacity(0.5), radius: 8)
 
             Text(title)
                 .font(.system(size: 10, weight: .heavy))
@@ -29,28 +32,31 @@ struct StatCard: View {
                 RoundedRectangle(cornerRadius: 15)
                     .fill(Theme.buttonGradient)
                     .opacity(0.1)
-                
+
                 // Frosted overlay
                 RoundedRectangle(cornerRadius: 15)
                     .fill(Color.white.opacity(0.05))
-                
+
                 // Top edge highlight
                 RoundedRectangle(cornerRadius: 15)
                     .stroke(
                         LinearGradient(
                             colors: [
                                 Color.white.opacity(0.5),
-                                Color.white.opacity(0.1)
+                                Color.white.opacity(0.1),
                             ],
                             startPoint: .topLeading,
                             endPoint: .bottomTrailing
                         ),
                         lineWidth: 1
                     )
-                
+
                 // Inner glow
                 RoundedRectangle(cornerRadius: 15)
-                    .stroke(Color(red: 56/255, green: 189/255, blue: 248/255).opacity(0.3), lineWidth: 1)
+                    .stroke(
+                        Color(red: 56 / 255, green: 189 / 255, blue: 248 / 255)
+                            .opacity(0.3), lineWidth: 1
+                    )
                     .blur(radius: 2)
                     .offset(y: 1)
             }

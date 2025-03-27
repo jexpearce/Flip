@@ -1,41 +1,47 @@
+import CoreLocation
 import Foundation
 import SwiftUI
-import CoreLocation
 
 struct CustomLocationCreationView: View {
     @Binding var isPresented: Bool
     let coordinate: CLLocationCoordinate2D
     let onLocationCreated: (BuildingInfo) -> Void
-    
+
     @State private var locationName: String = ""
     @State private var isCreating = false
     @State private var errorMessage: String?
-    
+
     // Custom gradient for the creation view
     private let creationGradient = LinearGradient(
         colors: [
-            Color(red: 35/255, green: 16/255, blue: 55/255), // Deep midnight purple
-            Color(red: 42/255, green: 22/255, blue: 60/255), // Medium purple with slight red
-            Color(red: 48/255, green: 24/255, blue: 65/255)  // Light purple
+            Color(red: 35 / 255, green: 16 / 255, blue: 55 / 255),  // Deep midnight purple
+            Color(red: 42 / 255, green: 22 / 255, blue: 60 / 255),  // Medium purple with slight red
+            Color(red: 48 / 255, green: 24 / 255, blue: 65 / 255),  // Light purple
         ],
         startPoint: .top,
         endPoint: .bottom
     )
-    
+
     var body: some View {
         ZStack {
             // Main background
             creationGradient
                 .edgesIgnoringSafeArea(.all)
-            
+
             // Decorative element
             VStack {
                 Circle()
                     .fill(
                         RadialGradient(
                             gradient: Gradient(colors: [
-                                Color(red: 220/255, green: 38/255, blue: 38/255).opacity(0.15),
-                                Color(red: 127/255, green: 29/255, blue: 29/255).opacity(0.05)
+                                Color(
+                                    red: 220 / 255, green: 38 / 255,
+                                    blue: 38 / 255
+                                ).opacity(0.15),
+                                Color(
+                                    red: 127 / 255, green: 29 / 255,
+                                    blue: 29 / 255
+                                ).opacity(0.05),
                             ]),
                             center: .center,
                             startRadius: 10,
@@ -45,79 +51,97 @@ struct CustomLocationCreationView: View {
                     .frame(width: 250, height: 250)
                     .offset(x: 150, y: -100)
                     .blur(radius: 40)
-                
+
                 Spacer()
             }
-            
+
             VStack(spacing: 20) {
                 // Header with icon and title
                 HStack {
                     Image(systemName: "mappin.and.ellipse")
                         .font(.system(size: 24))
-                        .foregroundColor(Color(red: 220/255, green: 38/255, blue: 38/255))
-                        .shadow(color: Color(red: 220/255, green: 38/255, blue: 38/255).opacity(0.5), radius: 4)
-                    
+                        .foregroundColor(
+                            Color(
+                                red: 220 / 255, green: 38 / 255, blue: 38 / 255)
+                        )
+                        .shadow(
+                            color: Color(
+                                red: 220 / 255, green: 38 / 255, blue: 38 / 255
+                            ).opacity(0.5), radius: 4)
+
                     Text("ADD CUSTOM LOCATION")
                         .font(.system(size: 20, weight: .black))
                         .tracking(4)
                         .foregroundColor(.white)
-                        .shadow(color: Color(red: 220/255, green: 38/255, blue: 38/255).opacity(0.5), radius: 8)
+                        .shadow(
+                            color: Color(
+                                red: 220 / 255, green: 38 / 255, blue: 38 / 255
+                            ).opacity(0.5), radius: 8)
                 }
-                
+
                 Text("Create a new location at your current position")
                     .font(.system(size: 14))
                     .foregroundColor(.white.opacity(0.8))
                     .multilineTextAlignment(.center)
                     .padding(.bottom, 10)
-                
+
                 // Location name input
                 VStack(alignment: .leading, spacing: 8) {
                     Text("LOCATION NAME")
                         .font(.system(size: 12, weight: .bold))
                         .tracking(1)
                         .foregroundColor(.white.opacity(0.7))
-                    
-                    TextField("Department of Computer Science, etc.", text: $locationName)
-                        .padding()
-                        .background(
-                            ZStack {
-                                RoundedRectangle(cornerRadius: 12)
-                                    .fill(Color.white.opacity(0.1))
-                                
-                                RoundedRectangle(cornerRadius: 12)
-                                    .stroke(
-                                        LinearGradient(
-                                            colors: [
-                                                Color.white.opacity(0.5),
-                                                Color.white.opacity(0.2)
-                                            ],
-                                            startPoint: .topLeading,
-                                            endPoint: .bottomTrailing
-                                        ),
-                                        lineWidth: 1
-                                    )
-                            }
-                        )
-                        .foregroundColor(.white)
+
+                    TextField(
+                        "Department of Computer Science, etc.",
+                        text: $locationName
+                    )
+                    .padding()
+                    .background(
+                        ZStack {
+                            RoundedRectangle(cornerRadius: 12)
+                                .fill(Color.white.opacity(0.1))
+
+                            RoundedRectangle(cornerRadius: 12)
+                                .stroke(
+                                    LinearGradient(
+                                        colors: [
+                                            Color.white.opacity(0.5),
+                                            Color.white.opacity(0.2),
+                                        ],
+                                        startPoint: .topLeading,
+                                        endPoint: .bottomTrailing
+                                    ),
+                                    lineWidth: 1
+                                )
+                        }
+                    )
+                    .foregroundColor(.white)
                 }
                 .padding(.horizontal)
-                
+
                 // Coordinates display
                 VStack(alignment: .leading, spacing: 8) {
                     Text("COORDINATES")
                         .font(.system(size: 12, weight: .bold))
                         .tracking(1)
                         .foregroundColor(.white.opacity(0.7))
-                    
+
                     HStack {
                         Image(systemName: "location.fill")
                             .font(.system(size: 16))
-                            .foregroundColor(Color(red: 220/255, green: 38/255, blue: 38/255))
+                            .foregroundColor(
+                                Color(
+                                    red: 220 / 255, green: 38 / 255,
+                                    blue: 38 / 255)
+                            )
                             .padding(.trailing, 8)
-                        
-                        Text("\(String(format: "%.6f", coordinate.latitude)), \(String(format: "%.6f", coordinate.longitude))")
-                            .font(.system(size: 14, weight: .medium))
-                            .foregroundColor(.white.opacity(0.9))
+
+                        Text(
+                            "\(String(format: "%.6f", coordinate.latitude)), \(String(format: "%.6f", coordinate.longitude))"
+                        )
+                        .font(.system(size: 14, weight: .medium))
+                        .foregroundColor(.white.opacity(0.9))
                     }
                     .padding()
                     .frame(maxWidth: .infinity, alignment: .leading)
@@ -125,13 +149,13 @@ struct CustomLocationCreationView: View {
                         ZStack {
                             RoundedRectangle(cornerRadius: 12)
                                 .fill(Color.white.opacity(0.05))
-                            
+
                             RoundedRectangle(cornerRadius: 12)
                                 .stroke(
                                     LinearGradient(
                                         colors: [
                                             Color.white.opacity(0.3),
-                                            Color.white.opacity(0.1)
+                                            Color.white.opacity(0.1),
                                         ],
                                         startPoint: .topLeading,
                                         endPoint: .bottomTrailing
@@ -142,27 +166,32 @@ struct CustomLocationCreationView: View {
                     )
                 }
                 .padding(.horizontal)
-                
+
                 // Error message
                 if let errorMessage = errorMessage {
                     Text(errorMessage)
                         .font(.system(size: 14))
-                        .foregroundColor(Color(red: 220/255, green: 38/255, blue: 38/255))
+                        .foregroundColor(
+                            Color(
+                                red: 220 / 255, green: 38 / 255, blue: 38 / 255)
+                        )
                         .padding(.top, 10)
                 }
-                
+
                 // Create button
                 Button(action: createLocation) {
                     HStack {
                         if isCreating {
                             ProgressView()
-                                .progressViewStyle(CircularProgressViewStyle(tint: .white))
+                                .progressViewStyle(
+                                    CircularProgressViewStyle(tint: .white)
+                                )
                                 .frame(width: 24, height: 24)
                         } else {
                             Image(systemName: "plus.circle.fill")
                                 .font(.system(size: 18))
                         }
-                        
+
                         Text("Create Location")
                             .font(.system(size: 16, weight: .bold))
                     }
@@ -178,26 +207,32 @@ struct CustomLocationCreationView: View {
                                 } else {
                                     LinearGradient(
                                         colors: [
-                                            Color(red: 220/255, green: 38/255, blue: 38/255).opacity(0.8),
-                                            Color(red: 185/255, green: 28/255, blue: 28/255).opacity(0.8)
+                                            Color(
+                                                red: 220 / 255, green: 38 / 255,
+                                                blue: 38 / 255
+                                            ).opacity(0.8),
+                                            Color(
+                                                red: 185 / 255, green: 28 / 255,
+                                                blue: 28 / 255
+                                            ).opacity(0.8),
                                         ],
                                         startPoint: .leading,
                                         endPoint: .trailing
                                     )
                                 }
                             }
-                            
+
                             // Glass effect
                             RoundedRectangle(cornerRadius: 12)
                                 .fill(Color.white.opacity(0.1))
-                            
+
                             // Edge highlight
                             RoundedRectangle(cornerRadius: 12)
                                 .stroke(
                                     LinearGradient(
                                         colors: [
                                             Color.white.opacity(0.6),
-                                            Color.white.opacity(0.2)
+                                            Color.white.opacity(0.2),
                                         ],
                                         startPoint: .topLeading,
                                         endPoint: .bottomTrailing
@@ -206,12 +241,18 @@ struct CustomLocationCreationView: View {
                                 )
                         }
                     )
-                    .shadow(color: locationName.isEmpty ? Color.clear : Color(red: 220/255, green: 38/255, blue: 38/255).opacity(0.5), radius: 8)
+                    .shadow(
+                        color: locationName.isEmpty
+                            ? Color.clear
+                            : Color(
+                                red: 220 / 255, green: 38 / 255, blue: 38 / 255
+                            ).opacity(0.5), radius: 8
+                    )
                     .padding(.horizontal)
                     .padding(.top, 15)
                 }
                 .disabled(locationName.isEmpty || isCreating)
-                
+
                 // Cancel button
                 Button(action: {
                     isPresented = false
@@ -226,7 +267,9 @@ struct CustomLocationCreationView: View {
                                 .fill(Color.white.opacity(0.1))
                                 .overlay(
                                     RoundedRectangle(cornerRadius: 12)
-                                        .stroke(Color.white.opacity(0.2), lineWidth: 1)
+                                        .stroke(
+                                            Color.white.opacity(0.2),
+                                            lineWidth: 1)
                                 )
                         )
                         .padding(.horizontal)
@@ -238,25 +281,27 @@ struct CustomLocationCreationView: View {
         .cornerRadius(20)
         .shadow(color: Color.black.opacity(0.3), radius: 20)
     }
-    
+
     private func createLocation() {
         guard !locationName.isEmpty else {
             errorMessage = "Please enter a location name"
             return
         }
-        
+
         isCreating = true
         errorMessage = nil
-        
-        CustomLocationHandler.shared.createCustomLocation(name: locationName, at: coordinate) { buildingInfo, error in
+
+        CustomLocationHandler.shared.createCustomLocation(
+            name: locationName, at: coordinate
+        ) { buildingInfo, error in
             DispatchQueue.main.async {
                 isCreating = false
-                
+
                 if let error = error {
                     errorMessage = "Error: \(error.localizedDescription)"
                     return
                 }
-                
+
                 if let buildingInfo = buildingInfo {
                     onLocationCreated(buildingInfo)
                     isPresented = false

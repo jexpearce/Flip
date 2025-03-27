@@ -10,32 +10,34 @@ struct LockView: View {
             // Base gradient background that covers the entire widget
             LinearGradient(
                 colors: [
-                    Color(red: 20/255, green: 10/255, blue: 40/255),
-                    Color(red: 35/255, green: 20/255, blue: 90/255)
+                    Color(red: 20 / 255, green: 10 / 255, blue: 40 / 255),
+                    Color(red: 35 / 255, green: 20 / 255, blue: 90 / 255),
                 ],
                 startPoint: .top,
                 endPoint: .bottom
             )
             .ignoresSafeArea()
-            
+
             // Content with glass effect container
-            VStack(spacing: 8) { // Reduced from 12 to 8 for more compact layout
+            VStack(spacing: 8) {  // Reduced from 12 to 8 for more compact layout
                 // Order matters - check wasSuccessful first
-                if let wasSuccessful = context.state.wasSuccessful, wasSuccessful {
+                if let wasSuccessful = context.state.wasSuccessful,
+                    wasSuccessful
+                {
                     SuccessLockView()
                         .transition(.opacity.combined(with: .scale))
-                        .id("success") // Force view refresh when state changes
+                        .id("success")  // Force view refresh when state changes
                 } else if context.state.isFailed {
                     FailedLockView()
                         .transition(.opacity.combined(with: .scale))
-                        .id("failed") // Force view refresh when state changes
+                        .id("failed")  // Force view refresh when state changes
                 } else {
                     ActiveLockView(context: context)
                         .transition(.opacity.combined(with: .scale))
-                        .id("active") // Force view refresh when state changes
+                        .id("active")  // Force view refresh when state changes
                 }
             }
-            .padding(8) // Reduced from standard padding to 8
+            .padding(8)  // Reduced from standard padding to 8
             .background(
                 RoundedRectangle(cornerRadius: 15)
                     .fill(Color.white.opacity(0.05))  // Glass effect
@@ -46,7 +48,7 @@ struct LockView: View {
                         LinearGradient(
                             colors: [
                                 Color.white.opacity(0.3),
-                                Color.white.opacity(0.1)
+                                Color.white.opacity(0.1),
                             ],
                             startPoint: .topLeading,
                             endPoint: .bottomTrailing

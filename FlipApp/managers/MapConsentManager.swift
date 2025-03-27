@@ -1,91 +1,96 @@
-import SwiftUI
 import FirebaseAuth
 import FirebaseFirestore
+import SwiftUI
 
 class MapConsentManager: ObservableObject {
     static let shared = MapConsentManager()
-    
+
     @Published var hasAcceptedMapPrivacy = false
     @Published var showMapPrivacyAlert = false
-    
+
     private let userDefaults = UserDefaults.standard
     private let mapConsentKey = "hasAcceptedMapPrivacy"
     private let db = Firestore.firestore()
     private var pendingCompletion: ((Bool) -> Void)?
-    
+
     init() {
         // Check if user has already accepted in UserDefaults
         hasAcceptedMapPrivacy = userDefaults.bool(forKey: mapConsentKey)
-        
+
         // For existing users, also check Firestore (in case UserDefaults was reset)
         if !hasAcceptedMapPrivacy, let userId = Auth.auth().currentUser?.uid {
             db.collection("users").document(userId)
                 .collection("settings").document("mapPrivacy")
                 .getDocument { [weak self] document, error in
                     if let data = document?.data(),
-                       let hasAccepted = data["hasAcceptedMapPrivacy"] as? Bool,
-                       hasAccepted {
+                        let hasAccepted = data["hasAcceptedMapPrivacy"]
+                            as? Bool,
+                        hasAccepted
+                    {
                         DispatchQueue.main.async {
                             print("Found existing map consent in Firestore")
                             self?.hasAcceptedMapPrivacy = true
-                            self?.userDefaults.set(true, forKey: self?.mapConsentKey ?? "")
+                            self?.userDefaults.set(
+                                true, forKey: self?.mapConsentKey ?? "")
                         }
                     }
                 }
         }
     }
-    
+
     func checkAndRequestConsent(completion: @escaping (Bool) -> Void) {
-        print("Checking map consent: hasAcceptedMapPrivacy = \(hasAcceptedMapPrivacy)")
-        
+        print(
+            "Checking map consent: hasAcceptedMapPrivacy = \(hasAcceptedMapPrivacy)"
+        )
+
         // If already accepted, just return true
         if hasAcceptedMapPrivacy {
             print("Map consent already granted, proceeding")
             completion(true)
             return
         }
-        
+
         // Otherwise show alert and store completion handler for later
         print("Showing map privacy alert")
         pendingCompletion = completion
-        
+
         // Important: ensure this happens on main thread
         DispatchQueue.main.async {
             self.showMapPrivacyAlert = true
         }
     }
-    
+
     func acceptMapPrivacy() {
         print("User accepted map privacy")
         hasAcceptedMapPrivacy = true
         userDefaults.set(true, forKey: mapConsentKey)
-        
+
         DispatchQueue.main.async {
             self.showMapPrivacyAlert = false
         }
-        
+
         // Save to Firestore for syncing across devices
         if let userId = Auth.auth().currentUser?.uid {
             db.collection("users").document(userId)
                 .collection("settings").document("mapPrivacy")
                 .setData(["hasAcceptedMapPrivacy": true], merge: true)
         }
-        
+
         if let completion = pendingCompletion {
             completion(true)
             pendingCompletion = nil
         }
     }
-    
+
     func rejectMapPrivacy() {
         print("User rejected map privacy")
         hasAcceptedMapPrivacy = false
         userDefaults.set(false, forKey: mapConsentKey)
-        
+
         DispatchQueue.main.async {
             self.showMapPrivacyAlert = false
         }
-        
+
         if let completion = pendingCompletion {
             completion(false)
             pendingCompletion = nil
@@ -98,7 +103,7 @@ struct MapPrivacyAlert: View {
     let onReject: () -> Void
     @State private var animateContent = false
     @State private var isVisible = false
-    
+
     var body: some View {
         ZStack {
             // Only show content when isPresented is true
@@ -106,7 +111,7 @@ struct MapPrivacyAlert: View {
                 // Dimmed background
                 Color.black.opacity(0.7)
                     .edgesIgnoringSafeArea(.all)
-                
+
                 // Alert content
                 VStack(spacing: 25) {
                     // Header with icon
@@ -115,53 +120,80 @@ struct MapPrivacyAlert: View {
                         ZStack {
                             // Outer pulse
                             Circle()
-                                .fill(Color(red: 220/255, green: 38/255, blue: 38/255).opacity(0.3))
+                                .fill(
+                                    Color(
+                                        red: 220 / 255, green: 38 / 255,
+                                        blue: 38 / 255
+                                    ).opacity(0.3)
+                                )
                                 .frame(width: 90, height: 90)
                                 .scaleEffect(animateContent ? 1.3 : 0.8)
                                 .opacity(animateContent ? 0.0 : 0.5)
-                            
+
                             // Inner circle
                             Circle()
-                                .fill(LinearGradient(
-                                    colors: [
-                                        Color(red: 220/255, green: 38/255, blue: 38/255),
-                                        Color(red: 185/255, green: 28/255, blue: 28/255)
-                                    ],
-                                    startPoint: .top,
-                                    endPoint: .bottom
-                                ))
+                                .fill(
+                                    LinearGradient(
+                                        colors: [
+                                            Color(
+                                                red: 220 / 255, green: 38 / 255,
+                                                blue: 38 / 255),
+                                            Color(
+                                                red: 185 / 255, green: 28 / 255,
+                                                blue: 28 / 255),
+                                        ],
+                                        startPoint: .top,
+                                        endPoint: .bottom
+                                    )
+                                )
                                 .frame(width: 70, height: 70)
-                            
+
                             // Icon
                             Image(systemName: "map.fill")
                                 .font(.system(size: 32))
                                 .foregroundColor(.white)
-                                .shadow(color: Color.white.opacity(0.5), radius: 4)
+                                .shadow(
+                                    color: Color.white.opacity(0.5), radius: 4)
                         }
-                        
+
                         Text("FRIENDS MAP PRIVACY")
                             .font(.system(size: 20, weight: .black))
                             .tracking(4)
                             .foregroundColor(.white)
-                            .shadow(color: Color(red: 220/255, green: 38/255, blue: 38/255).opacity(0.6), radius: 8)
+                            .shadow(
+                                color: Color(
+                                    red: 220 / 255, green: 38 / 255,
+                                    blue: 38 / 255
+                                ).opacity(0.6), radius: 8)
                     }
                     .padding(.top, 10)
-                    
+
                     // Explanation text
-                    Text("The Friends Map feature shows your focus session locations to other users. Your privacy is important to us:")
-                        .font(.system(size: 16))
-                        .foregroundColor(.white)
-                        .multilineTextAlignment(.center)
-                        .padding(.horizontal, 20)
-                    
+                    Text(
+                        "The Friends Map feature shows your focus session locations to other users. Your privacy is important to us:"
+                    )
+                    .font(.system(size: 16))
+                    .foregroundColor(.white)
+                    .multilineTextAlignment(.center)
+                    .padding(.horizontal, 20)
+
                     // Privacy bullet points
                     VStack(alignment: .leading, spacing: 15) {
-                        privacyPoint(icon: "checkmark.circle.fill", text: "Only your last 3 session locations are shown")
-                        privacyPoint(icon: "checkmark.circle.fill", text: "Your current location is NEVER stored or shared")
-                        privacyPoint(icon: "checkmark.circle.fill", text: "You can change map privacy settings anytime")
+                        privacyPoint(
+                            icon: "checkmark.circle.fill",
+                            text: "Only your last 3 session locations are shown"
+                        )
+                        privacyPoint(
+                            icon: "checkmark.circle.fill",
+                            text:
+                                "Your current location is NEVER stored or shared"
+                        )
+                        privacyPoint(
+                            icon: "checkmark.circle.fill",
+                            text: "You can change map privacy settings anytime")
                     }
                     .padding(.horizontal, 20)
-                    
+
                     // Buttons
                     HStack(spacing: 15) {
                         // Decline button
@@ -178,11 +210,13 @@ struct MapPrivacyAlert: View {
                                         .fill(Color.white.opacity(0.2))
                                         .overlay(
                                             RoundedRectangle(cornerRadius: 12)
-                                                .stroke(Color.white.opacity(0.3), lineWidth: 1)
+                                                .stroke(
+                                                    Color.white.opacity(0.3),
+                                                    lineWidth: 1)
                                         )
                                 )
                         }
-                        
+
                         // Accept button
                         Button(action: {
                             handleAccept()
@@ -194,10 +228,16 @@ struct MapPrivacyAlert: View {
                                 .padding(.vertical, 15)
                                 .background(
                                     RoundedRectangle(cornerRadius: 12)
-                                        .fill(Color(red: 220/255, green: 38/255, blue: 38/255))
+                                        .fill(
+                                            Color(
+                                                red: 220 / 255, green: 38 / 255,
+                                                blue: 38 / 255)
+                                        )
                                         .overlay(
                                             RoundedRectangle(cornerRadius: 12)
-                                                .stroke(Color.white.opacity(0.3), lineWidth: 1)
+                                                .stroke(
+                                                    Color.white.opacity(0.3),
+                                                    lineWidth: 1)
                                         )
                                 )
                         }
@@ -212,25 +252,29 @@ struct MapPrivacyAlert: View {
                             .fill(
                                 LinearGradient(
                                     colors: [
-                                        Color(red: 30/255, green: 14/255, blue: 50/255),
-                                        Color(red: 38/255, green: 18/255, blue: 58/255)
+                                        Color(
+                                            red: 30 / 255, green: 14 / 255,
+                                            blue: 50 / 255),
+                                        Color(
+                                            red: 38 / 255, green: 18 / 255,
+                                            blue: 58 / 255),
                                     ],
                                     startPoint: .top,
                                     endPoint: .bottom
                                 )
                             )
-                        
+
                         // Glass effect
                         RoundedRectangle(cornerRadius: 25)
                             .fill(Color.white.opacity(0.05))
-                        
+
                         // Border
                         RoundedRectangle(cornerRadius: 25)
                             .stroke(
                                 LinearGradient(
                                     colors: [
                                         Color.white.opacity(0.6),
-                                        Color.white.opacity(0.1)
+                                        Color.white.opacity(0.1),
                                     ],
                                     startPoint: .topLeading,
                                     endPoint: .bottomTrailing
@@ -261,7 +305,7 @@ struct MapPrivacyAlert: View {
             }
         }
     }
-    
+
     private func showAlert() {
         print("Showing privacy alert")
         isVisible = true
@@ -269,25 +313,28 @@ struct MapPrivacyAlert: View {
             withAnimation(.spring(response: 0.5, dampingFraction: 0.8)) {
                 animateContent = true
             }
-            
+
             // Start the pulse animation
-            withAnimation(Animation.easeInOut(duration: 2).repeatForever(autoreverses: true)) {
+            withAnimation(
+                Animation.easeInOut(duration: 2).repeatForever(
+                    autoreverses: true)
+            ) {
                 animateContent = true
             }
         }
     }
-    
+
     private func hideAlert() {
         print("Hiding privacy alert")
         withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
             animateContent = false
         }
-        
+
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
             isVisible = false
         }
     }
-    
+
     private func handleAccept() {
         print("User tapped Accept")
         withAnimation {
@@ -295,7 +342,7 @@ struct MapPrivacyAlert: View {
         }
         onAccept()
     }
-    
+
     private func handleReject() {
         print("User tapped Decline")
         withAnimation {
@@ -303,14 +350,16 @@ struct MapPrivacyAlert: View {
         }
         onReject()
     }
-    
+
     private func privacyPoint(icon: String, text: String) -> some View {
         HStack(alignment: .top, spacing: 12) {
             Image(systemName: icon)
-                .foregroundColor(Color(red: 220/255, green: 38/255, blue: 38/255))
+                .foregroundColor(
+                    Color(red: 220 / 255, green: 38 / 255, blue: 38 / 255)
+                )
                 .font(.system(size: 16))
                 .frame(width: 24, alignment: .center)
-            
+
             Text(text)
                 .font(.system(size: 15))
                 .foregroundColor(.white)

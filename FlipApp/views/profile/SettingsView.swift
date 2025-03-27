@@ -1,6 +1,6 @@
-import SwiftUI
 import FirebaseAuth
 import FirebaseFirestore
+import SwiftUI
 
 class SettingsViewModel: ObservableObject {
     @Published var friendFailureNotifications = true
@@ -9,42 +9,51 @@ class SettingsViewModel: ObservableObject {
     @Published var commentNotifications = true
     @Published var regionalDisplayMode: RegionalDisplayMode = .normal
     @Published var regionalOptOut = false
-    
+
     private let db = Firestore.firestore()
-    
+
     init() {
         loadSettings()
     }
-    
+
     func loadSettings() {
         guard let userId = Auth.auth().currentUser?.uid else { return }
-        
+
         // Load notification and privacy settings
-        db.collection("user_settings").document(userId).getDocument { [weak self] document, error in
+        db.collection("user_settings").document(userId).getDocument {
+            [weak self] document, error in
             guard let self = self else { return }
-            
-            if let document = document, document.exists, let data = document.data() {
+
+            if let document = document, document.exists,
+                let data = document.data()
+            {
                 // Load friend failure notification setting (default to ON if not set)
-                self.friendFailureNotifications = data["friendFailureNotifications"] as? Bool ?? true
-                
+                self.friendFailureNotifications =
+                    data["friendFailureNotifications"] as? Bool ?? true
+
                 // Load comment notifications setting (default to ON if not set)
-                self.commentNotifications = data["commentNotifications"] as? Bool ?? true
-                
+                self.commentNotifications =
+                    data["commentNotifications"] as? Bool ?? true
+
                 // Load visibility level (default to friendsOnly if not set)
                 if let visibilityString = data["visibilityLevel"] as? String,
-                   let visibility = LocationVisibilityLevel(rawValue: visibilityString) {
+                    let visibility = LocationVisibilityLevel(
+                        rawValue: visibilityString)
+                {
                     self.visibilityLevel = visibility
                 }
-                
+
                 // Load session history setting (default to ON if not set)
-                self.showSessionHistory = data["showSessionHistory"] as? Bool ?? true
-                
+                self.showSessionHistory =
+                    data["showSessionHistory"] as? Bool ?? true
+
                 // Load regional display mode (default to normal if not set)
                 if let modeString = data["regionalDisplayMode"] as? String,
-                   let mode = RegionalDisplayMode(rawValue: modeString) {
+                    let mode = RegionalDisplayMode(rawValue: modeString)
+                {
                     self.regionalDisplayMode = mode
                 }
-                
+
                 // Load regional opt out setting (default to OFF if not set)
                 self.regionalOptOut = data["regionalOptOut"] as? Bool ?? false
             } else {
@@ -59,10 +68,10 @@ class SettingsViewModel: ObservableObject {
             }
         }
     }
-    
+
     func saveSettings() {
         guard let userId = Auth.auth().currentUser?.uid else { return }
-        
+
         let settings: [String: Any] = [
             "friendFailureNotifications": friendFailureNotifications,
             "commentNotifications": commentNotifications,
@@ -70,49 +79,51 @@ class SettingsViewModel: ObservableObject {
             "showSessionHistory": showSessionHistory,
             "regionalDisplayMode": regionalDisplayMode.rawValue,
             "regionalOptOut": regionalOptOut,
-            "updatedAt": FieldValue.serverTimestamp()
+            "updatedAt": FieldValue.serverTimestamp(),
         ]
-        
-        db.collection("user_settings").document(userId).setData(settings, merge: true) { error in
+
+        db.collection("user_settings").document(userId).setData(
+            settings, merge: true
+        ) { error in
             if let error = error {
                 print("Error saving settings: \(error.localizedDescription)")
             }
         }
     }
-    
+
     func toggleCommentNotifications() {
         commentNotifications.toggle()
         saveSettings()
     }
-    
+
     func updateVisibilityLevel(_ level: LocationVisibilityLevel) {
         visibilityLevel = level
         saveSettings()
     }
-    
+
     func toggleFriendFailureNotifications() {
         friendFailureNotifications.toggle()
         saveSettings()
     }
-    
+
     func toggleShowSessionHistory() {
         showSessionHistory.toggle()
         saveSettings()
     }
-    
+
     // New methods for regional privacy settings
     func updateRegionalDisplayMode(_ mode: RegionalDisplayMode) {
         regionalDisplayMode = mode
         saveSettings()
-        
+
         // Update in UserSettingsManager too for immediate effect
         UserSettingsManager.shared.setRegionalDisplayMode(mode)
     }
-    
+
     func toggleRegionalOptOut() {
         regionalOptOut.toggle()
         saveSettings()
-        
+
         // Update in UserSettingsManager too for immediate effect
         UserSettingsManager.shared.setRegionalOptOut(regionalOptOut)
     }
@@ -124,39 +135,42 @@ struct SettingsView: View {
     @State private var showPrivacyPolicy = false
     @State private var showPermissionResetAlert = false
     @State private var animateSettings = false
-    
+
     // Colors from the app's theme
-    private let cyanBlueAccent = Color(red: 56/255, green: 189/255, blue: 248/255)
-    private let deepPurple = Color(red: 26/255, green: 14/255, blue: 47/255)
-    private let darkPurple = Color(red: 30/255, green: 30/255, blue: 46/255)
-    
+    private let cyanBlueAccent = Color(
+        red: 56 / 255, green: 189 / 255, blue: 248 / 255)
+    private let deepPurple = Color(
+        red: 26 / 255, green: 14 / 255, blue: 47 / 255)
+    private let darkPurple = Color(
+        red: 30 / 255, green: 30 / 255, blue: 46 / 255)
+
     var body: some View {
         NavigationView {
             ZStack {
                 // Background gradient
                 LinearGradient(
                     colors: [
-                        Color(red: 20/255, green: 10/255, blue: 40/255),
-                        Color(red: 30/255, green: 18/255, blue: 60/255)
+                        Color(red: 20 / 255, green: 10 / 255, blue: 40 / 255),
+                        Color(red: 30 / 255, green: 18 / 255, blue: 60 / 255),
                     ],
                     startPoint: .top,
                     endPoint: .bottom
                 )
                 .edgesIgnoringSafeArea(.all)
-                
+
                 // Decorative background elements
                 Circle()
                     .fill(cyanBlueAccent.opacity(0.1))
                     .frame(width: 300)
                     .offset(x: 150, y: -200)
                     .blur(radius: 60)
-                
+
                 Circle()
                     .fill(cyanBlueAccent.opacity(0.08))
                     .frame(width: 250)
                     .offset(x: -150, y: 300)
                     .blur(radius: 50)
-                
+
                 ScrollView {
                     VStack(spacing: 25) {
                         // Section Header
@@ -169,20 +183,23 @@ struct SettingsView: View {
                             .padding(.bottom, 10)
                             .opacity(animateSettings ? 1 : 0)
                             .offset(y: animateSettings ? 0 : -20)
-                        
+
                         // Notifications Section
                         SettingsSection(title: "NOTIFICATIONS") {
                             VStack(spacing: 15) {
                                 // Friend Failure Toggle
                                 ToggleSettingRow(
                                     title: "Friend Failure Alerts",
-                                    subtitle: "Get notified when your friends fail a session? WARNING: Turning this on also allows your failed sessions to notify your friends too.",
+                                    subtitle:
+                                        "Get notified when your friends fail a session? WARNING: Turning this on also allows your failed sessions to notify your friends too.",
                                     isOn: $viewModel.friendFailureNotifications,
-                                    action: viewModel.toggleFriendFailureNotifications
+                                    action: viewModel
+                                        .toggleFriendFailureNotifications
                                 )
                                 ToggleSettingRow(
                                     title: "Comment Notifications",
-                                    subtitle: "Get notified when someone comments on your focus sessions",
+                                    subtitle:
+                                        "Get notified when someone comments on your focus sessions",
                                     isOn: $viewModel.commentNotifications,
                                     action: viewModel.toggleCommentNotifications
                                 )
@@ -190,7 +207,7 @@ struct SettingsView: View {
                             }
                         }
                         .offset(x: animateSettings ? 0 : -300)
-                        
+
                         // Privacy Section
                         SettingsSection(title: "PRIVACY") {
                             VStack(spacing: 20) {
@@ -200,51 +217,67 @@ struct SettingsView: View {
                                         .font(.system(size: 14, weight: .bold))
                                         .tracking(2)
                                         .foregroundColor(.white.opacity(0.7))
-                                    
+
                                     // Radio button options
                                     privacyOption(
                                         title: "Everyone",
-                                        description: "All users can see where your past flips were",
-                                        isSelected: viewModel.visibilityLevel == .everyone
+                                        description:
+                                            "All users can see where your past flips were",
+                                        isSelected: viewModel.visibilityLevel
+                                            == .everyone
                                     ) {
-                                        viewModel.updateVisibilityLevel(.everyone)
+                                        viewModel.updateVisibilityLevel(
+                                            .everyone)
                                     }
 
                                     privacyOption(
                                         title: "Friends Only",
-                                        description: "Only friends can see your past & live flips",
-                                        isSelected: viewModel.visibilityLevel == .friendsOnly
+                                        description:
+                                            "Only friends can see your past & live flips",
+                                        isSelected: viewModel.visibilityLevel
+                                            == .friendsOnly
                                     ) {
-                                        viewModel.updateVisibilityLevel(.friendsOnly)
+                                        viewModel.updateVisibilityLevel(
+                                            .friendsOnly)
                                     }
 
                                     privacyOption(
                                         title: "Nobody",
-                                        description: "Your flips are hidden from everyone",
-                                        isSelected: viewModel.visibilityLevel == .nobody
+                                        description:
+                                            "Your flips are hidden from everyone",
+                                        isSelected: viewModel.visibilityLevel
+                                            == .nobody
                                     ) {
                                         viewModel.updateVisibilityLevel(.nobody)
                                     }
                                 }
-                                
+
                                 Divider()
                                     .background(Color.white.opacity(0.2))
                                     .padding(.vertical, 5)
-                                
+
                                 // Session History Toggle
                                 Toggle(isOn: $viewModel.showSessionHistory) {
                                     VStack(alignment: .leading, spacing: 4) {
                                         Text("Show Past Sessions on Map")
-                                            .font(.system(size: 16, weight: .semibold))
+                                            .font(
+                                                .system(
+                                                    size: 16, weight: .semibold)
+                                            )
                                             .foregroundColor(.white)
-                                        
-                                        Text("When enabled, the map will show your past session locations")
-                                            .font(.system(size: 14))
-                                            .foregroundColor(.white.opacity(0.7))
+
+                                        Text(
+                                            "When enabled, the map will show your past session locations"
+                                        )
+                                        .font(.system(size: 14))
+                                        .foregroundColor(.white.opacity(0.7))
                                     }
                                 }
-                                .toggleStyle(SwitchToggleStyle(tint: cyanBlueAccent))
-                                .onChange(of: viewModel.showSessionHistory) { _ in
+                                .toggleStyle(
+                                    SwitchToggleStyle(tint: cyanBlueAccent)
+                                )
+                                .onChange(of: viewModel.showSessionHistory) {
+                                    _ in
                                     viewModel.saveSettings()
                                 }
                                 Divider()
@@ -252,23 +285,28 @@ struct SettingsView: View {
                                     .padding(.vertical, 5)
 
                                 RegionalPrivacySection(viewModel: viewModel)
-                                
+
                                 // Privacy Information
                                 VStack(alignment: .leading, spacing: 10) {
                                     HStack(spacing: 10) {
                                         Image(systemName: "lock.shield.fill")
                                             .font(.system(size: 18))
                                             .foregroundColor(cyanBlueAccent)
-                                        
+
                                         Text("Your Data Privacy")
-                                            .font(.system(size: 16, weight: .bold))
+                                            .font(
+                                                .system(size: 16, weight: .bold)
+                                            )
                                             .foregroundColor(.white)
                                     }
-                                    
-                                    Text("Your current location data is NEVER stored, solely your last 3 session locations on the friends map if permitted. FLIP will only ever store your last 3 sessions in its private database that's secure and protected.")
-                                        .font(.system(size: 14))
-                                        .foregroundColor(.white.opacity(0.8))
-                                        .fixedSize(horizontal: false, vertical: true)
+
+                                    Text(
+                                        "Your current location data is NEVER stored, solely your last 3 session locations on the friends map if permitted. FLIP will only ever store your last 3 sessions in its private database that's secure and protected."
+                                    )
+                                    .font(.system(size: 14))
+                                    .foregroundColor(.white.opacity(0.8))
+                                    .fixedSize(
+                                        horizontal: false, vertical: true)
                                 }
                                 .padding()
                                 .background(
@@ -276,10 +314,12 @@ struct SettingsView: View {
                                         .fill(cyanBlueAccent.opacity(0.1))
                                         .overlay(
                                             RoundedRectangle(cornerRadius: 12)
-                                                .stroke(cyanBlueAccent.opacity(0.3), lineWidth: 1)
+                                                .stroke(
+                                                    cyanBlueAccent.opacity(0.3),
+                                                    lineWidth: 1)
                                         )
                                 )
-                                
+
                                 // Privacy Policy Button
                                 Button(action: {
                                     showPrivacyPolicy = true
@@ -288,16 +328,20 @@ struct SettingsView: View {
                                         Image(systemName: "doc.text")
                                             .font(.system(size: 18))
                                             .foregroundColor(cyanBlueAccent)
-                                        
+
                                         Text("Privacy Policy")
-                                            .font(.system(size: 16, weight: .semibold))
+                                            .font(
+                                                .system(
+                                                    size: 16, weight: .semibold)
+                                            )
                                             .foregroundColor(.white)
-                                        
+
                                         Spacer()
-                                        
+
                                         Image(systemName: "chevron.right")
                                             .font(.system(size: 14))
-                                            .foregroundColor(.white.opacity(0.5))
+                                            .foregroundColor(
+                                                .white.opacity(0.5))
                                     }
                                     .padding()
                                     .background(
@@ -306,27 +350,35 @@ struct SettingsView: View {
                                     )
                                 }
                                 .buttonStyle(PlainButtonStyle())
-                                
+
                                 // Data Deletion Request Button
                                 Button(action: {
-                                    if let emailURL = URL(string: "mailto:jex@jajajeev.com?subject=Data%20Deletion%20Request") {
+                                    if let emailURL = URL(
+                                        string:
+                                            "mailto:jex@jajajeev.com?subject=Data%20Deletion%20Request"
+                                    ) {
                                         UIApplication.shared.open(emailURL)
                                     }
                                 }) {
                                     HStack {
                                         Image(systemName: "trash.fill")
                                             .font(.system(size: 18))
-                                            .foregroundColor(Color.red.opacity(0.8))
-                                        
+                                            .foregroundColor(
+                                                Color.red.opacity(0.8))
+
                                         Text("Request Data Deletion")
-                                            .font(.system(size: 16, weight: .semibold))
+                                            .font(
+                                                .system(
+                                                    size: 16, weight: .semibold)
+                                            )
                                             .foregroundColor(.white)
-                                        
+
                                         Spacer()
-                                        
+
                                         Image(systemName: "envelope")
                                             .font(.system(size: 14))
-                                            .foregroundColor(.white.opacity(0.5))
+                                            .foregroundColor(
+                                                .white.opacity(0.5))
                                     }
                                     .padding()
                                     .background(
@@ -335,25 +387,32 @@ struct SettingsView: View {
                                     )
                                 }
                                 .buttonStyle(PlainButtonStyle())
-                                
+
                                 // Reset Permissions Button
                                 Button(action: {
                                     showPermissionResetAlert = true
                                 }) {
                                     HStack {
-                                        Image(systemName: "arrow.triangle.2.circlepath")
-                                            .font(.system(size: 18))
-                                            .foregroundColor(Color.orange)
-                                        
+                                        Image(
+                                            systemName:
+                                                "arrow.triangle.2.circlepath"
+                                        )
+                                        .font(.system(size: 18))
+                                        .foregroundColor(Color.orange)
+
                                         Text("Reset Permissions")
-                                            .font(.system(size: 16, weight: .semibold))
+                                            .font(
+                                                .system(
+                                                    size: 16, weight: .semibold)
+                                            )
                                             .foregroundColor(.white)
-                                        
+
                                         Spacer()
-                                        
+
                                         Image(systemName: "chevron.right")
                                             .font(.system(size: 14))
-                                            .foregroundColor(.white.opacity(0.5))
+                                            .foregroundColor(
+                                                .white.opacity(0.5))
                                     }
                                     .padding()
                                     .background(
@@ -365,23 +424,27 @@ struct SettingsView: View {
                             }
                         }
                         .offset(x: animateSettings ? 0 : 300)
-                        
+
                         // Support Section
                         SettingsSection(title: "SUPPORT") {
                             Button(action: {
                                 showHelpSheet = true
                             }) {
                                 HStack {
-                                    Image(systemName: "questionmark.circle.fill")
-                                        .font(.system(size: 18))
-                                        .foregroundColor(cyanBlueAccent)
-                                    
+                                    Image(
+                                        systemName: "questionmark.circle.fill"
+                                    )
+                                    .font(.system(size: 18))
+                                    .foregroundColor(cyanBlueAccent)
+
                                     Text("Help & Support")
-                                        .font(.system(size: 16, weight: .semibold))
+                                        .font(
+                                            .system(size: 16, weight: .semibold)
+                                        )
                                         .foregroundColor(.white)
-                                    
+
                                     Spacer()
-                                    
+
                                     Image(systemName: "chevron.right")
                                         .font(.system(size: 14))
                                         .foregroundColor(.white.opacity(0.5))
@@ -396,14 +459,16 @@ struct SettingsView: View {
                         }
                         .opacity(animateSettings ? 1 : 0)
                         .offset(y: animateSettings ? 0 : 50)
-                        
+
                         // Sign Out Button - Destructive Action
                         VStack(spacing: 10) {
                             Button(action: {
                                 presentationMode.wrappedValue.dismiss()
-                                DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-                                        AuthManager.shared.signOut()
-                                    }
+                                DispatchQueue.main.asyncAfter(
+                                    deadline: .now() + 0.3
+                                ) {
+                                    AuthManager.shared.signOut()
+                                }
                             }) {
                                 Text("Sign Out")
                                     .font(.system(size: 16, weight: .bold))
@@ -414,13 +479,17 @@ struct SettingsView: View {
                                         RoundedRectangle(cornerRadius: 12)
                                             .fill(Color.red.opacity(0.7))
                                             .overlay(
-                                                RoundedRectangle(cornerRadius: 12)
-                                                    .stroke(Color.white.opacity(0.1), lineWidth: 1)
+                                                RoundedRectangle(
+                                                    cornerRadius: 12
+                                                )
+                                                .stroke(
+                                                    Color.white.opacity(0.1),
+                                                    lineWidth: 1)
                                             )
                                     )
                             }
                             .buttonStyle(PlainButtonStyle())
-                            
+
                             // App version
                             Text("Flip v1.0.0")
                                 .font(.system(size: 12))
@@ -436,13 +505,15 @@ struct SettingsView: View {
                 }
             }
             .navigationBarTitle("", displayMode: .inline)
-            .navigationBarItems(trailing: Button(action: {
-                presentationMode.wrappedValue.dismiss()
-            }) {
-                Image(systemName: "xmark.circle.fill")
-                    .font(.system(size: 24))
-                    .foregroundColor(.white.opacity(0.8))
-            })
+            .navigationBarItems(
+                trailing: Button(action: {
+                    presentationMode.wrappedValue.dismiss()
+                }) {
+                    Image(systemName: "xmark.circle.fill")
+                        .font(.system(size: 24))
+                        .foregroundColor(.white.opacity(0.8))
+                }
+            )
             .sheet(isPresented: $showHelpSheet) {
                 HelpSupportView()
             }
@@ -452,13 +523,19 @@ struct SettingsView: View {
             .alert(isPresented: $showPermissionResetAlert) {
                 Alert(
                     title: Text("Reset Permissions"),
-                    message: Text("This will restart the permission setup process. Continue?"),
+                    message: Text(
+                        "This will restart the permission setup process. Continue?"
+                    ),
                     primaryButton: .default(Text("Reset")) {
                         // Reset permission flow flag
-                        UserDefaults.standard.set(true, forKey: "isResettingPermissions")
-                        UserDefaults.standard.set(false, forKey: "hasCompletedPermissionFlow")
+                        UserDefaults.standard.set(
+                            true, forKey: "isResettingPermissions")
+                        UserDefaults.standard.set(
+                            false, forKey: "hasCompletedPermissionFlow")
                         // Restart app with InitialView
-                        NotificationCenter.default.post(name: NSNotification.Name("ShowPermissionsFlow"), object: nil)
+                        NotificationCenter.default.post(
+                            name: NSNotification.Name("ShowPermissionsFlow"),
+                            object: nil)
                     },
                     secondaryButton: .cancel()
                 )
@@ -470,8 +547,11 @@ struct SettingsView: View {
             }
         }
     }
-    
-    private func privacyOption(title: String, description: String, isSelected: Bool, action: @escaping () -> Void) -> some View {
+
+    private func privacyOption(
+        title: String, description: String, isSelected: Bool,
+        action: @escaping () -> Void
+    ) -> some View {
         Button(action: action) {
             HStack(spacing: 15) {
                 // Radio button
@@ -479,25 +559,25 @@ struct SettingsView: View {
                     Circle()
                         .stroke(Color.white.opacity(0.5), lineWidth: 2)
                         .frame(width: 24, height: 24)
-                    
+
                     if isSelected {
                         Circle()
                             .fill(cyanBlueAccent)
                             .frame(width: 16, height: 16)
                     }
                 }
-                
+
                 // Text
                 VStack(alignment: .leading, spacing: 2) {
                     Text(title)
                         .font(.system(size: 16, weight: .bold))
                         .foregroundColor(.white)
-                    
+
                     Text(description)
                         .font(.system(size: 14))
                         .foregroundColor(.white.opacity(0.7))
                 }
-                
+
                 Spacer()
             }
             .padding(.vertical, 10)
@@ -505,8 +585,9 @@ struct SettingsView: View {
             .background(
                 ZStack {
                     RoundedRectangle(cornerRadius: 12)
-                        .fill(isSelected ? Color.white.opacity(0.1) : Color.clear)
-                    
+                        .fill(
+                            isSelected ? Color.white.opacity(0.1) : Color.clear)
+
                     if isSelected {
                         RoundedRectangle(cornerRadius: 12)
                             .stroke(cyanBlueAccent.opacity(0.5), lineWidth: 1)
@@ -519,25 +600,28 @@ struct SettingsView: View {
 
 struct RegionalPrivacySection: View {
     @ObservedObject var viewModel: SettingsViewModel
-    private let cyanBlueAccent = Color(red: 56/255, green: 189/255, blue: 248/255)
-    
+    private let cyanBlueAccent = Color(
+        red: 56 / 255, green: 189 / 255, blue: 248 / 255)
+
     var body: some View {
         VStack(alignment: .leading, spacing: 15) {
             Text("REGIONAL LEADERBOARD PRIVACY")
                 .font(.system(size: 14, weight: .bold))
                 .tracking(2)
                 .foregroundColor(.white.opacity(0.7))
-            
+
             // Opt Out Toggle
             Toggle(isOn: $viewModel.regionalOptOut) {
                 VStack(alignment: .leading, spacing: 4) {
                     Text("Opt Out of Leaderboard")
                         .font(.system(size: 16, weight: .semibold))
                         .foregroundColor(.white)
-                    
-                    Text("When enabled, your sessions won't appear on any regional leaderboards")
-                        .font(.system(size: 14))
-                        .foregroundColor(.white.opacity(0.7))
+
+                    Text(
+                        "When enabled, your sessions won't appear on any regional leaderboards"
+                    )
+                    .font(.system(size: 14))
+                    .foregroundColor(.white.opacity(0.7))
                 }
             }
             .toggleStyle(SwitchToggleStyle(tint: cyanBlueAccent))
@@ -553,22 +637,24 @@ struct RegionalPrivacySection: View {
                             .stroke(Color.white.opacity(0.2), lineWidth: 1)
                     )
             )
-            
+
             // Display Mode Selection (only visible if not opted out)
             if !viewModel.regionalOptOut {
                 VStack(alignment: .leading, spacing: 12) {
                     Text("Display Name Option")
                         .font(.system(size: 16, weight: .semibold))
                         .foregroundColor(.white)
-                    
+
                     HStack(spacing: 20) {
                         // Normal display mode
                         VStack {
                             ZStack {
                                 Circle()
-                                    .stroke(Color.white.opacity(0.5), lineWidth: 2)
+                                    .stroke(
+                                        Color.white.opacity(0.5), lineWidth: 2
+                                    )
                                     .frame(width: 24, height: 24)
-                                
+
                                 if viewModel.regionalDisplayMode == .normal {
                                     Circle()
                                         .fill(cyanBlueAccent)
@@ -578,19 +664,21 @@ struct RegionalPrivacySection: View {
                             .onTapGesture {
                                 viewModel.updateRegionalDisplayMode(.normal)
                             }
-                            
+
                             Text("Normal")
                                 .font(.system(size: 14))
                                 .foregroundColor(.white)
                         }
-                        
+
                         // Anonymous display mode
                         VStack {
                             ZStack {
                                 Circle()
-                                    .stroke(Color.white.opacity(0.5), lineWidth: 2)
+                                    .stroke(
+                                        Color.white.opacity(0.5), lineWidth: 2
+                                    )
                                     .frame(width: 24, height: 24)
-                                
+
                                 if viewModel.regionalDisplayMode == .anonymous {
                                     Circle()
                                         .fill(cyanBlueAccent)
@@ -600,19 +688,21 @@ struct RegionalPrivacySection: View {
                             .onTapGesture {
                                 viewModel.updateRegionalDisplayMode(.anonymous)
                             }
-                            
+
                             Text("Anonymous")
                                 .font(.system(size: 14))
                                 .foregroundColor(.white)
                         }
                     }
-                    
-                    Text(viewModel.regionalDisplayMode == .normal ?
-                        "Your username and profile picture will be visible on regional leaderboards" :
-                        "You'll appear as 'Anonymous' with a default profile image on regional leaderboards")
-                        .font(.system(size: 14))
-                        .foregroundColor(.white.opacity(0.7))
-                        .fixedSize(horizontal: false, vertical: true)
+
+                    Text(
+                        viewModel.regionalDisplayMode == .normal
+                            ? "Your username and profile picture will be visible on regional leaderboards"
+                            : "You'll appear as 'Anonymous' with a default profile image on regional leaderboards"
+                    )
+                    .font(.system(size: 14))
+                    .foregroundColor(.white.opacity(0.7))
+                    .fixedSize(horizontal: false, vertical: true)
                 }
                 .padding()
                 .background(
@@ -628,15 +718,15 @@ struct RegionalPrivacySection: View {
     }
 }
 
-
 struct ToggleSettingRow: View {
     let title: String
     let subtitle: String
     @Binding var isOn: Bool
     let action: () -> Void
-    
-    private let cyanBlueAccent = Color(red: 56/255, green: 189/255, blue: 248/255)
-    
+
+    private let cyanBlueAccent = Color(
+        red: 56 / 255, green: 189 / 255, blue: 248 / 255)
+
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
             HStack {
@@ -645,16 +735,16 @@ struct ToggleSettingRow: View {
                         .font(.system(size: 16, weight: .semibold))
                         .foregroundColor(.white)
                 }
-                
+
                 Spacer()
-                
+
                 Toggle("", isOn: $isOn)
                     .toggleStyle(SwitchToggleStyle(tint: cyanBlueAccent))
                     .onChange(of: isOn) { _ in
                         action()
                     }
             }
-            
+
             Text(subtitle)
                 .font(.system(size: 14))
                 .foregroundColor(.white.opacity(0.7))
@@ -675,15 +765,18 @@ struct ToggleSettingRow: View {
 struct SettingsSection<Content: View>: View {
     let title: String
     @ViewBuilder let content: Content
-    
+
     var body: some View {
         VStack(alignment: .leading, spacing: 15) {
             Text(title)
                 .font(.system(size: 16, weight: .black))
                 .tracking(5)
                 .foregroundColor(.white)
-                .shadow(color: Color(red: 56/255, green: 189/255, blue: 248/255).opacity(0.4), radius: 4)
-            
+                .shadow(
+                    color: Color(
+                        red: 56 / 255, green: 189 / 255, blue: 248 / 255
+                    ).opacity(0.4), radius: 4)
+
             content
         }
         .padding()
@@ -693,23 +786,27 @@ struct SettingsSection<Content: View>: View {
                     .fill(
                         LinearGradient(
                             colors: [
-                                Color(red: 30/255, green: 18/255, blue: 50/255),
-                                Color(red: 40/255, green: 25/255, blue: 65/255)
+                                Color(
+                                    red: 30 / 255, green: 18 / 255,
+                                    blue: 50 / 255),
+                                Color(
+                                    red: 40 / 255, green: 25 / 255,
+                                    blue: 65 / 255),
                             ],
                             startPoint: .topLeading,
                             endPoint: .bottomTrailing
                         )
                     )
-                
+
                 RoundedRectangle(cornerRadius: 16)
                     .fill(Color.white.opacity(0.05))
-                
+
                 RoundedRectangle(cornerRadius: 16)
                     .stroke(
                         LinearGradient(
                             colors: [
                                 Color.white.opacity(0.5),
-                                Color.white.opacity(0.1)
+                                Color.white.opacity(0.1),
                             ],
                             startPoint: .topLeading,
                             endPoint: .bottomTrailing
@@ -724,25 +821,25 @@ struct SettingsSection<Content: View>: View {
 
 struct HelpSupportView: View {
     @Environment(\.presentationMode) var presentationMode
-    
+
     var body: some View {
         ZStack {
             // Background gradient
             LinearGradient(
                 colors: [
-                    Color(red: 20/255, green: 10/255, blue: 40/255),
-                    Color(red: 30/255, green: 18/255, blue: 60/255)
+                    Color(red: 20 / 255, green: 10 / 255, blue: 40 / 255),
+                    Color(red: 30 / 255, green: 18 / 255, blue: 60 / 255),
                 ],
                 startPoint: .top,
                 endPoint: .bottom
             )
             .edgesIgnoringSafeArea(.all)
-            
+
             VStack(spacing: 30) {
                 // Header
                 HStack {
                     Spacer()
-                    
+
                     Button(action: {
                         presentationMode.wrappedValue.dismiss()
                     }) {
@@ -753,42 +850,55 @@ struct HelpSupportView: View {
                 }
                 .padding(.horizontal)
                 .padding(.top, 20)
-                
+
                 // Content
                 VStack(spacing: 25) {
                     Image(systemName: "bubble.left.and.bubble.right.fill")
                         .font(.system(size: 60))
-                        .foregroundColor(Color(red: 56/255, green: 189/255, blue: 248/255))
+                        .foregroundColor(
+                            Color(
+                                red: 56 / 255, green: 189 / 255, blue: 248 / 255
+                            )
+                        )
                         .padding()
                         .background(
                             Circle()
                                 .fill(Color.white.opacity(0.1))
                                 .frame(width: 120, height: 120)
                         )
-                    
+
                     Text("Need Help?")
                         .font(.system(size: 28, weight: .bold))
                         .foregroundColor(.white)
-                    
-                    Text("Any questions? Found a bug? Just want to say hi? Send an email to jex@jajajeev.com or hit me up on instagram at @jexpearce")
-                        .font(.system(size: 18))
-                        .foregroundColor(.white.opacity(0.9))
-                        .multilineTextAlignment(.center)
-                        .padding(.horizontal, 25)
-                    
+
+                    Text(
+                        "Any questions? Found a bug? Just want to say hi? Send an email to jex@jajajeev.com or hit me up on instagram at @jexpearce"
+                    )
+                    .font(.system(size: 18))
+                    .foregroundColor(.white.opacity(0.9))
+                    .multilineTextAlignment(.center)
+                    .padding(.horizontal, 25)
+
                     // Contact buttons
                     VStack(spacing: 15) {
-                        ContactButton(icon: "envelope.fill", text: "jex@jajajeev.com") {
-                            if let url = URL(string: "mailto:jex@jajajeev.com") {
+                        ContactButton(
+                            icon: "envelope.fill", text: "jex@jajajeev.com"
+                        ) {
+                            if let url = URL(string: "mailto:jex@jajajeev.com")
+                            {
                                 UIApplication.shared.open(url)
                             }
                         }
-                        
+
                         ContactButton(icon: "camera.fill", text: "@jexpearce") {
-                            if let url = URL(string: "instagram://user?username=jexpearce") {
+                            if let url = URL(
+                                string: "instagram://user?username=jexpearce")
+                            {
                                 if UIApplication.shared.canOpenURL(url) {
                                     UIApplication.shared.open(url)
-                                } else if let webURL = URL(string: "https://instagram.com/jexpearce") {
+                                } else if let webURL = URL(
+                                    string: "https://instagram.com/jexpearce")
+                                {
                                     UIApplication.shared.open(webURL)
                                 }
                             }
@@ -796,7 +906,7 @@ struct HelpSupportView: View {
                     }
                     .padding(.top, 15)
                 }
-                
+
                 Spacer()
             }
             .padding()
@@ -808,20 +918,21 @@ struct ContactButton: View {
     let icon: String
     let text: String
     let action: () -> Void
-    
+
     var body: some View {
         Button(action: action) {
             HStack(spacing: 15) {
                 Image(systemName: icon)
                     .font(.system(size: 20))
-                    .foregroundColor(Color(red: 56/255, green: 189/255, blue: 248/255))
-                
+                    .foregroundColor(
+                        Color(red: 56 / 255, green: 189 / 255, blue: 248 / 255))
+
                 Text(text)
                     .font(.system(size: 16, weight: .medium))
                     .foregroundColor(.white)
-                
+
                 Spacer()
-                
+
                 Image(systemName: "arrow.up.right.square")
                     .font(.system(size: 16))
                     .foregroundColor(.white.opacity(0.6))

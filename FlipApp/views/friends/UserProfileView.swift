@@ -3,32 +3,35 @@ import FirebaseFirestore
 import Foundation
 import SwiftUI
 
-
 struct UserProfileLoader: View {
     let userId: String
     @State private var isLoading = true
     @State private var loadedUser: FirebaseManager.FlipUser?
-    
+
     // Match the app's theme
-    private let cyanBlueAccent = Color(red: 56/255, green: 189/255, blue: 248/255)
-    private let cyanBlueGlow = Color(red: 56/255, green: 189/255, blue: 248/255).opacity(0.5)
+    private let cyanBlueAccent = Color(
+        red: 56 / 255, green: 189 / 255, blue: 248 / 255)
+    private let cyanBlueGlow = Color(
+        red: 56 / 255, green: 189 / 255, blue: 248 / 255
+    ).opacity(0.5)
     private let cyanBluePurpleGradient = LinearGradient(
         colors: [
-            Color(red: 20/255, green: 10/255, blue: 40/255),
-            Color(red: 30/255, green: 18/255, blue: 60/255),
-            Color(red: 14/255, green: 101/255, blue: 151/255).opacity(0.7),
-            Color(red: 12/255, green: 74/255, blue: 110/255).opacity(0.6)
+            Color(red: 20 / 255, green: 10 / 255, blue: 40 / 255),
+            Color(red: 30 / 255, green: 18 / 255, blue: 60 / 255),
+            Color(red: 14 / 255, green: 101 / 255, blue: 151 / 255).opacity(
+                0.7),
+            Color(red: 12 / 255, green: 74 / 255, blue: 110 / 255).opacity(0.6),
         ],
         startPoint: .top,
         endPoint: .bottom
     )
-    
+
     var body: some View {
         ZStack {
             // Background gradient to prevent black screen
             cyanBluePurpleGradient
                 .edgesIgnoringSafeArea(.all)
-            
+
             if isLoading || loadedUser == nil {
                 // Loading indicator - styled to match the app
                 VStack(spacing: 20) {
@@ -36,15 +39,17 @@ struct UserProfileLoader: View {
                         Circle()
                             .stroke(cyanBlueAccent.opacity(0.2), lineWidth: 6)
                             .frame(width: 60, height: 60)
-                        
+
                         Circle()
                             .trim(from: 0, to: 0.7)
                             .stroke(cyanBlueAccent, lineWidth: 6)
                             .frame(width: 60, height: 60)
                             .rotationEffect(Angle(degrees: isLoading ? 360 : 0))
-                            .animation(Animation.linear(duration: 1).repeatForever(autoreverses: false), value: isLoading)
+                            .animation(
+                                Animation.linear(duration: 1).repeatForever(
+                                    autoreverses: false), value: isLoading)
                     }
-                    
+
                     Text("Loading profile...")
                         .font(.system(size: 18, weight: .medium))
                         .foregroundColor(.white)
@@ -60,27 +65,29 @@ struct UserProfileLoader: View {
             loadUserData()
         }
     }
-    
+
     private func loadUserData() {
-        FirebaseManager.shared.db.collection("users").document(userId).getDocument { document, error in
-            if let userData = try? document?.data(as: FirebaseManager.FlipUser.self) {
-                DispatchQueue.main.async {
-                    withAnimation {
-                        self.loadedUser = userData
+        FirebaseManager.shared.db.collection("users").document(userId)
+            .getDocument { document, error in
+                if let userData = try? document?.data(
+                    as: FirebaseManager.FlipUser.self)
+                {
+                    DispatchQueue.main.async {
+                        withAnimation {
+                            self.loadedUser = userData
+                            self.isLoading = false
+                        }
+                    }
+                } else {
+                    print("Error loading user profile for ID: \(userId)")
+                    DispatchQueue.main.async {
+                        // Keep loading state visible to prevent black screen
                         self.isLoading = false
                     }
                 }
-            } else {
-                print("Error loading user profile for ID: \(userId)")
-                DispatchQueue.main.async {
-                    // Keep loading state visible to prevent black screen
-                    self.isLoading = false
-                }
             }
-        }
     }
 }
-
 
 struct UserProfileView: View {
     let user: FirebaseManager.FlipUser
@@ -96,50 +103,63 @@ struct UserProfileView: View {
     @StateObject private var friendManager = FriendManager()
     @StateObject private var searchManager = SearchManager()
     @Environment(\.presentationMode) var presentationMode
-    @State private var userScore: Double = 3.0 // Default starting score
+    @State private var userScore: Double = 3.0  // Default starting score
     @State private var userFriends: [FirebaseManager.FlipUser] = []
     @State private var mutualFriends: [FirebaseManager.FlipUser] = []
     @State private var loadingFriends = false
-    @State private var isLoading = true // Add loading state
-    
+    @State private var isLoading = true  // Add loading state
+
     // Cyan-midnight theme colors
     private let cyanBluePurpleGradient = LinearGradient(
         colors: [
-            Color(red: 20/255, green: 10/255, blue: 40/255), // Deep midnight purple
-            Color(red: 30/255, green: 18/255, blue: 60/255), // Medium midnight purple
-            Color(red: 14/255, green: 101/255, blue: 151/255).opacity(0.7), // Dark cyan blue
-            Color(red: 12/255, green: 74/255, blue: 110/255).opacity(0.6)  // Deeper cyan blue
+            Color(red: 20 / 255, green: 10 / 255, blue: 40 / 255),  // Deep midnight purple
+            Color(red: 30 / 255, green: 18 / 255, blue: 60 / 255),  // Medium midnight purple
+            Color(red: 14 / 255, green: 101 / 255, blue: 151 / 255).opacity(
+                0.7),  // Dark cyan blue
+            Color(red: 12 / 255, green: 74 / 255, blue: 110 / 255).opacity(0.6),  // Deeper cyan blue
         ],
         startPoint: .top,
         endPoint: .bottom
     )
-    
-    private let cyanBlueAccent = Color(red: 56/255, green: 189/255, blue: 248/255)
-    private let cyanBlueGlow = Color(red: 56/255, green: 189/255, blue: 248/255).opacity(0.5)
-    
+
+    private let cyanBlueAccent = Color(
+        red: 56 / 255, green: 189 / 255, blue: 248 / 255)
+    private let cyanBlueGlow = Color(
+        red: 56 / 255, green: 189 / 255, blue: 248 / 255
+    ).opacity(0.5)
+
     // Check if this is the current user's profile
     private var isCurrentUser: Bool {
-        guard let currentUserId = Auth.auth().currentUser?.uid else { return false }
+        guard let currentUserId = Auth.auth().currentUser?.uid else {
+            return false
+        }
         return user.id == currentUserId
     }
-    
+
     // Check if this user is a friend
     private var isFriend: Bool {
-        guard let currentUserId = Auth.auth().currentUser?.uid else { return false }
+        guard let currentUserId = Auth.auth().currentUser?.uid else {
+            return false
+        }
         return user.friends.contains(currentUserId)
     }
-    
+
     // Check if we've sent a friend request to this user
     private var hasSentFriendRequest: Bool {
-        guard let currentUserId = Auth.auth().currentUser?.uid else { return false }
+        guard let currentUserId = Auth.auth().currentUser?.uid else {
+            return false
+        }
         // Check both local state and user data
-        return friendRequestSent || FirebaseManager.shared.currentUser?.sentRequests.contains(user.id) ?? false
+        return friendRequestSent
+            || FirebaseManager.shared.currentUser?.sentRequests.contains(
+                user.id) ?? false
     }
-    
+
     private var weeksLongestSession: Int? {
-        return weeklyViewModel.weeksLongestSession > 0 ? weeklyViewModel.weeksLongestSession : nil
+        return weeklyViewModel.weeksLongestSession > 0
+            ? weeklyViewModel.weeksLongestSession : nil
     }
-    
+
     var body: some View {
         ZStack {
             // Enhanced background with decorative elements
@@ -147,7 +167,7 @@ struct UserProfileView: View {
                 cyanBluePurpleGradient: cyanBluePurpleGradient,
                 cyanBlueAccent: cyanBlueAccent
             )
-            
+
             if isLoading {
                 // Enhanced loading indicator overlay
                 VStack(spacing: 20) {
@@ -155,15 +175,17 @@ struct UserProfileView: View {
                         Circle()
                             .stroke(cyanBlueAccent.opacity(0.2), lineWidth: 6)
                             .frame(width: 60, height: 60)
-                        
+
                         Circle()
                             .trim(from: 0, to: 0.7)
                             .stroke(cyanBlueAccent, lineWidth: 6)
                             .frame(width: 60, height: 60)
                             .rotationEffect(Angle(degrees: isLoading ? 360 : 0))
-                            .animation(Animation.linear(duration: 1).repeatForever(autoreverses: false), value: isLoading)
+                            .animation(
+                                Animation.linear(duration: 1).repeatForever(
+                                    autoreverses: false), value: isLoading)
                     }
-                    
+
                     Text("Loading profile...")
                         .font(.system(size: 18, weight: .medium))
                         .foregroundColor(.white)
@@ -184,9 +206,10 @@ struct UserProfileView: View {
                             hasSentFriendRequest: hasSentFriendRequest,
                             showRemoveFriendAlert: $showRemoveFriendAlert,
                             showCancelRequestAlert: $showCancelRequestAlert,
-                            showAddFriendConfirmation: $showAddFriendConfirmation
+                            showAddFriendConfirmation:
+                                $showAddFriendConfirmation
                         )
-                        
+
                         // Friend status badge
                         if !isCurrentUser {
                             FriendStatusBadgeView(
@@ -195,7 +218,7 @@ struct UserProfileView: View {
                             )
                             .padding(.horizontal)
                         }
-                        
+
                         // Friends count button - leads to friends list
                         FriendsCountButton(
                             user: user,
@@ -204,7 +227,7 @@ struct UserProfileView: View {
                             showFriendsList: $showFriendsList,
                             loadUserFriends: loadUserFriends
                         )
-                        
+
                         // Stats Summary Card with button to detailed view
                         EnhancedStatsCardView(
                             user: user,
@@ -229,7 +252,7 @@ struct UserProfileView: View {
                     }
                     .padding(.bottom, 30)
                 }
-                
+
                 // Friends List overlay when activated
                 if showFriendsList {
                     UserFriendsListView(
@@ -240,7 +263,7 @@ struct UserProfileView: View {
                         loadingFriends: loadingFriends
                     )
                 }
-                
+
                 // Alert Overlays
                 AlertOverlays(
                     showRemoveFriendAlert: $showRemoveFriendAlert,
@@ -264,20 +287,20 @@ struct UserProfileView: View {
             FriendStatsView(user: user)
         }
     }
-    
+
     // Function to handle data loading
     private func loadInitialData() {
         // Start loading immediately
         Task {
             // Load sessions data
             weeklyViewModel.loadSessions(for: user.id)
-            
+
             // Load user's score
             loadUserScore()
-            
+
             // Short delay to ensure data is loaded and view rendering is complete
-            try? await Task.sleep(nanoseconds: 500_000_000) // 0.5 seconds
-            
+            try? await Task.sleep(nanoseconds: 500_000_000)  // 0.5 seconds
+
             // Update UI with animation
             withAnimation(.spring()) {
                 isLoading = false
@@ -285,108 +308,127 @@ struct UserProfileView: View {
             }
         }
     }
-    
+
     // Function to load user's score from Firebase
     private func loadUserScore() {
-        FirebaseManager.shared.db.collection("users").document(user.id).getDocument { snapshot, error in
-            if let data = snapshot?.data(), let score = data["score"] as? Double {
-                DispatchQueue.main.async {
-                    self.userScore = score
+        FirebaseManager.shared.db.collection("users").document(user.id)
+            .getDocument { snapshot, error in
+                if let data = snapshot?.data(),
+                    let score = data["score"] as? Double
+                {
+                    DispatchQueue.main.async {
+                        self.userScore = score
+                    }
                 }
             }
-        }
     }
-    
+
     // Function to load a user's friends with mutual friends highlighted
     private func loadUserFriends() {
         guard let currentUserId = Auth.auth().currentUser?.uid else { return }
-        
+
         loadingFriends = true
         userFriends = []
         mutualFriends = []
-        
+
         // Only continue if not viewing own profile (to avoid redundant work)
         if user.id != currentUserId {
             // First, get the current user's friends for comparison
-            FirebaseManager.shared.db.collection("users").document(currentUserId)
-                .getDocument { document, error in
-                    guard let userData = try? document?.data(as: FirebaseManager.FlipUser.self) else {
-                        return
-                    }
-                    
-                    let currentUserFriends = Set(userData.friends)
-                    
-                    // Now load all this user's friends
-                    self.loadFriendsDetails(friendIds: user.friends) { loadedFriends in
-                        DispatchQueue.main.async {
-                            // Separate mutual friends from other friends
-                            for friend in loadedFriends {
-                                if currentUserFriends.contains(friend.id) || friend.id == currentUserId {
-                                    self.mutualFriends.append(friend)
-                                } else {
-                                    self.userFriends.append(friend)
-                                }
+            FirebaseManager.shared.db.collection("users").document(
+                currentUserId
+            )
+            .getDocument { document, error in
+                guard
+                    let userData = try? document?.data(
+                        as: FirebaseManager.FlipUser.self)
+                else {
+                    return
+                }
+
+                let currentUserFriends = Set(userData.friends)
+
+                // Now load all this user's friends
+                self.loadFriendsDetails(friendIds: user.friends) {
+                    loadedFriends in
+                    DispatchQueue.main.async {
+                        // Separate mutual friends from other friends
+                        for friend in loadedFriends {
+                            if currentUserFriends.contains(friend.id)
+                                || friend.id == currentUserId
+                            {
+                                self.mutualFriends.append(friend)
+                            } else {
+                                self.userFriends.append(friend)
                             }
-                            
-                            // Sort both lists alphabetically
-                            self.mutualFriends.sort { $0.username < $1.username }
-                            self.userFriends.sort { $0.username < $1.username }
-                            
-                            self.loadingFriends = false
                         }
+
+                        // Sort both lists alphabetically
+                        self.mutualFriends.sort { $0.username < $1.username }
+                        self.userFriends.sort { $0.username < $1.username }
+
+                        self.loadingFriends = false
                     }
                 }
+            }
         } else {
             // If viewing own profile, just load all friends
             loadFriendsDetails(friendIds: user.friends) { loadedFriends in
                 DispatchQueue.main.async {
-                    self.userFriends = loadedFriends.sorted { $0.username < $1.username }
+                    self.userFriends = loadedFriends.sorted {
+                        $0.username < $1.username
+                    }
                     self.loadingFriends = false
                 }
             }
         }
     }
-    
+
     // Helper function to load friend details
-    private func loadFriendsDetails(friendIds: [String], completion: @escaping ([FirebaseManager.FlipUser]) -> Void) {
+    private func loadFriendsDetails(
+        friendIds: [String],
+        completion: @escaping ([FirebaseManager.FlipUser]) -> Void
+    ) {
         guard !friendIds.isEmpty else {
             completion([])
             return
         }
-        
+
         let db = FirebaseManager.shared.db
         var loadedFriends: [FirebaseManager.FlipUser] = []
         let dispatchGroup = DispatchGroup()
-        
+
         for friendId in friendIds {
             dispatchGroup.enter()
-            
-            db.collection("users").document(friendId).getDocument { document, error in
+
+            db.collection("users").document(friendId).getDocument {
+                document, error in
                 defer { dispatchGroup.leave() }
-                
-                if let userData = try? document?.data(as: FirebaseManager.FlipUser.self) {
+
+                if let userData = try? document?.data(
+                    as: FirebaseManager.FlipUser.self)
+                {
                     loadedFriends.append(userData)
                 }
             }
         }
-        
+
         dispatchGroup.notify(queue: .main) {
             completion(loadedFriends)
         }
     }
-    
+
     // Function to cancel a friend request
     private func cancelFriendRequest(to userId: String) {
         guard let currentUserId = Auth.auth().currentUser?.uid else { return }
-        
+
         let db = FirebaseManager.shared.db
-        
+
         // Remove from recipient's friend requests
         db.collection("users").document(userId)
             .updateData([
                 "friendRequests": FieldValue.arrayRemove([currentUserId])
             ])
-        
+
         // Remove from sender's sent requests
         db.collection("users").document(currentUserId)
             .updateData([
@@ -398,20 +440,20 @@ struct EnhancedProfileBackgroundView: View {
     let cyanBluePurpleGradient: LinearGradient
     let cyanBlueAccent: Color
     @State private var animateGlow = false
-    
+
     var body: some View {
         ZStack {
             // Main background
             cyanBluePurpleGradient
                 .edgesIgnoringSafeArea(.all)
-            
+
             // Animated top decorative glow
             Circle()
                 .fill(
                     RadialGradient(
                         gradient: Gradient(colors: [
                             cyanBlueAccent.opacity(0.3),
-                            cyanBlueAccent.opacity(0.05)
+                            cyanBlueAccent.opacity(0.05),
                         ]),
                         center: .center,
                         startRadius: 10,
@@ -422,15 +464,17 @@ struct EnhancedProfileBackgroundView: View {
                 .offset(x: 150, y: -150)
                 .blur(radius: 40)
                 .opacity(animateGlow ? 0.8 : 0.6)
-                .animation(Animation.easeInOut(duration: 4).repeatForever(autoreverses: true), value: animateGlow)
-            
+                .animation(
+                    Animation.easeInOut(duration: 4).repeatForever(
+                        autoreverses: true), value: animateGlow)
+
             // Bottom decorative glow
             Circle()
                 .fill(
                     RadialGradient(
                         gradient: Gradient(colors: [
                             cyanBlueAccent.opacity(0.2),
-                            cyanBlueAccent.opacity(0.03)
+                            cyanBlueAccent.opacity(0.03),
                         ]),
                         center: .center,
                         startRadius: 5,
@@ -441,15 +485,18 @@ struct EnhancedProfileBackgroundView: View {
                 .offset(x: -120, y: 350)
                 .blur(radius: 35)
                 .opacity(animateGlow ? 0.6 : 0.4)
-                .animation(Animation.easeInOut(duration: 3.5).repeatForever(autoreverses: true).delay(1), value: animateGlow)
-            
+                .animation(
+                    Animation.easeInOut(duration: 3.5).repeatForever(
+                        autoreverses: true
+                    ).delay(1), value: animateGlow)
+
             // Additional smaller accent glow
             Circle()
                 .fill(
                     RadialGradient(
                         gradient: Gradient(colors: [
                             cyanBlueAccent.opacity(0.15),
-                            cyanBlueAccent.opacity(0.01)
+                            cyanBlueAccent.opacity(0.01),
                         ]),
                         center: .center,
                         startRadius: 5,
@@ -460,7 +507,10 @@ struct EnhancedProfileBackgroundView: View {
                 .offset(x: 100, y: 200)
                 .blur(radius: 30)
                 .opacity(animateGlow ? 0.5 : 0.3)
-                .animation(Animation.easeInOut(duration: 5).repeatForever(autoreverses: true).delay(2), value: animateGlow)
+                .animation(
+                    Animation.easeInOut(duration: 5).repeatForever(
+                        autoreverses: true
+                    ).delay(2), value: animateGlow)
         }
         .onAppear {
             animateGlow = true
@@ -480,35 +530,64 @@ struct ProfileHeaderView: View {
     @Binding var showRemoveFriendAlert: Bool
     @Binding var showCancelRequestAlert: Bool
     @Binding var showAddFriendConfirmation: Bool
-    
+
     // Helper function to get rank
     private func getRank(for score: Double) -> (name: String, color: Color) {
         switch score {
-            case 0.0..<30.0:
-                return ("Novice", Color(red: 156/255, green: 163/255, blue: 231/255)) // Periwinkle
-            case 30.0..<60.0:
-                return ("Apprentice", Color(red: 96/255, green: 165/255, blue: 250/255)) // Light blue
-            case 60.0..<90.0:
-                return ("Beginner", Color(red: 59/255, green: 130/255, blue: 246/255)) // Blue
-            case 90.0..<120.0:
-                return ("Steady", Color(red: 16/255, green: 185/255, blue: 129/255)) // Green
-            case 120.0..<150.0:
-                return ("Focused", Color(red: 249/255, green: 180/255, blue: 45/255)) // Bright amber
-            case 150.0..<180.0:
-                return ("Disciplined", Color(red: 249/255, green: 115/255, blue: 22/255)) // Orange
-            case 180.0..<210.0:
-                return ("Resolute", Color(red: 239/255, green: 68/255, blue: 68/255)) // Red
-            case 210.0..<240.0:
-                return ("Master", Color(red: 236/255, green: 72/255, blue: 153/255)) // Pink
-            case 240.0..<270.0:
-                return ("Guru", Color(red: 147/255, green: 51/255, blue: 234/255)) // Vivid purple
-            case 270.0...300.0:
-                return ("Enlightened", Color(red: 236/255, green: 64/255, blue: 255/255)) // Bright fuchsia
-            default:
-                return ("Unranked", Color.gray)
+        case 0.0..<30.0:
+            return (
+                "Novice",
+                Color(red: 156 / 255, green: 163 / 255, blue: 231 / 255)
+            )  // Periwinkle
+        case 30.0..<60.0:
+            return (
+                "Apprentice",
+                Color(red: 96 / 255, green: 165 / 255, blue: 250 / 255)
+            )  // Light blue
+        case 60.0..<90.0:
+            return (
+                "Beginner",
+                Color(red: 59 / 255, green: 130 / 255, blue: 246 / 255)
+            )  // Blue
+        case 90.0..<120.0:
+            return (
+                "Steady",
+                Color(red: 16 / 255, green: 185 / 255, blue: 129 / 255)
+            )  // Green
+        case 120.0..<150.0:
+            return (
+                "Focused",
+                Color(red: 249 / 255, green: 180 / 255, blue: 45 / 255)
+            )  // Bright amber
+        case 150.0..<180.0:
+            return (
+                "Disciplined",
+                Color(red: 249 / 255, green: 115 / 255, blue: 22 / 255)
+            )  // Orange
+        case 180.0..<210.0:
+            return (
+                "Resolute",
+                Color(red: 239 / 255, green: 68 / 255, blue: 68 / 255)
+            )  // Red
+        case 210.0..<240.0:
+            return (
+                "Master",
+                Color(red: 236 / 255, green: 72 / 255, blue: 153 / 255)
+            )  // Pink
+        case 240.0..<270.0:
+            return (
+                "Guru", Color(red: 147 / 255, green: 51 / 255, blue: 234 / 255)
+            )  // Vivid purple
+        case 270.0...300.0:
+            return (
+                "Enlightened",
+                Color(red: 236 / 255, green: 64 / 255, blue: 255 / 255)
+            )  // Bright fuchsia
+        default:
+            return ("Unranked", Color.gray)
         }
     }
-    
+
     var body: some View {
         VStack(alignment: .leading, spacing: 15) {
             HStack(alignment: .top, spacing: 15) {
@@ -519,7 +598,7 @@ struct ProfileHeaderView: View {
                     username: user.username,
                     streakStatus: streakStatus
                 )
-                
+
                 VStack(alignment: .leading, spacing: 8) {
                     // Username with truncation handling
                     Text(user.username)
@@ -529,7 +608,7 @@ struct ProfileHeaderView: View {
                         .lineLimit(1)
                         .truncationMode(.tail)
                         .frame(maxWidth: 180, alignment: .leading)
-                    
+
                     // Display rank name
                     let rank = getRank(for: userScore)
                     Text(rank.name)
@@ -537,39 +616,57 @@ struct ProfileHeaderView: View {
                         .foregroundColor(rank.color)
                         .shadow(color: rank.color.opacity(0.5), radius: 4)
                 }
-                
+
                 Spacer()
-                
+
                 // Rank Circle
                 RankCircle(score: userScore)
                     .frame(width: 60, height: 60)
             }
-            
+
             // Display streak status if active - moved to its own row
             if streakStatus != .none {
                 HStack(spacing: 8) {
                     Image(systemName: "flame.fill")
                         .font(.system(size: 16, weight: .bold))
-                        .foregroundColor(streakStatus == .redFlame ? .red : .orange)
-                        .shadow(color: streakStatus == .redFlame ? Color.red.opacity(0.6) : Color.orange.opacity(0.6), radius: 4)
-                    
-                    Text(streakStatus == .redFlame ? "BLAZING STREAK" : "ON FIRE")
-                        .font(.system(size: 14, weight: .bold))
-                        .foregroundColor(streakStatus == .redFlame ? .red : .orange)
-                        .shadow(color: streakStatus == .redFlame ? Color.red.opacity(0.4) : Color.orange.opacity(0.4), radius: 2)
+                        .foregroundColor(
+                            streakStatus == .redFlame ? .red : .orange
+                        )
+                        .shadow(
+                            color: streakStatus == .redFlame
+                                ? Color.red.opacity(0.6)
+                                : Color.orange.opacity(0.6), radius: 4)
+
+                    Text(
+                        streakStatus == .redFlame ? "BLAZING STREAK" : "ON FIRE"
+                    )
+                    .font(.system(size: 14, weight: .bold))
+                    .foregroundColor(streakStatus == .redFlame ? .red : .orange)
+                    .shadow(
+                        color: streakStatus == .redFlame
+                            ? Color.red.opacity(0.4)
+                            : Color.orange.opacity(0.4), radius: 2)
                 }
                 .padding(.horizontal, 10)
                 .padding(.vertical, 5)
                 .background(
                     RoundedRectangle(cornerRadius: 8)
-                        .fill(streakStatus == .redFlame ? Color.red.opacity(0.1) : Color.orange.opacity(0.1))
+                        .fill(
+                            streakStatus == .redFlame
+                                ? Color.red.opacity(0.1)
+                                : Color.orange.opacity(0.1)
+                        )
                         .overlay(
                             RoundedRectangle(cornerRadius: 8)
-                                .stroke(streakStatus == .redFlame ? Color.red.opacity(0.2) : Color.orange.opacity(0.2), lineWidth: 1)
+                                .stroke(
+                                    streakStatus == .redFlame
+                                        ? Color.red.opacity(0.2)
+                                        : Color.orange.opacity(0.2),
+                                    lineWidth: 1)
                         )
                 )
             }
-            
+
             // Only show friend action buttons if this is not the current user's profile
             if !isCurrentUser {
                 HStack {
@@ -583,14 +680,15 @@ struct ProfileHeaderView: View {
                                 Circle()
                                     .fill(Color.red.opacity(0.2))
                                     .frame(width: 44, height: 44)
-                                
+
                                 Image(systemName: "person.fill.badge.minus")
                                     .font(.system(size: 18))
                                     .foregroundColor(.white.opacity(0.9))
                             }
                             .overlay(
                                 Circle()
-                                    .stroke(Color.white.opacity(0.3), lineWidth: 1)
+                                    .stroke(
+                                        Color.white.opacity(0.3), lineWidth: 1)
                             )
                             .shadow(color: Color.red.opacity(0.3), radius: 4)
                         }
@@ -603,14 +701,15 @@ struct ProfileHeaderView: View {
                                 Circle()
                                     .fill(Color.orange.opacity(0.2))
                                     .frame(width: 44, height: 44)
-                                
+
                                 Image(systemName: "clock.fill")
                                     .font(.system(size: 18))
                                     .foregroundColor(.white.opacity(0.9))
                             }
                             .overlay(
                                 Circle()
-                                    .stroke(Color.white.opacity(0.3), lineWidth: 1)
+                                    .stroke(
+                                        Color.white.opacity(0.3), lineWidth: 1)
                             )
                             .shadow(color: Color.orange.opacity(0.3), radius: 4)
                         }
@@ -625,14 +724,14 @@ struct ProfileHeaderView: View {
                                         LinearGradient(
                                             colors: [
                                                 cyanBlueAccent.opacity(0.7),
-                                                cyanBlueAccent.opacity(0.4)
+                                                cyanBlueAccent.opacity(0.4),
                                             ],
                                             startPoint: .topLeading,
                                             endPoint: .bottomTrailing
                                         )
                                     )
                                     .frame(width: 44, height: 44)
-                                
+
                                 Image(systemName: "person.fill.badge.plus")
                                     .font(.system(size: 18))
                                     .foregroundColor(.white)
@@ -643,7 +742,7 @@ struct ProfileHeaderView: View {
                                         LinearGradient(
                                             colors: [
                                                 Color.white.opacity(0.6),
-                                                Color.white.opacity(0.2)
+                                                Color.white.opacity(0.2),
                                             ],
                                             startPoint: .topLeading,
                                             endPoint: .bottomTrailing
@@ -664,16 +763,17 @@ struct ProfileHeaderView: View {
             loadStreakStatus()
         }
     }
-    
+
     // Function to load the user's streak status
     private func loadStreakStatus() {
         FirebaseManager.shared.db.collection("users").document(user.id)
             .collection("streak").document("current")
             .getDocument { snapshot, error in
                 if let data = snapshot?.data(),
-                   let statusString = data["streakStatus"] as? String,
-                   let status = StreakStatus(rawValue: statusString) {
-                    
+                    let statusString = data["streakStatus"] as? String,
+                    let status = StreakStatus(rawValue: statusString)
+                {
+
                     DispatchQueue.main.async {
                         self.streakStatus = status
                     }
@@ -686,7 +786,7 @@ struct ProfileHeaderView: View {
 struct FriendStatusBadgeView: View {
     let isFriend: Bool
     let hasSentFriendRequest: Bool
-    
+
     var body: some View {
         if isFriend {
             FriendStatusBadge(
@@ -711,7 +811,7 @@ struct FriendsCountButton: View {
     let cyanBlueAccent: Color
     @Binding var showFriendsList: Bool
     let loadUserFriends: () -> Void
-    
+
     var body: some View {
         Button(action: {
             loadUserFriends()
@@ -720,24 +820,28 @@ struct FriendsCountButton: View {
             HStack {
                 VStack(alignment: .leading, spacing: 6) {
                     // The title shows appropriate text based on whose profile it is
-                    Text(isCurrentUser ? "YOUR FRIENDS" : "\(user.username.uppercased())'S FRIENDS")
-                        .font(.system(size: 14, weight: .bold))
-                        .tracking(1)
-                        .foregroundColor(.white.opacity(0.8))
-                    
+                    Text(
+                        isCurrentUser
+                            ? "YOUR FRIENDS"
+                            : "\(user.username.uppercased())'S FRIENDS"
+                    )
+                    .font(.system(size: 14, weight: .bold))
+                    .tracking(1)
+                    .foregroundColor(.white.opacity(0.8))
+
                     HStack(spacing: 8) {
                         Image(systemName: "person.2.fill")
                             .font(.system(size: 18))
                             .foregroundColor(cyanBlueAccent)
-                        
+
                         Text("\(user.friends.count) friends")
                             .font(.system(size: 18, weight: .bold))
                             .foregroundColor(.white)
                     }
                 }
-                
+
                 Spacer()
-                
+
                 Image(systemName: "chevron.right")
                     .font(.system(size: 16, weight: .bold))
                     .foregroundColor(.white.opacity(0.6))
@@ -751,22 +855,22 @@ struct FriendsCountButton: View {
                             LinearGradient(
                                 colors: [
                                     cyanBlueAccent.opacity(0.4),
-                                    cyanBlueAccent.opacity(0.1)
+                                    cyanBlueAccent.opacity(0.1),
                                 ],
                                 startPoint: .topLeading,
                                 endPoint: .bottomTrailing
                             )
                         )
-                    
+
                     RoundedRectangle(cornerRadius: 15)
                         .fill(Color.white.opacity(0.05))
-                    
+
                     RoundedRectangle(cornerRadius: 15)
                         .stroke(
                             LinearGradient(
                                 colors: [
                                     Color.white.opacity(0.5),
-                                    Color.white.opacity(0.1)
+                                    Color.white.opacity(0.1),
                                 ],
                                 startPoint: .topLeading,
                                 endPoint: .bottomTrailing
@@ -787,7 +891,7 @@ struct EnhancedStatsCardView: View {
     let cyanBlueAccent: Color
     @Binding var showDetailedStats: Bool
     @State private var animatePulse = false
-    
+
     var body: some View {
         VStack(spacing: 15) {
             // Quick Stats overview
@@ -798,7 +902,7 @@ struct EnhancedStatsCardView: View {
                     icon: "timer",
                     accentColor: cyanBlueAccent
                 )
-                
+
                 EnhancedStatBox(
                     title: "FOCUS TIME",
                     value: "\(user.totalFocusTime)m",
@@ -807,7 +911,7 @@ struct EnhancedStatsCardView: View {
                 )
             }
             .padding(.vertical, 5)
-            
+
             // View detailed stats button
             Button(action: {
                 showDetailedStats = true
@@ -817,13 +921,15 @@ struct EnhancedStatsCardView: View {
                         .font(.system(size: 15, weight: .bold))
                         .tracking(1)
                         .foregroundColor(.white)
-                    
+
                     Image(systemName: "chevron.right")
                         .font(.system(size: 14, weight: .semibold))
                         .foregroundColor(.white.opacity(0.7))
                         .padding(.leading, 4)
                         .offset(x: animatePulse ? 4 : 0)
-                        .animation(Animation.easeInOut(duration: 1.3).repeatForever(autoreverses: true), value: animatePulse)
+                        .animation(
+                            Animation.easeInOut(duration: 1.3).repeatForever(
+                                autoreverses: true), value: animatePulse)
                 }
                 .padding(.vertical, 9)
                 .frame(maxWidth: .infinity)
@@ -834,22 +940,22 @@ struct EnhancedStatsCardView: View {
                                 LinearGradient(
                                     colors: [
                                         cyanBlueAccent.opacity(0.4),
-                                        cyanBlueAccent.opacity(0.2)
+                                        cyanBlueAccent.opacity(0.2),
                                     ],
                                     startPoint: .topLeading,
                                     endPoint: .bottomTrailing
                                 )
                             )
-                        
+
                         RoundedRectangle(cornerRadius: 12)
                             .fill(Color.white.opacity(0.1))
-                        
+
                         RoundedRectangle(cornerRadius: 12)
                             .stroke(
                                 LinearGradient(
                                     colors: [
                                         Color.white.opacity(0.5),
-                                        Color.white.opacity(0.2)
+                                        Color.white.opacity(0.2),
                                     ],
                                     startPoint: .topLeading,
                                     endPoint: .bottomTrailing
@@ -868,22 +974,22 @@ struct EnhancedStatsCardView: View {
                         LinearGradient(
                             colors: [
                                 cyanBlueAccent.opacity(0.5),
-                                cyanBlueAccent.opacity(0.2)
+                                cyanBlueAccent.opacity(0.2),
                             ],
                             startPoint: .topLeading,
                             endPoint: .bottomTrailing
                         )
                     )
-                
+
                 RoundedRectangle(cornerRadius: 18)
                     .fill(Color.white.opacity(0.05))
-                
+
                 RoundedRectangle(cornerRadius: 18)
                     .stroke(
                         LinearGradient(
                             colors: [
                                 Color.white.opacity(0.6),
-                                Color.white.opacity(0.1)
+                                Color.white.opacity(0.1),
                             ],
                             startPoint: .topLeading,
                             endPoint: .bottomTrailing
@@ -908,7 +1014,7 @@ struct EnhancedWeeklyStatsView: View {
     let cyanBlueAccent: Color
     let cyanBlueGlow: Color
     @State private var animate = false
-    
+
     var body: some View {
         HStack {
             VStack(alignment: .leading, spacing: 8) {
@@ -917,7 +1023,7 @@ struct EnhancedWeeklyStatsView: View {
                         .font(.system(size: 14, weight: .black))
                         .tracking(2)
                         .foregroundColor(.white)
-                    
+
                     Text("THIS WEEK")
                         .font(.system(size: 12, weight: .bold))
                         .tracking(1)
@@ -928,14 +1034,14 @@ struct EnhancedWeeklyStatsView: View {
                                 .fill(cyanBlueAccent.opacity(0.3))
                         )
                         .foregroundColor(.white.opacity(0.9))
-                    
+
                     Image(systemName: "crown.fill")
                         .font(.system(size: 14))
                         .foregroundStyle(
                             LinearGradient(
                                 colors: [
                                     Color.yellow,
-                                    Color.orange
+                                    Color.orange,
                                 ],
                                 startPoint: .top,
                                 endPoint: .bottom
@@ -943,15 +1049,23 @@ struct EnhancedWeeklyStatsView: View {
                         )
                         .shadow(color: Color.orange.opacity(0.7), radius: 4)
                         .rotationEffect(Angle(degrees: animate ? 5 : -5))
-                        .animation(Animation.easeInOut(duration: 1.3).repeatForever(autoreverses: true), value: animate)
+                        .animation(
+                            Animation.easeInOut(duration: 1.3).repeatForever(
+                                autoreverses: true), value: animate)
                 }
 
-                Text(weeksLongestSession != nil ? "\(weeksLongestSession!) min" : "No sessions yet this week")
-                    .font(.system(size: 32, weight: .black))
-                    .foregroundColor(.white)
-                    .shadow(color: cyanBlueGlow, radius: 8)
-                    .opacity(animate ? 1 : 0.7)
-                    .animation(.easeInOut(duration: 2).repeatForever(autoreverses: true), value: animate)
+                Text(
+                    weeksLongestSession != nil
+                        ? "\(weeksLongestSession!) min"
+                        : "No sessions yet this week"
+                )
+                .font(.system(size: 32, weight: .black))
+                .foregroundColor(.white)
+                .shadow(color: cyanBlueGlow, radius: 8)
+                .opacity(animate ? 1 : 0.7)
+                .animation(
+                    .easeInOut(duration: 2).repeatForever(autoreverses: true),
+                    value: animate)
             }
             Spacer()
         }
@@ -963,13 +1077,13 @@ struct EnhancedWeeklyStatsView: View {
                         LinearGradient(
                             colors: [
                                 cyanBlueAccent.opacity(0.4),
-                                cyanBlueAccent.opacity(0.2)
+                                cyanBlueAccent.opacity(0.2),
                             ],
                             startPoint: .topLeading,
                             endPoint: .bottomTrailing
                         )
                     )
-                
+
                 // Subtle pattern overlay
                 HStack(spacing: 0) {
                     ForEach(0..<20) { i in
@@ -981,13 +1095,13 @@ struct EnhancedWeeklyStatsView: View {
                     }
                 }
                 .mask(RoundedRectangle(cornerRadius: 18))
-                
+
                 RoundedRectangle(cornerRadius: 18)
                     .stroke(
                         LinearGradient(
                             colors: [
                                 Color.white.opacity(0.6),
-                                Color.white.opacity(0.1)
+                                Color.white.opacity(0.1),
                             ],
                             startPoint: .topLeading,
                             endPoint: .bottomTrailing
@@ -1010,7 +1124,7 @@ struct RecentSessionsView: View {
     let user: FirebaseManager.FlipUser
     let weeklyViewModel: WeeklySessionListViewModel
     let cyanBlueGlow: Color
-    
+
     var body: some View {
         VStack(alignment: .leading, spacing: 15) {
             Text("RECENT SESSIONS")
@@ -1037,7 +1151,7 @@ struct AlertOverlays: View {
     @Binding var friendRequestSent: Bool
     let cancelFriendRequest: (String) -> Void
     let presentationMode: Binding<PresentationMode>
-    
+
     var body: some View {
         ZStack {
             if showRemoveFriendAlert {
@@ -1053,7 +1167,7 @@ struct AlertOverlays: View {
                     }
                 }
             }
-            
+
             if showCancelRequestAlert {
                 CancelFriendRequestAlert(
                     isPresented: $showCancelRequestAlert,
@@ -1061,12 +1175,12 @@ struct AlertOverlays: View {
                 ) {
                     // Handle canceling the friend request
                     cancelFriendRequest(user.id)
-                    
+
                     // Update local state
                     friendRequestSent = false
                 }
             }
-            
+
             if showAddFriendConfirmation {
                 AddFriendConfirmation(
                     isPresented: $showAddFriendConfirmation,
@@ -1088,11 +1202,14 @@ struct UserFriendsListView: View {
     let mutualFriends: [FirebaseManager.FlipUser]
     let userFriends: [FirebaseManager.FlipUser]
     let loadingFriends: Bool
-    
+
     // Colors
-    private let cyanBlueAccent = Color(red: 56/255, green: 189/255, blue: 248/255)
-    private let cyanBlueGlow = Color(red: 56/255, green: 189/255, blue: 248/255).opacity(0.5)
-    
+    private let cyanBlueAccent = Color(
+        red: 56 / 255, green: 189 / 255, blue: 248 / 255)
+    private let cyanBlueGlow = Color(
+        red: 56 / 255, green: 189 / 255, blue: 248 / 255
+    ).opacity(0.5)
+
     var body: some View {
         ZStack {
             // Dimmed background
@@ -1103,7 +1220,7 @@ struct UserFriendsListView: View {
                         isPresented = false
                     }
                 }
-            
+
             // Content
             VStack(spacing: 0) {
                 // Header
@@ -1114,14 +1231,14 @@ struct UserFriendsListView: View {
                             .tracking(3)
                             .foregroundColor(.white)
                             .shadow(color: cyanBlueGlow, radius: 8)
-                        
+
                         Text("\(user.friends.count) total friends")
                             .font(.system(size: 14))
                             .foregroundColor(.white.opacity(0.7))
                     }
-                    
+
                     Spacer()
-                    
+
                     // Close button
                     Button(action: {
                         withAnimation(.spring()) {
@@ -1132,7 +1249,7 @@ struct UserFriendsListView: View {
                             Circle()
                                 .fill(Color.white.opacity(0.1))
                                 .frame(width: 36, height: 36)
-                            
+
                             Image(systemName: "xmark")
                                 .font(.system(size: 14, weight: .bold))
                                 .foregroundColor(.white)
@@ -1142,21 +1259,21 @@ struct UserFriendsListView: View {
                 .padding(.horizontal, 20)
                 .padding(.top, 20)
                 .padding(.bottom, 16)
-                
+
                 if loadingFriends {
                     // Loading indicator
                     Spacer()
-                    
+
                     VStack(spacing: 12) {
                         ProgressView()
                             .tint(cyanBlueAccent)
                             .scaleEffect(1.5)
-                        
+
                         Text("Loading friends...")
                             .font(.system(size: 16))
                             .foregroundColor(.white.opacity(0.7))
                     }
-                    
+
                     Spacer()
                 } else {
                     ScrollView {
@@ -1169,32 +1286,37 @@ struct UserFriendsListView: View {
                                         .tracking(2)
                                         .foregroundColor(cyanBlueAccent)
                                         .padding(.horizontal, 20)
-                                    
+
                                     ForEach(mutualFriends) { friend in
-                                        FriendRow(friend: friend, isMutual: true)
+                                        FriendRow(
+                                            friend: friend, isMutual: true)
                                     }
                                 }
-                                
+
                                 Divider()
                                     .background(Color.white.opacity(0.2))
                                     .padding(.vertical, 10)
                             }
-                            
+
                             // Other friends section
                             if !userFriends.isEmpty {
                                 VStack(alignment: .leading, spacing: 12) {
-                                    Text(mutualFriends.isEmpty ? "FRIENDS" : "OTHER FRIENDS")
-                                        .font(.system(size: 16, weight: .bold))
-                                        .tracking(2)
-                                        .foregroundColor(.white.opacity(0.7))
-                                        .padding(.horizontal, 20)
-                                    
+                                    Text(
+                                        mutualFriends.isEmpty
+                                            ? "FRIENDS" : "OTHER FRIENDS"
+                                    )
+                                    .font(.system(size: 16, weight: .bold))
+                                    .tracking(2)
+                                    .foregroundColor(.white.opacity(0.7))
+                                    .padding(.horizontal, 20)
+
                                     ForEach(userFriends) { friend in
-                                        FriendRow(friend: friend, isMutual: false)
+                                        FriendRow(
+                                            friend: friend, isMutual: false)
                                     }
                                 }
                             }
-                            
+
                             // Empty state
                             if mutualFriends.isEmpty && userFriends.isEmpty {
                                 VStack(spacing: 12) {
@@ -1202,15 +1324,17 @@ struct UserFriendsListView: View {
                                         .font(.system(size: 50))
                                         .foregroundColor(.white.opacity(0.6))
                                         .padding(.top, 30)
-                                    
+
                                     Text("No friends yet")
                                         .font(.system(size: 20, weight: .bold))
                                         .foregroundColor(.white)
-                                    
-                                    Text("This user hasn't added any friends yet")
-                                        .font(.system(size: 16))
-                                        .foregroundColor(.white.opacity(0.7))
-                                        .multilineTextAlignment(.center)
+
+                                    Text(
+                                        "This user hasn't added any friends yet"
+                                    )
+                                    .font(.system(size: 16))
+                                    .foregroundColor(.white.opacity(0.7))
+                                    .multilineTextAlignment(.center)
                                 }
                                 .frame(maxWidth: .infinity)
                                 .padding(.top, 40)
@@ -1220,7 +1344,10 @@ struct UserFriendsListView: View {
                     }
                 }
             }
-            .frame(maxWidth: UIScreen.main.bounds.width * 0.9, maxHeight: UIScreen.main.bounds.height * 0.8)
+            .frame(
+                maxWidth: UIScreen.main.bounds.width * 0.9,
+                maxHeight: UIScreen.main.bounds.height * 0.8
+            )
             .background(
                 ZStack {
                     // Background gradient
@@ -1228,25 +1355,29 @@ struct UserFriendsListView: View {
                         .fill(
                             LinearGradient(
                                 colors: [
-                                    Color(red: 30/255, green: 14/255, blue: 60/255),
-                                    Color(red: 14/255, green: 30/255, blue: 60/255)
+                                    Color(
+                                        red: 30 / 255, green: 14 / 255,
+                                        blue: 60 / 255),
+                                    Color(
+                                        red: 14 / 255, green: 30 / 255,
+                                        blue: 60 / 255),
                                 ],
                                 startPoint: .topLeading,
                                 endPoint: .bottomTrailing
                             )
                         )
-                    
+
                     // Glass effect
                     RoundedRectangle(cornerRadius: 20)
                         .fill(Color.white.opacity(0.05))
-                    
+
                     // Border
                     RoundedRectangle(cornerRadius: 20)
                         .stroke(
                             LinearGradient(
                                 colors: [
                                     Color.white.opacity(0.6),
-                                    Color.white.opacity(0.1)
+                                    Color.white.opacity(0.1),
                                 ],
                                 startPoint: .topLeading,
                                 endPoint: .bottomTrailing
@@ -1266,11 +1397,12 @@ struct UserFriendsListView: View {
 struct FriendRow: View {
     let friend: FirebaseManager.FlipUser
     let isMutual: Bool
-    
+
     // Colors
-    private let cyanBlueAccent = Color(red: 56/255, green: 189/255, blue: 248/255)
+    private let cyanBlueAccent = Color(
+        red: 56 / 255, green: 189 / 255, blue: 248 / 255)
     @State private var isPressed = false
-    
+
     var body: some View {
         NavigationLink(destination: UserProfileView(user: friend)) {
             HStack(spacing: 12) {
@@ -1280,15 +1412,18 @@ struct FriendRow: View {
                     size: 50,
                     username: friend.username
                 )
-                
+
                 // Friend info
                 VStack(alignment: .leading, spacing: 4) {
                     HStack(spacing: 6) {
                         Text(friend.username)
                             .font(.system(size: 16, weight: .bold))
                             .foregroundColor(.white)
-                            .shadow(color: isMutual ? cyanBlueAccent.opacity(0.6) : Color.white.opacity(0.3), radius: 4)
-                        
+                            .shadow(
+                                color: isMutual
+                                    ? cyanBlueAccent.opacity(0.6)
+                                    : Color.white.opacity(0.3), radius: 4)
+
                         if isMutual {
                             // Mutual friend badge
                             Text("Mutual")
@@ -1301,26 +1436,34 @@ struct FriendRow: View {
                                         .fill(cyanBlueAccent.opacity(0.3))
                                         .overlay(
                                             Capsule()
-                                                .stroke(cyanBlueAccent.opacity(0.5), lineWidth: 1)
+                                                .stroke(
+                                                    cyanBlueAccent.opacity(0.5),
+                                                    lineWidth: 1)
                                         )
                                 )
                         }
                     }
-                    
+
                     // Stats
                     HStack(spacing: 12) {
-                        Label("\(friend.totalSessions) sessions", systemImage: "timer")
-                            .font(.system(size: 12))
-                            .foregroundColor(.white.opacity(0.7))
-                        
-                        Label("\(friend.totalFocusTime)m focus", systemImage: "clock")
-                            .font(.system(size: 12))
-                            .foregroundColor(.white.opacity(0.7))
+                        Label(
+                            "\(friend.totalSessions) sessions",
+                            systemImage: "timer"
+                        )
+                        .font(.system(size: 12))
+                        .foregroundColor(.white.opacity(0.7))
+
+                        Label(
+                            "\(friend.totalFocusTime)m focus",
+                            systemImage: "clock"
+                        )
+                        .font(.system(size: 12))
+                        .foregroundColor(.white.opacity(0.7))
                     }
                 }
-                
+
                 Spacer()
-                
+
                 Image(systemName: "chevron.right")
                     .font(.system(size: 14))
                     .foregroundColor(.white.opacity(0.5))
@@ -1332,34 +1475,39 @@ struct FriendRow: View {
                 ZStack {
                     // Different background for mutual friends
                     RoundedRectangle(cornerRadius: 12)
-                        .fill(isMutual ? cyanBlueAccent.opacity(0.15) : Color.white.opacity(0.05))
-                    
+                        .fill(
+                            isMutual
+                                ? cyanBlueAccent.opacity(0.15)
+                                : Color.white.opacity(0.05))
+
                     // Border
                     RoundedRectangle(cornerRadius: 12)
                         .stroke(
-                            isMutual ?
-                            LinearGradient(
-                                colors: [
-                                    cyanBlueAccent.opacity(0.5),
-                                    cyanBlueAccent.opacity(0.2)
-                                ],
-                                startPoint: .topLeading,
-                                endPoint: .bottomTrailing
-                            ) :
-                            LinearGradient(
-                                colors: [
-                                    Color.white.opacity(0.3),
-                                    Color.white.opacity(0.1)
-                                ],
-                                startPoint: .topLeading,
-                                endPoint: .bottomTrailing
-                            ),
+                            isMutual
+                                ? LinearGradient(
+                                    colors: [
+                                        cyanBlueAccent.opacity(0.5),
+                                        cyanBlueAccent.opacity(0.2),
+                                    ],
+                                    startPoint: .topLeading,
+                                    endPoint: .bottomTrailing
+                                )
+                                : LinearGradient(
+                                    colors: [
+                                        Color.white.opacity(0.3),
+                                        Color.white.opacity(0.1),
+                                    ],
+                                    startPoint: .topLeading,
+                                    endPoint: .bottomTrailing
+                                ),
                             lineWidth: 1
                         )
                 }
             )
             .scaleEffect(isPressed ? 0.98 : 1.0)
-            .animation(.spring(response: 0.3, dampingFraction: 0.6), value: isPressed)
+            .animation(
+                .spring(response: 0.3, dampingFraction: 0.6), value: isPressed
+            )
             .simultaneousGesture(
                 DragGesture(minimumDistance: 0)
                     .onChanged { _ in
@@ -1379,13 +1527,13 @@ struct FriendStatusBadge: View {
     let text: String
     let icon: String
     let color: Color
-    
+
     var body: some View {
         HStack(spacing: 8) {
             Image(systemName: icon)
                 .font(.system(size: 14))
                 .foregroundColor(color)
-            
+
             Text(text)
                 .font(.system(size: 14, weight: .medium))
                 .foregroundColor(color)
@@ -1411,7 +1559,7 @@ struct AddFriendConfirmation: View {
     let onConfirm: () -> Void
     @State private var isConfirmPressed = false
     @State private var isCancelPressed = false
-    
+
     var body: some View {
         ZStack {
             // Dimmed background
@@ -1422,7 +1570,7 @@ struct AddFriendConfirmation: View {
                         isPresented = false
                     }
                 }
-            
+
             // Alert card
             VStack(spacing: 20) {
                 // Icon
@@ -1431,8 +1579,12 @@ struct AddFriendConfirmation: View {
                         .fill(
                             LinearGradient(
                                 colors: [
-                                    Color(red: 56/255, green: 189/255, blue: 248/255),
-                                    Color(red: 14/255, green: 165/255, blue: 233/255)
+                                    Color(
+                                        red: 56 / 255, green: 189 / 255,
+                                        blue: 248 / 255),
+                                    Color(
+                                        red: 14 / 255, green: 165 / 255,
+                                        blue: 233 / 255),
                                 ],
                                 startPoint: .top,
                                 endPoint: .bottom
@@ -1440,37 +1592,47 @@ struct AddFriendConfirmation: View {
                         )
                         .frame(width: 70, height: 70)
                         .opacity(0.2)
-                    
+
                     Image(systemName: "person.fill.badge.plus")
                         .font(.system(size: 36))
                         .foregroundStyle(
                             LinearGradient(
                                 colors: [
-                                    Color(red: 56/255, green: 189/255, blue: 248/255),
-                                    Color(red: 14/255, green: 165/255, blue: 233/255)
+                                    Color(
+                                        red: 56 / 255, green: 189 / 255,
+                                        blue: 248 / 255),
+                                    Color(
+                                        red: 14 / 255, green: 165 / 255,
+                                        blue: 233 / 255),
                                 ],
                                 startPoint: .top,
                                 endPoint: .bottom
                             )
                         )
-                        .shadow(color: Color(red: 56/255, green: 189/255, blue: 248/255).opacity(0.5), radius: 8)
+                        .shadow(
+                            color: Color(
+                                red: 56 / 255, green: 189 / 255, blue: 248 / 255
+                            ).opacity(0.5), radius: 8)
                 }
                 .padding(.top, 20)
-                
+
                 // Title
                 VStack(spacing: 4) {
                     Text("ADD FRIEND?")
                         .font(.system(size: 22, weight: .black))
                         .tracking(2)
                         .foregroundColor(.white)
-                        .shadow(color: Color(red: 56/255, green: 189/255, blue: 248/255).opacity(0.5), radius: 6)
-                    
+                        .shadow(
+                            color: Color(
+                                red: 56 / 255, green: 189 / 255, blue: 248 / 255
+                            ).opacity(0.5), radius: 6)
+
                     Text("友達を追加")
                         .font(.system(size: 12))
                         .tracking(2)
                         .foregroundColor(.white.opacity(0.7))
                 }
-                
+
                 // Message
                 Text("Send a friend request to \(username)?")
                     .font(.system(size: 16, weight: .medium))
@@ -1478,7 +1640,7 @@ struct AddFriendConfirmation: View {
                     .foregroundColor(.white)
                     .padding(.horizontal, 20)
                     .padding(.top, 10)
-                
+
                 // Buttons
                 HStack(spacing: 15) {
                     // Cancel button
@@ -1500,14 +1662,16 @@ struct AddFriendConfirmation: View {
                                 ZStack {
                                     RoundedRectangle(cornerRadius: 22)
                                         .fill(Color.white.opacity(0.1))
-                                    
+
                                     RoundedRectangle(cornerRadius: 22)
-                                        .stroke(Color.white.opacity(0.3), lineWidth: 1)
+                                        .stroke(
+                                            Color.white.opacity(0.3),
+                                            lineWidth: 1)
                                 }
                             )
                             .scaleEffect(isCancelPressed ? 0.95 : 1.0)
                     }
-                    
+
                     // Add friend button
                     Button(action: {
                         withAnimation(.spring()) {
@@ -1530,24 +1694,30 @@ struct AddFriendConfirmation: View {
                                         .fill(
                                             LinearGradient(
                                                 colors: [
-                                                    Color(red: 56/255, green: 189/255, blue: 248/255),
-                                                    Color(red: 14/255, green: 165/255, blue: 233/255)
+                                                    Color(
+                                                        red: 56 / 255,
+                                                        green: 189 / 255,
+                                                        blue: 248 / 255),
+                                                    Color(
+                                                        red: 14 / 255,
+                                                        green: 165 / 255,
+                                                        blue: 233 / 255),
                                                 ],
                                                 startPoint: .top,
                                                 endPoint: .bottom
                                             )
                                         )
                                         .opacity(0.8)
-                                    
+
                                     RoundedRectangle(cornerRadius: 22)
                                         .fill(Color.white.opacity(0.1))
-                                    
+
                                     RoundedRectangle(cornerRadius: 22)
                                         .stroke(
                                             LinearGradient(
                                                 colors: [
                                                     Color.white.opacity(0.5),
-                                                    Color.white.opacity(0.2)
+                                                    Color.white.opacity(0.2),
                                                 ],
                                                 startPoint: .top,
                                                 endPoint: .bottom
@@ -1568,16 +1738,16 @@ struct AddFriendConfirmation: View {
                 ZStack {
                     RoundedRectangle(cornerRadius: 20)
                         .fill(Theme.darkGray)
-                    
+
                     RoundedRectangle(cornerRadius: 20)
                         .fill(Color.black.opacity(0.3))
-                    
+
                     RoundedRectangle(cornerRadius: 20)
                         .stroke(
                             LinearGradient(
                                 colors: [
                                     Color.white.opacity(0.5),
-                                    Color.white.opacity(0.1)
+                                    Color.white.opacity(0.1),
                                 ],
                                 startPoint: .topLeading,
                                 endPoint: .bottomTrailing
@@ -1598,40 +1768,45 @@ struct FriendStatsView: View {
     @Environment(\.presentationMode) var presentationMode
     let user: FirebaseManager.FlipUser
     @State private var animateStats = false
-    
+
     // Cyan-midnight theme colors
-    private let cyanBlueAccent = Color(red: 56/255, green: 189/255, blue: 248/255)
-    private let cyanBlueGlow = Color(red: 56/255, green: 189/255, blue: 248/255).opacity(0.5)
-    
+    private let cyanBlueAccent = Color(
+        red: 56 / 255, green: 189 / 255, blue: 248 / 255)
+    private let cyanBlueGlow = Color(
+        red: 56 / 255, green: 189 / 255, blue: 248 / 255
+    ).opacity(0.5)
+
     var averageSessionLength: Int {
         if user.totalSessions == 0 {
             return 0
         }
         return user.totalFocusTime / user.totalSessions
     }
-    
+
     var body: some View {
         ZStack {
             // Background gradient
             LinearGradient(
                 colors: [
-                    Color(red: 20/255, green: 10/255, blue: 40/255), // Deep midnight purple
-                    Color(red: 30/255, green: 18/255, blue: 60/255), // Medium midnight purple
-                    Color(red: 14/255, green: 101/255, blue: 151/255).opacity(0.7), // Dark cyan blue
-                    Color(red: 12/255, green: 74/255, blue: 110/255).opacity(0.6)  // Deeper cyan blue
+                    Color(red: 20 / 255, green: 10 / 255, blue: 40 / 255),  // Deep midnight purple
+                    Color(red: 30 / 255, green: 18 / 255, blue: 60 / 255),  // Medium midnight purple
+                    Color(red: 14 / 255, green: 101 / 255, blue: 151 / 255)
+                        .opacity(0.7),  // Dark cyan blue
+                    Color(red: 12 / 255, green: 74 / 255, blue: 110 / 255)
+                        .opacity(0.6),  // Deeper cyan blue
                 ],
                 startPoint: .top,
                 endPoint: .bottom
             )
             .edgesIgnoringSafeArea(.all)
-            
+
             // Decorative glow
             Circle()
                 .fill(
                     RadialGradient(
                         gradient: Gradient(colors: [
                             cyanBlueAccent.opacity(0.2),
-                            cyanBlueAccent.opacity(0.05)
+                            cyanBlueAccent.opacity(0.05),
                         ]),
                         center: .center,
                         startRadius: 10,
@@ -1642,27 +1817,27 @@ struct FriendStatsView: View {
                 .offset(x: 150, y: -150)
                 .blur(radius: 50)
                 .edgesIgnoringSafeArea(.all)
-            
+
             VStack(spacing: 25) {
                 // Header
                 HStack {
                     Spacer()
-                    
+
                     VStack(spacing: 4) {
                         Text("\(user.username)'s STATS")
                             .font(.system(size: 24, weight: .black))
                             .tracking(6)
                             .foregroundColor(.white)
                             .shadow(color: cyanBlueGlow, radius: 8)
-                        
+
                         Text("スタッツ")
                             .font(.system(size: 12))
                             .tracking(4)
                             .foregroundColor(.white.opacity(0.7))
                     }
-                    
+
                     Spacer()
-                    
+
                     // Close button
                     Button(action: {
                         presentationMode.wrappedValue.dismiss()
@@ -1671,7 +1846,7 @@ struct FriendStatsView: View {
                             Circle()
                                 .fill(Color.white.opacity(0.1))
                                 .frame(width: 36, height: 36)
-                            
+
                             Image(systemName: "xmark.circle.fill")
                                 .font(.system(size: 24))
                                 .foregroundColor(.white.opacity(0.8))
@@ -1680,7 +1855,7 @@ struct FriendStatsView: View {
                     .padding(.trailing, 20)
                 }
                 .padding(.top, 40)
-                
+
                 // Main stats display
                 VStack(spacing: 30) {
                     // Total Focus Time
@@ -1694,47 +1869,50 @@ struct FriendStatsView: View {
                     )
                     .scaleEffect(animateStats ? 1 : 0.8)
                     .opacity(animateStats ? 1 : 0)
-                    
+
                     // Total Sessions
                     FriendStatCard(
                         title: "TOTAL SESSIONS",
                         value: "\(user.totalSessions)",
                         unit: "completed",
                         icon: "checkmark.circle.fill",
-                        color: Color(red: 16/255, green: 185/255, blue: 129/255),
+                        color: Color(
+                            red: 16 / 255, green: 185 / 255, blue: 129 / 255),
                         delay: 0.1
                     )
                     .scaleEffect(animateStats ? 1 : 0.8)
                     .opacity(animateStats ? 1 : 0)
-                    
+
                     // Average Session Length
                     FriendStatCard(
                         title: "AVERAGE SESSION LENGTH",
                         value: "\(averageSessionLength)",
                         unit: "minutes",
                         icon: "chart.bar.fill",
-                        color: Color(red: 245/255, green: 158/255, blue: 11/255),
+                        color: Color(
+                            red: 245 / 255, green: 158 / 255, blue: 11 / 255),
                         delay: 0.2
                     )
                     .scaleEffect(animateStats ? 1 : 0.8)
                     .opacity(animateStats ? 1 : 0)
-                    
+
                     // Longest Session
                     FriendStatCard(
                         title: "LONGEST SESSION",
                         value: "\(user.longestSession)",
                         unit: "minutes",
                         icon: "crown.fill",
-                        color: Color(red: 236/255, green: 72/255, blue: 153/255),
+                        color: Color(
+                            red: 236 / 255, green: 72 / 255, blue: 153 / 255),
                         delay: 0.3
                     )
                     .scaleEffect(animateStats ? 1 : 0.8)
                     .opacity(animateStats ? 1 : 0)
                 }
                 .padding(.horizontal, 20)
-                
+
                 Spacer()
-                
+
                 // Back button
                 Button(action: {
                     presentationMode.wrappedValue.dismiss()
@@ -1751,22 +1929,22 @@ struct FriendStatsView: View {
                                         LinearGradient(
                                             colors: [
                                                 cyanBlueAccent.opacity(0.7),
-                                                cyanBlueAccent.opacity(0.4)
+                                                cyanBlueAccent.opacity(0.4),
                                             ],
                                             startPoint: .topLeading,
                                             endPoint: .bottomTrailing
                                         )
                                     )
-                                
+
                                 RoundedRectangle(cornerRadius: 15)
                                     .fill(Color.white.opacity(0.1))
-                                
+
                                 RoundedRectangle(cornerRadius: 15)
                                     .stroke(
                                         LinearGradient(
                                             colors: [
                                                 Color.white.opacity(0.6),
-                                                Color.white.opacity(0.2)
+                                                Color.white.opacity(0.2),
                                             ],
                                             startPoint: .topLeading,
                                             endPoint: .bottomTrailing
@@ -1800,9 +1978,9 @@ struct FriendStatCard: View {
     let icon: String
     let color: Color
     let delay: Double
-    
+
     @State private var animate = false
-    
+
     var body: some View {
         HStack(spacing: 20) {
             // Icon
@@ -1810,26 +1988,26 @@ struct FriendStatCard: View {
                 Circle()
                     .fill(color.opacity(0.2))
                     .frame(width: 60, height: 60)
-                
+
                 Image(systemName: icon)
                     .font(.system(size: 30))
                     .foregroundColor(color)
                     .shadow(color: color.opacity(0.5), radius: 5)
             }
             .scaleEffect(animate ? 1 : 0.5)
-            
+
             VStack(alignment: .leading, spacing: 4) {
                 Text(title)
                     .font(.system(size: 14, weight: .bold))
                     .tracking(1)
                     .foregroundColor(.white.opacity(0.7))
-                
+
                 HStack(alignment: .firstTextBaseline, spacing: 6) {
                     Text(value)
                         .font(.system(size: 30, weight: .black))
                         .foregroundColor(.white)
                         .shadow(color: color.opacity(0.5), radius: 6)
-                    
+
                     Text(unit)
                         .font(.system(size: 14))
                         .foregroundColor(.white.opacity(0.6))
@@ -1837,7 +2015,7 @@ struct FriendStatCard: View {
                 .opacity(animate ? 1 : 0)
                 .offset(x: animate ? 0 : -20)
             }
-            
+
             Spacer()
         }
         .padding()
@@ -1845,13 +2023,13 @@ struct FriendStatCard: View {
             ZStack {
                 RoundedRectangle(cornerRadius: 16)
                     .fill(Color.white.opacity(0.05))
-                
+
                 RoundedRectangle(cornerRadius: 16)
                     .stroke(
                         LinearGradient(
                             colors: [
                                 color.opacity(0.6),
-                                color.opacity(0.2)
+                                color.opacity(0.2),
                             ],
                             startPoint: .topLeading,
                             endPoint: .bottomTrailing
@@ -1875,7 +2053,7 @@ struct EnhancedStatBox: View {
     let icon: String
     let accentColor: Color
     @State private var animateValue = false
-    
+
     var body: some View {
         VStack(spacing: 8) {
             ZStack {
@@ -1884,7 +2062,7 @@ struct EnhancedStatBox: View {
                         RadialGradient(
                             gradient: Gradient(colors: [
                                 accentColor.opacity(0.3),
-                                accentColor.opacity(0.1)
+                                accentColor.opacity(0.1),
                             ]),
                             center: .center,
                             startRadius: 0,
@@ -1892,22 +2070,25 @@ struct EnhancedStatBox: View {
                         )
                     )
                     .frame(width: 54, height: 54)
-                
+
                 Image(systemName: icon)
                     .font(.system(size: 22, weight: .semibold))
                     .foregroundColor(.white)
                     .shadow(color: accentColor.opacity(0.6), radius: 4)
             }
             .scaleEffect(animateValue ? 1.0 : 0.9)
-            .animation(.spring(response: 0.8, dampingFraction: 0.6).delay(0.2), value: animateValue)
-            
+            .animation(
+                .spring(response: 0.8, dampingFraction: 0.6).delay(0.2),
+                value: animateValue)
+
             Text(value)
                 .font(.system(size: 26, weight: .black))
                 .foregroundColor(.white)
                 .shadow(color: accentColor.opacity(0.7), radius: 4)
                 .opacity(animateValue ? 1 : 0)
                 .offset(y: animateValue ? 0 : 10)
-                .animation(.spring(response: 0.6).delay(0.3), value: animateValue)
+                .animation(
+                    .spring(response: 0.6).delay(0.3), value: animateValue)
 
             Text(title)
                 .font(.system(size: 13, weight: .bold))
@@ -1927,12 +2108,15 @@ struct WeeklySessionList: View {
     @ObservedObject var viewModel: WeeklySessionListViewModel
     @State private var showingAllSessions = false
     let userId: String
-    
-    init(userId: String, viewModel: WeeklySessionListViewModel = WeeklySessionListViewModel()) {
+
+    init(
+        userId: String,
+        viewModel: WeeklySessionListViewModel = WeeklySessionListViewModel()
+    ) {
         self.userId = userId
         self.viewModel = viewModel
     }
-    
+
     private var displayedSessions: [Session] {
         if showingAllSessions {
             return viewModel.sessions
@@ -1946,7 +2130,7 @@ struct WeeklySessionList: View {
             ForEach(displayedSessions) { session in
                 SessionHistoryCard(session: session)
             }
-            
+
             if viewModel.sessions.isEmpty {
                 Text("No sessions recorded yet")
                     .font(.system(size: 16))
@@ -1954,7 +2138,7 @@ struct WeeklySessionList: View {
                     .frame(maxWidth: .infinity, alignment: .center)
                     .padding(.vertical, 20)
             }
-            
+
             if viewModel.sessions.count > 5 {
                 Button(action: {
                     withAnimation(.spring()) {
@@ -1964,8 +2148,11 @@ struct WeeklySessionList: View {
                     HStack {
                         Text(showingAllSessions ? "Show Less" : "Show More")
                             .font(.system(size: 16, weight: .bold))
-                        Image(systemName: showingAllSessions ? "chevron.up" : "chevron.down")
-                            .font(.system(size: 14, weight: .bold))
+                        Image(
+                            systemName: showingAllSessions
+                                ? "chevron.up" : "chevron.down"
+                        )
+                        .font(.system(size: 14, weight: .bold))
                     }
                     .foregroundColor(.white)
                     .padding(.vertical, 10)
@@ -1976,23 +2163,29 @@ struct WeeklySessionList: View {
                                 .fill(
                                     LinearGradient(
                                         colors: [
-                                            Color(red: 16/255, green: 185/255, blue: 129/255).opacity(0.5),
-                                            Color(red: 16/255, green: 185/255, blue: 129/255).opacity(0.3)
+                                            Color(
+                                                red: 16 / 255, green: 185 / 255,
+                                                blue: 129 / 255
+                                            ).opacity(0.5),
+                                            Color(
+                                                red: 16 / 255, green: 185 / 255,
+                                                blue: 129 / 255
+                                            ).opacity(0.3),
                                         ],
                                         startPoint: .top,
                                         endPoint: .bottom
                                     )
                                 )
-                            
+
                             RoundedRectangle(cornerRadius: 12)
                                 .fill(Color.white.opacity(0.05))
-                            
+
                             RoundedRectangle(cornerRadius: 12)
                                 .stroke(
                                     LinearGradient(
                                         colors: [
                                             Color.white.opacity(0.5),
-                                            Color.white.opacity(0.1)
+                                            Color.white.opacity(0.1),
                                         ],
                                         startPoint: .topLeading,
                                         endPoint: .bottomTrailing
@@ -2001,7 +2194,10 @@ struct WeeklySessionList: View {
                                 )
                         }
                     )
-                    .shadow(color: Color(red: 56/255, green: 189/255, blue: 248/255).opacity(0.3), radius: 6)
+                    .shadow(
+                        color: Color(
+                            red: 56 / 255, green: 189 / 255, blue: 248 / 255
+                        ).opacity(0.3), radius: 6)
                 }
                 .padding(.horizontal)
                 .padding(.top, 5)
@@ -2012,7 +2208,6 @@ struct WeeklySessionList: View {
         }
     }
 }
-
 
 class WeeklySessionListViewModel: ObservableObject {
     @Published var sessions: [Session] = []
@@ -2030,18 +2225,28 @@ class WeeklySessionListViewModel: ObservableObject {
                     self?.sessions = documents.compactMap { document in
                         try? document.data(as: Session.self)
                     }
-                    
+
                     // Calculate this week's longest session
                     let calendar = Calendar.current
                     let currentDate = Date()
-                    let weekStart = calendar.date(from: calendar.dateComponents([.yearForWeekOfYear, .weekOfYear], from: currentDate))!
-                    
-                    let thisWeeksSessions = self?.sessions.filter { session in
-                        // Only include successful sessions from this week
-                        session.wasSuccessful && calendar.isDate(session.startTime, equalTo: weekStart, toGranularity: .weekOfYear)
-                    } ?? []
-                    
-                    self?.weeksLongestSession = thisWeeksSessions.max(by: { $0.actualDuration < $1.actualDuration })?.actualDuration ?? 0
+                    let weekStart = calendar.date(
+                        from: calendar.dateComponents(
+                            [.yearForWeekOfYear, .weekOfYear], from: currentDate
+                        ))!
+
+                    let thisWeeksSessions =
+                        self?.sessions.filter { session in
+                            // Only include successful sessions from this week
+                            session.wasSuccessful
+                                && calendar.isDate(
+                                    session.startTime, equalTo: weekStart,
+                                    toGranularity: .weekOfYear)
+                        } ?? []
+
+                    self?.weeksLongestSession =
+                        thisWeeksSessions.max(by: {
+                            $0.actualDuration < $1.actualDuration
+                        })?.actualDuration ?? 0
                 }
             }
     }

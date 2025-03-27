@@ -1,21 +1,21 @@
-import Foundation
 import ActivityKit
+import Foundation
 import SwiftUI
 import WidgetKit
 
 struct SuccessLockView: View {
     private let gradientBackground = LinearGradient(
         colors: [
-            Color(red: 20/255, green: 10/255, blue: 40/255),
-            Color(red: 35/255, green: 20/255, blue: 90/255)
+            Color(red: 20 / 255, green: 10 / 255, blue: 40 / 255),
+            Color(red: 35 / 255, green: 20 / 255, blue: 90 / 255),
         ],
         startPoint: .top,
         endPoint: .bottom
     )
-    
+
     @State private var scale: CGFloat = 0.8
     @State private var opacity: Double = 0
-    
+
     var body: some View {
         VStack(spacing: 15) {
             // Success Icon with gradient
@@ -24,8 +24,12 @@ struct SuccessLockView: View {
                     .fill(
                         LinearGradient(
                             colors: [
-                                Color(red: 34/255, green: 197/255, blue: 94/255),
-                                Color(red: 22/255, green: 163/255, blue: 74/255)
+                                Color(
+                                    red: 34 / 255, green: 197 / 255,
+                                    blue: 94 / 255),
+                                Color(
+                                    red: 22 / 255, green: 163 / 255,
+                                    blue: 74 / 255),
                             ],
                             startPoint: .top,
                             endPoint: .bottom
@@ -33,18 +37,22 @@ struct SuccessLockView: View {
                     )
                     .frame(width: 60, height: 60)
                     .opacity(0.2)
-                
+
                 Circle()
                     .fill(Color.white.opacity(0.1))
                     .frame(width: 65, height: 65)
-                
+
                 Image(systemName: "checkmark.circle.fill")
                     .font(.system(size: 40, weight: .bold))
                     .foregroundStyle(
                         LinearGradient(
                             colors: [
-                                Color(red: 34/255, green: 197/255, blue: 94/255),
-                                Color(red: 22/255, green: 163/255, blue: 74/255)
+                                Color(
+                                    red: 34 / 255, green: 197 / 255,
+                                    blue: 94 / 255),
+                                Color(
+                                    red: 22 / 255, green: 163 / 255,
+                                    blue: 74 / 255),
                             ],
                             startPoint: .top,
                             endPoint: .bottom
@@ -61,14 +69,21 @@ struct SuccessLockView: View {
                 .foregroundStyle(
                     LinearGradient(
                         colors: [
-                            Color(red: 250/255, green: 204/255, blue: 21/255), // Yellow
-                            Color(red: 234/255, green: 179/255, blue: 8/255)
+                            Color(
+                                red: 250 / 255, green: 204 / 255, blue: 21 / 255
+                            ),  // Yellow
+                            Color(
+                                red: 234 / 255, green: 179 / 255, blue: 8 / 255),
                         ],
                         startPoint: .top,
                         endPoint: .bottom
                     )
                 )
-                .shadow(color: Color(red: 250/255, green: 204/255, blue: 21/255).opacity(0.5), radius: 8)
+                .shadow(
+                    color: Color(
+                        red: 250 / 255, green: 204 / 255, blue: 21 / 255
+                    ).opacity(0.5), radius: 8
+                )
                 .scaleEffect(scale)
                 .opacity(opacity)
 
@@ -90,13 +105,16 @@ struct SuccessLockView: View {
             ZStack {
                 gradientBackground
                 Color.white.opacity(0.05)  // Glass effect
-                
+
                 // Subtle pattern
                 GeometryReader { geometry in
                     Path { path in
-                        for i in stride(from: 0, to: geometry.size.width, by: 20) {
+                        for i in stride(
+                            from: 0, to: geometry.size.width, by: 20)
+                        {
                             path.move(to: CGPoint(x: i, y: 0))
-                            path.addLine(to: CGPoint(x: i, y: geometry.size.height))
+                            path.addLine(
+                                to: CGPoint(x: i, y: geometry.size.height))
                         }
                     }
                     .stroke(Color.white.opacity(0.05), lineWidth: 1)

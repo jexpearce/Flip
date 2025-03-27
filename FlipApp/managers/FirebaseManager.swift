@@ -1,7 +1,7 @@
+import CoreLocation  // Add this import for CLLocationCoordinate2D
 import FirebaseAuth
 import FirebaseFirestore
 import FirebaseStorage
-import CoreLocation  // Add this import for CLLocationCoordinate2D
 
 class FirebaseManager: ObservableObject {
     static let shared = FirebaseManager()
@@ -21,7 +21,7 @@ class FirebaseManager: ObservableObject {
         var friendRequests: [String]  // New: incoming friend requests
         var sentRequests: [String]  // New: outgoing friend requests
         var profileImageURL: String?  // New: URL to profile image
-        
+
     }
 
     func searchUsers(query: String, completion: @escaping ([FlipUser]) -> Void)
@@ -51,15 +51,17 @@ extension FirebaseManager {
     // Function to create a test session to ensure the collection exists
     @MainActor func createTestSessionLocation() {
         guard let userId = Auth.auth().currentUser?.uid else { return }
-        
+
         let sessionId = "\(userId)_test_\(Int(Date().timeIntervalSince1970))"
         let currentCoordinates = LocationHandler.shared.lastLocation.coordinate
-        
+
         // Create basic test session data
         let sessionData: [String: Any] = [
             "userId": userId,
             "username": FirebaseManager.shared.currentUser?.username ?? "User",
-            "location": GeoPoint(latitude: currentCoordinates.latitude, longitude: currentCoordinates.longitude),
+            "location": GeoPoint(
+                latitude: currentCoordinates.latitude,
+                longitude: currentCoordinates.longitude),
             "isCurrentlyFlipped": false,
             "lastFlipTime": Timestamp(date: Date()),
             "lastFlipWasSuccessful": true,
@@ -67,11 +69,13 @@ extension FirebaseManager {
             "actualDuration": 1,
             "sessionStartTime": Timestamp(date: Date().addingTimeInterval(-60)),
             "sessionEndTime": Timestamp(date: Date()),
-            "createdAt": FieldValue.serverTimestamp()
+            "createdAt": FieldValue.serverTimestamp(),
         ]
-        
+
         // Directly save to Firestore to create the collection
-        db.collection("session_locations").document(sessionId).setData(sessionData) { error in
+        db.collection("session_locations").document(sessionId).setData(
+            sessionData
+        ) { error in
             if let error = error {
                 print("❌ TEST SESSION ERROR: \(error.localizedDescription)")
             } else {
@@ -85,45 +89,51 @@ extension FirebaseManager {
             print("⚠️ USER INSPECTION: No current user")
             return
         }
-        
+
         print("🔍 STARTING USER DATA INSPECTION")
-        
+
         // First check current user data
-        db.collection("users").document(currentUserId).getDocument { document, error in
+        db.collection("users").document(currentUserId).getDocument {
+            document, error in
             if let error = error {
                 print("❌ USER INSPECTION ERROR: \(error.localizedDescription)")
                 return
             }
-            
+
             if let data = document?.data() {
                 print("👤 CURRENT USER (\(currentUserId)) RAW DATA: \(data)")
-                
+
                 // Check username field specifically
                 if let username = data["username"] as? String {
                     print("✅ Current user username exists: '\(username)'")
-                    
+
                     // Check if username is empty
                     if username.isEmpty {
                         print("⚠️ Current user username is EMPTY")
                     }
-                    
+
                     // Try to update current user's username in FirebaseManager
                     if self.currentUser?.username.isEmpty ?? true {
-                        print("⚠️ Current user object has empty username, updating it to: \(username)")
-                        
+                        print(
+                            "⚠️ Current user object has empty username, updating it to: \(username)"
+                        )
+
                         // Create a new FlipUser with the correct username
                         let updatedUser = FirebaseManager.FlipUser(
                             id: currentUserId,
                             username: username,
-                            totalFocusTime: self.currentUser?.totalFocusTime ?? 0,
+                            totalFocusTime: self.currentUser?.totalFocusTime
+                                ?? 0,
                             totalSessions: self.currentUser?.totalSessions ?? 0,
-                            longestSession: self.currentUser?.longestSession ?? 0,
+                            longestSession: self.currentUser?.longestSession
+                                ?? 0,
                             friends: self.currentUser?.friends ?? [],
-                            friendRequests: self.currentUser?.friendRequests ?? [],
+                            friendRequests: self.currentUser?.friendRequests
+                                ?? [],
                             sentRequests: self.currentUser?.sentRequests ?? [],
                             profileImageURL: self.currentUser?.profileImageURL
                         )
-                        
+
                         // Update the current user
                         DispatchQueue.main.async {
                             self.currentUser = updatedUser
@@ -131,76 +141,108 @@ extension FirebaseManager {
                     }
                 } else {
                     print("❌ Current user is missing username field!")
-                    
+
                     // Check if there's a displayName in Auth that we can use
-                    if let displayName = Auth.auth().currentUser?.displayName, !displayName.isEmpty {
-                        print("🔄 Found displayName in Auth: \(displayName), updating Firestore...")
-                        
+                    if let displayName = Auth.auth().currentUser?.displayName,
+                        !displayName.isEmpty
+                    {
+                        print(
+                            "🔄 Found displayName in Auth: \(displayName), updating Firestore..."
+                        )
+
                         // Update Firestore with the displayName as username
-                        self.db.collection("users").document(currentUserId).updateData([
-                            "username": displayName
-                        ]) { error in
-                            if let error = error {
-                                print("❌ Failed to update missing username: \(error.localizedDescription)")
-                            } else {
-                                print("✅ Successfully repaired missing username field")
-                                
-                                // Also update local user object
-                                if let currentUser = self.currentUser {
-                                    let updatedUser = FirebaseManager.FlipUser(
-                                        id: currentUser.id,
-                                        username: displayName,
-                                        totalFocusTime: currentUser.totalFocusTime,
-                                        totalSessions: currentUser.totalSessions,
-                                        longestSession: currentUser.longestSession,
-                                        friends: currentUser.friends,
-                                        friendRequests: currentUser.friendRequests,
-                                        sentRequests: currentUser.sentRequests,
-                                        profileImageURL: currentUser.profileImageURL
+                        self.db.collection("users").document(currentUserId)
+                            .updateData([
+                                "username": displayName
+                            ]) { error in
+                                if let error = error {
+                                    print(
+                                        "❌ Failed to update missing username: \(error.localizedDescription)"
                                     )
-                                    
-                                    DispatchQueue.main.async {
-                                        self.currentUser = updatedUser
+                                } else {
+                                    print(
+                                        "✅ Successfully repaired missing username field"
+                                    )
+
+                                    // Also update local user object
+                                    if let currentUser = self.currentUser {
+                                        let updatedUser =
+                                            FirebaseManager.FlipUser(
+                                                id: currentUser.id,
+                                                username: displayName,
+                                                totalFocusTime: currentUser
+                                                    .totalFocusTime,
+                                                totalSessions: currentUser
+                                                    .totalSessions,
+                                                longestSession: currentUser
+                                                    .longestSession,
+                                                friends: currentUser.friends,
+                                                friendRequests: currentUser
+                                                    .friendRequests,
+                                                sentRequests: currentUser
+                                                    .sentRequests,
+                                                profileImageURL: currentUser
+                                                    .profileImageURL
+                                            )
+
+                                        DispatchQueue.main.async {
+                                            self.currentUser = updatedUser
+                                        }
                                     }
                                 }
                             }
-                        }
                     }
                 }
             } else {
                 print("❌ No user document found for current user!")
             }
-            
+
             // Then check friend data
-            self.db.collection("users").document(currentUserId).getDocument { document, error in
-                if let userData = try? document?.data(as: FirebaseManager.FlipUser.self) {
+            self.db.collection("users").document(currentUserId).getDocument {
+                document, error in
+                if let userData = try? document?.data(
+                    as: FirebaseManager.FlipUser.self)
+                {
                     print("👥 Checking \(userData.friends.count) friends...")
-                    
+
                     for friendId in userData.friends {
-                        self.db.collection("users").document(friendId).getDocument { friendDoc, friendError in
-                            if let friendError = friendError {
-                                print("❌ Error getting friend data for \(friendId): \(friendError.localizedDescription)")
-                                return
-                            }
-                            
-                            if let friendData = friendDoc?.data() {
-                                if let friendUsername = friendData["username"] as? String {
-                                    print("👤 Friend \(friendId): username = '\(friendUsername)'")
-                                    
-                                    if friendUsername.isEmpty {
-                                        print("⚠️ Friend \(friendId) has EMPTY username")
+                        self.db.collection("users").document(friendId)
+                            .getDocument { friendDoc, friendError in
+                                if let friendError = friendError {
+                                    print(
+                                        "❌ Error getting friend data for \(friendId): \(friendError.localizedDescription)"
+                                    )
+                                    return
+                                }
+
+                                if let friendData = friendDoc?.data() {
+                                    if let friendUsername = friendData[
+                                        "username"] as? String
+                                    {
+                                        print(
+                                            "👤 Friend \(friendId): username = '\(friendUsername)'"
+                                        )
+
+                                        if friendUsername.isEmpty {
+                                            print(
+                                                "⚠️ Friend \(friendId) has EMPTY username"
+                                            )
+                                        }
+                                    } else {
+                                        print(
+                                            "❌ Friend \(friendId) is MISSING username field"
+                                        )
                                     }
                                 } else {
-                                    print("❌ Friend \(friendId) is MISSING username field")
+                                    print(
+                                        "❌ No document found for friend \(friendId)"
+                                    )
                                 }
-                            } else {
-                                print("❌ No document found for friend \(friendId)")
                             }
-                        }
                     }
                 }
             }
-            
+
             // Check recent sessions to ensure they have usernames
             self.db.collection("sessions")
                 .whereField("userId", isEqualTo: currentUserId)
@@ -211,36 +253,51 @@ extension FirebaseManager {
                         print("❌ No recent sessions found")
                         return
                     }
-                    
+
                     print("📋 Checking \(documents.count) recent sessions...")
-                    
+
                     for document in documents {
                         let data = document.data()
                         let sessionId = document.documentID
-                        
+
                         if let username = data["username"] as? String {
-                            print("📝 Session \(sessionId): username = '\(username)'")
-                            
+                            print(
+                                "📝 Session \(sessionId): username = '\(username)'"
+                            )
+
                             if username.isEmpty {
-                                print("⚠️ Session \(sessionId) has EMPTY username")
-                                
+                                print(
+                                    "⚠️ Session \(sessionId) has EMPTY username")
+
                                 // Try to repair this session
-                                if let currentUsername = self.currentUser?.username, !currentUsername.isEmpty {
-                                    print("🔄 Repairing session \(sessionId) with username: \(currentUsername)")
-                                    
-                                    self.db.collection("sessions").document(sessionId).updateData([
+                                if let currentUsername = self.currentUser?
+                                    .username, !currentUsername.isEmpty
+                                {
+                                    print(
+                                        "🔄 Repairing session \(sessionId) with username: \(currentUsername)"
+                                    )
+
+                                    self.db.collection("sessions").document(
+                                        sessionId
+                                    ).updateData([
                                         "username": currentUsername
                                     ]) { error in
                                         if let error = error {
-                                            print("❌ Failed to repair session: \(error.localizedDescription)")
+                                            print(
+                                                "❌ Failed to repair session: \(error.localizedDescription)"
+                                            )
                                         } else {
-                                            print("✅ Successfully repaired session \(sessionId)")
+                                            print(
+                                                "✅ Successfully repaired session \(sessionId)"
+                                            )
                                         }
                                     }
                                 }
                             }
                         } else {
-                            print("❌ Session \(sessionId) is MISSING username field")
+                            print(
+                                "❌ Session \(sessionId) is MISSING username field"
+                            )
                         }
                     }
                 }
@@ -250,73 +307,87 @@ extension FirebaseManager {
     func pruneOldSessions(forUserId userId: String) {
         // Get a timestamp for 30 days ago
         let calendar = Calendar.current
-        let thirtyDaysAgo = calendar.date(byAdding: .day, value: -10, to: Date()) ?? Date()
-        
+        let thirtyDaysAgo =
+            calendar.date(byAdding: .day, value: -10, to: Date()) ?? Date()
+
         // First, delete any very old sessions (more than 30 days old)
         db.collection("session_locations")
             .whereField("userId", isEqualTo: userId)
-            .whereField("sessionEndTime", isLessThan: Timestamp(date: thirtyDaysAgo))
+            .whereField(
+                "sessionEndTime", isLessThan: Timestamp(date: thirtyDaysAgo)
+            )
             .getDocuments { [weak self] snapshot, error in
-                guard let self = self, let documents = snapshot?.documents, !documents.isEmpty else {
+                guard let self = self, let documents = snapshot?.documents,
+                    !documents.isEmpty
+                else {
                     return
                 }
-                
+
                 let batch = self.db.batch()
                 for doc in documents {
                     batch.deleteDocument(doc.reference)
                 }
-                
+
                 batch.commit { error in
                     if let error = error {
                         print("Error deleting old sessions: \(error)")
                     } else {
-                        print("Deleted \(documents.count) sessions older than 10 days")
+                        print(
+                            "Deleted \(documents.count) sessions older than 10 days"
+                        )
                     }
                 }
             }
-        
+
         // Next, make sure we only keep the 10 most recent sessions within the last 30 days
         db.collection("session_locations")
             .whereField("userId", isEqualTo: userId)
-            .whereField("sessionEndTime", isGreaterThan: Timestamp(date: thirtyDaysAgo))
+            .whereField(
+                "sessionEndTime", isGreaterThan: Timestamp(date: thirtyDaysAgo)
+            )
             .order(by: "sessionEndTime", descending: true)
             .getDocuments { [weak self] snapshot, error in
                 guard let self = self,
-                      let documents = snapshot?.documents,
-                      documents.count > 10 else {
+                    let documents = snapshot?.documents,
+                    documents.count > 10
+                else {
                     return
                 }
-                
+
                 // Keep the 10 most recent, delete the rest
                 let docsToDelete = documents.suffix(from: 10)
-                
+
                 let batch = self.db.batch()
                 for doc in docsToDelete {
                     batch.deleteDocument(doc.reference)
                 }
-                
+
                 batch.commit { error in
                     if let error = error {
                         print("Error pruning excess sessions: \(error)")
                     } else {
-                        print("Pruned \(docsToDelete.count) excess sessions for map display")
+                        print(
+                            "Pruned \(docsToDelete.count) excess sessions for map display"
+                        )
                     }
                 }
             }
     }
     func saveSessionLocation(session: CompletedSession) {
         let sessionId = "\(session.userId)_\(Int(Date().timeIntervalSince1970))"
-        
+
         // CRITICAL FIX: Make sure actualDuration is calculated properly
         // Only apply a minimum if it makes sense
         let validActualDuration = session.actualDuration
-        let sessionEndTime = session.startTime.addingTimeInterval(Double(session.actualDuration * 60))
+        let sessionEndTime = session.startTime.addingTimeInterval(
+            Double(session.actualDuration * 60))
 
-        
         var sessionData: [String: Any] = [
             "userId": session.userId,
             "username": session.username,
-            "location": GeoPoint(latitude: session.location.latitude, longitude: session.location.longitude),
+            "location": GeoPoint(
+                latitude: session.location.latitude,
+                longitude: session.location.longitude),
             "isCurrentlyFlipped": false,
             "lastFlipTime": Timestamp(date: Date()),
             "lastFlipWasSuccessful": session.wasSuccessful,
@@ -324,9 +395,9 @@ extension FirebaseManager {
             "actualDuration": validActualDuration,
             "sessionStartTime": Timestamp(date: session.startTime),
             "sessionEndTime": Timestamp(date: sessionEndTime),
-            "createdAt": FieldValue.serverTimestamp()
+            "createdAt": FieldValue.serverTimestamp(),
         ]
-        
+
         // Add building information if available
         if let building = session.building {
             sessionData["buildingId"] = building.id
@@ -334,29 +405,35 @@ extension FirebaseManager {
             sessionData["buildingLatitude"] = building.coordinate.latitude
             sessionData["buildingLongitude"] = building.coordinate.longitude
         }
-        
+
         // Save to Firestore
-        db.collection("session_locations").document(sessionId).setData(sessionData) { [weak self] error in
+        db.collection("session_locations").document(sessionId).setData(
+            sessionData
+        ) { [weak self] error in
             if let error = error {
                 print("❌ SAVE ERROR: \(error.localizedDescription)")
             } else {
-                print("✅ SESSION SAVED SUCCESSFULLY: \(sessionId) with duration \(validActualDuration) minutes")
-                
+                print(
+                    "✅ SESSION SAVED SUCCESSFULLY: \(sessionId) with duration \(validActualDuration) minutes"
+                )
+
                 // Prune old sessions to keep the map clean
                 self?.pruneOldSessions(forUserId: session.userId)
-                
+
                 // Force refresh building leaderboard if needed
                 if let building = session.building {
                     DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
-                        RegionalViewModel.shared.leaderboardViewModel.loadBuildingLeaderboard(building: building)
+                        RegionalViewModel.shared.leaderboardViewModel
+                            .loadBuildingLeaderboard(building: building)
                     }
                 }
-                
+
                 // Clean up stale location data
                 if session.wasSuccessful {
                     // Only remove from active locations when session completed successfully
                     // to ensure failed sessions still show up properly
-                    self?.db.collection("locations").document(session.userId).delete()
+                    self?.db.collection("locations").document(session.userId)
+                        .delete()
                 }
             }
         }
@@ -367,40 +444,51 @@ extension FirebaseManager {
 extension FirebaseManager {
     func cleanupOldLocationData() {
         let calendar = Calendar.current
-        let oneWeekAgo = calendar.date(byAdding: .weekOfYear, value: -1, to: Date())!
-        
+        let oneWeekAgo = calendar.date(
+            byAdding: .weekOfYear, value: -1, to: Date())!
+
         let db = Firestore.firestore()
-        
+
         // Query for session_locations older than one week
         db.collection("session_locations")
-            .whereField("sessionEndTime", isLessThan: Timestamp(date: oneWeekAgo))
+            .whereField(
+                "sessionEndTime", isLessThan: Timestamp(date: oneWeekAgo)
+            )
             .limit(to: 500)  // Process in batches to avoid timeout
             .getDocuments { snapshot, error in
                 if let error = error {
-                    print("Error querying old sessions: \(error.localizedDescription)")
+                    print(
+                        "Error querying old sessions: \(error.localizedDescription)"
+                    )
                     return
                 }
-                
-                guard let documents = snapshot?.documents, !documents.isEmpty else {
+
+                guard let documents = snapshot?.documents, !documents.isEmpty
+                else {
                     print("No old sessions to clean up")
                     return
                 }
-                
+
                 let batch = db.batch()
-                
+
                 for document in documents {
                     batch.deleteDocument(document.reference)
                 }
-                
+
                 batch.commit { error in
                     if let error = error {
-                        print("Error deleting old sessions: \(error.localizedDescription)")
+                        print(
+                            "Error deleting old sessions: \(error.localizedDescription)"
+                        )
                     } else {
-                        print("Successfully deleted \(documents.count) old sessions")
-                        
+                        print(
+                            "Successfully deleted \(documents.count) old sessions"
+                        )
+
                         // If there are likely more documents to delete, call this function again
                         if documents.count == 500 {
-                            DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 1)
+                            {
                                 self.cleanupOldLocationData()
                             }
                         }
@@ -415,76 +503,86 @@ extension FirebaseManager {
     // Check if the user has already completed their first session
     func hasCompletedFirstSession(completion: @escaping (Bool) -> Void) {
         if UserDefaults.standard.bool(forKey: "isPotentialFirstTimeUser") {
-                print("🏆 FIRST SESSION OVERRIDE: Fresh install with new account, forcing first-time experience")
-                completion(false)
-                return
-            }
+            print(
+                "🏆 FIRST SESSION OVERRIDE: Fresh install with new account, forcing first-time experience"
+            )
+            completion(false)
+            return
+        }
         guard let userId = Auth.auth().currentUser?.uid else {
             completion(false)
             return
         }
-        
+
         // Check first_sessions collection first
         db.collection("first_sessions")
             .document(userId)
             .getDocument { document, error in
                 if let error = error {
-                    print("Error checking first session: \(error.localizedDescription)")
+                    print(
+                        "Error checking first session: \(error.localizedDescription)"
+                    )
                     completion(false)
                     return
                 }
-                
+
                 if let document = document, document.exists {
                     // User already has a first session record
                     completion(true)
                     return
                 }
-                
+
                 // Also check sessions collection as a backup
                 self.db.collection("sessions")
                     .whereField("userId", isEqualTo: userId)
                     .limit(to: 1)
                     .getDocuments { snapshot, error in
                         if let error = error {
-                            print("Error checking regular sessions: \(error.localizedDescription)")
+                            print(
+                                "Error checking regular sessions: \(error.localizedDescription)"
+                            )
                             completion(false)
                             return
                         }
-                        
+
                         // If there are any documents, the user has completed at least one session
                         completion(!(snapshot?.documents.isEmpty ?? true))
                     }
             }
     }
-    
+
     // Create a first session entry in the leaderboard
-    func recordFirstSession(duration: Int, wasSuccessful: Bool, completion: @escaping (Bool) -> Void) {
+    func recordFirstSession(
+        duration: Int, wasSuccessful: Bool, completion: @escaping (Bool) -> Void
+    ) {
         guard let userId = Auth.auth().currentUser?.uid else {
             completion(false)
             return
         }
-        
+
         let username = self.currentUser?.username ?? "User"
-        
+
         // Create first session document
         let firstSessionData: [String: Any] = [
             "userId": userId,
             "username": username,
             "duration": duration,
             "wasSuccessful": wasSuccessful,
-            "timestamp": FieldValue.serverTimestamp()
+            "timestamp": FieldValue.serverTimestamp(),
         ]
-        
+
         // Save to first_sessions collection
         db.collection("first_sessions")
             .document(userId)
             .setData(firstSessionData) { error in
                 if let error = error {
-                    print("Error saving first session: \(error.localizedDescription)")
+                    print(
+                        "Error saving first session: \(error.localizedDescription)"
+                    )
                     completion(false)
                     return
                 }
-                
+
                 print("First session recorded successfully")
                 completion(true)
             }
@@ -494,15 +592,18 @@ extension FirebaseManager {
     func ensureFirstTimeExperience() {
         let defaults = UserDefaults.standard
         if defaults.bool(forKey: "isPotentialFirstTimeUser") {
-            
+
             guard let userId = Auth.auth().currentUser?.uid else { return }
-            
+
             // ONLY clear first_sessions entry to ensure proper first-time experience
-            print("🧹 FRESH INSTALL: Clearing first_sessions record if it exists")
-            
+            print(
+                "🧹 FRESH INSTALL: Clearing first_sessions record if it exists")
+
             db.collection("first_sessions").document(userId).delete { error in
                 if let error = error {
-                    print("⚠️ Error clearing first session: \(error.localizedDescription)")
+                    print(
+                        "⚠️ Error clearing first session: \(error.localizedDescription)"
+                    )
                 } else {
                     print("✅ Successfully cleared first_sessions record")
                 }

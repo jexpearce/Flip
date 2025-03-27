@@ -2,7 +2,9 @@ import ActivityKit
 import SwiftUI
 import WidgetKit
 
-func DynamicIslandView(context: ActivityViewContext<FlipActivityAttributes>) -> DynamicIsland {
+func DynamicIslandView(context: ActivityViewContext<FlipActivityAttributes>)
+    -> DynamicIsland
+{
     DynamicIsland {
         // Expanded View
         DynamicIslandExpandedRegion(.center) {
@@ -11,52 +13,87 @@ func DynamicIslandView(context: ActivityViewContext<FlipActivityAttributes>) -> 
                 Rectangle()
                     .fill(Color.clear)
                     .frame(height: 28)
-                
+
                 HStack {
                     // Icon - different based on state
-                    Image(systemName: context.state.isPaused ? "pause.circle.fill" : "timer")
-                        .font(.system(size: 15, weight: .bold))
-                        .foregroundStyle(
-                            LinearGradient(
-                                colors: [
-                                    context.state.isPaused ?
-                                        Color(red: 239/255, green: 68/255, blue: 68/255) :
-                                        Color(red: 56/255, green: 189/255, blue: 248/255),
-                                    context.state.isPaused ?
-                                        Color(red: 185/255, green: 28/255, blue: 28/255) :
-                                        Color(red: 14/255, green: 165/255, blue: 233/255)
-                                ],
-                                startPoint: .top,
-                                endPoint: .bottom
-                            )
+                    Image(
+                        systemName: context.state.isPaused
+                            ? "pause.circle.fill" : "timer"
+                    )
+                    .font(.system(size: 15, weight: .bold))
+                    .foregroundStyle(
+                        LinearGradient(
+                            colors: [
+                                context.state.isPaused
+                                    ? Color(
+                                        red: 239 / 255, green: 68 / 255,
+                                        blue: 68 / 255)
+                                    : Color(
+                                        red: 56 / 255, green: 189 / 255,
+                                        blue: 248 / 255),
+                                context.state.isPaused
+                                    ? Color(
+                                        red: 185 / 255, green: 28 / 255,
+                                        blue: 28 / 255)
+                                    : Color(
+                                        red: 14 / 255, green: 165 / 255,
+                                        blue: 233 / 255),
+                            ],
+                            startPoint: .top,
+                            endPoint: .bottom
                         )
-                        .shadow(color: Color(red: 56/255, green: 189/255, blue: 248/255).opacity(0.5), radius: 4)
-                    
+                    )
+                    .shadow(
+                        color: Color(
+                            red: 56 / 255, green: 189 / 255, blue: 248 / 255
+                        ).opacity(0.5), radius: 4)
+
                     // Time display - show either session time or pause time
-                    if context.state.isPaused, let pauseTime = context.state.pauseTimeRemaining {
+                    if context.state.isPaused,
+                        let pauseTime = context.state.pauseTimeRemaining
+                    {
                         VStack(alignment: .leading, spacing: 0) {
                             Text(pauseTime)
-                                .font(.system(size: 16, weight: .bold, design: .monospaced))
-                                .foregroundColor(Color(red: 250/255, green: 204/255, blue: 21/255))
-                            
+                                .font(
+                                    .system(
+                                        size: 16, weight: .bold,
+                                        design: .monospaced)
+                                )
+                                .foregroundColor(
+                                    Color(
+                                        red: 250 / 255, green: 204 / 255,
+                                        blue: 21 / 255))
+
                             Text("Pause")
                                 .font(.system(size: 8, weight: .medium))
                                 .foregroundColor(.white.opacity(0.6))
                         }
                     } else {
                         Text(context.state.remainingTime)
-                            .font(.system(size: 18, weight: .bold, design: .monospaced))
+                            .font(
+                                .system(
+                                    size: 18, weight: .bold, design: .monospaced
+                                )
+                            )
                             .foregroundStyle(
                                 LinearGradient(
-                                    colors: [Color.white, Color.white.opacity(0.8)],
+                                    colors: [
+                                        Color.white, Color.white.opacity(0.8),
+                                    ],
                                     startPoint: .top,
                                     endPoint: .bottom
                                 )
                             )
-                            .shadow(color: Color(red: 56/255, green: 189/255, blue: 248/255).opacity(0.5), radius: 4)
+                            .shadow(
+                                color: Color(
+                                    red: 56 / 255, green: 189 / 255,
+                                    blue: 248 / 255
+                                ).opacity(0.5), radius: 4)
                     }
 
-                    if !context.state.isPaused && context.state.remainingPauses > 0 {
+                    if !context.state.isPaused
+                        && context.state.remainingPauses > 0
+                    {
                         Spacer()
                         HStack(spacing: 2) {
                             Text("\(context.state.remainingPauses)")
@@ -66,12 +103,18 @@ func DynamicIslandView(context: ActivityViewContext<FlipActivityAttributes>) -> 
                         }
                         .foregroundStyle(
                             LinearGradient(
-                                colors: [Color.white, Color.white.opacity(0.7)],
+                                colors: [
+                                    Color.white, Color.white.opacity(0.7),
+                                ],
                                 startPoint: .top,
                                 endPoint: .bottom
                             )
                         )
-                        .shadow(color: Color(red: 56/255, green: 189/255, blue: 248/255).opacity(0.4), radius: 3)
+                        .shadow(
+                            color: Color(
+                                red: 56 / 255, green: 189 / 255, blue: 248 / 255
+                            ).opacity(0.4), radius: 3
+                        )
                         .padding(.horizontal, 5)
                         .padding(.vertical, 2)
                         .background(
@@ -90,7 +133,7 @@ func DynamicIslandView(context: ActivityViewContext<FlipActivityAttributes>) -> 
                 Rectangle()
                     .fill(Color.clear)
                     .frame(height: 30)
-                
+
                 if let message = context.state.countdownMessage {
                     Text(message)
                         .font(.system(size: 11, weight: .medium))
@@ -99,7 +142,8 @@ func DynamicIslandView(context: ActivityViewContext<FlipActivityAttributes>) -> 
                         .padding(.vertical, 3)
                         .background(Color.white.opacity(0.08))
                         .cornerRadius(5)
-                } else if let flipBackTime = context.state.flipBackTimeRemaining {
+                } else if let flipBackTime = context.state.flipBackTimeRemaining
+                {
                     Text("\(flipBackTime)s to flip")
                         .font(.system(size: 11, weight: .medium))
                         .foregroundColor(.white)
@@ -115,8 +159,12 @@ func DynamicIslandView(context: ActivityViewContext<FlipActivityAttributes>) -> 
                                 .foregroundStyle(
                                     LinearGradient(
                                         colors: [
-                                            Color(red: 34/255, green: 197/255, blue: 94/255),
-                                            Color(red: 22/255, green: 163/255, blue: 74/255)
+                                            Color(
+                                                red: 34 / 255, green: 197 / 255,
+                                                blue: 94 / 255),
+                                            Color(
+                                                red: 22 / 255, green: 163 / 255,
+                                                blue: 74 / 255),
                                         ],
                                         startPoint: .leading,
                                         endPoint: .trailing
@@ -126,9 +174,10 @@ func DynamicIslandView(context: ActivityViewContext<FlipActivityAttributes>) -> 
                                 .padding(.vertical, 3)
                                 .background(Color.white.opacity(0.08))
                                 .cornerRadius(5)
-                                .shadow(color: Color.green.opacity(0.3), radius: 2)
+                                .shadow(
+                                    color: Color.green.opacity(0.3), radius: 2)
                         }
-                        
+
                         if let pauseTime = context.state.pauseTimeRemaining {
                             Text("Auto: \(pauseTime)")
                                 .font(.system(size: 10, weight: .medium))
@@ -142,8 +191,12 @@ func DynamicIslandView(context: ActivityViewContext<FlipActivityAttributes>) -> 
                             .foregroundStyle(
                                 LinearGradient(
                                     colors: [
-                                        Color(red: 239/255, green: 68/255, blue: 68/255),
-                                        Color(red: 185/255, green: 28/255, blue: 28/255)
+                                        Color(
+                                            red: 239 / 255, green: 68 / 255,
+                                            blue: 68 / 255),
+                                        Color(
+                                            red: 185 / 255, green: 28 / 255,
+                                            blue: 28 / 255),
                                     ],
                                     startPoint: .leading,
                                     endPoint: .trailing
@@ -159,32 +212,39 @@ func DynamicIslandView(context: ActivityViewContext<FlipActivityAttributes>) -> 
             }
         }
     } compactLeading: {
-        Image(systemName: context.state.isPaused ? "pause.circle.fill" : "timer")
-            .font(.system(size: 13, weight: .bold))
-            .foregroundStyle(
-                LinearGradient(
-                    colors: [
-                        context.state.isPaused ?
-                            Color(red: 239/255, green: 68/255, blue: 68/255) :
-                            Color.white,
-                        context.state.isPaused ?
-                            Color(red: 185/255, green: 28/255, blue: 28/255) :
-                            Color.white.opacity(0.7)
-                    ],
-                    startPoint: .top,
-                    endPoint: .bottom
-                )
+        Image(
+            systemName: context.state.isPaused ? "pause.circle.fill" : "timer"
+        )
+        .font(.system(size: 13, weight: .bold))
+        .foregroundStyle(
+            LinearGradient(
+                colors: [
+                    context.state.isPaused
+                        ? Color(red: 239 / 255, green: 68 / 255, blue: 68 / 255)
+                        : Color.white,
+                    context.state.isPaused
+                        ? Color(red: 185 / 255, green: 28 / 255, blue: 28 / 255)
+                        : Color.white.opacity(0.7),
+                ],
+                startPoint: .top,
+                endPoint: .bottom
             )
+        )
     } compactTrailing: {
-        if context.state.isPaused, let pauseTime = context.state.pauseTimeRemaining {
+        if context.state.isPaused,
+            let pauseTime = context.state.pauseTimeRemaining
+        {
             Text(pauseTime)
                 .font(.system(size: 13, design: .monospaced))
                 .fontWeight(.bold)
                 .foregroundStyle(
                     LinearGradient(
                         colors: [
-                            Color(red: 250/255, green: 204/255, blue: 21/255),
-                            Color(red: 234/255, green: 179/255, blue: 8/255)
+                            Color(
+                                red: 250 / 255, green: 204 / 255, blue: 21 / 255
+                            ),
+                            Color(
+                                red: 234 / 255, green: 179 / 255, blue: 8 / 255),
                         ],
                         startPoint: .top,
                         endPoint: .bottom
@@ -203,21 +263,23 @@ func DynamicIslandView(context: ActivityViewContext<FlipActivityAttributes>) -> 
                 )
         }
     } minimal: {
-        Image(systemName: context.state.isPaused ? "pause.circle.fill" : "timer")
-            .font(.system(size: 12, weight: .bold))
-            .foregroundStyle(
-                LinearGradient(
-                    colors: [
-                        context.state.isPaused ?
-                            Color(red: 239/255, green: 68/255, blue: 68/255) :
-                            Color.white,
-                        context.state.isPaused ?
-                            Color(red: 185/255, green: 28/255, blue: 28/255) :
-                            Color.white.opacity(0.7)
-                    ],
-                    startPoint: .top,
-                    endPoint: .bottom
-                )
+        Image(
+            systemName: context.state.isPaused ? "pause.circle.fill" : "timer"
+        )
+        .font(.system(size: 12, weight: .bold))
+        .foregroundStyle(
+            LinearGradient(
+                colors: [
+                    context.state.isPaused
+                        ? Color(red: 239 / 255, green: 68 / 255, blue: 68 / 255)
+                        : Color.white,
+                    context.state.isPaused
+                        ? Color(red: 185 / 255, green: 28 / 255, blue: 28 / 255)
+                        : Color.white.opacity(0.7),
+                ],
+                startPoint: .top,
+                endPoint: .bottom
             )
+        )
     }
 }
