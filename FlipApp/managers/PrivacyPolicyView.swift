@@ -8,7 +8,7 @@ struct PrivacyPolicyView: View {
             // Background gradient
             LinearGradient(
                 colors: [
-                    Color(red: 20 / 255, green: 10 / 255, blue: 40 / 255),
+                    Theme.deepMidnightPurple,
                     Color(red: 30 / 255, green: 18 / 255, blue: 60 / 255),
                 ],
                 startPoint: .top,

@@ -47,7 +47,7 @@ struct InitialView: View {
             // Background gradient
             LinearGradient(
                 colors: [
-                    Color(red: 20 / 255, green: 10 / 255, blue: 40 / 255),
+                    Theme.deepMidnightPurple,
                     Color(red: 30 / 255, green: 18 / 255, blue: 60 / 255),
                 ],
                 startPoint: .top,
@@ -286,9 +286,7 @@ struct InitialView: View {
                 Circle()
                     .fill(
                         isGranted
-                            ? Color(
-                                red: 34 / 255, green: 197 / 255, blue: 94 / 255
-                            ).opacity(0.2)
+                            ? Theme.mutedGreen.opacity(0.2)
                             : (isActive
                                 ? Color(
                                     red: 139 / 255, green: 92 / 255,
@@ -301,8 +299,7 @@ struct InitialView: View {
                     Image(systemName: "checkmark")
                         .font(.system(size: 16, weight: .bold))
                         .foregroundColor(
-                            Color(
-                                red: 34 / 255, green: 197 / 255, blue: 94 / 255)
+                            Theme.mutedGreen
                         )
                         .opacity(animateCheckmarks ? 1 : 0)
                         .scaleEffect(animateCheckmarks ? 1 : 0.5)
@@ -353,7 +350,7 @@ struct InitialView: View {
             .font(.system(size: 20))
             .foregroundColor(
                 isGranted
-                    ? Color(red: 34 / 255, green: 197 / 255, blue: 94 / 255)
+                    ? Theme.mutedGreen
                     : .white.opacity(0.4)
             )
             .opacity(isGranted && animateCheckmarks ? 1 : (isGranted ? 0 : 1))
@@ -539,9 +536,7 @@ struct EnhancedLocationPermissionAlert: View {
                 ZStack {
                     Circle()
                         .fill(
-                            Color(
-                                red: 56 / 255, green: 189 / 255, blue: 248 / 255
-                            ).opacity(0.2)
+                            Theme.lightTealBlue.opacity(0.2)
                         )
                         .frame(width: 90, height: 90)
                         .scaleEffect(animateContent ? 1.3 : 0.8)
@@ -551,9 +546,7 @@ struct EnhancedLocationPermissionAlert: View {
                         .fill(
                             LinearGradient(
                                 colors: [
-                                    Color(
-                                        red: 56 / 255, green: 189 / 255,
-                                        blue: 248 / 255),
+                                    Theme.lightTealBlue,
                                     Color(
                                         red: 14 / 255, green: 165 / 255,
                                         blue: 233 / 255),
@@ -575,9 +568,7 @@ struct EnhancedLocationPermissionAlert: View {
                     .tracking(4)
                     .foregroundColor(.white)
                     .shadow(
-                        color: Color(
-                            red: 56 / 255, green: 189 / 255, blue: 248 / 255
-                        ).opacity(0.6), radius: 8)
+                        color: Theme.lightTealBlue.opacity(0.6), radius: 8)
 
                 // Privacy explanation
                 Text(
@@ -622,7 +613,7 @@ struct EnhancedLocationPermissionAlert: View {
                             .font(.system(size: 14, weight: .medium))
                     }
                     .foregroundColor(
-                        Color(red: 56 / 255, green: 189 / 255, blue: 248 / 255)
+                        Theme.lightTealBlue
                     )
                     .padding(.vertical, 8)
                 }
@@ -676,10 +667,7 @@ struct EnhancedLocationPermissionAlert: View {
                                         .fill(
                                             LinearGradient(
                                                 colors: [
-                                                    Color(
-                                                        red: 56 / 255,
-                                                        green: 189 / 255,
-                                                        blue: 248 / 255),
+                                                    Theme.lightTealBlue,
                                                     Color(
                                                         red: 14 / 255,
                                                         green: 165 / 255,
@@ -700,10 +688,8 @@ struct EnhancedLocationPermissionAlert: View {
                                 }
                             )
                             .shadow(
-                                color: Color(
-                                    red: 56 / 255, green: 189 / 255,
-                                    blue: 248 / 255
-                                ).opacity(0.5), radius: 8
+                                color: Theme.lightTealBlue.opacity(0.5),
+                                radius: 8
                             )
                             .scaleEffect(animateButton ? 0.95 : 1.0)
                     }

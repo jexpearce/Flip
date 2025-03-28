@@ -181,10 +181,7 @@ struct FeedSessionCard: View {
                             .tracking(2)
                             .foregroundColor(
                                 session.wasSuccessful
-                                    ? Color(
-                                        red: 34 / 255, green: 197 / 255,
-                                        blue: 94 / 255
-                                    ).opacity(0.9)
+                                    ? Theme.mutedGreen.opacity(0.9)
                                     : Color(
                                         red: 239 / 255, green: 68 / 255,
                                         blue: 68 / 255
@@ -393,10 +390,7 @@ struct FeedSessionCard: View {
                             colors: [
                                 Color.white.opacity(0.7),
                                 session.wasSuccessful
-                                    ? Color(
-                                        red: 34 / 255, green: 197 / 255,
-                                        blue: 94 / 255
-                                    ).opacity(0.3)
+                                    ? Theme.mutedGreen.opacity(0.3)
                                     : Color(
                                         red: 239 / 255, green: 68 / 255,
                                         blue: 68 / 255
@@ -413,9 +407,7 @@ struct FeedSessionCard: View {
                 RoundedRectangle(cornerRadius: 2)
                     .fill(
                         session.wasSuccessful
-                            ? Color(
-                                red: 34 / 255, green: 197 / 255, blue: 94 / 255
-                            ).opacity(0.8)
+                            ? Theme.mutedGreen.opacity(0.8)
                             : Color(
                                 red: 239 / 255, green: 68 / 255, blue: 68 / 255
                             ).opacity(0.8)
@@ -527,8 +519,8 @@ struct FeedSessionCard: View {
         session.wasSuccessful
             ? LinearGradient(
                 colors: [
-                    Color(red: 34 / 255, green: 197 / 255, blue: 94 / 255),
-                    Color(red: 22 / 255, green: 163 / 255, blue: 74 / 255),
+                    Theme.mutedGreen,
+                    Theme.darkerGreen,
                 ],
                 startPoint: .top,
                 endPoint: .bottom
@@ -546,7 +538,7 @@ struct FeedSessionCard: View {
     // Status glow color
     private var statusGlow: Color {
         session.wasSuccessful
-            ? Color(red: 34 / 255, green: 197 / 255, blue: 94 / 255).opacity(
+            ? Theme.mutedGreen.opacity(
                 0.6)
             : Color(red: 239 / 255, green: 68 / 255, blue: 68 / 255).opacity(
                 0.6)
@@ -652,12 +644,12 @@ struct GroupParticipantBadge: View {
             .font(.system(size: 12, weight: .semibold))
             .foregroundColor(
                 wasSuccessful
-                    ? Color(red: 34 / 255, green: 197 / 255, blue: 94 / 255)
+                    ? Theme.mutedGreen
                     : Color(red: 239 / 255, green: 68 / 255, blue: 68 / 255)
             )
             .shadow(
                 color: wasSuccessful
-                    ? Color(red: 34 / 255, green: 197 / 255, blue: 94 / 255)
+                    ? Theme.mutedGreen
                         .opacity(0.6)
                     : Color(red: 239 / 255, green: 68 / 255, blue: 68 / 255)
                         .opacity(0.6),
@@ -783,7 +775,7 @@ struct CommentInputField: View {
             RoundedRectangle(cornerRadius: 10)
                 .stroke(
                     isFocused
-                        ? Color(red: 34 / 255, green: 197 / 255, blue: 94 / 255)
+                        ? Theme.mutedGreen
                             .opacity(0.6) : Color.white.opacity(0.2),
                     lineWidth: 1
                 )
@@ -879,12 +871,8 @@ struct CommentInputField: View {
                 .fill(
                     LinearGradient(
                         colors: [
-                            Color(
-                                red: 34 / 255, green: 197 / 255, blue: 94 / 255
-                            ).opacity(0.7),
-                            Color(
-                                red: 22 / 255, green: 163 / 255, blue: 74 / 255
-                            ).opacity(0.7),
+                            Theme.mutedGreen.opacity(0.7),
+                            Theme.darkerGreen.opacity(0.7),
                         ],
                         startPoint: .leading,
                         endPoint: .trailing
@@ -907,7 +895,7 @@ struct CommentInputField: View {
                 .stroke(Color.white.opacity(0.3), lineWidth: 1)
         }
         .shadow(
-            color: Color(red: 34 / 255, green: 197 / 255, blue: 94 / 255)
+            color: Theme.mutedGreen
                 .opacity(0.4), radius: 4)
     }
 
@@ -1211,26 +1199,17 @@ struct CommentsView: View {
                     ZStack {
                         Circle()
                             .fill(
-                                Color(
-                                    red: 56 / 255, green: 189 / 255,
-                                    blue: 248 / 255
-                                ).opacity(0.2)
+                                Theme.lightTealBlue.opacity(0.2)
                             )
                             .frame(width: 28, height: 28)
 
                         Image(systemName: "text.bubble.fill")
                             .font(.system(size: 14))
                             .foregroundColor(
-                                Color(
-                                    red: 56 / 255, green: 189 / 255,
-                                    blue: 248 / 255
-                                ).opacity(0.8)
+                                Theme.lightTealBlue.opacity(0.8)
                             )
                             .shadow(
-                                color: Color(
-                                    red: 56 / 255, green: 189 / 255,
-                                    blue: 248 / 255
-                                ).opacity(0.6), radius: 4)
+                                color: Theme.lightTealBlue.opacity(0.6), radius: 4)
                     }
 
                     VStack(alignment: .leading, spacing: 4) {
@@ -1246,16 +1225,10 @@ struct CommentsView: View {
                                 Text(commentorName)
                                     .font(.system(size: 13, weight: .bold))
                                     .foregroundColor(
-                                        Color(
-                                            red: 56 / 255, green: 189 / 255,
-                                            blue: 248 / 255
-                                        ).opacity(0.9)
+                                        Theme.lightTealBlue.opacity(0.9)
                                     )
                                     .shadow(
-                                        color: Color(
-                                            red: 56 / 255, green: 189 / 255,
-                                            blue: 248 / 255
-                                        ).opacity(0.4), radius: 4)
+                                        color: Theme.lightTealBlue.opacity(0.4), radius: 4)
                             }
                             .buttonStyle(PlainButtonStyle())
 
@@ -1281,16 +1254,10 @@ struct CommentsView: View {
                                 Text(session.username)
                                     .font(.system(size: 13, weight: .bold))
                                     .foregroundColor(
-                                        Color(
-                                            red: 56 / 255, green: 189 / 255,
-                                            blue: 248 / 255
-                                        ).opacity(0.9)
+                                        Theme.lightTealBlue.opacity(0.9)
                                     )
                                     .shadow(
-                                        color: Color(
-                                            red: 56 / 255, green: 189 / 255,
-                                            blue: 248 / 255
-                                        ).opacity(0.4), radius: 4)
+                                        color: Theme.lightTealBlue.opacity(0.4), radius: 4)
                             }
                             .buttonStyle(PlainButtonStyle())
 
@@ -1342,7 +1309,7 @@ struct CommentBubble: View {
                 // Glow effect
                 Circle()
                     .fill(
-                        Color(red: 56 / 255, green: 189 / 255, blue: 248 / 255)
+                        Theme.lightTealBlue
                             .opacity(0.15)
                     )
                     .frame(width: 32, height: 32)
@@ -1353,10 +1320,7 @@ struct CommentBubble: View {
                     .fill(
                         LinearGradient(
                             colors: [
-                                Color(
-                                    red: 56 / 255, green: 189 / 255,
-                                    blue: 248 / 255
-                                ).opacity(0.3),
+                                Theme.lightTealBlue.opacity(0.3),
                                 Color(
                                     red: 14 / 255, green: 165 / 255,
                                     blue: 233 / 255
@@ -1372,13 +1336,11 @@ struct CommentBubble: View {
                 Image(systemName: "text.bubble.fill")
                     .font(.system(size: 14))
                     .foregroundColor(
-                        Color(red: 56 / 255, green: 189 / 255, blue: 248 / 255)
+                        Theme.lightTealBlue
                             .opacity(0.9)
                     )
                     .shadow(
-                        color: Color(
-                            red: 56 / 255, green: 189 / 255, blue: 248 / 255
-                        ).opacity(0.5), radius: 3)
+                        color: Theme.lightTealBlue.opacity(0.5), radius: 3)
             }
 
             VStack(alignment: .leading, spacing: 4) {
@@ -1389,14 +1351,10 @@ struct CommentBubble: View {
                     Text(comment.username)
                         .font(.system(size: 13, weight: .bold))
                         .foregroundColor(
-                            Color(
-                                red: 56 / 255, green: 189 / 255, blue: 248 / 255
-                            ).opacity(0.9)
+                            Theme.lightTealBlue.opacity(0.9)
                         )
                         .shadow(
-                            color: Color(
-                                red: 56 / 255, green: 189 / 255, blue: 248 / 255
-                            ).opacity(0.4), radius: 4)
+                            color: Theme.lightTealBlue.opacity(0.4), radius: 4)
                 }
                 .buttonStyle(PlainButtonStyle())
 

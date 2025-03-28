@@ -36,9 +36,7 @@ struct RulesButtonView: View {
                             )
                     )
                     .shadow(
-                        color: Color(
-                            red: 56 / 255, green: 189 / 255, blue: 248 / 255
-                        ).opacity(0.3), radius: 4)
+                        color: Theme.lightTealBlue.opacity(0.3), radius: 4)
 
                 Text("?")
                     .font(.system(size: 18, weight: .bold))

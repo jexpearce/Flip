@@ -88,7 +88,7 @@ struct MainView: View {
                     .tag(4)
             }
             .accentColor(
-                Color(red: 56 / 255, green: 189 / 255, blue: 248 / 255)
+                Theme.lightTealBlue
             )  // Set accent color for selected tab
             .frame(maxWidth: .infinity, maxHeight: .infinity)
             .background(Theme.mainGradient)
@@ -124,7 +124,7 @@ struct MainView: View {
 
                 // Add subtle glow to selected item
                 appearance.selectionIndicatorTintColor = UIColor(
-                    red: 56 / 255, green: 189 / 255, blue: 248 / 255, alpha: 1.0
+                    Theme.lightTealBlue
                 )
 
                 UITabBar.appearance().standardAppearance = appearance

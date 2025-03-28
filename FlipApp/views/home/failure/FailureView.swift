@@ -127,10 +127,7 @@ struct FailureView: View {
                                     .font(.system(size: 42, weight: .black))
                                     .foregroundColor(.white)
                                     .shadow(
-                                        color: Color(
-                                            red: 56 / 255, green: 189 / 255,
-                                            blue: 248 / 255
-                                        ).opacity(0.6), radius: 10)
+                                        color: Theme.lightTealBlue.opacity(0.6), radius: 10)
 
                                 Text(actualDuration == 1 ? "minute" : "minutes")
                                     .font(.system(size: 18, weight: .medium))

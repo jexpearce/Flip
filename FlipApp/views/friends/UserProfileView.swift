@@ -9,14 +9,11 @@ struct UserProfileLoader: View {
     @State private var loadedUser: FirebaseManager.FlipUser?
 
     // Match the app's theme
-    private let cyanBlueAccent = Color(
-        red: 56 / 255, green: 189 / 255, blue: 248 / 255)
-    private let cyanBlueGlow = Color(
-        red: 56 / 255, green: 189 / 255, blue: 248 / 255
-    ).opacity(0.5)
+    private let cyanBlueAccent = Theme.lightTealBlue
+    private let cyanBlueGlow = Theme.lightTealBlue.opacity(0.5)
     private let cyanBluePurpleGradient = LinearGradient(
         colors: [
-            Color(red: 20 / 255, green: 10 / 255, blue: 40 / 255),
+            Theme.deepMidnightPurple,
             Color(red: 30 / 255, green: 18 / 255, blue: 60 / 255),
             Color(red: 14 / 255, green: 101 / 255, blue: 151 / 255).opacity(
                 0.7),
@@ -112,7 +109,7 @@ struct UserProfileView: View {
     // Cyan-midnight theme colors
     private let cyanBluePurpleGradient = LinearGradient(
         colors: [
-            Color(red: 20 / 255, green: 10 / 255, blue: 40 / 255),  // Deep midnight purple
+            Theme.deepMidnightPurple,  // Deep midnight purple
             Color(red: 30 / 255, green: 18 / 255, blue: 60 / 255),  // Medium midnight purple
             Color(red: 14 / 255, green: 101 / 255, blue: 151 / 255).opacity(
                 0.7),  // Dark cyan blue
@@ -122,11 +119,8 @@ struct UserProfileView: View {
         endPoint: .bottom
     )
 
-    private let cyanBlueAccent = Color(
-        red: 56 / 255, green: 189 / 255, blue: 248 / 255)
-    private let cyanBlueGlow = Color(
-        red: 56 / 255, green: 189 / 255, blue: 248 / 255
-    ).opacity(0.5)
+    private let cyanBlueAccent = Theme.lightTealBlue
+    private let cyanBlueGlow = Theme.lightTealBlue.opacity(0.5)
 
     // Check if this is the current user's profile
     private var isCurrentUser: Bool {
@@ -1204,11 +1198,8 @@ struct UserFriendsListView: View {
     let loadingFriends: Bool
 
     // Colors
-    private let cyanBlueAccent = Color(
-        red: 56 / 255, green: 189 / 255, blue: 248 / 255)
-    private let cyanBlueGlow = Color(
-        red: 56 / 255, green: 189 / 255, blue: 248 / 255
-    ).opacity(0.5)
+    private let cyanBlueAccent = Theme.lightTealBlue
+    private let cyanBlueGlow = Theme.lightTealBlue.opacity(0.5)
 
     var body: some View {
         ZStack {
@@ -1399,8 +1390,7 @@ struct FriendRow: View {
     let isMutual: Bool
 
     // Colors
-    private let cyanBlueAccent = Color(
-        red: 56 / 255, green: 189 / 255, blue: 248 / 255)
+    private let cyanBlueAccent = Theme.lightTealBlue
     @State private var isPressed = false
 
     var body: some View {
@@ -1579,9 +1569,7 @@ struct AddFriendConfirmation: View {
                         .fill(
                             LinearGradient(
                                 colors: [
-                                    Color(
-                                        red: 56 / 255, green: 189 / 255,
-                                        blue: 248 / 255),
+                                    Theme.lightTealBlue,
                                     Color(
                                         red: 14 / 255, green: 165 / 255,
                                         blue: 233 / 255),
@@ -1598,9 +1586,7 @@ struct AddFriendConfirmation: View {
                         .foregroundStyle(
                             LinearGradient(
                                 colors: [
-                                    Color(
-                                        red: 56 / 255, green: 189 / 255,
-                                        blue: 248 / 255),
+                                    Theme.lightTealBlue,
                                     Color(
                                         red: 14 / 255, green: 165 / 255,
                                         blue: 233 / 255),
@@ -1610,9 +1596,7 @@ struct AddFriendConfirmation: View {
                             )
                         )
                         .shadow(
-                            color: Color(
-                                red: 56 / 255, green: 189 / 255, blue: 248 / 255
-                            ).opacity(0.5), radius: 8)
+                            color: Theme.lightTealBlue.opacity(0.5), radius: 8)
                 }
                 .padding(.top, 20)
 
@@ -1623,9 +1607,7 @@ struct AddFriendConfirmation: View {
                         .tracking(2)
                         .foregroundColor(.white)
                         .shadow(
-                            color: Color(
-                                red: 56 / 255, green: 189 / 255, blue: 248 / 255
-                            ).opacity(0.5), radius: 6)
+                            color: Theme.lightTealBlue.opacity(0.5), radius: 6)
 
                     Text("友達を追加")
                         .font(.system(size: 12))
@@ -1694,10 +1676,7 @@ struct AddFriendConfirmation: View {
                                         .fill(
                                             LinearGradient(
                                                 colors: [
-                                                    Color(
-                                                        red: 56 / 255,
-                                                        green: 189 / 255,
-                                                        blue: 248 / 255),
+                                                    Theme.lightTealBlue,
                                                     Color(
                                                         red: 14 / 255,
                                                         green: 165 / 255,
@@ -1770,11 +1749,8 @@ struct FriendStatsView: View {
     @State private var animateStats = false
 
     // Cyan-midnight theme colors
-    private let cyanBlueAccent = Color(
-        red: 56 / 255, green: 189 / 255, blue: 248 / 255)
-    private let cyanBlueGlow = Color(
-        red: 56 / 255, green: 189 / 255, blue: 248 / 255
-    ).opacity(0.5)
+    private let cyanBlueAccent = Theme.lightTealBlue
+    private let cyanBlueGlow = Theme.lightTealBlue.opacity(0.5)
 
     var averageSessionLength: Int {
         if user.totalSessions == 0 {
@@ -1788,7 +1764,7 @@ struct FriendStatsView: View {
             // Background gradient
             LinearGradient(
                 colors: [
-                    Color(red: 20 / 255, green: 10 / 255, blue: 40 / 255),  // Deep midnight purple
+                    Theme.deepMidnightPurple,  // Deep midnight purple
                     Color(red: 30 / 255, green: 18 / 255, blue: 60 / 255),  // Medium midnight purple
                     Color(red: 14 / 255, green: 101 / 255, blue: 151 / 255)
                         .opacity(0.7),  // Dark cyan blue
@@ -2195,9 +2171,7 @@ struct WeeklySessionList: View {
                         }
                     )
                     .shadow(
-                        color: Color(
-                            red: 56 / 255, green: 189 / 255, blue: 248 / 255
-                        ).opacity(0.3), radius: 6)
+                        color: Theme.lightTealBlue.opacity(0.3), radius: 6)
                 }
                 .padding(.horizontal)
                 .padding(.top, 5)

@@ -347,9 +347,7 @@ struct TrackingView: View {
                         }
                     )
                     .shadow(
-                        color: Color(
-                            red: 56 / 255, green: 189 / 255, blue: 248 / 255
-                        ).opacity(0.5), radius: 8
+                        color: Theme.lightTealBlue.opacity(0.5), radius: 8
                     )
                     .scaleEffect(isPausePressed ? 0.95 : 1.0)
                 }

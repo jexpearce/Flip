@@ -22,7 +22,7 @@ struct FriendsView: View {
                     gradient: Gradient(colors: [
                         Color(red: 26 / 255, green: 14 / 255, blue: 47 / 255),  // Deep purple
                         Color(red: 65 / 255, green: 16 / 255, blue: 94 / 255),  // Medium purple
-                        Color(red: 35 / 255, green: 20 / 255, blue: 90 / 255),  // Purple-red transition
+                        Theme.darkPurpleBlue,  // Purple-red transition
                     ]),
                     startPoint: .topLeading,
                     endPoint: .bottomTrailing
@@ -38,10 +38,7 @@ struct FriendsView: View {
                             .tracking(8)
                             .foregroundColor(.white)
                             .shadow(
-                                color: Color(
-                                    red: 250 / 255, green: 204 / 255,
-                                    blue: 21 / 255
-                                ).opacity(0.6), radius: 10
+                                color: Theme.yellow.opacity(0.6), radius: 10
                             )
                             .padding(.top, 20)
 
@@ -58,15 +55,10 @@ struct FriendsView: View {
                                     .font(.system(size: 16, weight: .black))
                                     .tracking(5)
                                     .foregroundColor(
-                                        Color(
-                                            red: 250 / 255, green: 204 / 255,
-                                            blue: 21 / 255)
+                                        Theme.yellow
                                     )
                                     .shadow(
-                                        color: Color(
-                                            red: 250 / 255, green: 204 / 255,
-                                            blue: 21 / 255
-                                        ).opacity(0.6), radius: 6)
+                                        color: Theme.yellow.opacity(0.6), radius: 6)
 
                                 ForEach(viewModel.friendRequests) { user in
                                     EnhancedFriendRequestCard(user: user) {
@@ -193,15 +185,10 @@ struct FriendsView: View {
                                 .font(.system(size: 16, weight: .black))
                                 .tracking(5)
                                 .foregroundColor(
-                                    Color(
-                                        red: 56 / 255, green: 189 / 255,
-                                        blue: 248 / 255)
+                                    Theme.lightTealBlue
                                 )
                                 .shadow(
-                                    color: Color(
-                                        red: 56 / 255, green: 189 / 255,
-                                        blue: 248 / 255
-                                    ).opacity(0.6), radius: 6
+                                    color: Theme.lightTealBlue.opacity(0.6), radius: 6
                                 )
                                 .frame(maxWidth: .infinity, alignment: .leading)
                                 .padding(.horizontal)
@@ -216,11 +203,7 @@ struct FriendsView: View {
                                         .fill(
                                             RadialGradient(
                                                 gradient: Gradient(colors: [
-                                                    Color(
-                                                        red: 56 / 255,
-                                                        green: 189 / 255,
-                                                        blue: 248 / 255
-                                                    ).opacity(0.7),
+                                                    Theme.lightTealBlue.opacity(0.7),
                                                     Color(
                                                         red: 14 / 255,
                                                         green: 165 / 255,
@@ -242,10 +225,7 @@ struct FriendsView: View {
                                             radius: 10)
                                 }
                                 .shadow(
-                                    color: Color(
-                                        red: 56 / 255, green: 189 / 255,
-                                        blue: 248 / 255
-                                    ).opacity(0.6), radius: 15)
+                                    color: Theme.lightTealBlue.opacity(0.6), radius: 15)
 
                                 Text("No Friends Yet")
                                     .font(.system(size: 26, weight: .bold))

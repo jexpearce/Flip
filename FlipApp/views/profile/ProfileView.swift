@@ -20,7 +20,7 @@ struct ProfileView: View {
     // Cyan-midnight theme colors
     private let cyanBluePurpleGradient = LinearGradient(
         colors: [
-            Color(red: 20 / 255, green: 10 / 255, blue: 40 / 255),  // Deep midnight purple
+            Theme.deepMidnightPurple,  // Deep midnight purple
             Color(red: 30 / 255, green: 18 / 255, blue: 60 / 255),  // Medium midnight purple
             Color(red: 14 / 255, green: 101 / 255, blue: 151 / 255).opacity(
                 0.7),  // Dark cyan blue
@@ -30,11 +30,8 @@ struct ProfileView: View {
         endPoint: .bottom
     )
 
-    private let cyanBlueAccent = Color(
-        red: 56 / 255, green: 189 / 255, blue: 248 / 255)
-    private let cyanBlueGlow = Color(
-        red: 56 / 255, green: 189 / 255, blue: 248 / 255
-    ).opacity(0.5)
+    private let cyanBlueAccent = Theme.lightTealBlue
+    private let cyanBlueGlow = Theme.lightTealBlue.opacity(0.5)
 
     private func loadProfileDataFromFirestore() {
         guard let userId = Auth.auth().currentUser?.uid else { return }

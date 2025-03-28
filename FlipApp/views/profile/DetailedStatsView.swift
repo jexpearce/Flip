@@ -32,10 +32,7 @@ struct DetailedStatsView: View {
                             .tracking(8)
                             .foregroundColor(.white)
                             .shadow(
-                                color: Color(
-                                    red: 56 / 255, green: 189 / 255,
-                                    blue: 248 / 255
-                                ).opacity(0.5), radius: 8)
+                                color: Theme.lightTealBlue.opacity(0.5), radius: 8)
 
                         Text("スタッツ")
                             .font(.system(size: 12))
@@ -155,9 +152,7 @@ struct DetailedStatsView: View {
                             }
                         )
                         .shadow(
-                            color: Color(
-                                red: 56 / 255, green: 189 / 255, blue: 248 / 255
-                            ).opacity(0.5), radius: 8)
+                            color: Theme.lightTealBlue.opacity(0.5), radius: 8)
                 }
                 .padding(.horizontal, 30)
                 .padding(.bottom, 40)

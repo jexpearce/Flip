@@ -34,14 +34,8 @@ struct FeedView: View {
                             .fill(
                                 RadialGradient(
                                     gradient: Gradient(colors: [
-                                        Color(
-                                            red: 34 / 255, green: 197 / 255,
-                                            blue: 94 / 255
-                                        ).opacity(0.25),
-                                        Color(
-                                            red: 34 / 255, green: 197 / 255,
-                                            blue: 94 / 255
-                                        ).opacity(0.0),
+                                        Theme.mutedGreen.opacity(0.25),
+                                        Theme.mutedGreen.opacity(0.0),
                                     ]),
                                     center: .center,
                                     startRadius: 10,
@@ -56,14 +50,8 @@ struct FeedView: View {
                             .fill(
                                 RadialGradient(
                                     gradient: Gradient(colors: [
-                                        Color(
-                                            red: 34 / 255, green: 197 / 255,
-                                            blue: 94 / 255
-                                        ).opacity(0.4),
-                                        Color(
-                                            red: 34 / 255, green: 197 / 255,
-                                            blue: 94 / 255
-                                        ).opacity(0.0),
+                                        Theme.mutedGreen.opacity(0.4),
+                                        Theme.mutedGreen.opacity(0.0),
                                     ]),
                                     center: .center,
                                     startRadius: 5,
@@ -84,14 +72,8 @@ struct FeedView: View {
                             .fill(
                                 RadialGradient(
                                     gradient: Gradient(colors: [
-                                        Color(
-                                            red: 34 / 255, green: 197 / 255,
-                                            blue: 94 / 255
-                                        ).opacity(0.15),
-                                        Color(
-                                            red: 34 / 255, green: 197 / 255,
-                                            blue: 94 / 255
-                                        ).opacity(0.0),
+                                        Theme.mutedGreen.opacity(0.15),
+                                        Theme.mutedGreen.opacity(0.0),
                                     ]),
                                     center: .center,
                                     startRadius: 5,
@@ -106,14 +88,8 @@ struct FeedView: View {
                             .fill(
                                 RadialGradient(
                                     gradient: Gradient(colors: [
-                                        Color(
-                                            red: 56 / 255, green: 189 / 255,
-                                            blue: 248 / 255
-                                        ).opacity(0.12),
-                                        Color(
-                                            red: 56 / 255, green: 189 / 255,
-                                            blue: 248 / 255
-                                        ).opacity(0.0),
+                                        Theme.lightTealBlue.opacity(0.12),
+                                        Theme.lightTealBlue.opacity(0.0),
                                     ]),
                                     center: .center,
                                     startRadius: 5,
@@ -135,10 +111,7 @@ struct FeedView: View {
                                 .tracking(8)
                                 .foregroundColor(.white)
                                 .shadow(
-                                    color: Color(
-                                        red: 34 / 255, green: 197 / 255,
-                                        blue: 94 / 255
-                                    ).opacity(0.7), radius: 15
+                                    color: Theme.mutedGreen.opacity(0.7), radius: 15
                                 )
                                 .padding(.top, 40)
                             Spacer()
@@ -153,16 +126,8 @@ struct FeedView: View {
                                             .fill(
                                                 RadialGradient(
                                                     gradient: Gradient(colors: [
-                                                        Color(
-                                                            red: 34 / 255,
-                                                            green: 197 / 255,
-                                                            blue: 94 / 255
-                                                        ).opacity(0.3),
-                                                        Color(
-                                                            red: 34 / 255,
-                                                            green: 197 / 255,
-                                                            blue: 94 / 255
-                                                        ).opacity(0.0),
+                                                        Theme.mutedGreen.opacity(0.3),
+                                                        Theme.mutedGreen.opacity(0.0),
                                                     ]),
                                                     center: .center,
                                                     startRadius: 1,
@@ -176,10 +141,7 @@ struct FeedView: View {
                                         ProgressView()
                                             .scaleEffect(2)
                                             .tint(
-                                                Color(
-                                                    red: 34 / 255,
-                                                    green: 197 / 255,
-                                                    blue: 94 / 255))
+                                                Theme.mutedGreen)
                                     }
                                     .padding(.bottom, 5)
 
@@ -297,10 +259,7 @@ struct EmptyFeedView: View {
                     .fill(
                         RadialGradient(
                             gradient: Gradient(colors: [
-                                Color(
-                                    red: 34 / 255, green: 197 / 255,
-                                    blue: 94 / 255
-                                ).opacity(0.5),
+                                Theme.mutedGreen.opacity(0.5),
                                 Color(
                                     red: 20 / 255, green: 83 / 255,
                                     blue: 45 / 255
@@ -319,14 +278,8 @@ struct EmptyFeedView: View {
                     .fill(
                         RadialGradient(
                             gradient: Gradient(colors: [
-                                Color(
-                                    red: 34 / 255, green: 197 / 255,
-                                    blue: 94 / 255
-                                ).opacity(0.7),
-                                Color(
-                                    red: 34 / 255, green: 197 / 255,
-                                    blue: 94 / 255
-                                ).opacity(0.1),
+                                Theme.mutedGreen.opacity(0.7),
+                                Theme.mutedGreen.opacity(0.1),
                             ]),
                             center: .center,
                             startRadius: 5,
@@ -340,9 +293,7 @@ struct EmptyFeedView: View {
                     .font(.system(size: 50))
                     .foregroundColor(.white)
                     .shadow(
-                        color: Color(
-                            red: 34 / 255, green: 197 / 255, blue: 94 / 255
-                        ).opacity(0.8), radius: 10)
+                        color: Theme.mutedGreen.opacity(0.8), radius: 10)
             }
             .padding(.top, 20)
 
@@ -353,9 +304,7 @@ struct EmptyFeedView: View {
                     .tracking(6)
                     .foregroundColor(.white)
                     .shadow(
-                        color: Color(
-                            red: 34 / 255, green: 197 / 255, blue: 94 / 255
-                        ).opacity(0.6), radius: 8)
+                        color: Theme.mutedGreen.opacity(0.6), radius: 8)
 
                 Text("No sessions available")
                     .font(.system(size: 14))

@@ -134,7 +134,7 @@ struct RegionalView: View {
     // Regional view deep midnight purple gradient with subtle red
     private let regionalGradient = LinearGradient(
         colors: [
-            Color(red: 20 / 255, green: 10 / 255, blue: 38 / 255),  // Deep midnight purple
+            Theme.deepMidnightPurple,  // Deep midnight purple
             Color(red: 28 / 255, green: 14 / 255, blue: 45 / 255),  // Midnight purple
             Color(red: 35 / 255, green: 14 / 255, blue: 40 / 255),  // Purple with slight red
             Color(red: 30 / 255, green: 12 / 255, blue: 36 / 255),  // Back to purple

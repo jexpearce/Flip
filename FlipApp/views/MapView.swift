@@ -406,7 +406,7 @@ struct FriendMapMarker: View {
             // Historical sessions - with correct transparency based on index
             let baseColor =
                 friend.lastFlipWasSuccessful
-                ? Color(red: 34 / 255, green: 197 / 255, blue: 94 / 255)
+                ? Theme.mutedGreen
                 :  // Success green
                 Color(red: 239 / 255, green: 68 / 255, blue: 68 / 255)  // Failure red
 
@@ -424,7 +424,7 @@ struct FriendMapMarker: View {
             // Completed or failed session - FIXED
             if friend.lastFlipWasSuccessful {
                 // Success - green
-                return Color(red: 34 / 255, green: 197 / 255, blue: 94 / 255)
+                return Theme.mutedGreen
             } else {
                 // Failed - red - ENSURE this branch is properly reached
                 return Color(red: 239 / 255, green: 68 / 255, blue: 68 / 255)
@@ -924,7 +924,7 @@ struct FriendPreviewCard: View {
                 return Color(red: 239 / 255, green: 68 / 255, blue: 68 / 255)
             } else {
                 // Success - green
-                return Color(red: 34 / 255, green: 197 / 255, blue: 94 / 255)
+                return Theme.mutedGreen
             }
         }
     }
@@ -976,10 +976,7 @@ struct MapPrivacySettingsView: View {
                             .tracking(4)
                             .foregroundColor(.white)
                             .shadow(
-                                color: Color(
-                                    red: 56 / 255, green: 189 / 255,
-                                    blue: 248 / 255
-                                ).opacity(0.5), radius: 6
+                                color: Theme.lightTealBlue.opacity(0.5), radius: 6
                             )
                             .frame(maxWidth: .infinity, alignment: .leading)
 
@@ -1049,10 +1046,7 @@ struct MapPrivacySettingsView: View {
                             .tracking(4)
                             .foregroundColor(.white)
                             .shadow(
-                                color: Color(
-                                    red: 56 / 255, green: 189 / 255,
-                                    blue: 248 / 255
-                                ).opacity(0.5), radius: 6
+                                color: Theme.lightTealBlue.opacity(0.5), radius: 6
                             )
                             .frame(maxWidth: .infinity, alignment: .leading)
 
@@ -1064,9 +1058,7 @@ struct MapPrivacySettingsView: View {
                         .foregroundColor(.white)
                         .toggleStyle(
                             SwitchToggleStyle(
-                                tint: Color(
-                                    red: 56 / 255, green: 189 / 255,
-                                    blue: 248 / 255))
+                                tint: Theme.lightTealBlue)
                         )
                         .padding()
                         .background(
@@ -1184,9 +1176,7 @@ struct MapPrivacySettingsView: View {
                     if isSelected {
                         Circle()
                             .fill(
-                                Color(
-                                    red: 56 / 255, green: 189 / 255,
-                                    blue: 248 / 255)
+                                Theme.lightTealBlue
                             )
                             .frame(width: 16, height: 16)
                     }
@@ -1216,10 +1206,7 @@ struct MapPrivacySettingsView: View {
                     if isSelected {
                         RoundedRectangle(cornerRadius: 12)
                             .stroke(
-                                Color(
-                                    red: 56 / 255, green: 189 / 255,
-                                    blue: 248 / 255
-                                ).opacity(0.5), lineWidth: 1)
+                                Theme.lightTealBlue.opacity(0.5), lineWidth: 1)
                     }
                 }
             )

@@ -23,6 +23,11 @@ struct Theme {
     static let darkGray = Color(red: 24 / 255, green: 24 / 255, blue: 27 / 255)  // Almost Black
     static let nearBlack = Color(red: 17 / 255, green: 12 / 255, blue: 34 / 255)  // Very dark purple-tinted black
 
+    static let mutedGreen = Color(
+        red: 34 / 255, green: 197 / 255, blue: 94 / 255)
+    static let darkerGreen = Color(
+        red: 22 / 255, green: 163 / 255, blue: 74 / 255)
+
     // Glass Effect Colors
     static let glassEffect = Color(
         red: 255 / 255, green: 255 / 255, blue: 255 / 255, opacity: 0.1)
@@ -35,14 +40,17 @@ struct Theme {
         red: 56 / 255, green: 189 / 255, blue: 248 / 255)
     static let darkTealBlue = Color(
         red: 14 / 255, green: 165 / 255, blue: 233 / 255)
+
     static let deepMidnightPurple = Color(
         red: 20 / 255, green: 10 / 255, blue: 40 / 255)  // Darker
+    static let darkPurpleBlue = Color(
+        red: 35 / 255, green: 20 / 255, blue: 90 / 255)
 
     // Gradients
     static let mainGradient = LinearGradient(
         colors: [
             deepMidnightPurple,
-            Color(red: 35 / 255, green: 20 / 255, blue: 90 / 255),  // Dark purple-blue
+            darkPurpleBlue,
             nearBlack,
         ],
         startPoint: .top,
@@ -90,7 +98,7 @@ struct Theme {
     static let glassyDarkGradient = LinearGradient(
         colors: [
             Color(red: 40 / 255, green: 20 / 255, blue: 80 / 255).opacity(0.3),
-            Color(red: 20 / 255, green: 10 / 255, blue: 40 / 255).opacity(0.1),
+            Theme.deepMidnightPurple.opacity(0.1),
         ],
         startPoint: .topLeading,
         endPoint: .bottomTrailing
@@ -113,13 +121,28 @@ struct Theme {
         endPoint: .trailing
     )
 
+    static let indigoPurpleGradient = LinearGradient(
+        colors: [
+            Theme.deepMidnightPurple,  // Deep midnight purple
+            Color(red: 30 / 255, green: 18 / 255, blue: 60 / 255),  // Medium midnight purple
+            Color(red: 79 / 255, green: 70 / 255, blue: 229 / 255).opacity(0.4),  // Indigo
+            Color(red: 67 / 255, green: 56 / 255, blue: 202 / 255).opacity(0.3),  // Deeper indigo
+        ],
+        startPoint: .top,
+        endPoint: .bottom
+    )
+
+    static let indigoAccent = Color(
+        red: 79 / 255, green: 70 / 255, blue: 229 / 255)
+    static let indigoGlow = Color(
+        red: 79 / 255, green: 70 / 255, blue: 229 / 255
+    ).opacity(0.5)
+
     // Shadows
     static let purpleShadow = Color(
         red: 147 / 255, green: 51 / 255, blue: 234 / 255
     ).opacity(0.5)
-    static let yellowShadow = Color(
-        red: 250 / 255, green: 204 / 255, blue: 21 / 255
-    ).opacity(0.5)
+    static let yellowShadow = Theme.yellow.opacity(0.5)
 }
 
 // Text Style Extensions

@@ -24,24 +24,6 @@ struct AuthView: View {
         case email, password, username
     }
 
-    // Indigo-purple theme colors to match app style
-    private let indigoPurpleGradient = LinearGradient(
-        colors: [
-            Color(red: 20 / 255, green: 10 / 255, blue: 40 / 255),  // Deep midnight purple
-            Color(red: 30 / 255, green: 18 / 255, blue: 60 / 255),  // Medium midnight purple
-            Color(red: 79 / 255, green: 70 / 255, blue: 229 / 255).opacity(0.4),  // Indigo
-            Color(red: 67 / 255, green: 56 / 255, blue: 202 / 255).opacity(0.3),  // Deeper indigo
-        ],
-        startPoint: .top,
-        endPoint: .bottom
-    )
-
-    private let indigoAccent = Color(
-        red: 79 / 255, green: 70 / 255, blue: 229 / 255)
-    private let indigoGlow = Color(
-        red: 79 / 255, green: 70 / 255, blue: 229 / 255
-    ).opacity(0.5)
-
     var body: some View {
         ZStack {
             // Main content
@@ -74,7 +56,7 @@ struct AuthView: View {
                                     .tracking(2)
                                     .foregroundColor(.white)
                             }
-                            .shadow(color: indigoGlow, radius: 10)
+                            .shadow(color: Theme.indigoGlow, radius: 10)
                             .scaleEffect(logoScale)
                             .animation(
                                 .spring(response: 0.5, dampingFraction: 0.6),
@@ -84,7 +66,7 @@ struct AuthView: View {
                             Image(systemName: "arrow.2.squarepath")
                                 .font(.system(size: 50, weight: .bold))
                                 .foregroundColor(.white)
-                                .shadow(color: indigoGlow, radius: 6)
+                                .shadow(color: Theme.indigoGlow, radius: 6)
                                 .rotationEffect(
                                     .degrees(isFlipAnimating ? 360 : 0)
                                 )
@@ -100,7 +82,7 @@ struct AuthView: View {
                                 )
                                 .font(.system(size: 24, weight: .bold))
                                 .foregroundColor(.white)
-                                .shadow(color: indigoGlow, radius: 6)
+                                .shadow(color: Theme.indigoGlow, radius: 6)
                             }
                             .padding(.top, 8)
                             .scaleEffect(isKeyboardVisible ? 0.9 : 1.0)
@@ -116,7 +98,7 @@ struct AuthView: View {
                                     icon: "person.fill",
                                     placeholder: "Username",
                                     isSelected: selectedField == .username,
-                                    accentColor: indigoAccent,
+                                    accentColor: Theme.indigoAccent,
                                     onTap: { selectedField = .username }
                                 )
                                 .transition(
@@ -130,7 +112,7 @@ struct AuthView: View {
                                 placeholder: "Email",
                                 keyboardType: .emailAddress,
                                 isSelected: selectedField == .email,
-                                accentColor: indigoAccent,
+                                accentColor: Theme.indigoAccent,
                                 onTap: { selectedField = .email }
                             )
 
@@ -145,7 +127,7 @@ struct AuthView: View {
                                     .scaleEffect(
                                         selectedField == .password ? 1.1 : 1.0
                                     )
-                                    .shadow(color: indigoGlow, radius: 4)
+                                    .shadow(color: Theme.indigoGlow, radius: 4)
 
                                 Group {
                                     if showPassword {
@@ -208,7 +190,7 @@ struct AuthView: View {
                             )
                             .shadow(
                                 color: selectedField == .password
-                                    ? indigoGlow : .clear,
+                                    ? Theme.indigoGlow : .clear,
                                 radius: 4
                             )
                             .onTapGesture {
@@ -256,8 +238,10 @@ struct AuthView: View {
                                         .fill(
                                             LinearGradient(
                                                 colors: [
-                                                    indigoAccent.opacity(0.8),
-                                                    indigoAccent.opacity(0.5),
+                                                    Theme.indigoAccent.opacity(
+                                                        0.8),
+                                                    Theme.indigoAccent.opacity(
+                                                        0.5),
                                                 ],
                                                 startPoint: .topLeading,
                                                 endPoint: .bottomTrailing
@@ -282,7 +266,7 @@ struct AuthView: View {
                                 }
                             )
                             .shadow(
-                                color: indigoGlow,
+                                color: Theme.indigoGlow,
                                 radius: isButtonPressed ? 15 : 8
                             )
                             .scaleEffect(
@@ -305,7 +289,7 @@ struct AuthView: View {
                             )
                             .font(.system(size: 16, weight: .medium))
                             .foregroundColor(.white.opacity(0.8))
-                            .shadow(color: indigoGlow, radius: 4)
+                            .shadow(color: Theme.indigoGlow, radius: 4)
                         }
                         .padding(.bottom, 20)
 
@@ -372,12 +356,8 @@ struct AuthView: View {
                                 .foregroundStyle(
                                     LinearGradient(
                                         colors: [
-                                            Color(
-                                                red: 34 / 255, green: 197 / 255,
-                                                blue: 94 / 255),
-                                            Color(
-                                                red: 22 / 255, green: 163 / 255,
-                                                blue: 74 / 255),
+                                            Theme.mutedGreen,
+                                            Theme.darkerGreen,
                                         ],
                                         startPoint: .top,
                                         endPoint: .bottom
@@ -447,10 +427,12 @@ struct AuthView: View {
                                                 .fill(
                                                     LinearGradient(
                                                         colors: [
-                                                            indigoAccent.opacity(
-                                                                0.8),
-                                                            indigoAccent.opacity(
-                                                                0.5),
+                                                            Theme.indigoAccent
+                                                                .opacity(
+                                                                    0.8),
+                                                            Theme.indigoAccent
+                                                                .opacity(
+                                                                    0.5),
                                                         ],
                                                         startPoint: .topLeading,
                                                         endPoint:
@@ -478,7 +460,7 @@ struct AuthView: View {
                                                 )
                                         }
                                     )
-                                    .shadow(color: indigoGlow, radius: 8)
+                                    .shadow(color: Theme.indigoGlow, radius: 8)
                             }
                             .padding(.bottom, 30)
                         }
@@ -524,7 +506,7 @@ struct AuthView: View {
             }
 
             // Background gradient
-            indigoPurpleGradient
+            Theme.indigoPurpleGradient
                 .edgesIgnoringSafeArea(.all)
                 .zIndex(-1)
 
@@ -533,8 +515,8 @@ struct AuthView: View {
                 .fill(
                     RadialGradient(
                         gradient: Gradient(colors: [
-                            indigoAccent.opacity(0.2),
-                            indigoAccent.opacity(0.05),
+                            Theme.indigoAccent.opacity(0.2),
+                            Theme.indigoAccent.opacity(0.05),
                         ]),
                         center: .center,
                         startRadius: 10,
@@ -551,8 +533,8 @@ struct AuthView: View {
                 .fill(
                     RadialGradient(
                         gradient: Gradient(colors: [
-                            indigoAccent.opacity(0.15),
-                            indigoAccent.opacity(0.03),
+                            Theme.indigoAccent.opacity(0.15),
+                            Theme.indigoAccent.opacity(0.03),
                         ]),
                         center: .center,
                         startRadius: 5,

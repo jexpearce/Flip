@@ -39,9 +39,7 @@ struct PausedView: View {
                             .foregroundStyle(
                                 LinearGradient(
                                     colors: [
-                                        Color(
-                                            red: 250 / 255, green: 204 / 255,
-                                            blue: 21 / 255),  // Yellow
+                                        Theme.yellow,  // Yellow
                                         Color(
                                             red: 234 / 255, green: 179 / 255,
                                             blue: 8 / 255),
@@ -51,10 +49,7 @@ struct PausedView: View {
                                 )
                             )
                             .shadow(
-                                color: Color(
-                                    red: 250 / 255, green: 204 / 255,
-                                    blue: 21 / 255
-                                ).opacity(isGlowing ? 0.5 : 0.3),
+                                color: Theme.yellow.opacity(isGlowing ? 0.5 : 0.3),
                                 radius: isGlowing ? 10 : 5)
                     }
                     .onAppear {
@@ -73,10 +68,7 @@ struct PausedView: View {
                             .tracking(6)
                             .foregroundColor(.white)
                             .shadow(
-                                color: Color(
-                                    red: 250 / 255, green: 204 / 255,
-                                    blue: 21 / 255
-                                ).opacity(0.4), radius: 6)
+                                color: Theme.yellow.opacity(0.4), radius: 6)
 
                     }
                 }
@@ -89,9 +81,7 @@ struct PausedView: View {
                             .font(.system(size: 16, weight: .bold))
                             .tracking(2)
                             .foregroundColor(
-                                Color(
-                                    red: 250 / 255, green: 204 / 255,
-                                    blue: 21 / 255))
+                                Theme.yellow)
 
                         HStack(spacing: 6) {
                             timeComponent(
@@ -541,9 +531,7 @@ struct CustomCancelAlert: View {
                                     Color(
                                         red: 26 / 255, green: 14 / 255,
                                         blue: 47 / 255),
-                                    Color(
-                                        red: 20 / 255, green: 10 / 255,
-                                        blue: 40 / 255),
+                                    Theme.deepMidnightPurple,
                                 ],
                                 startPoint: .top,
                                 endPoint: .bottom

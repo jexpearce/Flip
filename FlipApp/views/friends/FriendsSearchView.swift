@@ -337,8 +337,7 @@ struct RecommendationsSection: View {
     var onViewProfile: (FirebaseManager.FlipUser) -> Void
 
     // Gold color for mutual friends
-    private let goldAccent = Color(
-        red: 250 / 255, green: 204 / 255, blue: 21 / 255)
+    private let goldAccent = Theme.yellow
     private let orangeAccent = Color(
         red: 249 / 255, green: 115 / 255, blue: 22 / 255)
 
@@ -610,8 +609,7 @@ struct EnhancedUserSearchCard: View {
     ).opacity(0.5)
     private let purpleAccent = Color(
         red: 147 / 255, green: 51 / 255, blue: 234 / 255)
-    private let goldAccent = Color(
-        red: 250 / 255, green: 204 / 255, blue: 21 / 255)  // Gold color for mutual friends
+    private let goldAccent = Theme.yellow  // Gold color for mutual friends
 
     var body: some View {
         Button(action: {
@@ -806,16 +804,8 @@ struct EnhancedUserSearchCard: View {
                                     .fill(
                                         LinearGradient(
                                             colors: [
-                                                Color(
-                                                    red: 34 / 255,
-                                                    green: 197 / 255,
-                                                    blue: 94 / 255
-                                                ).opacity(0.3),
-                                                Color(
-                                                    red: 22 / 255,
-                                                    green: 163 / 255,
-                                                    blue: 74 / 255
-                                                ).opacity(0.2),
+                                                Theme.mutedGreen.opacity(0.3),
+                                                Theme.darkerGreen.opacity(0.2),
                                             ],
                                             startPoint: .top,
                                             endPoint: .bottom

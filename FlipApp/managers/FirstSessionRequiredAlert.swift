@@ -15,9 +15,7 @@ struct FirstSessionRequiredAlert: View {
                     .foregroundStyle(
                         LinearGradient(
                             colors: [
-                                Color(
-                                    red: 250 / 255, green: 204 / 255,
-                                    blue: 21 / 255),
+                                Theme.yellow,
                                 Color(
                                     red: 234 / 255, green: 179 / 255,
                                     blue: 8 / 255),
@@ -27,9 +25,7 @@ struct FirstSessionRequiredAlert: View {
                         )
                     )
                     .shadow(
-                        color: Color(
-                            red: 250 / 255, green: 204 / 255, blue: 21 / 255
-                        ).opacity(0.5), radius: 5)
+                        color: Theme.yellow.opacity(0.5), radius: 5)
 
                 // Title
                 Text("FIRST SESSION REQUIRED")

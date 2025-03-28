@@ -31,7 +31,7 @@ struct SessionNotesView: View {
                 .font(.system(size: 16, weight: .bold))
                 .tracking(2)
                 .foregroundColor(
-                    Color(red: 250 / 255, green: 204 / 255, blue: 21 / 255)
+                    Theme.yellow
                 )
                 .frame(maxWidth: .infinity, alignment: .center)
 
@@ -65,10 +65,7 @@ struct SessionNotesView: View {
                                 RoundedRectangle(cornerRadius: 12)
                                     .stroke(
                                         isTitleFocused
-                                            ? Color(
-                                                red: 250 / 255,
-                                                green: 204 / 255, blue: 21 / 255
-                                            ).opacity(0.5)
+                                            ? Theme.yellow.opacity(0.5)
                                             : Color.white.opacity(0.3),
                                         lineWidth: isTitleFocused ? 1.5 : 1
                                     )
@@ -159,10 +156,7 @@ struct SessionNotesView: View {
                             RoundedRectangle(cornerRadius: 12)
                                 .stroke(
                                     isNotesFocused
-                                        ? Color(
-                                            red: 250 / 255, green: 204 / 255,
-                                            blue: 21 / 255
-                                        ).opacity(0.5)
+                                        ? Theme.yellow.opacity(0.5)
                                         : Color.white.opacity(0.3),
                                     lineWidth: isNotesFocused ? 1.5 : 1
                                 )

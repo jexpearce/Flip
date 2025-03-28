@@ -8,8 +8,8 @@ struct ActiveLockView: View {
 
     private let gradientBackground = LinearGradient(
         colors: [
-            Color(red: 20 / 255, green: 10 / 255, blue: 40 / 255),
-            Color(red: 35 / 255, green: 20 / 255, blue: 90 / 255),
+            Theme.deepMidnightPurple,
+            Theme.darkPurpleBlue,
         ],
         startPoint: .top,
         endPoint: .bottom
@@ -24,7 +24,7 @@ struct ActiveLockView: View {
                 Text("Flip")
                     .font(.system(size: 18, weight: .black))  // Reduced from 20 to 18
                     .foregroundColor(
-                        Color(red: 250 / 255, green: 204 / 255, blue: 21 / 255))  // Yellow accent
+                        Theme.yellow)  // Yellow accent
 
                 Text("Focus")
                     .font(.system(size: 14, weight: .medium))  // Reduced from 16 to 14
@@ -40,8 +40,7 @@ struct ActiveLockView: View {
                 } else {
                     StatusPill(
                         text: "ACTIVE",
-                        color: Color(
-                            red: 34 / 255, green: 197 / 255, blue: 94 / 255))
+                        color: Theme.mutedGreen)
                 }
             }
 
@@ -64,9 +63,7 @@ struct ActiveLockView: View {
                     )
                 )
                 .shadow(
-                    color: Color(
-                        red: 56 / 255, green: 189 / 255, blue: 248 / 255
-                    ).opacity(0.5), radius: 8)
+                    color: Theme.lightTealBlue.opacity(0.5), radius: 8)
 
                 if context.state.isPaused,
                     let pauseTime = context.state.pauseTimeRemaining
@@ -79,15 +76,10 @@ struct ActiveLockView: View {
                                     design: .monospaced)
                             )  // Reduced from 24 to 22
                             .foregroundColor(
-                                Color(
-                                    red: 250 / 255, green: 204 / 255,
-                                    blue: 21 / 255)
+                                Theme.yellow
                             )  // Yellow accent
                             .shadow(
-                                color: Color(
-                                    red: 250 / 255, green: 204 / 255,
-                                    blue: 21 / 255
-                                ).opacity(0.5), radius: 4)
+                                color: Theme.yellow.opacity(0.5), radius: 4)
 
                         Text("Pause")
                             .font(.system(size: 10, weight: .medium))  // Reduced from 12 to 10
@@ -101,9 +93,7 @@ struct ActiveLockView: View {
                         )  // Reduced from 24 to 22
                         .foregroundColor(.white)
                         .shadow(
-                            color: Color(
-                                red: 56 / 255, green: 189 / 255, blue: 248 / 255
-                            ).opacity(0.5), radius: 8
+                            color: Theme.lightTealBlue.opacity(0.5), radius: 8
                         )
                         .frame(minWidth: 70)  // Reduced from 80 to 70
                 }
@@ -128,9 +118,7 @@ struct ActiveLockView: View {
                             .fill(Color.white.opacity(0.1))
                     )
                     .shadow(
-                        color: Color(
-                            red: 56 / 255, green: 189 / 255, blue: 248 / 255
-                        ).opacity(0.5), radius: 6)
+                        color: Theme.lightTealBlue.opacity(0.5), radius: 6)
                 }
             }
 
@@ -160,12 +148,8 @@ struct ActiveLockView: View {
                         ZStack {
                             LinearGradient(
                                 colors: [
-                                    Color(
-                                        red: 34 / 255, green: 197 / 255,
-                                        blue: 94 / 255),
-                                    Color(
-                                        red: 22 / 255, green: 163 / 255,
-                                        blue: 74 / 255),
+                                    Theme.mutedGreen,
+                                    Theme.darkerGreen,
                                 ],
                                 startPoint: .top,
                                 endPoint: .bottom

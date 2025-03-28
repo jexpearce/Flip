@@ -137,8 +137,7 @@ struct SettingsView: View {
     @State private var animateSettings = false
 
     // Colors from the app's theme
-    private let cyanBlueAccent = Color(
-        red: 56 / 255, green: 189 / 255, blue: 248 / 255)
+    private let cyanBlueAccent = Theme.lightTealBlue
     private let deepPurple = Color(
         red: 26 / 255, green: 14 / 255, blue: 47 / 255)
     private let darkPurple = Color(
@@ -150,7 +149,7 @@ struct SettingsView: View {
                 // Background gradient
                 LinearGradient(
                     colors: [
-                        Color(red: 20 / 255, green: 10 / 255, blue: 40 / 255),
+                        Theme.deepMidnightPurple,
                         Color(red: 30 / 255, green: 18 / 255, blue: 60 / 255),
                     ],
                     startPoint: .top,
@@ -599,8 +598,7 @@ struct SettingsView: View {
 
 struct RegionalPrivacySection: View {
     @ObservedObject var viewModel: SettingsViewModel
-    private let cyanBlueAccent = Color(
-        red: 56 / 255, green: 189 / 255, blue: 248 / 255)
+    private let cyanBlueAccent = Theme.lightTealBlue
 
     var body: some View {
         VStack(alignment: .leading, spacing: 15) {
@@ -723,8 +721,7 @@ struct ToggleSettingRow: View {
     @Binding var isOn: Bool
     let action: () -> Void
 
-    private let cyanBlueAccent = Color(
-        red: 56 / 255, green: 189 / 255, blue: 248 / 255)
+    private let cyanBlueAccent = Theme.lightTealBlue
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
@@ -772,9 +769,7 @@ struct SettingsSection<Content: View>: View {
                 .tracking(5)
                 .foregroundColor(.white)
                 .shadow(
-                    color: Color(
-                        red: 56 / 255, green: 189 / 255, blue: 248 / 255
-                    ).opacity(0.4), radius: 4)
+                    color: Theme.lightTealBlue.opacity(0.4), radius: 4)
 
             content
         }
@@ -826,7 +821,7 @@ struct HelpSupportView: View {
             // Background gradient
             LinearGradient(
                 colors: [
-                    Color(red: 20 / 255, green: 10 / 255, blue: 40 / 255),
+                    Theme.deepMidnightPurple,
                     Color(red: 30 / 255, green: 18 / 255, blue: 60 / 255),
                 ],
                 startPoint: .top,
@@ -855,9 +850,7 @@ struct HelpSupportView: View {
                     Image(systemName: "bubble.left.and.bubble.right.fill")
                         .font(.system(size: 60))
                         .foregroundColor(
-                            Color(
-                                red: 56 / 255, green: 189 / 255, blue: 248 / 255
-                            )
+                            Theme.lightTealBlue
                         )
                         .padding()
                         .background(
@@ -924,7 +917,7 @@ struct ContactButton: View {
                 Image(systemName: icon)
                     .font(.system(size: 20))
                     .foregroundColor(
-                        Color(red: 56 / 255, green: 189 / 255, blue: 248 / 255))
+                        Theme.lightTealBlue)
 
                 Text(text)
                     .font(.system(size: 16, weight: .medium))

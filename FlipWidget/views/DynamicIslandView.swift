@@ -28,9 +28,7 @@ func DynamicIslandView(context: ActivityViewContext<FlipActivityAttributes>)
                                     ? Color(
                                         red: 239 / 255, green: 68 / 255,
                                         blue: 68 / 255)
-                                    : Color(
-                                        red: 56 / 255, green: 189 / 255,
-                                        blue: 248 / 255),
+                                    : Theme.lightTealBlue,
                                 context.state.isPaused
                                     ? Color(
                                         red: 185 / 255, green: 28 / 255,
@@ -44,9 +42,7 @@ func DynamicIslandView(context: ActivityViewContext<FlipActivityAttributes>)
                         )
                     )
                     .shadow(
-                        color: Color(
-                            red: 56 / 255, green: 189 / 255, blue: 248 / 255
-                        ).opacity(0.5), radius: 4)
+                        color: Theme.lightTealBlue.opacity(0.5), radius: 4)
 
                     // Time display - show either session time or pause time
                     if context.state.isPaused,
@@ -60,9 +56,7 @@ func DynamicIslandView(context: ActivityViewContext<FlipActivityAttributes>)
                                         design: .monospaced)
                                 )
                                 .foregroundColor(
-                                    Color(
-                                        red: 250 / 255, green: 204 / 255,
-                                        blue: 21 / 255))
+                                    Theme.yellow)
 
                             Text("Pause")
                                 .font(.system(size: 8, weight: .medium))
@@ -85,10 +79,7 @@ func DynamicIslandView(context: ActivityViewContext<FlipActivityAttributes>)
                                 )
                             )
                             .shadow(
-                                color: Color(
-                                    red: 56 / 255, green: 189 / 255,
-                                    blue: 248 / 255
-                                ).opacity(0.5), radius: 4)
+                                color: Theme.lightTealBlue.opacity(0.5), radius: 4)
                     }
 
                     if !context.state.isPaused
@@ -111,9 +102,7 @@ func DynamicIslandView(context: ActivityViewContext<FlipActivityAttributes>)
                             )
                         )
                         .shadow(
-                            color: Color(
-                                red: 56 / 255, green: 189 / 255, blue: 248 / 255
-                            ).opacity(0.4), radius: 3
+                            color: Theme.lightTealBlue.opacity(0.4), radius: 3
                         )
                         .padding(.horizontal, 5)
                         .padding(.vertical, 2)
@@ -159,12 +148,8 @@ func DynamicIslandView(context: ActivityViewContext<FlipActivityAttributes>)
                                 .foregroundStyle(
                                     LinearGradient(
                                         colors: [
-                                            Color(
-                                                red: 34 / 255, green: 197 / 255,
-                                                blue: 94 / 255),
-                                            Color(
-                                                red: 22 / 255, green: 163 / 255,
-                                                blue: 74 / 255),
+                                            Theme.mutedGreen,
+                                            Theme.darkerGreen,
                                         ],
                                         startPoint: .leading,
                                         endPoint: .trailing
@@ -240,9 +225,7 @@ func DynamicIslandView(context: ActivityViewContext<FlipActivityAttributes>)
                 .foregroundStyle(
                     LinearGradient(
                         colors: [
-                            Color(
-                                red: 250 / 255, green: 204 / 255, blue: 21 / 255
-                            ),
+                            Theme.yellow,
                             Color(
                                 red: 234 / 255, green: 179 / 255, blue: 8 / 255),
                         ],

@@ -45,10 +45,7 @@ struct DisciplineRankCard: View {
                             .font(.system(size: 22, weight: .black))
                             .foregroundColor(.white)
                             .shadow(
-                                color: Color(
-                                    red: 56 / 255, green: 189 / 255,
-                                    blue: 248 / 255
-                                ).opacity(0.5), radius: 6)
+                                color: Theme.lightTealBlue.opacity(0.5), radius: 6)
 
                         Text("points needed")
                             .font(.system(size: 10, weight: .medium))

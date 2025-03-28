@@ -64,9 +64,7 @@ struct EnhancedFriendCard: View {
                     .shadow(
                         color: isLive
                             ? Color.green.opacity(0.6)
-                            : Color(
-                                red: 56 / 255, green: 189 / 255, blue: 248 / 255
-                            ).opacity(0.4), radius: 8)
+                            : Theme.lightTealBlue.opacity(0.4), radius: 8)
 
                     // Live indicator badge with animation
                     if isLive {
@@ -161,9 +159,7 @@ struct EnhancedFriendCard: View {
                         .font(.system(size: 20, weight: .bold))
                         .foregroundColor(.white)
                         .shadow(
-                            color: Color(
-                                red: 56 / 255, green: 189 / 255, blue: 248 / 255
-                            ).opacity(0.5), radius: 6)
+                            color: Theme.lightTealBlue.opacity(0.5), radius: 6)
 
                     // Show session count in normal state or live session info
                     if !isLive {
@@ -185,9 +181,7 @@ struct EnhancedFriendCard: View {
                             Image(systemName: "clock.fill")
                                 .font(.system(size: 12))
                                 .foregroundColor(
-                                    Color(
-                                        red: 250 / 255, green: 204 / 255,
-                                        blue: 21 / 255))
+                                    Theme.yellow)
 
                             Text(
                                 "Target: \(liveSession?.targetDuration ?? 0)min"
@@ -234,27 +228,18 @@ struct EnhancedFriendCard: View {
                             .font(.system(size: 18, weight: .bold))
                             .foregroundColor(.white)
                             .shadow(
-                                color: Color(
-                                    red: 250 / 255, green: 204 / 255,
-                                    blue: 21 / 255
-                                ).opacity(0.5), radius: 6)
+                                color: Theme.yellow.opacity(0.5), radius: 6)
 
                         HStack(spacing: 6) {
                             Text("focus time")
                                 .font(.system(size: 12))
                                 .foregroundColor(
-                                    Color(
-                                        red: 250 / 255, green: 204 / 255,
-                                        blue: 21 / 255
-                                    ).opacity(0.8))
+                                    Theme.yellow.opacity(0.8))
 
                             Image(systemName: "clock.fill")
                                 .font(.system(size: 12))
                                 .foregroundColor(
-                                    Color(
-                                        red: 250 / 255, green: 204 / 255,
-                                        blue: 21 / 255
-                                    ).opacity(0.8))
+                                    Theme.yellow.opacity(0.8))
                         }
                     }
                 }
@@ -273,10 +258,7 @@ struct EnhancedFriendCard: View {
                                 .font(.system(size: 12, weight: .medium))
                                 .tracking(1)
                                 .foregroundColor(
-                                    Color(
-                                        red: 56 / 255, green: 189 / 255,
-                                        blue: 248 / 255
-                                    ).opacity(0.8))
+                                    Theme.lightTealBlue.opacity(0.8))
 
                             // Use our real-time updated timer here
                             Text(formattedElapsedTime)
@@ -285,10 +267,7 @@ struct EnhancedFriendCard: View {
                                 .foregroundColor(.white)
                                 .id(sessionTimer.currentTick)  // Force refresh when counter changes
                                 .shadow(
-                                    color: Color(
-                                        red: 56 / 255, green: 189 / 255,
-                                        blue: 248 / 255
-                                    ).opacity(0.5), radius: 4)
+                                    color: Theme.lightTealBlue.opacity(0.5), radius: 4)
                         }
 
                         Spacer()
@@ -335,19 +314,13 @@ struct EnhancedFriendCard: View {
                                     .font(.system(size: 12, weight: .medium))
                                     .tracking(1)
                                     .foregroundColor(
-                                        Color(
-                                            red: 250 / 255, green: 204 / 255,
-                                            blue: 21 / 255
-                                        ).opacity(0.8))
+                                        Theme.yellow.opacity(0.8))
 
                                 Text("\(session.targetDuration) min")
                                     .font(.system(size: 18, weight: .bold))
                                     .foregroundColor(.white)
                                     .shadow(
-                                        color: Color(
-                                            red: 250 / 255, green: 204 / 255,
-                                            blue: 21 / 255
-                                        ).opacity(0.5), radius: 4)
+                                        color: Theme.yellow.opacity(0.5), radius: 4)
                             }
                         }
                     }

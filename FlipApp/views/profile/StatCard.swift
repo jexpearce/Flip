@@ -11,9 +11,7 @@ struct StatCard: View {
                 .font(.system(size: 28, weight: .black))
                 .foregroundColor(.white)
                 .shadow(
-                    color: Color(
-                        red: 56 / 255, green: 189 / 255, blue: 248 / 255
-                    ).opacity(0.5), radius: 8)
+                    color: Theme.lightTealBlue.opacity(0.5), radius: 8)
 
             Text(title)
                 .font(.system(size: 10, weight: .heavy))
@@ -54,7 +52,7 @@ struct StatCard: View {
                 // Inner glow
                 RoundedRectangle(cornerRadius: 15)
                     .stroke(
-                        Color(red: 56 / 255, green: 189 / 255, blue: 248 / 255)
+                        Theme.lightTealBlue
                             .opacity(0.3), lineWidth: 1
                     )
                     .blur(radius: 2)

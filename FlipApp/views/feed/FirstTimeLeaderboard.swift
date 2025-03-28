@@ -338,7 +338,7 @@ struct FirstTimeLeaderboardView: View {
                     .font(.system(size: 16, weight: .bold))
                     .tracking(2)
                     .foregroundColor(
-                        Color(red: 250 / 255, green: 204 / 255, blue: 21 / 255))
+                        Theme.yellow)
 
                 Text("GLOBAL FIRST FLIP LEADERBOARD")
                     .font(.system(size: 14, weight: .bold))
@@ -373,9 +373,7 @@ struct FirstTimeLeaderboardView: View {
                             .foregroundStyle(
                                 LinearGradient(
                                     colors: [
-                                        Color(
-                                            red: 250 / 255, green: 204 / 255,
-                                            blue: 21 / 255),
+                                        Theme.yellow,
                                         Color(
                                             red: 220 / 255, green: 170 / 255,
                                             blue: 0 / 255),
@@ -385,10 +383,7 @@ struct FirstTimeLeaderboardView: View {
                                 )
                             )
                             .shadow(
-                                color: Color(
-                                    red: 250 / 255, green: 204 / 255,
-                                    blue: 21 / 255
-                                ).opacity(0.5), radius: 5)
+                                color: Theme.yellow.opacity(0.5), radius: 5)
 
                         // Rank text with colorful gradient
                         Text("#\(leaderboardManager.userRank)")
@@ -396,9 +391,7 @@ struct FirstTimeLeaderboardView: View {
                             .foregroundStyle(
                                 LinearGradient(
                                     colors: [
-                                        Color(
-                                            red: 250 / 255, green: 204 / 255,
-                                            blue: 21 / 255),
+                                        Theme.yellow,
                                         Color(
                                             red: 220 / 255, green: 170 / 255,
                                             blue: 0 / 255),
@@ -408,10 +401,7 @@ struct FirstTimeLeaderboardView: View {
                                 )
                             )
                             .shadow(
-                                color: Color(
-                                    red: 250 / 255, green: 204 / 255,
-                                    blue: 21 / 255
-                                ).opacity(0.5), radius: 5)
+                                color: Theme.yellow.opacity(0.5), radius: 5)
                     }
 
                     Text("out of \(leaderboardManager.totalUsers) Flippers")
@@ -564,8 +554,7 @@ struct LeaderboardRow: View {
                 )
                 .foregroundColor(
                     entry.isCurrentUser
-                        ? Color(
-                            red: 250 / 255, green: 204 / 255, blue: 21 / 255)
+                        ? Theme.yellow
                         : .white
                 )
                 .frame(width: 50, alignment: .center)
@@ -599,7 +588,7 @@ struct LeaderboardRow: View {
             }
             .foregroundColor(
                 entry.isCurrentUser
-                    ? Color(red: 250 / 255, green: 204 / 255, blue: 21 / 255)
+                    ? Theme.yellow
                     : .white
             )
             .frame(width: 70, alignment: .trailing)
@@ -631,10 +620,7 @@ struct LeaderboardRow: View {
                                 .strokeBorder(
                                     LinearGradient(
                                         colors: [
-                                            Color(
-                                                red: 250 / 255,
-                                                green: 204 / 255, blue: 21 / 255
-                                            ).opacity(glowUser ? 0.7 : 0.4),
+                                            Theme.yellow.opacity(glowUser ? 0.7 : 0.4),
                                             Color(
                                                 red: 220 / 255,
                                                 green: 170 / 255, blue: 0 / 255
@@ -646,10 +632,7 @@ struct LeaderboardRow: View {
                                     lineWidth: 1.5
                                 )
                                 .shadow(
-                                    color: Color(
-                                        red: 250 / 255, green: 204 / 255,
-                                        blue: 21 / 255
-                                    ).opacity(glowUser ? 0.5 : 0.2),
+                                    color: Theme.yellow.opacity(glowUser ? 0.5 : 0.2),
                                     radius: glowUser ? 6 : 3
                                 )
                         )

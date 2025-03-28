@@ -7,8 +7,8 @@ struct SessionHistoryCard: View {
         session.wasSuccessful
             ? LinearGradient(
                 colors: [
-                    Color(red: 34 / 255, green: 197 / 255, blue: 94 / 255),  // Success green
-                    Color(red: 22 / 255, green: 163 / 255, blue: 74 / 255),  // Darker success green
+                    Theme.mutedGreen,  // Success green
+                    Theme.darkerGreen,  // Darker success green
                 ],
                 startPoint: .leading,
                 endPoint: .trailing
@@ -34,9 +34,7 @@ struct SessionHistoryCard: View {
                     .font(.system(size: 20, weight: .black))
                     .foregroundColor(.white)
                     .shadow(
-                        color: Color(
-                            red: 56 / 255, green: 189 / 255, blue: 248 / 255
-                        ).opacity(0.3), radius: 4)
+                        color: Theme.lightTealBlue.opacity(0.3), radius: 4)
             }
 
             Spacer()
@@ -93,7 +91,7 @@ struct SessionHistoryCard: View {
                 // Inner glow
                 RoundedRectangle(cornerRadius: 15)
                     .stroke(
-                        Color(red: 56 / 255, green: 189 / 255, blue: 248 / 255)
+                        Theme.lightTealBlue
                             .opacity(0.3), lineWidth: 1
                     )
                     .blur(radius: 2)

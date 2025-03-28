@@ -71,7 +71,7 @@ struct ProfileAvatarView: View {
             }
         }
         .shadow(
-            color: Color(red: 56 / 255, green: 189 / 255, blue: 248 / 255)
+            color: Theme.lightTealBlue
                 .opacity(0.5), radius: size * 0.075)
     }
 }
@@ -234,7 +234,7 @@ struct EnhancedProfileAvatarWithStreak: View {
             }
         }
         .shadow(
-            color: Color(red: 56 / 255, green: 189 / 255, blue: 248 / 255)
+            color: Theme.lightTealBlue
                 .opacity(0.5), radius: size * 0.075)
     }
 }

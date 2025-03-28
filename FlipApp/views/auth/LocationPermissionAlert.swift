@@ -128,9 +128,7 @@ struct LocationPermissionAlert: View {
                 ZStack {
                     Circle()
                         .fill(
-                            Color(
-                                red: 56 / 255, green: 189 / 255, blue: 248 / 255
-                            ).opacity(0.2)
+                            Theme.lightTealBlue.opacity(0.2)
                         )
                         .frame(width: 90, height: 90)
                         .scaleEffect(animateContent ? 1.3 : 0.8)
@@ -140,9 +138,7 @@ struct LocationPermissionAlert: View {
                         .fill(
                             LinearGradient(
                                 colors: [
-                                    Color(
-                                        red: 56 / 255, green: 189 / 255,
-                                        blue: 248 / 255),
+                                    Theme.lightTealBlue,
                                     Color(
                                         red: 14 / 255, green: 165 / 255,
                                         blue: 233 / 255),
@@ -164,9 +160,7 @@ struct LocationPermissionAlert: View {
                     .tracking(4)
                     .foregroundColor(.white)
                     .shadow(
-                        color: Color(
-                            red: 56 / 255, green: 189 / 255, blue: 248 / 255
-                        ).opacity(0.6), radius: 8)
+                        color: Theme.lightTealBlue.opacity(0.6), radius: 8)
 
                 // Privacy explanation
                 Text(
@@ -213,7 +207,7 @@ struct LocationPermissionAlert: View {
                             .font(.system(size: 14, weight: .medium))
                     }
                     .foregroundColor(
-                        Color(red: 56 / 255, green: 189 / 255, blue: 248 / 255)
+                        Theme.lightTealBlue
                     )
                     .padding(.vertical, 8)
                 }
@@ -246,10 +240,7 @@ struct LocationPermissionAlert: View {
                                         .fill(
                                             LinearGradient(
                                                 colors: [
-                                                    Color(
-                                                        red: 56 / 255,
-                                                        green: 189 / 255,
-                                                        blue: 248 / 255),
+                                                    Theme.lightTealBlue,
                                                     Color(
                                                         red: 14 / 255,
                                                         green: 165 / 255,
@@ -270,10 +261,7 @@ struct LocationPermissionAlert: View {
                                 }
                             )
                             .shadow(
-                                color: Color(
-                                    red: 56 / 255, green: 189 / 255,
-                                    blue: 248 / 255
-                                ).opacity(0.5), radius: 8
+                                color: Theme.lightTealBlue.opacity(0.5), radius: 8
                             )
                             .scaleEffect(animateButton ? 0.95 : 1.0)
                     }

@@ -190,10 +190,7 @@ struct BeginButton: View {
                                             ]
                                             : // Location allowed - blue gradient
                                             [
-                                                Color(
-                                                    red: 56 / 255,
-                                                    green: 189 / 255,
-                                                    blue: 248 / 255),  // Bright teal
+                                                Theme.lightTealBlue,
                                                 Color(
                                                     red: 14 / 255,
                                                     green: 165 / 255,
@@ -228,9 +225,7 @@ struct BeginButton: View {
                         ? Color.gray.opacity(0.5)
                         : permissionManager.locationAuthStatus == .denied
                             ? Theme.yellowShadow
-                            : Color(
-                                red: 56 / 255, green: 189 / 255, blue: 248 / 255
-                            ).opacity(0.5),
+                            : Theme.lightTealBlue.opacity(0.5),
                     radius: isPulsing ? 15 : 8
                 )
                 .scaleEffect(isPressed ? 0.97 : 1.0)

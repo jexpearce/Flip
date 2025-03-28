@@ -6,8 +6,8 @@ import WidgetKit
 struct SuccessLockView: View {
     private let gradientBackground = LinearGradient(
         colors: [
-            Color(red: 20 / 255, green: 10 / 255, blue: 40 / 255),
-            Color(red: 35 / 255, green: 20 / 255, blue: 90 / 255),
+            Theme.deepMidnightPurple,
+            Theme.darkPurpleBlue,
         ],
         startPoint: .top,
         endPoint: .bottom
@@ -24,12 +24,8 @@ struct SuccessLockView: View {
                     .fill(
                         LinearGradient(
                             colors: [
-                                Color(
-                                    red: 34 / 255, green: 197 / 255,
-                                    blue: 94 / 255),
-                                Color(
-                                    red: 22 / 255, green: 163 / 255,
-                                    blue: 74 / 255),
+                                Theme.mutedGreen,
+                                Theme.darkerGreen,
                             ],
                             startPoint: .top,
                             endPoint: .bottom
@@ -47,12 +43,8 @@ struct SuccessLockView: View {
                     .foregroundStyle(
                         LinearGradient(
                             colors: [
-                                Color(
-                                    red: 34 / 255, green: 197 / 255,
-                                    blue: 94 / 255),
-                                Color(
-                                    red: 22 / 255, green: 163 / 255,
-                                    blue: 74 / 255),
+                                Theme.mutedGreen,
+                                Theme.darkerGreen,
                             ],
                             startPoint: .top,
                             endPoint: .bottom
@@ -69,9 +61,7 @@ struct SuccessLockView: View {
                 .foregroundStyle(
                     LinearGradient(
                         colors: [
-                            Color(
-                                red: 250 / 255, green: 204 / 255, blue: 21 / 255
-                            ),  // Yellow
+                            Theme.yellow,  // Yellow
                             Color(
                                 red: 234 / 255, green: 179 / 255, blue: 8 / 255),
                         ],
@@ -80,9 +70,7 @@ struct SuccessLockView: View {
                     )
                 )
                 .shadow(
-                    color: Color(
-                        red: 250 / 255, green: 204 / 255, blue: 21 / 255
-                    ).opacity(0.5), radius: 8
+                    color: Theme.yellow.opacity(0.5), radius: 8
                 )
                 .scaleEffect(scale)
                 .opacity(opacity)

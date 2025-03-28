@@ -10,8 +10,8 @@ struct LockView: View {
             // Base gradient background that covers the entire widget
             LinearGradient(
                 colors: [
-                    Color(red: 20 / 255, green: 10 / 255, blue: 40 / 255),
-                    Color(red: 35 / 255, green: 20 / 255, blue: 90 / 255),
+                    Theme.deepMidnightPurple,
+                    Theme.darkPurpleBlue,
                 ],
                 startPoint: .top,
                 endPoint: .bottom

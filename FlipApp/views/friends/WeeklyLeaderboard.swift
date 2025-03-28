@@ -16,9 +16,7 @@ struct WeeklyLeaderboard: View {
                     .foregroundStyle(
                         LinearGradient(
                             colors: [
-                                Color(
-                                    red: 250 / 255, green: 204 / 255,
-                                    blue: 21 / 255),
+                                Theme.yellow,
                                 Color(
                                     red: 234 / 255, green: 179 / 255,
                                     blue: 8 / 255),
@@ -38,9 +36,7 @@ struct WeeklyLeaderboard: View {
                     .foregroundStyle(
                         LinearGradient(
                             colors: [
-                                Color(
-                                    red: 250 / 255, green: 204 / 255,
-                                    blue: 21 / 255),
+                                Theme.yellow,
                                 Color(
                                     red: 234 / 255, green: 179 / 255,
                                     blue: 8 / 255),
@@ -65,9 +61,7 @@ struct WeeklyLeaderboard: View {
                     Text(isShowingAll ? "Show Less" : "Show All")
                         .font(.system(size: 12, weight: .bold))
                         .foregroundColor(
-                            Color(
-                                red: 250 / 255, green: 204 / 255, blue: 21 / 255
-                            )
+                            Theme.yellow
                         )
                         .padding(.horizontal, 10)
                         .padding(.vertical, 4)
@@ -99,9 +93,7 @@ struct WeeklyLeaderboard: View {
                     Spacer()
                     ProgressView()
                         .tint(
-                            Color(
-                                red: 250 / 255, green: 204 / 255, blue: 21 / 255
-                            )
+                            Theme.yellow
                         )
                         .scaleEffect(1.2)
                         .padding(.vertical, 25)
@@ -114,9 +106,7 @@ struct WeeklyLeaderboard: View {
                         .font(.system(size: 12, weight: .bold))
                         .tracking(1)
                         .foregroundColor(
-                            Color(
-                                red: 250 / 255, green: 204 / 255, blue: 21 / 255
-                            )
+                            Theme.yellow
                         )
                         .frame(width: 50, alignment: .center)
 
@@ -124,9 +114,7 @@ struct WeeklyLeaderboard: View {
                         .font(.system(size: 12, weight: .bold))
                         .tracking(1)
                         .foregroundColor(
-                            Color(
-                                red: 250 / 255, green: 204 / 255, blue: 21 / 255
-                            )
+                            Theme.yellow
                         )
                         .frame(alignment: .leading)
 
@@ -136,9 +124,7 @@ struct WeeklyLeaderboard: View {
                         .font(.system(size: 12, weight: .bold))
                         .tracking(1)
                         .foregroundColor(
-                            Color(
-                                red: 250 / 255, green: 204 / 255, blue: 21 / 255
-                            )
+                            Theme.yellow
                         )
                         .frame(width: 70, alignment: .trailing)
                 }
@@ -153,9 +139,7 @@ struct WeeklyLeaderboard: View {
                             .foregroundStyle(
                                 LinearGradient(
                                     colors: [
-                                        Color(
-                                            red: 250 / 255, green: 204 / 255,
-                                            blue: 21 / 255),
+                                        Theme.yellow,
                                         Color(
                                             red: 234 / 255, green: 179 / 255,
                                             blue: 8 / 255),
@@ -229,10 +213,7 @@ struct WeeklyLeaderboard: View {
                     .stroke(
                         LinearGradient(
                             colors: [
-                                Color(
-                                    red: 250 / 255, green: 204 / 255,
-                                    blue: 21 / 255
-                                ).opacity(0.6),
+                                Theme.yellow.opacity(0.6),
                                 Color(
                                     red: 234 / 255, green: 179 / 255,
                                     blue: 8 / 255
@@ -432,14 +413,8 @@ struct EnhancedLeaderboardRow: View {
                         .stroke(
                             LinearGradient(
                                 colors: [
-                                    Color(
-                                        red: 250 / 255, green: 204 / 255,
-                                        blue: 21 / 255
-                                    ).opacity(0.7),
-                                    Color(
-                                        red: 250 / 255, green: 204 / 255,
-                                        blue: 21 / 255
-                                    ).opacity(0.3),
+                                    Theme.yellow.opacity(0.7),
+                                    Theme.yellow.opacity(0.3),
                                 ],
                                 startPoint: .topLeading,
                                 endPoint: .bottomTrailing

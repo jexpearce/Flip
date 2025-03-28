@@ -43,14 +43,8 @@ struct OthersActiveView: View {
                             LinearGradient(
                                 colors: currentUserSucceeded
                                     ? [
-                                        Color(
-                                            red: 34 / 255, green: 197 / 255,
-                                            blue: 94 / 255
-                                        ).opacity(0.3),
-                                        Color(
-                                            red: 22 / 255, green: 163 / 255,
-                                            blue: 74 / 255
-                                        ).opacity(0.2),
+                                        Theme.mutedGreen.opacity(0.3),
+                                        Theme.darkerGreen.opacity(0.2),
                                     ]
                                     : [
                                         Color(
@@ -91,12 +85,8 @@ struct OthersActiveView: View {
                         LinearGradient(
                             colors: currentUserSucceeded
                                 ? [
-                                    Color(
-                                        red: 34 / 255, green: 197 / 255,
-                                        blue: 94 / 255),
-                                    Color(
-                                        red: 22 / 255, green: 163 / 255,
-                                        blue: 74 / 255),
+                                    Theme.mutedGreen,
+                                    Theme.darkerGreen,
                                 ]
                                 : [
                                     Color(
@@ -112,9 +102,7 @@ struct OthersActiveView: View {
                     )
                     .shadow(
                         color: currentUserSucceeded
-                            ? Color(
-                                red: 34 / 255, green: 197 / 255, blue: 94 / 255
-                            ).opacity(isGlowing ? 0.6 : 0.3)
+                            ? Theme.mutedGreen.opacity(isGlowing ? 0.6 : 0.3)
                             : Color(
                                 red: 239 / 255, green: 68 / 255, blue: 68 / 255
                             ).opacity(isGlowing ? 0.6 : 0.3),
@@ -129,9 +117,7 @@ struct OthersActiveView: View {
                     .foregroundColor(.white)
                     .shadow(
                         color: currentUserSucceeded
-                            ? Color(
-                                red: 34 / 255, green: 197 / 255, blue: 94 / 255
-                            ).opacity(0.5)
+                            ? Theme.mutedGreen.opacity(0.5)
                             : Color(
                                 red: 239 / 255, green: 68 / 255, blue: 68 / 255
                             ).opacity(0.5),
@@ -152,9 +138,7 @@ struct OthersActiveView: View {
                         Text("Others still in session")
                             .font(.system(size: 18, weight: .medium))
                             .foregroundColor(
-                                Color(
-                                    red: 250 / 255, green: 204 / 255,
-                                    blue: 21 / 255)
+                                Theme.yellow
                             )
                             .multilineTextAlignment(.center)
                             .padding(.horizontal)
@@ -166,10 +150,7 @@ struct OthersActiveView: View {
                                     .font(.system(size: 50, weight: .black))
                                     .foregroundColor(.white)
                                     .shadow(
-                                        color: Color(
-                                            red: 56 / 255, green: 189 / 255,
-                                            blue: 248 / 255
-                                        ).opacity(0.6), radius: 10)
+                                        color: Theme.lightTealBlue.opacity(0.6), radius: 10)
 
                                 Text("minutes")
                                     .font(.system(size: 18, weight: .medium))
@@ -199,10 +180,7 @@ struct OthersActiveView: View {
                                         .font(.system(size: 42, weight: .black))
                                         .foregroundColor(.white)
                                         .shadow(
-                                            color: Color(
-                                                red: 56 / 255, green: 189 / 255,
-                                                blue: 248 / 255
-                                            ).opacity(0.6), radius: 10)
+                                            color: Theme.lightTealBlue.opacity(0.6), radius: 10)
 
                                     Text(
                                         actualDuration == 1
@@ -414,7 +392,7 @@ struct OthersActiveView: View {
                     .font(.system(size: 14, weight: .bold))
                     .tracking(2)
                     .foregroundColor(
-                        Color(red: 250 / 255, green: 204 / 255, blue: 21 / 255)
+                        Theme.yellow
                     )
                     .frame(maxWidth: .infinity, alignment: .center)
 
@@ -462,9 +440,7 @@ struct OthersActiveView: View {
                                 )
                                 .foregroundColor(
                                     participant.wasSuccessful ?? false
-                                        ? Color(
-                                            red: 34 / 255, green: 197 / 255,
-                                            blue: 94 / 255)
+                                        ? Theme.mutedGreen
                                         : Color(
                                             red: 239 / 255, green: 68 / 255,
                                             blue: 68 / 255)

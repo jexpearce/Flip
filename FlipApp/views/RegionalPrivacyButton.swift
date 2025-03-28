@@ -26,8 +26,7 @@ struct RegionalPrivacySheet: View {
     @State private var regionalDisplayMode: RegionalDisplayMode
     @State private var regionalOptOut: Bool
 
-    private let cyanBlueAccent = Color(
-        red: 56 / 255, green: 189 / 255, blue: 248 / 255)
+    private let cyanBlueAccent = Theme.lightTealBlue
     private let redAccent = Color(
         red: 239 / 255, green: 68 / 255, blue: 68 / 255)
 
@@ -44,7 +43,7 @@ struct RegionalPrivacySheet: View {
                 // Background gradient
                 LinearGradient(
                     colors: [
-                        Color(red: 20 / 255, green: 10 / 255, blue: 40 / 255),
+                        Theme.deepMidnightPurple,
                         Color(red: 30 / 255, green: 18 / 255, blue: 60 / 255),
                     ],
                     startPoint: .top,
