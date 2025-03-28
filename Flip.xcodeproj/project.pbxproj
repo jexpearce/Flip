@@ -43,6 +43,7 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		1A0773522D972264004F7210 /* .swift-format */ = {isa = PBXFileReference; lastKnownFileType = text; path = ".swift-format"; sourceTree = "<group>"; };
 		42CADC862D52A72500D41EB9 /* FlipApp.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = FlipApp.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		42CADCB72D52A75900D41EB9 /* FlipWidget.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = FlipWidget.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		42CADCB92D52A75900D41EB9 /* WidgetKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = WidgetKit.framework; path = System/Library/Frameworks/WidgetKit.framework; sourceTree = SDKROOT; };
@@ -137,6 +138,7 @@
 				42CADCBD2D52A75A00D41EB9 /* FlipWidget */,
 				42CADCB82D52A75900D41EB9 /* Frameworks */,
 				42CADC872D52A72500D41EB9 /* Products */,
+				1A0773522D972264004F7210 /* .swift-format */,
 			);
 			sourceTree = "<group>";
 		};
