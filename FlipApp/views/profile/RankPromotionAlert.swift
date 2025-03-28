@@ -183,12 +183,8 @@ struct RankPromotionAlert: View {
                         .fill(
                             LinearGradient(
                                 colors: [
-                                    Color(
-                                        red: 26 / 255, green: 18 / 255,
-                                        blue: 47 / 255),
-                                    Color(
-                                        red: 16 / 255, green: 24 / 255,
-                                        blue: 57 / 255),
+                                    Theme.mutedPurple,
+                                    Theme.blueishPurple,
                                 ],
                                 startPoint: .top,
                                 endPoint: .bottom

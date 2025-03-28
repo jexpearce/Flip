@@ -20,7 +20,7 @@ struct FriendsView: View {
                 // Custom gradient background with more orange/yellow color variety
                 LinearGradient(
                     gradient: Gradient(colors: [
-                        Color(red: 26 / 255, green: 14 / 255, blue: 47 / 255),  // Deep purple
+                        Theme.mutedPurple,  // Deep purple
                         Color(red: 65 / 255, green: 16 / 255, blue: 94 / 255),  // Medium purple
                         Theme.darkPurpleBlue,  // Purple-red transition
                     ]),

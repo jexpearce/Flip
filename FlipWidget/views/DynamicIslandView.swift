@@ -33,9 +33,7 @@ func DynamicIslandView(context: ActivityViewContext<FlipActivityAttributes>)
                                     ? Color(
                                         red: 185 / 255, green: 28 / 255,
                                         blue: 28 / 255)
-                                    : Color(
-                                        red: 14 / 255, green: 165 / 255,
-                                        blue: 233 / 255),
+                                    : Theme.darkTealBlue,
                             ],
                             startPoint: .top,
                             endPoint: .bottom

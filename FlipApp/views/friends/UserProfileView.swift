@@ -1570,9 +1570,7 @@ struct AddFriendConfirmation: View {
                             LinearGradient(
                                 colors: [
                                     Theme.lightTealBlue,
-                                    Color(
-                                        red: 14 / 255, green: 165 / 255,
-                                        blue: 233 / 255),
+                                    Theme.darkTealBlue,
                                 ],
                                 startPoint: .top,
                                 endPoint: .bottom
@@ -1587,9 +1585,7 @@ struct AddFriendConfirmation: View {
                             LinearGradient(
                                 colors: [
                                     Theme.lightTealBlue,
-                                    Color(
-                                        red: 14 / 255, green: 165 / 255,
-                                        blue: 233 / 255),
+                                    Theme.darkTealBlue,
                                 ],
                                 startPoint: .top,
                                 endPoint: .bottom
@@ -1677,10 +1673,7 @@ struct AddFriendConfirmation: View {
                                             LinearGradient(
                                                 colors: [
                                                     Theme.lightTealBlue,
-                                                    Color(
-                                                        red: 14 / 255,
-                                                        green: 165 / 255,
-                                                        blue: 233 / 255),
+                                                    Theme.darkTealBlue,
                                                 ],
                                                 startPoint: .top,
                                                 endPoint: .bottom

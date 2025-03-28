@@ -528,9 +528,7 @@ struct CustomCancelAlert: View {
                         .fill(
                             LinearGradient(
                                 colors: [
-                                    Color(
-                                        red: 26 / 255, green: 14 / 255,
-                                        blue: 47 / 255),
+                                    Theme.mutedPurple,
                                     Theme.deepMidnightPurple,
                                 ],
                                 startPoint: .top,

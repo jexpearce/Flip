@@ -13,8 +13,8 @@ struct DetailedStatsView: View {
             // Background gradient
             LinearGradient(
                 gradient: Gradient(colors: [
-                    Color(red: 26 / 255, green: 14 / 255, blue: 47 / 255),
-                    Color(red: 16 / 255, green: 24 / 255, blue: 57 / 255),
+                    Theme.mutedPurple,
+                    Theme.blueishPurple,
                 ]),
                 startPoint: .top,
                 endPoint: .bottom

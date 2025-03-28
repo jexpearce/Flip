@@ -191,10 +191,7 @@ struct BeginButton: View {
                                             :  // Location allowed - blue gradient
                                             [
                                                 Theme.lightTealBlue,
-                                                Color(
-                                                    red: 14 / 255,
-                                                    green: 165 / 255,
-                                                    blue: 233 / 255),  // Deeper blue
+                                                Theme.darkTealBlue,
                                             ],
                                     startPoint: .leading,
                                     endPoint: .trailing

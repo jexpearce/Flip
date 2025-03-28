@@ -1321,10 +1321,7 @@ struct CommentBubble: View {
                         LinearGradient(
                             colors: [
                                 Theme.lightTealBlue.opacity(0.3),
-                                Color(
-                                    red: 14 / 255, green: 165 / 255,
-                                    blue: 233 / 255
-                                ).opacity(0.2),
+                                Theme.darkTealBlue.opacity(0.2),
                             ],
                             startPoint: .topLeading,
                             endPoint: .bottomTrailing

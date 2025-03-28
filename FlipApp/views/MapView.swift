@@ -97,10 +97,7 @@ struct MapView: View {
                             // Button background
                             Circle()
                                 .fill(
-                                    Color(
-                                        red: 26 / 255, green: 14 / 255,
-                                        blue: 47 / 255
-                                    ).opacity(0.85)
+                                    Theme.mutedPurple.opacity(0.85)
                                 )
                                 .frame(width: 46, height: 46)
                                 .overlay(
@@ -135,10 +132,7 @@ struct MapView: View {
                                 ZStack {
                                     Circle()
                                         .fill(
-                                            Color(
-                                                red: 26 / 255, green: 14 / 255,
-                                                blue: 47 / 255
-                                            ).opacity(0.8))
+                                            Theme.mutedPurple.opacity(0.8))
 
                                     Circle()
                                         .stroke(
@@ -164,14 +158,8 @@ struct MapView: View {
                             .fill(
                                 LinearGradient(
                                     gradient: Gradient(colors: [
-                                        Color(
-                                            red: 26 / 255, green: 14 / 255,
-                                            blue: 47 / 255
-                                        ).opacity(0.8),
-                                        Color(
-                                            red: 26 / 255, green: 14 / 255,
-                                            blue: 47 / 255
-                                        ).opacity(0),
+                                        Theme.mutedPurple.opacity(0.8),
+                                        Theme.mutedPurple.opacity(0),
                                     ]),
                                     startPoint: .top,
                                     endPoint: .bottom

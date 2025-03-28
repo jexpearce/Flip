@@ -138,8 +138,7 @@ struct SettingsView: View {
 
     // Colors from the app's theme
     private let cyanBlueAccent = Theme.lightTealBlue
-    private let deepPurple = Color(
-        red: 26 / 255, green: 14 / 255, blue: 47 / 255)
+    private let deepPurple = Theme.mutedPurple
     private let darkPurple = Color(
         red: 30 / 255, green: 30 / 255, blue: 46 / 255)
 

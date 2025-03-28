@@ -547,9 +547,7 @@ struct EnhancedLocationPermissionAlert: View {
                             LinearGradient(
                                 colors: [
                                     Theme.lightTealBlue,
-                                    Color(
-                                        red: 14 / 255, green: 165 / 255,
-                                        blue: 233 / 255),
+                                    Theme.darkTealBlue,
                                 ],
                                 startPoint: .top,
                                 endPoint: .bottom
@@ -668,10 +666,7 @@ struct EnhancedLocationPermissionAlert: View {
                                             LinearGradient(
                                                 colors: [
                                                     Theme.lightTealBlue,
-                                                    Color(
-                                                        red: 14 / 255,
-                                                        green: 165 / 255,
-                                                        blue: 233 / 255),
+                                                    Theme.darkTealBlue,
                                                 ],
                                                 startPoint: .leading,
                                                 endPoint: .trailing
@@ -708,12 +703,8 @@ struct EnhancedLocationPermissionAlert: View {
                         .fill(
                             LinearGradient(
                                 colors: [
-                                    Color(
-                                        red: 26 / 255, green: 14 / 255,
-                                        blue: 47 / 255),
-                                    Color(
-                                        red: 16 / 255, green: 24 / 255,
-                                        blue: 57 / 255),
+                                    Theme.mutedPurple,
+                                    Theme.blueishPurple,
                                 ],
                                 startPoint: .top,
                                 endPoint: .bottom

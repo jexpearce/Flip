@@ -14,7 +14,7 @@ struct FriendsSearchView: View {
     // Orange-purple theme colors for friend-related views
     private let orangePurpleGradient = LinearGradient(
         colors: [
-            Color(red: 26 / 255, green: 14 / 255, blue: 47 / 255),  // Deep purple
+            Theme.mutedPurple,  // Deep purple
             Color(red: 47 / 255, green: 17 / 255, blue: 67 / 255),  // Medium purple
             Color(red: 65 / 255, green: 20 / 255, blue: 60 / 255),  // Purple with hint of red
             Color(red: 35 / 255, green: 15 / 255, blue: 50 / 255),  // Back to deeper purple
