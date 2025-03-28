@@ -1694,8 +1694,8 @@ class FeedViewModel: ObservableObject {
         for userId in missingUserIds {
             group.enter()
 
-            firebaseManager.db.collection("users").document(userId).getDocument
-            { [weak self] document, error in
+            firebaseManager.db.collection("users").document(userId).getDocument {
+                [weak self] document, error in
                 if let userData = try? document?.data(
                     as: FirebaseManager.FlipUser.self)
                 {

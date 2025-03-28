@@ -169,8 +169,7 @@ struct BuildingSelectionView: View {
                                         }
                                         .padding(.trailing, 8)
 
-                                        VStack(alignment: .leading, spacing: 4)
-                                        {
+                                        VStack(alignment: .leading, spacing: 4) {
                                             Text(
                                                 BuildingIdentificationService
                                                     .shared.getBuildingName(

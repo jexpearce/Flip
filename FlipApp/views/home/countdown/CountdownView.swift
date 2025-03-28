@@ -16,7 +16,8 @@ struct CountdownView: View {
                 .tracking(8)
                 .foregroundColor(.white)
                 .shadow(
-                    color: Theme.lightTealBlue.opacity(isGlowing ? 0.7 : 0.3), radius: isGlowing ? 15 : 8
+                    color: Theme.lightTealBlue.opacity(isGlowing ? 0.7 : 0.3),
+                    radius: isGlowing ? 15 : 8
                 )
                 .onAppear {
                     withAnimation(
@@ -37,8 +38,7 @@ struct CountdownView: View {
                     color: Theme.lightTealBlue.opacity(0.6), radius: 15
                 )
                 .onChange(of: appManager.countdownSeconds) {
-                    withAnimation(.spring(response: 0.3, dampingFraction: 0.6))
-                    {
+                    withAnimation(.spring(response: 0.3, dampingFraction: 0.6)) {
                         numberScale = 1.4
                         numberOpacity = 0.7
                     }

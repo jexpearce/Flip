@@ -876,8 +876,7 @@ struct HelpSupportView: View {
                         ContactButton(
                             icon: "envelope.fill", text: "jex@jajajeev.com"
                         ) {
-                            if let url = URL(string: "mailto:jex@jajajeev.com")
-                            {
+                            if let url = URL(string: "mailto:jex@jajajeev.com") {
                                 UIApplication.shared.open(url)
                             }
                         }

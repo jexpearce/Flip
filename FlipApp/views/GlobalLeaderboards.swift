@@ -1089,9 +1089,8 @@ class GlobalWeeklyLeaderboardViewModel: ObservableObject {
                 )
 
                 // Dictionary to track each user's total time
-                var userWeeklyData:
-                    [String: (userId: String, username: String, minutes: Int)] =
-                        [:]
+                var userWeeklyData: [String: (userId: String, username: String, minutes: Int)] =
+                    [:]
 
                 // Collection of user IDs we need to fetch privacy settings for
                 var userIdsToCheck = Set<String>()
@@ -1441,8 +1440,7 @@ class GlobalAllTimeLeaderboardViewModel: ObservableObject {
                 )
 
                 // Dictionary to store user data with total focus time
-                var userData:
-                    [(userId: String, username: String, minutes: Int)] = []
+                var userData: [(userId: String, username: String, minutes: Int)] = []
 
                 // Collection of user IDs we need to fetch privacy settings for
                 var userIdsToCheck = [String]()
@@ -2739,8 +2737,7 @@ class RegionalWeeklyLeaderboardViewModel: ObservableObject {
                                             if let locationDocs = snapshot?
                                                 .documents
                                             {
-                                                for locationDoc in locationDocs
-                                                {
+                                                for locationDoc in locationDocs {
                                                     if let geoPoint =
                                                         locationDoc.data()[
                                                             "location"]
@@ -2802,8 +2799,7 @@ class RegionalWeeklyLeaderboardViewModel: ObservableObject {
 
     private func processSessions(documents: [QueryDocumentSnapshot]) {
         // Dictionary to track each user's total time
-        var userWeeklyData:
-            [String: (userId: String, username: String, minutes: Int)] = [:]
+        var userWeeklyData: [String: (userId: String, username: String, minutes: Int)] = [:]
 
         // Collection of user IDs we need to fetch privacy settings for
         var userIdsToCheck = Set<String>()
@@ -2923,8 +2919,7 @@ class RegionalWeeklyLeaderboardViewModel: ObservableObject {
                 {
                     // County/district name
                     regionName = subAdministrativeArea
-                } else if let administrativeArea = placemark.administrativeArea
-                {
+                } else if let administrativeArea = placemark.administrativeArea {
                     // State/province name
                     regionName = administrativeArea
                 }
@@ -3370,8 +3365,7 @@ class RegionalAllTimeLeaderboardViewModel: ObservableObject {
                 {
                     // County/district name
                     regionName = subAdministrativeArea
-                } else if let administrativeArea = placemark.administrativeArea
-                {
+                } else if let administrativeArea = placemark.administrativeArea {
                     // State/province name
                     regionName = administrativeArea
                 }

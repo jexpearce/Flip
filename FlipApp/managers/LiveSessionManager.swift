@@ -172,8 +172,7 @@ class LiveSessionManager: ObservableObject {
             "lastUpdateTime": Timestamp(date: now),
         ]
 
-        db.collection("live_sessions").document(sessionId).setData(sessionData)
-        { error in
+        db.collection("live_sessions").document(sessionId).setData(sessionData) { error in
             if let error = error {
                 print(
                     "Error creating live session: \(error.localizedDescription)"
@@ -501,8 +500,7 @@ class LiveSessionManager: ObservableObject {
     private var cleanupTimer: Timer?
 
     private func startCleanupTimer() {
-        cleanupTimer = Timer.scheduledTimer(withTimeInterval: 15, repeats: true)
-        { [weak self] _ in
+        cleanupTimer = Timer.scheduledTimer(withTimeInterval: 15, repeats: true) { [weak self] _ in
             self?.cleanupStaleSessions()
         }
         RunLoop.current.add(cleanupTimer!, forMode: .common)

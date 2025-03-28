@@ -130,8 +130,7 @@ class SessionManager: ObservableObject {
         }
 
         // Handle streak achievement
-        if let streakAchievement = result.streakAchievement, streakAchievement.0
-        {
+        if let streakAchievement = result.streakAchievement, streakAchievement.0 {
             DispatchQueue.main.async {
                 self.streakAchievementStatus = streakAchievement.1
                 self.streakCount = streakAchievement.2

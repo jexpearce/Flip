@@ -289,7 +289,7 @@ struct MapPrivacyAlert: View {
             }
         }
         .opacity(isVisible ? 1 : 0)
-        .onChange(of: isPresented) { 
+        .onChange(of: isPresented) {
             print("MapPrivacyAlert isPresented changed to: \(isPresented)")
             if isPresented {
                 showAlert()

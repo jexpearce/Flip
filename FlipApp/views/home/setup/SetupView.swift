@@ -102,8 +102,7 @@ struct SetupView: View {
 
                     // Set Time Title
                     VStack(spacing: 2) {  // Reduced spacing from 4 to 2
-                        if joinLiveSessionMode, let sessionInfo = sessionToJoin
-                        {
+                        if joinLiveSessionMode, let sessionInfo = sessionToJoin {
                             Text(
                                 "JOIN \(sessionInfo.name.uppercased())'S SESSION"
                             )
@@ -538,8 +537,7 @@ struct SetupView: View {
             }
 
             // Check if we're being called to join a session
-            if let sessionData = SessionJoinCoordinator.shared.getJoinSession()
-            {
+            if let sessionData = SessionJoinCoordinator.shared.getJoinSession() {
                 joinLiveSessionMode = true
                 sessionToJoin = sessionData
 

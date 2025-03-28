@@ -632,8 +632,7 @@ class RegionalViewModel: NSObject, ObservableObject, CLLocationManagerDelegate {
             object: nil,
             queue: .main
         ) { [weak self] notification in
-            if let location = notification.userInfo?["location"] as? CLLocation
-            {
+            if let location = notification.userInfo?["location"] as? CLLocation {
                 self?.currentLocation = location
                 self?.loadNearbyUsers()
             }

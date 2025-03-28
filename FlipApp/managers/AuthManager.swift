@@ -150,8 +150,7 @@ class AuthManager: ObservableObject {
                         "createdAt": FieldValue.serverTimestamp(),
                     ]
 
-                    db.collection("users").document(user.uid).setData(userData)
-                    { error in
+                    db.collection("users").document(user.uid).setData(userData) { error in
                         DispatchQueue.main.async {
                             if let error = error {
                                 print(
@@ -249,8 +248,7 @@ class AuthManager: ObservableObject {
         }
     }
 
-    private func loadUserData(userId: String, completion: @escaping () -> Void)
-    {
+    private func loadUserData(userId: String, completion: @escaping () -> Void) {
         let db = Firestore.firestore()
         db.collection("users").document(userId).getDocument { document, error in
             if let error = error {

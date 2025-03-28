@@ -602,8 +602,7 @@ class LeaderboardViewModel: ObservableObject {
         for userId in userIds {
             group.enter()
 
-            firebaseManager.db.collection("users").document(userId).getDocument
-            { document, error in
+            firebaseManager.db.collection("users").document(userId).getDocument { document, error in
                 defer { group.leave() }
 
                 if let document = document, let data = document.data() {

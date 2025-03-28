@@ -74,7 +74,7 @@ struct JoinedCompletionView: View {
                             .fill(
                                 LinearGradient(
                                     colors: [
-                                        Theme.mutedGreen).opacity(0.3),
+                                        Theme.mutedGreen.opacity(0.3),
                                         Theme.darkerGreen.opacity(0.2),
                                     ],
                                     startPoint: .topLeading,

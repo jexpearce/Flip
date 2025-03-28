@@ -408,8 +408,7 @@ struct OthersActiveView: View {
                             // Different status indicators based on participant state
                             if participant.isActive {
                                 // Active participant with timer
-                                if let remaining = participant.remainingSeconds
-                                {
+                                if let remaining = participant.remainingSeconds {
                                     let minutes = remaining / 60
                                     let seconds = remaining % 60
 

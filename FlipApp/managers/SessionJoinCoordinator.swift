@@ -80,8 +80,7 @@ class SessionJoinCoordinator: ObservableObject {
 
     // Start cleanup timer to prevent stale join requests
     private func startCleanupTimer() {
-        cleanupTimer = Timer.scheduledTimer(withTimeInterval: 15, repeats: true)
-        { [weak self] _ in
+        cleanupTimer = Timer.scheduledTimer(withTimeInterval: 15, repeats: true) { [weak self] _ in
             self?.checkForStaleRequests()
         }
         RunLoop.current.add(cleanupTimer!, forMode: .common)

@@ -129,8 +129,7 @@ class SearchManager: ObservableObject {
     }
 
     // Perform fuzzy search (with tolerance for typos) on users with mutual friends
-    private func performFuzzySearch(query: String) -> [FirebaseManager.FlipUser]
-    {
+    private func performFuzzySearch(query: String) -> [FirebaseManager.FlipUser] {
         let lowercaseQuery = query.lowercased()
 
         // Only apply fuzzy search to users with mutual friends

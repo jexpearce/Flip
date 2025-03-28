@@ -24,8 +24,7 @@ class FirebaseManager: ObservableObject {
 
     }
 
-    func searchUsers(query: String, completion: @escaping ([FlipUser]) -> Void)
-    {
+    func searchUsers(query: String, completion: @escaping ([FlipUser]) -> Void) {
         guard !query.isEmpty else {
             completion([])
             return
@@ -487,8 +486,7 @@ extension FirebaseManager {
 
                         // If there are likely more documents to delete, call this function again
                         if documents.count == 500 {
-                            DispatchQueue.main.asyncAfter(deadline: .now() + 1)
-                            {
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
                                 self.cleanupOldLocationData()
                             }
                         }

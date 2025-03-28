@@ -101,8 +101,7 @@ struct ActiveLockView: View {
                 Spacer()
 
                 // Only show pauses if not paused and there are pauses remaining
-                if !context.state.isPaused && context.state.remainingPauses > 0
-                {
+                if !context.state.isPaused && context.state.remainingPauses > 0 {
                     HStack(spacing: 2) {  // Reduced spacing from 4 to 2
                         Text("\(context.state.remainingPauses)")
                             .font(.system(size: 16, weight: .bold))  // Reduced from 18 to 16

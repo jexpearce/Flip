@@ -45,8 +45,7 @@ class ScoreViewModel: ObservableObject {
             }
 
             // Load score
-            if let data = document?.data(), let score = data["score"] as? Double
-            {
+            if let data = document?.data(), let score = data["score"] as? Double {
                 DispatchQueue.main.async {
                     self?.userScore = score
                 }
@@ -698,8 +697,7 @@ struct FriendMapMarker: View {
     }
 
     // Helper to create a thumbnail image
-    private func createThumbnail(from image: UIImage, size: CGFloat) -> UIImage
-    {
+    private func createThumbnail(from image: UIImage, size: CGFloat) -> UIImage {
         let renderer = UIGraphicsImageRenderer(
             size: CGSize(width: size, height: size))
         return renderer.image { (context) in

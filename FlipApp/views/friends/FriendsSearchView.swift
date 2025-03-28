@@ -293,8 +293,7 @@ struct SearchResultsSection: View {
                     .foregroundColor(.white.opacity(0.7))
             }
             .padding(.top, 40)
-        } else if viewModel.filteredSearchResults.isEmpty && !searchText.isEmpty
-        {
+        } else if viewModel.filteredSearchResults.isEmpty && !searchText.isEmpty {
             // No search results state
             NoUsersFoundView(
                 message: "No users found matching '\(searchText)'",

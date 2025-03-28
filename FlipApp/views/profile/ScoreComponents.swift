@@ -286,8 +286,7 @@ struct RankCircle: View {
                 .foregroundColor(.white)
 
             // NEW: Optional streak indicator
-            if showStreakIndicator && ScoreManager.shared.streakStatus != .none
-            {
+            if showStreakIndicator && ScoreManager.shared.streakStatus != .none {
                 StreakIndicator(streakStatus: ScoreManager.shared.streakStatus)
                     .position(x: size * 0.8, y: size * 0.2)
             }

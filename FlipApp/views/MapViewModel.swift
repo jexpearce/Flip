@@ -186,8 +186,7 @@ class MapViewModel: NSObject, ObservableObject, CLLocationManagerDelegate {
         // ONLY start tracking if we already have permission
         let authStatus = locationManager.authorizationStatus
 
-        if authStatus == .authorizedWhenInUse || authStatus == .authorizedAlways
-        {
+        if authStatus == .authorizedWhenInUse || authStatus == .authorizedAlways {
             // Configure and start location updates
             locationManager.desiredAccuracy = kCLLocationAccuracyHundredMeters
             locationManager.distanceFilter = 50
@@ -293,8 +292,8 @@ class MapViewModel: NSObject, ObservableObject, CLLocationManagerDelegate {
                 }
 
                 // Get the user's friends list
-                self.db.collection("users").document(currentUserId).getDocument
-                { [weak self] document, error in
+                self.db.collection("users").document(currentUserId).getDocument {
+                    [weak self] document, error in
                     guard let self = self,
                         let userData = try? document?.data(
                             as: FirebaseManager.FlipUser.self)

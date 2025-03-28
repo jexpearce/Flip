@@ -176,19 +176,19 @@ struct BeginButton: View {
                                 LinearGradient(
                                     colors: !permissionManager
                                         .motionPermissionGranted
-                                        ? // No motion permission - grayed out (highest priority)
+                                        ?  // No motion permission - grayed out (highest priority)
                                         [
                                             Color.gray.opacity(0.5),
                                             Color.gray.opacity(0.3),
                                         ]
                                         : permissionManager.locationAuthStatus
                                             == .denied
-                                            ? // Location denied - orange/yellow gradient
+                                            ?  // Location denied - orange/yellow gradient
                                             [
                                                 Theme.yellow,  // Vibrant yellow
                                                 Theme.orange,  // Warm orange
                                             ]
-                                            : // Location allowed - blue gradient
+                                            :  // Location allowed - blue gradient
                                             [
                                                 Theme.lightTealBlue,
                                                 Color(

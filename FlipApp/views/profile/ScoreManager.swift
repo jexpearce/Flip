@@ -561,8 +561,7 @@ enum StreakStatus: String, Codable {
 
 // SwiftUI Color extension for Firestore compatibility
 extension Color {
-    var components: (red: Double, green: Double, blue: Double, opacity: Double)
-    {
+    var components: (red: Double, green: Double, blue: Double, opacity: Double) {
         #if canImport(UIKit)
             typealias NativeColor = UIColor
         #elseif canImport(AppKit)

@@ -131,8 +131,7 @@ func DynamicIslandView(context: ActivityViewContext<FlipActivityAttributes>)
                         .padding(.vertical, 3)
                         .background(Color.white.opacity(0.08))
                         .cornerRadius(5)
-                } else if let flipBackTime = context.state.flipBackTimeRemaining
-                {
+                } else if let flipBackTime = context.state.flipBackTimeRemaining {
                     Text("\(flipBackTime)s to flip")
                         .font(.system(size: 11, weight: .medium))
                         .foregroundColor(.white)

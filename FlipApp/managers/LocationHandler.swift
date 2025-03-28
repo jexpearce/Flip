@@ -70,8 +70,7 @@ import SwiftUI
         self.motionManager.startDeviceMotionUpdates()
 
         // ONLY start actual location updates if we have permission
-        if authStatus == .authorizedWhenInUse || authStatus == .authorizedAlways
-        {
+        if authStatus == .authorizedWhenInUse || authStatus == .authorizedAlways {
             print("Starting location updates - background mode: \(isInSession)")
             Task {
                 do {

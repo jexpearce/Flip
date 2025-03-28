@@ -579,8 +579,7 @@ class AppManager: NSObject, ObservableObject {
 
         guard !isPaused else { return }
 
-        sessionTimer = Timer.scheduledTimer(withTimeInterval: 1, repeats: true)
-        { [weak self] _ in
+        sessionTimer = Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { [weak self] _ in
             guard let self = self else { return }
 
             if self.remainingSeconds > 0 {
@@ -682,8 +681,8 @@ class AppManager: NSObject, ObservableObject {
         // Initialize the timer with default value
         flipBackTimeRemaining = 10
 
-        flipBackTimer = Timer.scheduledTimer(withTimeInterval: 1, repeats: true)
-        { [weak self] timer in
+        flipBackTimer = Timer.scheduledTimer(withTimeInterval: 1, repeats: true) {
+            [weak self] timer in
             guard let self = self else {
                 timer.invalidate()
                 return
