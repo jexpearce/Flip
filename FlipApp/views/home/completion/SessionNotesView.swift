@@ -123,10 +123,7 @@ struct SessionNotesView: View {
                 RoundedRectangle(cornerRadius: 16)
                     .fill(
                         LinearGradient(
-                            colors: [
-                                Color(red: 60 / 255, green: 30 / 255, blue: 110 / 255).opacity(0.4),
-                                Color(red: 40 / 255, green: 20 / 255, blue: 80 / 255).opacity(0.2),
-                            ],
+                            colors: [Theme.mutedPink.opacity(0.4), Theme.deepBlue.opacity(0.2)],
                             startPoint: .topLeading,
                             endPoint: .bottomTrailing
                         )

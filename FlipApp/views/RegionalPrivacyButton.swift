@@ -38,10 +38,7 @@ struct RegionalPrivacySheet: View {
             ZStack {
                 // Background gradient
                 LinearGradient(
-                    colors: [
-                        Theme.deepMidnightPurple,
-                        Color(red: 30 / 255, green: 18 / 255, blue: 60 / 255),
-                    ],
+                    colors: [Theme.deepMidnightPurple, Theme.mediumMidnightPurple],
                     startPoint: .top,
                     endPoint: .bottom
                 )

@@ -196,7 +196,7 @@ struct MapPrivacyAlert: View {
                             .fill(
                                 LinearGradient(
                                     colors: [
-                                        Color(red: 30 / 255, green: 14 / 255, blue: 50 / 255),
+                                        Theme.mediumMidnightPurple,
                                         Color(red: 38 / 255, green: 18 / 255, blue: 58 / 255),
                                     ],
                                     startPoint: .top,

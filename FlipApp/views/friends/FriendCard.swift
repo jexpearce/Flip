@@ -138,9 +138,7 @@ struct EnhancedFriendCard: View {
                     if !isLive {
                         HStack(spacing: 8) {
                             Image(systemName: "timer").font(.system(size: 12))
-                                .foregroundColor(
-                                    Color(red: 168 / 255, green: 85 / 255, blue: 247 / 255)
-                                )
+                                .foregroundColor(Theme.vibrantPurple)
 
                             Text("\(friend.totalSessions) sessions").font(.system(size: 14))
                                 .foregroundColor(.white.opacity(0.8))

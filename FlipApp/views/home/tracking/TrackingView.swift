@@ -139,8 +139,8 @@ struct TrackingView: View {
                     .fill(
                         LinearGradient(
                             colors: [
-                                Color(red: 40 / 255, green: 20 / 255, blue: 80 / 255).opacity(0.5),
-                                Color(red: 30 / 255, green: 15 / 255, blue: 60 / 255).opacity(0.3),
+                                Theme.deepBlue.opacity(0.5),
+                                Theme.mediumMidnightPurple.opacity(0.3),
                             ],
                             startPoint: .top,
                             endPoint: .bottom
@@ -208,8 +208,8 @@ struct TrackingView: View {
                     .fill(
                         LinearGradient(
                             colors: [
-                                Color(red: 40 / 255, green: 20 / 255, blue: 80 / 255).opacity(0.4),
-                                Color(red: 30 / 255, green: 15 / 255, blue: 60 / 255).opacity(0.2),
+                                Theme.deepBlue.opacity(0.4),
+                                Theme.mediumMidnightPurple.opacity(0.2),
                             ],
                             startPoint: .top,
                             endPoint: .bottom

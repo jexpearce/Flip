@@ -172,10 +172,7 @@ struct FeedSessionCard: View {
                         Button(action: { showLikesSheet = true }) {
                             HStack(spacing: 6) {
                                 Image(systemName: "heart.fill").font(.system(size: 12))
-                                    .foregroundColor(
-                                        Color(red: 249 / 255, green: 115 / 255, blue: 22 / 255)
-                                            .opacity(0.9)
-                                    )
+                                    .foregroundColor(Theme.orange.opacity(0.9))
 
                                 if likesCount == 1 {
                                     Text("1 like").font(.system(size: 12, weight: .medium))
@@ -208,24 +205,10 @@ struct FeedSessionCard: View {
                             HStack(spacing: 8) {
                                 Image(systemName: isLiked ? "heart.fill" : "heart")
                                     .font(.system(size: 16, weight: .semibold))
-                                    .foregroundColor(
-                                        isLiked
-                                            ? Color(
-                                                red: 249 / 255,
-                                                green: 115 / 255,
-                                                blue: 22 / 255
-                                            ) : .white.opacity(0.9)
-                                    )
+                                    .foregroundColor(isLiked ? Theme.orange : .white.opacity(0.9))
 
                                 Text("Like").font(.system(size: 14, weight: .medium))
-                                    .foregroundColor(
-                                        isLiked
-                                            ? Color(
-                                                red: 249 / 255,
-                                                green: 115 / 255,
-                                                blue: 22 / 255
-                                            ) : .white.opacity(0.9)
-                                    )
+                                    .foregroundColor(isLiked ? Theme.orange : .white.opacity(0.9))
                             }
                         }
                         .buttonStyle(PlainButtonStyle())
@@ -639,8 +622,7 @@ struct CommentInputField: View {
     private var characterCounter: some View {
         Text("\(comment.count)/\(maxChars)").font(.system(size: 12))
             .foregroundColor(
-                comment.count > maxChars * Int(0.8)
-                    ? Color(red: 249 / 255, green: 115 / 255, blue: 22 / 255) : .white.opacity(0.6)
+                comment.count > maxChars * Int(0.8) ? Theme.orange : .white.opacity(0.6)
             )
     }
 
@@ -758,10 +740,7 @@ struct CompactLikesListView: View {
             HStack {
                 Text("\(likesCount) \(likesCount == 1 ? "Like" : "Likes")")
                     .font(.system(size: 16, weight: .bold)).foregroundColor(.white)
-                    .shadow(
-                        color: Color(red: 249 / 255, green: 115 / 255, blue: 22 / 255).opacity(0.4),
-                        radius: 4
-                    )
+                    .shadow(color: Theme.orange.opacity(0.4), radius: 4)
 
                 Spacer()
 
@@ -786,10 +765,7 @@ struct CompactLikesListView: View {
                                 .fill(
                                     RadialGradient(
                                         gradient: Gradient(colors: [
-                                            Color(red: 249 / 255, green: 115 / 255, blue: 22 / 255)
-                                                .opacity(0.3),
-                                            Color(red: 249 / 255, green: 115 / 255, blue: 22 / 255)
-                                                .opacity(0.0),
+                                            Theme.orange.opacity(0.3), Theme.orange.opacity(0.0),
                                         ]),
                                         center: .center,
                                         startRadius: 1,
@@ -799,9 +775,7 @@ struct CompactLikesListView: View {
                                 .frame(width: 60, height: 60).blur(radius: 8)
 
                             // Spinner
-                            ProgressView()
-                                .tint(Color(red: 249 / 255, green: 115 / 255, blue: 22 / 255))
-                                .scaleEffect(1.2)
+                            ProgressView().tint(Theme.orange).scaleEffect(1.2)
                         }
 
                         Text("Loading likes...").font(.system(size: 14))
@@ -816,12 +790,8 @@ struct CompactLikesListView: View {
                 VStack(spacing: 10) {
                     ZStack {
                         // Faded heart background
-                        Circle()
-                            .fill(
-                                Color(red: 249 / 255, green: 115 / 255, blue: 22 / 255)
-                                    .opacity(0.15)
-                            )
-                            .frame(width: 60, height: 60).blur(radius: 10)
+                        Circle().fill(Theme.orange.opacity(0.15)).frame(width: 60, height: 60)
+                            .blur(radius: 10)
 
                         Image(systemName: "heart.slash").font(.system(size: 28))
                             .foregroundColor(.white.opacity(0.7))

@@ -110,18 +110,6 @@ struct RegionalView: View {
     @State private var isFirstLaunch =
         UserDefaults.standard.bool(forKey: "hasShownRegionalView") == false
 
-    // Regional view deep midnight purple gradient with subtle red
-    private let regionalGradient = LinearGradient(
-        colors: [
-            Theme.deepMidnightPurple,  // Deep midnight purple
-            Color(red: 28 / 255, green: 14 / 255, blue: 45 / 255),  // Midnight purple
-            Color(red: 35 / 255, green: 14 / 255, blue: 40 / 255),  // Purple with slight red
-            Color(red: 30 / 255, green: 12 / 255, blue: 36 / 255),  // Back to purple
-        ],
-        startPoint: .top,
-        endPoint: .bottom
-    )
-
     // Red glow effect for accents
     private let redGlow = Theme.darkRed.opacity(0.5)
 
@@ -133,7 +121,7 @@ struct RegionalView: View {
                     // Background with decorative elements
                     ZStack {
                         // Main gradient background
-                        regionalGradient.edgesIgnoringSafeArea(.all)
+                        Theme.regionalGradient.edgesIgnoringSafeArea(.all)
 
                         // Top decorative glow
                         Circle()
@@ -417,7 +405,7 @@ struct RegionalView: View {
                 secondaryButton: .cancel()
             )
         }
-        .background(regionalGradient.edgesIgnoringSafeArea(.all))
+        .background(Theme.regionalGradient.edgesIgnoringSafeArea(.all))
         // Load appropriate leaderboard data when switching tabs
         .onChange(of: currentLeaderboard) {
             switch currentLeaderboard {

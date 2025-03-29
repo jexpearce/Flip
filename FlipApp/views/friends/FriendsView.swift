@@ -78,18 +78,7 @@ struct FriendsView: View {
                                     Circle()
                                         .fill(
                                             LinearGradient(
-                                                colors: [
-                                                    Color(
-                                                        red: 249 / 255,
-                                                        green: 115 / 255,
-                                                        blue: 22 / 255
-                                                    ),
-                                                    Color(
-                                                        red: 234 / 255,
-                                                        green: 88 / 255,
-                                                        blue: 12 / 255
-                                                    ),
-                                                ],
+                                                colors: [Theme.orange, Theme.yellowyOrange],
                                                 startPoint: .topLeading,
                                                 endPoint: .bottomTrailing
                                             )
@@ -113,18 +102,8 @@ struct FriendsView: View {
                                         .fill(
                                             LinearGradient(
                                                 colors: [
-                                                    Color(
-                                                        red: 249 / 255,
-                                                        green: 115 / 255,
-                                                        blue: 22 / 255
-                                                    )
-                                                    .opacity(0.7),
-                                                    Color(
-                                                        red: 234 / 255,
-                                                        green: 88 / 255,
-                                                        blue: 12 / 255
-                                                    )
-                                                    .opacity(0.7),
+                                                    Theme.orange.opacity(0.7),
+                                                    Theme.yellowyOrange.opacity(0.7),
                                                 ],
                                                 startPoint: .topLeading,
                                                 endPoint: .bottomTrailing
@@ -150,11 +129,7 @@ struct FriendsView: View {
                                         )
                                 }
                             )
-                            .shadow(
-                                color: Color(red: 249 / 255, green: 115 / 255, blue: 22 / 255)
-                                    .opacity(0.5),
-                                radius: 8
-                            )
+                            .shadow(color: Theme.orange.opacity(0.5), radius: 8)
                             .scaleEffect(isButtonPressed ? 0.96 : 1.0)
                         }
                         .padding(.horizontal)

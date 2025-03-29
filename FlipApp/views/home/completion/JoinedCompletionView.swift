@@ -152,10 +152,8 @@ struct JoinedCompletionView: View {
                                 .fill(
                                     LinearGradient(
                                         colors: [
-                                            Color(red: 60 / 255, green: 30 / 255, blue: 110 / 255)
-                                                .opacity(0.5),
-                                            Color(red: 40 / 255, green: 20 / 255, blue: 80 / 255)
-                                                .opacity(0.3),
+                                            Theme.mutedPink.opacity(0.5),
+                                            Theme.deepBlue.opacity(0.3),
                                         ],
                                         startPoint: .topLeading,
                                         endPoint: .bottomTrailing
@@ -245,7 +243,7 @@ struct JoinedCompletionView: View {
                                 .fill(
                                     LinearGradient(
                                         colors: [
-                                            Color(red: 168 / 255, green: 85 / 255, blue: 247 / 255),
+                                            Theme.vibrantPurple,
                                             Color(red: 88 / 255, green: 28 / 255, blue: 135 / 255),
                                         ],
                                         startPoint: .topLeading,
@@ -268,10 +266,7 @@ struct JoinedCompletionView: View {
                                 )
                         }
                     )
-                    .shadow(
-                        color: Color(red: 168 / 255, green: 85 / 255, blue: 247 / 255).opacity(0.5),
-                        radius: 8
-                    )
+                    .shadow(color: Theme.vibrantPurple.opacity(0.5), radius: 8)
                     .scaleEffect(isButtonPressed ? 0.97 : 1.0)
                 }
                 .padding(.horizontal, 30).offset(y: showButton ? 0 : 50).opacity(showButton ? 1 : 0)
@@ -510,10 +505,7 @@ struct ReadOnlyNotesView: View {
                 RoundedRectangle(cornerRadius: 16)
                     .fill(
                         LinearGradient(
-                            colors: [
-                                Color(red: 60 / 255, green: 30 / 255, blue: 110 / 255).opacity(0.4),
-                                Color(red: 40 / 255, green: 20 / 255, blue: 80 / 255).opacity(0.2),
-                            ],
+                            colors: [Theme.mutedPink.opacity(0.4), Theme.deepBlue.opacity(0.2)],
                             startPoint: .topLeading,
                             endPoint: .bottomTrailing
                         )

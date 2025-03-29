@@ -137,10 +137,7 @@ struct SettingsView: View {
             ZStack {
                 // Background gradient
                 LinearGradient(
-                    colors: [
-                        Theme.deepMidnightPurple,
-                        Color(red: 30 / 255, green: 18 / 255, blue: 60 / 255),
-                    ],
+                    colors: [Theme.deepMidnightPurple, Theme.mediumMidnightPurple],
                     startPoint: .top,
                     endPoint: .bottom
                 )
@@ -616,7 +613,7 @@ struct SettingsSection<Content: View>: View {
                     .fill(
                         LinearGradient(
                             colors: [
-                                Color(red: 30 / 255, green: 18 / 255, blue: 50 / 255),
+                                Theme.mediumMidnightPurple,
                                 Color(red: 40 / 255, green: 25 / 255, blue: 65 / 255),
                             ],
                             startPoint: .topLeading,
@@ -648,9 +645,7 @@ struct HelpSupportView: View {
         ZStack {
             // Background gradient
             LinearGradient(
-                colors: [
-                    Theme.deepMidnightPurple, Color(red: 30 / 255, green: 18 / 255, blue: 60 / 255),
-                ],
+                colors: [Theme.deepMidnightPurple, Theme.mediumMidnightPurple],
                 startPoint: .top,
                 endPoint: .bottom
             )

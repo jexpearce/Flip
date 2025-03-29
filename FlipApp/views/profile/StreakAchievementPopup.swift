@@ -44,7 +44,7 @@ struct StreakAchievementAlert: View {
         streakStatus == .redFlame
             ? Theme.mutedRed
             :  // Red
-            Color(red: 249 / 255, green: 115 / 255, blue: 22 / 255)  // Orange
+            Theme.orange  // Orange
     }
 
     var body: some View {

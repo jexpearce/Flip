@@ -11,21 +11,10 @@ struct CustomLocationCreationView: View {
     @State private var isCreating = false
     @State private var errorMessage: String?
 
-    // Custom gradient for the creation view
-    private let creationGradient = LinearGradient(
-        colors: [
-            Color(red: 35 / 255, green: 16 / 255, blue: 55 / 255),  // Deep midnight purple
-            Color(red: 42 / 255, green: 22 / 255, blue: 60 / 255),  // Medium purple with slight red
-            Color(red: 48 / 255, green: 24 / 255, blue: 65 / 255),  // Light purple
-        ],
-        startPoint: .top,
-        endPoint: .bottom
-    )
-
     var body: some View {
         ZStack {
             // Main background
-            creationGradient.edgesIgnoringSafeArea(.all)
+            Theme.creationGradient.edgesIgnoringSafeArea(.all)
 
             // Decorative element
             VStack {

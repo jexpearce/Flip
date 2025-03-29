@@ -14,21 +14,10 @@ struct BuildingSelectionView: View {
     @State private var sessionCounts: [String: Int] = [:]
     @State private var isLoadingCounts = true
 
-    // Custom gradient for the selection view
-    private let selectionGradient = LinearGradient(
-        colors: [
-            Color(red: 30 / 255, green: 14 / 255, blue: 50 / 255),  // Deep midnight purple
-            Color(red: 38 / 255, green: 18 / 255, blue: 58 / 255),  // Lighter purple with slight red
-            Color(red: 45 / 255, green: 20 / 255, blue: 60 / 255),  // Medium purple
-        ],
-        startPoint: .top,
-        endPoint: .bottom
-    )
-
     var body: some View {
         ZStack {
             // Main background
-            selectionGradient.edgesIgnoringSafeArea(.all)
+            Theme.selectionGradient.edgesIgnoringSafeArea(.all)
 
             // Additional decorative elements for visual interest
             VStack {
@@ -338,7 +327,7 @@ struct BuildingSelectionView: View {
             .padding()
             .background(
                 ZStack {
-                    RoundedRectangle(cornerRadius: 20).fill(selectionGradient)
+                    RoundedRectangle(cornerRadius: 20).fill(Theme.selectionGradient)
 
                     RoundedRectangle(cornerRadius: 20).fill(Color.white.opacity(0.05))
 

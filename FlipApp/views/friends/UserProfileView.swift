@@ -11,20 +11,11 @@ struct UserProfileLoader: View {
     // Match the app's theme
     private let cyanBlueAccent = Theme.lightTealBlue
     private let cyanBlueGlow = Theme.lightTealBlue.opacity(0.5)
-    private let cyanBluePurpleGradient = LinearGradient(
-        colors: [
-            Theme.deepMidnightPurple, Color(red: 30 / 255, green: 18 / 255, blue: 60 / 255),
-            Color(red: 14 / 255, green: 101 / 255, blue: 151 / 255).opacity(0.7),
-            Color(red: 12 / 255, green: 74 / 255, blue: 110 / 255).opacity(0.6),
-        ],
-        startPoint: .top,
-        endPoint: .bottom
-    )
 
     var body: some View {
         ZStack {
             // Background gradient to prevent black screen
-            cyanBluePurpleGradient.edgesIgnoringSafeArea(.all)
+            Theme.profileGradient.edgesIgnoringSafeArea(.all)
 
             if isLoading || loadedUser == nil {
                 // Loading indicator - styled to match the app
@@ -100,7 +91,7 @@ struct UserProfileView: View {
     private let cyanBluePurpleGradient = LinearGradient(
         colors: [
             Theme.deepMidnightPurple,  // Deep midnight purple
-            Color(red: 30 / 255, green: 18 / 255, blue: 60 / 255),  // Medium midnight purple
+            Theme.mediumMidnightPurple,  // Medium midnight purple
             Color(red: 14 / 255, green: 101 / 255, blue: 151 / 255).opacity(0.7),  // Dark cyan blue
             Color(red: 12 / 255, green: 74 / 255, blue: 110 / 255).opacity(0.6),  // Deeper cyan blue
         ],
@@ -483,8 +474,7 @@ struct ProfileHeaderView: View {
             return ("Steady", Color(red: 16 / 255, green: 185 / 255, blue: 129 / 255))  // Green
         case 120.0..<150.0:
             return ("Focused", Color(red: 249 / 255, green: 180 / 255, blue: 45 / 255))  // Bright amber
-        case 150.0..<180.0:
-            return ("Disciplined", Color(red: 249 / 255, green: 115 / 255, blue: 22 / 255))  // Orange
+        case 150.0..<180.0: return ("Disciplined", Theme.orange)  // Orange
         case 180.0..<210.0: return ("Resolute", Theme.mutedRed)  // Red
         case 210.0..<240.0:
             return ("Master", Color(red: 236 / 255, green: 72 / 255, blue: 153 / 255))  // Pink
@@ -1113,7 +1103,7 @@ struct UserFriendsListView: View {
                         .fill(
                             LinearGradient(
                                 colors: [
-                                    Color(red: 30 / 255, green: 14 / 255, blue: 60 / 255),
+                                    Theme.mediumMidnightPurple,
                                     Color(red: 14 / 255, green: 30 / 255, blue: 60 / 255),
                                 ],
                                 startPoint: .topLeading,
@@ -1432,7 +1422,7 @@ struct FriendStatsView: View {
             LinearGradient(
                 colors: [
                     Theme.deepMidnightPurple,  // Deep midnight purple
-                    Color(red: 30 / 255, green: 18 / 255, blue: 60 / 255),  // Medium midnight purple
+                    Theme.mediumMidnightPurple,  // Medium midnight purple
                     Color(red: 14 / 255, green: 101 / 255, blue: 151 / 255).opacity(0.7),  // Dark cyan blue
                     Color(red: 12 / 255, green: 74 / 255, blue: 110 / 255).opacity(0.6),  // Deeper cyan blue
                 ],

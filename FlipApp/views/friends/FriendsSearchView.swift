@@ -23,8 +23,8 @@ struct FriendsSearchView: View {
         endPoint: .bottom
     )
 
-    private let orangeAccent = Color(red: 249 / 255, green: 115 / 255, blue: 22 / 255)  // Warm Orange
-    private let orangeGlow = Color(red: 249 / 255, green: 115 / 255, blue: 22 / 255).opacity(0.5)
+    private let orangeAccent = Theme.orange  // Warm Orange
+    private let orangeGlow = Theme.orange.opacity(0.5)
     private let purpleAccent = Color(red: 147 / 255, green: 51 / 255, blue: 234 / 255)  // Vibrant Purple
 
     var body: some View {
@@ -285,7 +285,7 @@ struct RecommendationsSection: View {
 
     // Gold color for mutual friends
     private let goldAccent = Theme.yellow
-    private let orangeAccent = Color(red: 249 / 255, green: 115 / 255, blue: 22 / 255)
+    private let orangeAccent = Theme.orange
 
     var body: some View {
         VStack(alignment: .leading, spacing: 20) {
@@ -415,7 +415,7 @@ struct NoUsersFoundView: View {
     let message: String
     let icon: String
 
-    private let orangeAccent = Color(red: 249 / 255, green: 115 / 255, blue: 22 / 255)
+    private let orangeAccent = Theme.orange
 
     var body: some View {
         VStack(spacing: 16) {
@@ -486,8 +486,8 @@ struct EnhancedUserSearchCard: View {
     @State private var isCancelPressed = false
     @State private var isCardPressed = false
 
-    private let orangeAccent = Color(red: 249 / 255, green: 115 / 255, blue: 22 / 255)
-    private let orangeGlow = Color(red: 249 / 255, green: 115 / 255, blue: 22 / 255).opacity(0.5)
+    private let orangeAccent = Theme.orange
+    private let orangeGlow = Theme.orange.opacity(0.5)
     private let purpleAccent = Color(red: 147 / 255, green: 51 / 255, blue: 234 / 255)
     private let goldAccent = Theme.yellow  // Gold color for mutual friends
 

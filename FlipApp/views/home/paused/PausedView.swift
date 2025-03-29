@@ -19,8 +19,7 @@ struct PausedView: View {
                             .fill(
                                 LinearGradient(
                                     colors: [
-                                        Color(red: 168 / 255, green: 85 / 255, blue: 247 / 255)
-                                            .opacity(0.2),
+                                        Theme.vibrantPurple.opacity(0.2),
                                         Color(red: 88 / 255, green: 28 / 255, blue: 135 / 255)
                                             .opacity(0.1),
                                     ],
@@ -93,10 +92,8 @@ struct PausedView: View {
                                 .fill(
                                     LinearGradient(
                                         colors: [
-                                            Color(red: 40 / 255, green: 20 / 255, blue: 80 / 255)
-                                                .opacity(0.6),
-                                            Color(red: 30 / 255, green: 15 / 255, blue: 60 / 255)
-                                                .opacity(0.4),
+                                            Theme.deepBlue.opacity(0.6),
+                                            Theme.mediumMidnightPurple.opacity(0.4),
                                         ],
                                         startPoint: .top,
                                         endPoint: .bottom
@@ -127,11 +124,7 @@ struct PausedView: View {
 
                         Text("\(appManager.remainingPauses)").font(.system(size: 56, weight: .bold))
                             .foregroundColor(.white)
-                            .shadow(
-                                color: Color(red: 168 / 255, green: 85 / 255, blue: 247 / 255)
-                                    .opacity(0.6),
-                                radius: 6
-                            )
+                            .shadow(color: Theme.vibrantPurple.opacity(0.6), radius: 6)
 
                         if appManager.remainingPauses == 1 {
                             Text("Last pause available").font(.system(size: 14, weight: .medium))
@@ -155,10 +148,8 @@ struct PausedView: View {
                                 .fill(
                                     LinearGradient(
                                         colors: [
-                                            Color(red: 40 / 255, green: 20 / 255, blue: 80 / 255)
-                                                .opacity(0.4),
-                                            Color(red: 30 / 255, green: 15 / 255, blue: 60 / 255)
-                                                .opacity(0.2),
+                                            Theme.deepBlue.opacity(0.4),
+                                            Theme.mediumMidnightPurple.opacity(0.2),
                                         ],
                                         startPoint: .top,
                                         endPoint: .bottom
@@ -205,11 +196,7 @@ struct PausedView: View {
                                     .fill(
                                         LinearGradient(
                                             colors: [
-                                                Color(
-                                                    red: 168 / 255,
-                                                    green: 85 / 255,
-                                                    blue: 247 / 255
-                                                ),
+                                                Theme.vibrantPurple,
                                                 Color(
                                                     red: 88 / 255,
                                                     green: 28 / 255,
@@ -236,11 +223,7 @@ struct PausedView: View {
                                     )
                             }
                         )
-                        .shadow(
-                            color: Color(red: 168 / 255, green: 85 / 255, blue: 247 / 255)
-                                .opacity(0.5),
-                            radius: 8
-                        )
+                        .shadow(color: Theme.vibrantPurple.opacity(0.5), radius: 8)
                         .scaleEffect(isResumePressed ? 0.97 : 1.0)
                     }
                     .padding(.horizontal, 25)

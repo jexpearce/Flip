@@ -26,10 +26,7 @@ struct EnhancedFriendRequestCard: View {
                         size: 56,
                         username: user.username
                     )
-                    .shadow(
-                        color: Color(red: 168 / 255, green: 85 / 255, blue: 247 / 255).opacity(0.5),
-                        radius: 8
-                    )
+                    .shadow(color: Theme.vibrantPurple.opacity(0.5), radius: 8)
                 }
 
                 // User info - make this tappable too
@@ -37,11 +34,7 @@ struct EnhancedFriendRequestCard: View {
                     VStack(alignment: .leading, spacing: 5) {
                         Text(user.username).font(.system(size: 18, weight: .bold))
                             .foregroundColor(.white)
-                            .shadow(
-                                color: Color(red: 168 / 255, green: 85 / 255, blue: 247 / 255)
-                                    .opacity(0.5),
-                                radius: 6
-                            )
+                            .shadow(color: Theme.vibrantPurple.opacity(0.5), radius: 6)
 
                         Text("Wants to add you as a friend").font(.system(size: 14))
                             .foregroundColor(.white.opacity(0.8))
@@ -142,8 +135,7 @@ struct EnhancedFriendRequestCard: View {
                         .fill(
                             LinearGradient(
                                 colors: [
-                                    Color(red: 168 / 255, green: 85 / 255, blue: 247 / 255)
-                                        .opacity(0.3),
+                                    Theme.vibrantPurple.opacity(0.3),
                                     Color(red: 88 / 255, green: 28 / 255, blue: 135 / 255)
                                         .opacity(0.2),
                                 ],
@@ -158,8 +150,7 @@ struct EnhancedFriendRequestCard: View {
                         .stroke(
                             LinearGradient(
                                 colors: [
-                                    Color(red: 168 / 255, green: 85 / 255, blue: 247 / 255)
-                                        .opacity(0.6), Color.white.opacity(0.1),
+                                    Theme.vibrantPurple.opacity(0.6), Color.white.opacity(0.1),
                                 ],
                                 startPoint: .topLeading,
                                 endPoint: .bottomTrailing
@@ -168,10 +159,7 @@ struct EnhancedFriendRequestCard: View {
                         )
                 }
             )
-            .shadow(
-                color: Color(red: 168 / 255, green: 85 / 255, blue: 247 / 255).opacity(0.3),
-                radius: 8
-            )
+            .shadow(color: Theme.vibrantPurple.opacity(0.3), radius: 8)
         }
     }
 }

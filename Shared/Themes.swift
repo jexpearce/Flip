@@ -22,6 +22,10 @@ struct Theme {
     static let mutedGreen = Color(red: 34 / 255, green: 197 / 255, blue: 94 / 255)
     static let darkerGreen = Color(red: 22 / 255, green: 163 / 255, blue: 74 / 255)
 
+    static let mutedPink = Color(red: 60 / 255, green: 30 / 255, blue: 110 / 255)
+    static let deepBlue = Color(red: 40 / 255, green: 20 / 255, blue: 80 / 255)
+
+    static let softViolet = Color(red: 139 / 255, green: 92 / 255, blue: 246 / 255)
     // Glass Effect Colors
     static let glassEffect = Color(red: 255 / 255, green: 255 / 255, blue: 255 / 255, opacity: 0.1)
     static let glassHighlight = Color(
@@ -36,19 +40,104 @@ struct Theme {
     static let darkTealBlue = Color(red: 14 / 255, green: 165 / 255, blue: 233 / 255)
 
     static let deepMidnightPurple = Color(red: 20 / 255, green: 10 / 255, blue: 40 / 255)  // Darker
+    static let mediumMidnightPurple = Color(red: 30 / 255, green: 18 / 255, blue: 60 / 255)
     static let darkPurpleBlue = Color(red: 35 / 255, green: 20 / 255, blue: 90 / 255)
     static let mutedPurple = Color(red: 26 / 255, green: 14 / 255, blue: 47 / 255)
     static let blueishPurple = Color(red: 16 / 255, green: 24 / 255, blue: 57 / 255)
 
     static let yellowyOrange = Color(red: 234 / 255, green: 179 / 255, blue: 8 / 255)
+    static let orangeyYellow = Color(red: 220 / 255, green: 170 / 255, blue: 0 / 255)
 
     static let mutedRed = Color(red: 239 / 255, green: 68 / 255, blue: 68 / 255)
     static let darkerRed = Color(red: 185 / 255, green: 28 / 255, blue: 28 / 255)
     static let darkRed = Color(red: 220 / 255, green: 38 / 255, blue: 38 / 255)
 
+    // Medal colors
+    static let goldColor = LinearGradient(
+        colors: [
+            Color(red: 255 / 255, green: 215 / 255, blue: 0 / 255),
+            Color(red: 212 / 255, green: 175 / 255, blue: 55 / 255),
+        ],
+        startPoint: .top,
+        endPoint: .bottom
+    )
+
+    static let silverColor = LinearGradient(
+        colors: [
+            Color(red: 226 / 255, green: 232 / 255, blue: 240 / 255),
+            Color(red: 148 / 255, green: 163 / 255, blue: 184 / 255),
+        ],
+        startPoint: .top,
+        endPoint: .bottom
+    )
+
+    static let bronzeColor = LinearGradient(
+        colors: [
+            Color(red: 205 / 255, green: 127 / 255, blue: 50 / 255),
+            Color(red: 165 / 255, green: 113 / 255, blue: 78 / 255),
+        ],
+        startPoint: .top,
+        endPoint: .bottom
+    )
+
     // Gradients
+
     static let mainGradient = LinearGradient(
         colors: [deepMidnightPurple, darkPurpleBlue, nearBlack],
+        startPoint: .top,
+        endPoint: .bottom
+    )
+
+    // Enhanced gradient with more vibrant teal-green tones
+    static let feedGradient = LinearGradient(
+        colors: [
+            Color(red: 17 / 255, green: 29 / 255, blue: 48 / 255),  // Brighter deep blue
+            Color(red: 23 / 255, green: 42 / 255, blue: 58 / 255),  // Enhanced midnight teal
+            Color(red: 15 / 255, green: 38 / 255, blue: 52 / 255),  // Vibrant deep teal
+            Color(red: 18 / 255, green: 32 / 255, blue: 55 / 255),  // Rich blue-purple
+        ],
+        startPoint: .top,
+        endPoint: .bottom
+    )
+    static let profileGradient = LinearGradient(
+        colors: [
+            Theme.deepMidnightPurple, Theme.mediumMidnightPurple,
+            Color(red: 14 / 255, green: 101 / 255, blue: 151 / 255).opacity(0.7),
+            Color(red: 12 / 255, green: 74 / 255, blue: 110 / 255).opacity(0.6),
+        ],
+        startPoint: .top,
+        endPoint: .bottom
+    )
+
+    // Regional gradient
+    static let regionalGradient = LinearGradient(
+        colors: [
+            Theme.deepMidnightPurple,  // Deep midnight purple
+            Color(red: 28 / 255, green: 14 / 255, blue: 45 / 255),  // Midnight purple
+            Color(red: 35 / 255, green: 14 / 255, blue: 40 / 255),  // Purple with slight red
+            Color(red: 30 / 255, green: 12 / 255, blue: 36 / 255),  // Back to purple
+        ],
+        startPoint: .top,
+        endPoint: .bottom
+    )
+
+    // Custom gradient for the creation view
+    static let creationGradient = LinearGradient(
+        colors: [
+            Color(red: 35 / 255, green: 16 / 255, blue: 55 / 255),  // Deep midnight purple
+            Color(red: 42 / 255, green: 22 / 255, blue: 60 / 255),  // Medium purple with slight red
+            Color(red: 48 / 255, green: 24 / 255, blue: 65 / 255),  // Light purple
+        ],
+        startPoint: .top,
+        endPoint: .bottom
+    )
+    // Custom gradient for the selection view
+    static let selectionGradient = LinearGradient(
+        colors: [
+            Theme.mediumMidnightPurple,  // Deep midnight purple
+            Color(red: 38 / 255, green: 18 / 255, blue: 58 / 255),  // Lighter purple with slight red
+            Color(red: 45 / 255, green: 20 / 255, blue: 60 / 255),  // Medium purple
+        ],
         startPoint: .top,
         endPoint: .bottom
     )
@@ -80,10 +169,7 @@ struct Theme {
     )
 
     static let glassyDarkGradient = LinearGradient(
-        colors: [
-            Color(red: 40 / 255, green: 20 / 255, blue: 80 / 255).opacity(0.3),
-            Theme.deepMidnightPurple.opacity(0.1),
-        ],
+        colors: [Theme.deepBlue.opacity(0.3), Theme.deepMidnightPurple.opacity(0.1)],
         startPoint: .topLeading,
         endPoint: .bottomTrailing
     )
@@ -103,7 +189,7 @@ struct Theme {
     static let indigoPurpleGradient = LinearGradient(
         colors: [
             Theme.deepMidnightPurple,  // Deep midnight purple
-            Color(red: 30 / 255, green: 18 / 255, blue: 60 / 255),  // Medium midnight purple
+            Theme.mediumMidnightPurple,  // Medium midnight purple
             Color(red: 79 / 255, green: 70 / 255, blue: 229 / 255).opacity(0.4),  // Indigo
             Color(red: 67 / 255, green: 56 / 255, blue: 202 / 255).opacity(0.3),  // Deeper indigo
         ],

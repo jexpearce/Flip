@@ -38,34 +38,6 @@ struct GlobalWeeklyLeaderboard: View {
         endPoint: .bottomTrailing
     )
 
-    // Medal colors
-    private let goldColor = LinearGradient(
-        colors: [
-            Color(red: 255 / 255, green: 215 / 255, blue: 0 / 255),
-            Color(red: 212 / 255, green: 175 / 255, blue: 55 / 255),
-        ],
-        startPoint: .top,
-        endPoint: .bottom
-    )
-
-    private let silverColor = LinearGradient(
-        colors: [
-            Color(red: 226 / 255, green: 232 / 255, blue: 240 / 255),
-            Color(red: 148 / 255, green: 163 / 255, blue: 184 / 255),
-        ],
-        startPoint: .top,
-        endPoint: .bottom
-    )
-
-    private let bronzeColor = LinearGradient(
-        colors: [
-            Color(red: 205 / 255, green: 127 / 255, blue: 50 / 255),
-            Color(red: 165 / 255, green: 113 / 255, blue: 78 / 255),
-        ],
-        startPoint: .top,
-        endPoint: .bottom
-    )
-
     var body: some View {
         VStack(spacing: 12) {
             // Title section with navigation arrows
@@ -233,8 +205,9 @@ struct GlobalWeeklyLeaderboard: View {
                                         Circle()
                                             .fill(
                                                 index == 0
-                                                    ? goldColor
-                                                    : (index == 1 ? silverColor : bronzeColor)
+                                                    ? Theme.goldColor
+                                                    : (index == 1
+                                                        ? Theme.silverColor : Theme.bronzeColor)
                                             )
                                             .frame(width: 26, height: 26)
 
@@ -434,7 +407,7 @@ struct GlobalAllTimeLeaderboard: View {
     // Purple theme colors - different from the red of regional and blue of weekly
     private let purpleGradient = LinearGradient(
         colors: [
-            Color(red: 139 / 255, green: 92 / 255, blue: 246 / 255),  // Purple 500
+            Theme.softViolet,  // Purple 500
             Color(red: 124 / 255, green: 58 / 255, blue: 237 / 255),  // Purple 600
         ],
         startPoint: .top,
@@ -502,35 +475,27 @@ struct GlobalAllTimeLeaderboard: View {
                             .foregroundStyle(
                                 LinearGradient(
                                     colors: [
-                                        Color(red: 139 / 255, green: 92 / 255, blue: 246 / 255),
+                                        Theme.softViolet,
                                         Color(red: 124 / 255, green: 58 / 255, blue: 237 / 255),
                                     ],
                                     startPoint: .top,
                                     endPoint: .bottom
                                 )
                             )
-                            .shadow(
-                                color: Color(red: 139 / 255, green: 92 / 255, blue: 246 / 255)
-                                    .opacity(0.5),
-                                radius: 4
-                            )
+                            .shadow(color: Theme.softViolet.opacity(0.5), radius: 4)
 
                         Text("GLOBAL ALL TIME").font(.system(size: 13, weight: .black)).tracking(2)
                             .foregroundStyle(
                                 LinearGradient(
                                     colors: [
-                                        Color(red: 139 / 255, green: 92 / 255, blue: 246 / 255),
+                                        Theme.softViolet,
                                         Color(red: 124 / 255, green: 58 / 255, blue: 237 / 255),
                                     ],
                                     startPoint: .top,
                                     endPoint: .bottom
                                 )
                             )
-                            .shadow(
-                                color: Color(red: 139 / 255, green: 92 / 255, blue: 246 / 255)
-                                    .opacity(0.5),
-                                radius: 4
-                            )
+                            .shadow(color: Theme.softViolet.opacity(0.5), radius: 4)
                     }
 
                     Spacer()
@@ -550,8 +515,7 @@ struct GlobalAllTimeLeaderboard: View {
                     .fill(
                         LinearGradient(
                             colors: [
-                                Color(red: 139 / 255, green: 92 / 255, blue: 246 / 255)
-                                    .opacity(0.3),
+                                Theme.softViolet.opacity(0.3),
                                 Color(red: 124 / 255, green: 58 / 255, blue: 237 / 255)
                                     .opacity(0.2),
                             ],
@@ -597,23 +561,16 @@ struct GlobalAllTimeLeaderboard: View {
                 // Column headers for clarity
                 HStack {
                     Text("RANK").font(.system(size: 12, weight: .bold)).tracking(1)
-                        .foregroundColor(
-                            Color(red: 139 / 255, green: 92 / 255, blue: 246 / 255).opacity(0.9)
-                        )
+                        .foregroundColor(Theme.softViolet.opacity(0.9))
                         .frame(width: 50, alignment: .center)
 
                     Text("USER").font(.system(size: 12, weight: .bold)).tracking(1)
-                        .foregroundColor(
-                            Color(red: 139 / 255, green: 92 / 255, blue: 246 / 255).opacity(0.9)
-                        )
-                        .frame(alignment: .leading)
+                        .foregroundColor(Theme.softViolet.opacity(0.9)).frame(alignment: .leading)
 
                     Spacer()
 
                     Text("MINUTES").font(.system(size: 12, weight: .bold)).tracking(1)
-                        .foregroundColor(
-                            Color(red: 139 / 255, green: 92 / 255, blue: 246 / 255).opacity(0.9)
-                        )
+                        .foregroundColor(Theme.softViolet.opacity(0.9))
                         .frame(width: 80, alignment: .trailing)
                 }
                 .padding(.horizontal, 16).padding(.top, 4).padding(.bottom, 8)
@@ -719,18 +676,8 @@ struct GlobalAllTimeLeaderboard: View {
                                 // All time minutes
                                 VStack(alignment: .trailing, spacing: 2) {
                                     Text("\(entry.minutes)").font(.system(size: 18, weight: .black))
-                                        .foregroundColor(
-                                            Color(red: 139 / 255, green: 92 / 255, blue: 246 / 255)
-                                        )
-                                        .shadow(
-                                            color: Color(
-                                                red: 139 / 255,
-                                                green: 92 / 255,
-                                                blue: 246 / 255
-                                            )
-                                            .opacity(0.3),
-                                            radius: 4
-                                        )
+                                        .foregroundColor(Theme.softViolet)
+                                        .shadow(color: Theme.softViolet.opacity(0.3), radius: 4)
 
                                     Text("minutes").font(.system(size: 10, weight: .medium))
                                         .foregroundColor(.white.opacity(0.7))
@@ -744,18 +691,8 @@ struct GlobalAllTimeLeaderboard: View {
                                         LinearGradient(
                                             colors: index < 3
                                                 ? [
-                                                    Color(
-                                                        red: 139 / 255,
-                                                        green: 92 / 255,
-                                                        blue: 246 / 255
-                                                    )
-                                                    .opacity(0.2),
-                                                    Color(
-                                                        red: 139 / 255,
-                                                        green: 92 / 255,
-                                                        blue: 246 / 255
-                                                    )
-                                                    .opacity(0.1),
+                                                    Theme.softViolet.opacity(0.2),
+                                                    Theme.softViolet.opacity(0.1),
                                                 ]
                                                 : [
                                                     Color.white.opacity(0.08),
@@ -770,12 +707,8 @@ struct GlobalAllTimeLeaderboard: View {
                                             .stroke(
                                                 // Highlight current user
                                                 Auth.auth().currentUser?.uid == entry.userId
-                                                    ? Color(
-                                                        red: 139 / 255,
-                                                        green: 92 / 255,
-                                                        blue: 246 / 255
-                                                    )
-                                                    .opacity(0.5) : Color.white.opacity(0.2),
+                                                    ? Theme.softViolet.opacity(0.5)
+                                                    : Color.white.opacity(0.2),
                                                 lineWidth: Auth.auth().currentUser?.uid
                                                     == entry.userId ? 1.5 : 1
                                             )
@@ -810,8 +743,7 @@ struct GlobalAllTimeLeaderboard: View {
                     .stroke(
                         LinearGradient(
                             colors: [
-                                Color(red: 139 / 255, green: 92 / 255, blue: 246 / 255)
-                                    .opacity(0.5),
+                                Theme.softViolet.opacity(0.5),
                                 Color(red: 124 / 255, green: 58 / 255, blue: 237 / 255)
                                     .opacity(0.2),
                             ],

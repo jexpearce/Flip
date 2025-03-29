@@ -341,10 +341,7 @@ struct FirstTimeLeaderboardView: View {
                         Image(systemName: "trophy.fill").font(.system(size: 38))
                             .foregroundStyle(
                                 LinearGradient(
-                                    colors: [
-                                        Theme.yellow,
-                                        Color(red: 220 / 255, green: 170 / 255, blue: 0 / 255),
-                                    ],
+                                    colors: [Theme.yellow, Theme.orangeyYellow],
                                     startPoint: .top,
                                     endPoint: .bottom
                                 )
@@ -356,10 +353,7 @@ struct FirstTimeLeaderboardView: View {
                             .font(.system(size: 40, weight: .black))
                             .foregroundStyle(
                                 LinearGradient(
-                                    colors: [
-                                        Theme.yellow,
-                                        Color(red: 220 / 255, green: 170 / 255, blue: 0 / 255),
-                                    ],
+                                    colors: [Theme.yellow, Theme.orangeyYellow],
                                     startPoint: .top,
                                     endPoint: .bottom
                                 )
@@ -419,10 +413,7 @@ struct FirstTimeLeaderboardView: View {
                 RoundedRectangle(cornerRadius: 16)
                     .fill(
                         LinearGradient(
-                            colors: [
-                                Color(red: 60 / 255, green: 30 / 255, blue: 110 / 255).opacity(0.4),
-                                Color(red: 40 / 255, green: 20 / 255, blue: 80 / 255).opacity(0.2),
-                            ],
+                            colors: [Theme.mutedPink.opacity(0.4), Theme.deepBlue.opacity(0.2)],
                             startPoint: .topLeading,
                             endPoint: .bottomTrailing
                         )
@@ -516,8 +507,7 @@ struct LeaderboardRow: View {
                         .fill(
                             LinearGradient(
                                 colors: [
-                                    Color(red: 168 / 255, green: 85 / 255, blue: 247 / 255)
-                                        .opacity(0.3),
+                                    Theme.vibrantPurple.opacity(0.3),
                                     Color(red: 128 / 255, green: 65 / 255, blue: 217 / 255)
                                         .opacity(0.2),
                                 ],
@@ -531,8 +521,7 @@ struct LeaderboardRow: View {
                                     LinearGradient(
                                         colors: [
                                             Theme.yellow.opacity(glowUser ? 0.7 : 0.4),
-                                            Color(red: 220 / 255, green: 170 / 255, blue: 0 / 255)
-                                                .opacity(glowUser ? 0.5 : 0.3),
+                                            Theme.orangeyYellow.opacity(glowUser ? 0.5 : 0.3),
                                         ],
                                         startPoint: .topLeading,
                                         endPoint: .bottomTrailing

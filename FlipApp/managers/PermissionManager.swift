@@ -470,11 +470,8 @@ struct MotionPermissionAlert: View {
                     // Motion icon with animation
                     ZStack {
                         // Outer pulse
-                        Circle()
-                            .fill(
-                                Color(red: 139 / 255, green: 92 / 255, blue: 246 / 255).opacity(0.3)
-                            )
-                            .frame(width: 90, height: 90).scaleEffect(animateContent ? 1.3 : 0.8)
+                        Circle().fill(Theme.softViolet.opacity(0.3)).frame(width: 90, height: 90)
+                            .scaleEffect(animateContent ? 1.3 : 0.8)
                             .opacity(animateContent ? 0.0 : 0.5)
 
                         // Inner circle
@@ -482,7 +479,7 @@ struct MotionPermissionAlert: View {
                             .fill(
                                 LinearGradient(
                                     colors: [
-                                        Color(red: 139 / 255, green: 92 / 255, blue: 246 / 255),
+                                        Theme.softViolet,
                                         Color(red: 124 / 255, green: 58 / 255, blue: 237 / 255),
                                     ],
                                     startPoint: .top,
@@ -499,11 +496,7 @@ struct MotionPermissionAlert: View {
 
                     Text("MOTION ACCESS").font(.system(size: 20, weight: .black)).tracking(4)
                         .foregroundColor(.white)
-                        .shadow(
-                            color: Color(red: 139 / 255, green: 92 / 255, blue: 246 / 255)
-                                .opacity(0.6),
-                            radius: 8
-                        )
+                        .shadow(color: Theme.softViolet.opacity(0.6), radius: 8)
 
                 }
                 .padding(.top, 10)
@@ -565,11 +558,7 @@ struct MotionPermissionAlert: View {
                                     )
                             }
                         )
-                        .shadow(
-                            color: Color(red: 139 / 255, green: 92 / 255, blue: 246 / 255)
-                                .opacity(0.5),
-                            radius: 8
-                        )
+                        .shadow(color: Theme.softViolet.opacity(0.5), radius: 8)
                 }
                 .padding(.horizontal, 20).padding(.top, 10)
             }

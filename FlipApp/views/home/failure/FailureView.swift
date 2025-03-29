@@ -112,10 +112,8 @@ struct FailureView: View {
                                 .fill(
                                     LinearGradient(
                                         colors: [
-                                            Color(red: 60 / 255, green: 30 / 255, blue: 110 / 255)
-                                                .opacity(0.5),
-                                            Color(red: 40 / 255, green: 20 / 255, blue: 80 / 255)
-                                                .opacity(0.3),
+                                            Theme.mutedPink.opacity(0.5),
+                                            Theme.deepBlue.opacity(0.3),
                                         ],
                                         startPoint: .topLeading,
                                         endPoint: .bottomTrailing
@@ -271,11 +269,7 @@ struct FailureView: View {
                                     .fill(
                                         LinearGradient(
                                             colors: [
-                                                Color(
-                                                    red: 168 / 255,
-                                                    green: 85 / 255,
-                                                    blue: 247 / 255
-                                                ),
+                                                Theme.vibrantPurple,
                                                 Color(
                                                     red: 88 / 255,
                                                     green: 28 / 255,
@@ -302,11 +296,7 @@ struct FailureView: View {
                                     )
                             }
                         )
-                        .shadow(
-                            color: Color(red: 168 / 255, green: 85 / 255, blue: 247 / 255)
-                                .opacity(0.5),
-                            radius: 8
-                        )
+                        .shadow(color: Theme.vibrantPurple.opacity(0.5), radius: 8)
                         .scaleEffect(isTryAgainPressed ? 0.97 : 1.0)
                     }
 

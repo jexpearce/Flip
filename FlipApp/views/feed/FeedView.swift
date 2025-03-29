@@ -6,23 +6,11 @@ struct FeedView: View {
     @EnvironmentObject var sessionManager: SessionManager
     @StateObject private var viewModel = FeedViewModel()
 
-    // Enhanced gradient with more vibrant teal-green tones
-    private let feedGradient = LinearGradient(
-        colors: [
-            Color(red: 17 / 255, green: 29 / 255, blue: 48 / 255),  // Brighter deep blue
-            Color(red: 23 / 255, green: 42 / 255, blue: 58 / 255),  // Enhanced midnight teal
-            Color(red: 15 / 255, green: 38 / 255, blue: 52 / 255),  // Vibrant deep teal
-            Color(red: 18 / 255, green: 32 / 255, blue: 55 / 255),  // Rich blue-purple
-        ],
-        startPoint: .top,
-        endPoint: .bottom
-    )
-
     var body: some View {
         NavigationView {
             ZStack {
                 // Enhanced Background Gradient
-                feedGradient.edgesIgnoringSafeArea(.all)
+                Theme.feedGradient.edgesIgnoringSafeArea(.all)
 
                 // Enhanced decorative elements
                 VStack {

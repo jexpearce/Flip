@@ -37,10 +37,7 @@ struct ControlButton<Content: View>: View {
                 RoundedRectangle(cornerRadius: 16)
                     .fill(
                         LinearGradient(
-                            colors: [
-                                Color(red: 60 / 255, green: 30 / 255, blue: 110 / 255).opacity(0.3),
-                                Color(red: 40 / 255, green: 20 / 255, blue: 80 / 255).opacity(0.2),
-                            ],
+                            colors: [Theme.mutedPink.opacity(0.3), Theme.deepBlue.opacity(0.2)],
                             startPoint: .topLeading,
                             endPoint: .bottomTrailing
                         )
@@ -145,18 +142,8 @@ struct ModernPickerStyle: View {
                                         .fill(
                                             LinearGradient(
                                                 colors: [
-                                                    Color(
-                                                        red: 60 / 255,
-                                                        green: 30 / 255,
-                                                        blue: 110 / 255
-                                                    )
-                                                    .opacity(0.7),
-                                                    Color(
-                                                        red: 40 / 255,
-                                                        green: 20 / 255,
-                                                        blue: 80 / 255
-                                                    )
-                                                    .opacity(0.5),
+                                                    Theme.mutedPink.opacity(0.7),
+                                                    Theme.deepBlue.opacity(0.5),
                                                 ],
                                                 startPoint: .topLeading,
                                                 endPoint: .bottomTrailing
@@ -211,10 +198,7 @@ struct InfinityToggle: View {
                             .fill(
                                 LinearGradient(
                                     colors: [
-                                        Color(red: 60 / 255, green: 30 / 255, blue: 110 / 255)
-                                            .opacity(0.7),
-                                        Color(red: 40 / 255, green: 20 / 255, blue: 80 / 255)
-                                            .opacity(0.5),
+                                        Theme.mutedPink.opacity(0.7), Theme.deepBlue.opacity(0.5),
                                     ],
                                     startPoint: .topLeading,
                                     endPoint: .bottomTrailing

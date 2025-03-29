@@ -257,8 +257,7 @@ extension ScoreManager {
             return ("Steady", Color(red: 16 / 255, green: 185 / 255, blue: 129 / 255))  // Green
         case 120.0..<150.0:
             return ("Focused", Color(red: 249 / 255, green: 180 / 255, blue: 45 / 255))  // Bright amber
-        case 150.0..<180.0:
-            return ("Disciplined", Color(red: 249 / 255, green: 115 / 255, blue: 22 / 255))  // Orange
+        case 150.0..<180.0: return ("Disciplined", Theme.orange)  // Orange
         case 180.0..<210.0: return ("Resolute", Theme.mutedRed)  // Red
         case 210.0..<240.0:
             return ("Master", Color(red: 236 / 255, green: 72 / 255, blue: 153 / 255))  // Pink

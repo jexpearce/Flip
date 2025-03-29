@@ -40,11 +40,7 @@ struct FirstSessionRequiredAlert: View {
                                     .fill(
                                         LinearGradient(
                                             colors: [
-                                                Color(
-                                                    red: 168 / 255,
-                                                    green: 85 / 255,
-                                                    blue: 247 / 255
-                                                ),
+                                                Theme.vibrantPurple,
                                                 Color(
                                                     red: 88 / 255,
                                                     green: 28 / 255,
@@ -69,11 +65,7 @@ struct FirstSessionRequiredAlert: View {
                                     )
                             }
                         )
-                        .shadow(
-                            color: Color(red: 168 / 255, green: 85 / 255, blue: 247 / 255)
-                                .opacity(0.4),
-                            radius: 5
-                        )
+                        .shadow(color: Theme.vibrantPurple.opacity(0.4), radius: 5)
                 }
                 .padding(.top, 10)
             }
@@ -84,10 +76,7 @@ struct FirstSessionRequiredAlert: View {
                         .fill(
                             LinearGradient(
                                 colors: [
-                                    Color(red: 60 / 255, green: 30 / 255, blue: 110 / 255)
-                                        .opacity(0.6),
-                                    Color(red: 40 / 255, green: 20 / 255, blue: 80 / 255)
-                                        .opacity(0.4),
+                                    Theme.mutedPink.opacity(0.6), Theme.deepBlue.opacity(0.4),
                                 ],
                                 startPoint: .topLeading,
                                 endPoint: .bottomTrailing

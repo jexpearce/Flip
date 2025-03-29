@@ -20,7 +20,7 @@ struct ProfileView: View {
     private let cyanBluePurpleGradient = LinearGradient(
         colors: [
             Theme.deepMidnightPurple,  // Deep midnight purple
-            Color(red: 30 / 255, green: 18 / 255, blue: 60 / 255),  // Medium midnight purple
+            Theme.mediumMidnightPurple,  // Medium midnight purple
             Color(red: 14 / 255, green: 101 / 255, blue: 151 / 255).opacity(0.7),  // Dark cyan blue
             Color(red: 12 / 255, green: 74 / 255, blue: 110 / 255).opacity(0.6),  // Deeper cyan blue
         ],

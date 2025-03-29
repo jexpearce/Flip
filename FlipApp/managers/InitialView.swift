@@ -42,9 +42,7 @@ struct InitialView: View {
         ZStack {
             // Background gradient
             LinearGradient(
-                colors: [
-                    Theme.deepMidnightPurple, Color(red: 30 / 255, green: 18 / 255, blue: 60 / 255),
-                ],
+                colors: [Theme.deepMidnightPurple, Theme.mediumMidnightPurple],
                 startPoint: .top,
                 endPoint: .bottom
             )
@@ -62,11 +60,7 @@ struct InitialView: View {
 
                     Text("FLIP").font(.system(size: 36, weight: .black)).tracking(10)
                         .foregroundColor(.white)
-                        .shadow(
-                            color: Color(red: 139 / 255, green: 92 / 255, blue: 246 / 255)
-                                .opacity(0.6),
-                            radius: 8
-                        )
+                        .shadow(color: Theme.softViolet.opacity(0.6), radius: 8)
 
                     Text("ONE MORE STEP").font(.system(size: 18, weight: .bold)).tracking(5)
                         .foregroundColor(.white.opacity(0.8)).padding(.top, 5)
@@ -116,8 +110,7 @@ struct InitialView: View {
 
                         Text("Privacy Policy").font(.system(size: 16, weight: .medium))
                     }
-                    .foregroundColor(Color(red: 139 / 255, green: 92 / 255, blue: 246 / 255))
-                    .padding(.vertical, 8)
+                    .foregroundColor(Theme.softViolet).padding(.vertical, 8)
                 }
                 .padding(.top, 5)
 
@@ -146,11 +139,7 @@ struct InitialView: View {
                                     .fill(
                                         LinearGradient(
                                             colors: [
-                                                Color(
-                                                    red: 139 / 255,
-                                                    green: 92 / 255,
-                                                    blue: 246 / 255
-                                                ),
+                                                Theme.softViolet,
                                                 Color(
                                                     red: 79 / 255,
                                                     green: 70 / 255,
@@ -177,11 +166,7 @@ struct InitialView: View {
                                     )
                             }
                         )
-                        .shadow(
-                            color: Color(red: 139 / 255, green: 92 / 255, blue: 246 / 255)
-                                .opacity(0.4),
-                            radius: 8
-                        )
+                        .shadow(color: Theme.softViolet.opacity(0.4), radius: 8)
                 }
                 .opacity(readyToProceed ? 1 : 0.6).disabled(!readyToProceed).padding(.horizontal)
                 .padding(.top, 40)
@@ -245,9 +230,7 @@ struct InitialView: View {
                     .fill(
                         isGranted
                             ? Theme.mutedGreen.opacity(0.2)
-                            : (isActive
-                                ? Color(red: 139 / 255, green: 92 / 255, blue: 246 / 255)
-                                    .opacity(0.2) : Color.white.opacity(0.1))
+                            : (isActive ? Theme.softViolet.opacity(0.2) : Color.white.opacity(0.1))
                     )
                     .frame(width: 36, height: 36)
 
@@ -258,11 +241,7 @@ struct InitialView: View {
                 }
                 else {
                     Image(systemName: permission.icon).font(.system(size: 16))
-                        .foregroundColor(
-                            isActive
-                                ? Color(red: 139 / 255, green: 92 / 255, blue: 246 / 255)
-                                : .white.opacity(0.7)
-                        )
+                        .foregroundColor(isActive ? Theme.softViolet : .white.opacity(0.7))
                 }
             }
 
@@ -306,12 +285,7 @@ struct InitialView: View {
                 .stroke(
                     isActive
                         ? LinearGradient(
-                            colors: [
-                                Color(red: 139 / 255, green: 92 / 255, blue: 246 / 255)
-                                    .opacity(0.7),
-                                Color(red: 139 / 255, green: 92 / 255, blue: 246 / 255)
-                                    .opacity(0.3),
-                            ],
+                            colors: [Theme.softViolet.opacity(0.7), Theme.softViolet.opacity(0.3)],
                             startPoint: .topLeading,
                             endPoint: .bottomTrailing
                         )

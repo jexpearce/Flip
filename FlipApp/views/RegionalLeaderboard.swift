@@ -28,34 +28,6 @@ struct RegionalLeaderboard: View {
         endPoint: .bottomTrailing
     )
 
-    // Medal colors
-    private let goldColor = LinearGradient(
-        colors: [
-            Color(red: 255 / 255, green: 215 / 255, blue: 0 / 255),
-            Color(red: 212 / 255, green: 175 / 255, blue: 55 / 255),
-        ],
-        startPoint: .top,
-        endPoint: .bottom
-    )
-
-    private let silverColor = LinearGradient(
-        colors: [
-            Color(red: 226 / 255, green: 232 / 255, blue: 240 / 255),
-            Color(red: 148 / 255, green: 163 / 255, blue: 184 / 255),
-        ],
-        startPoint: .top,
-        endPoint: .bottom
-    )
-
-    private let bronzeColor = LinearGradient(
-        colors: [
-            Color(red: 205 / 255, green: 127 / 255, blue: 50 / 255),
-            Color(red: 165 / 255, green: 113 / 255, blue: 78 / 255),
-        ],
-        startPoint: .top,
-        endPoint: .bottom
-    )
-
     var body: some View {
         VStack(spacing: 12) {
             // Title section with enhanced visual style
@@ -235,8 +207,9 @@ struct RegionalLeaderboard: View {
                                         Circle()
                                             .fill(
                                                 index == 0
-                                                    ? goldColor
-                                                    : (index == 1 ? silverColor : bronzeColor)
+                                                    ? Theme.goldColor
+                                                    : (index == 1
+                                                        ? Theme.silverColor : Theme.bronzeColor)
                                             )
                                             .frame(width: 26, height: 26)
 
