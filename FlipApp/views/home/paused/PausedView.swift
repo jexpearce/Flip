@@ -40,9 +40,7 @@ struct PausedView: View {
                                 LinearGradient(
                                     colors: [
                                         Theme.yellow,  // Yellow
-                                        Color(
-                                            red: 234 / 255, green: 179 / 255,
-                                            blue: 8 / 255),
+                                        Theme.yellowyOrange,
                                     ],
                                     startPoint: .top,
                                     endPoint: .bottom
@@ -367,9 +365,7 @@ struct CustomCancelAlert: View {
                         .fill(
                             LinearGradient(
                                 colors: [
-                                    Color(
-                                        red: 239 / 255, green: 68 / 255,
-                                        blue: 68 / 255),
+                                    Theme.mutedRed,
                                     Color(
                                         red: 185 / 255, green: 28 / 255,
                                         blue: 28 / 255),
@@ -390,9 +386,7 @@ struct CustomCancelAlert: View {
                         .foregroundStyle(
                             LinearGradient(
                                 colors: [
-                                    Color(
-                                        red: 239 / 255, green: 68 / 255,
-                                        blue: 68 / 255),
+                                    Theme.mutedRed,
                                     Color(
                                         red: 185 / 255, green: 28 / 255,
                                         blue: 28 / 255),
@@ -482,10 +476,7 @@ struct CustomCancelAlert: View {
                                         .fill(
                                             LinearGradient(
                                                 colors: [
-                                                    Color(
-                                                        red: 239 / 255,
-                                                        green: 68 / 255,
-                                                        blue: 68 / 255),
+                                                    Theme.mutedRed,
                                                     Color(
                                                         red: 185 / 255,
                                                         green: 28 / 255,

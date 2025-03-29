@@ -1626,7 +1626,7 @@ struct RegionalWeeklyLeaderboard: View {
     // Red theme colors - maintaining original regional theme
     private let redGradient = LinearGradient(
         colors: [
-            Color(red: 239 / 255, green: 68 / 255, blue: 68 / 255),  // Red 500
+            Theme.mutedRed,  // Red 500
             Color(red: 220 / 255, green: 38 / 255, blue: 38 / 255),  // Red 600
         ],
         startPoint: .top,
@@ -1700,9 +1700,7 @@ struct RegionalWeeklyLeaderboard: View {
                             .foregroundStyle(
                                 LinearGradient(
                                     colors: [
-                                        Color(
-                                            red: 239 / 255, green: 68 / 255,
-                                            blue: 68 / 255),
+                                        Theme.mutedRed,
                                         Color(
                                             red: 220 / 255, green: 38 / 255,
                                             blue: 38 / 255),
@@ -1712,10 +1710,7 @@ struct RegionalWeeklyLeaderboard: View {
                                 )
                             )
                             .shadow(
-                                color: Color(
-                                    red: 239 / 255, green: 68 / 255,
-                                    blue: 68 / 255
-                                ).opacity(0.5), radius: 4)
+                                color: Theme.mutedRed.opacity(0.5), radius: 4)
 
                         Text("REGIONAL WEEKLY")
                             .font(.system(size: 13, weight: .black))
@@ -1723,9 +1718,7 @@ struct RegionalWeeklyLeaderboard: View {
                             .foregroundStyle(
                                 LinearGradient(
                                     colors: [
-                                        Color(
-                                            red: 239 / 255, green: 68 / 255,
-                                            blue: 68 / 255),
+                                        Theme.mutedRed,
                                         Color(
                                             red: 220 / 255, green: 38 / 255,
                                             blue: 38 / 255),
@@ -1735,10 +1728,7 @@ struct RegionalWeeklyLeaderboard: View {
                                 )
                             )
                             .shadow(
-                                color: Color(
-                                    red: 239 / 255, green: 68 / 255,
-                                    blue: 68 / 255
-                                ).opacity(0.5), radius: 4)
+                                color: Theme.mutedRed.opacity(0.5), radius: 4)
                     }
 
                     Spacer()
@@ -1774,10 +1764,7 @@ struct RegionalWeeklyLeaderboard: View {
                     .fill(
                         LinearGradient(
                             colors: [
-                                Color(
-                                    red: 239 / 255, green: 68 / 255,
-                                    blue: 68 / 255
-                                ).opacity(0.3),
+                                Theme.mutedRed.opacity(0.3),
                                 Color(
                                     red: 220 / 255, green: 38 / 255,
                                     blue: 38 / 255
@@ -1837,9 +1824,7 @@ struct RegionalWeeklyLeaderboard: View {
                         .font(.system(size: 12, weight: .bold))
                         .tracking(1)
                         .foregroundColor(
-                            Color(
-                                red: 239 / 255, green: 68 / 255, blue: 68 / 255
-                            ).opacity(0.9)
+                            Theme.mutedRed.opacity(0.9)
                         )
                         .frame(width: 50, alignment: .center)
 
@@ -1847,9 +1832,7 @@ struct RegionalWeeklyLeaderboard: View {
                         .font(.system(size: 12, weight: .bold))
                         .tracking(1)
                         .foregroundColor(
-                            Color(
-                                red: 239 / 255, green: 68 / 255, blue: 68 / 255
-                            ).opacity(0.9)
+                            Theme.mutedRed.opacity(0.9)
                         )
                         .frame(alignment: .leading)
 
@@ -1859,9 +1842,7 @@ struct RegionalWeeklyLeaderboard: View {
                         .font(.system(size: 12, weight: .bold))
                         .tracking(1)
                         .foregroundColor(
-                            Color(
-                                red: 239 / 255, green: 68 / 255, blue: 68 / 255
-                            ).opacity(0.9)
+                            Theme.mutedRed.opacity(0.9)
                         )
                         .frame(width: 80, alignment: .trailing)
                 }
@@ -1994,15 +1975,10 @@ struct RegionalWeeklyLeaderboard: View {
                                     Text("\(entry.minutes)")
                                         .font(.system(size: 18, weight: .black))
                                         .foregroundColor(
-                                            Color(
-                                                red: 239 / 255, green: 68 / 255,
-                                                blue: 68 / 255)
+                                            Theme.mutedRed
                                         )
                                         .shadow(
-                                            color: Color(
-                                                red: 239 / 255, green: 68 / 255,
-                                                blue: 68 / 255
-                                            ).opacity(0.3), radius: 4)
+                                            color: Theme.mutedRed.opacity(0.3), radius: 4)
 
                                     Text("minutes")
                                         .font(
@@ -2020,16 +1996,8 @@ struct RegionalWeeklyLeaderboard: View {
                                         LinearGradient(
                                             colors: index < 3
                                                 ? [
-                                                    Color(
-                                                        red: 239 / 255,
-                                                        green: 68 / 255,
-                                                        blue: 68 / 255
-                                                    ).opacity(0.2),
-                                                    Color(
-                                                        red: 239 / 255,
-                                                        green: 68 / 255,
-                                                        blue: 68 / 255
-                                                    ).opacity(0.1),
+                                                    Theme.mutedRed.opacity(0.2),
+                                                    Theme.mutedRed.opacity(0.1),
                                                 ]
                                                 : [
                                                     Color.white.opacity(0.08),
@@ -2045,11 +2013,7 @@ struct RegionalWeeklyLeaderboard: View {
                                                 // Highlight current user
                                                 Auth.auth().currentUser?.uid
                                                     == entry.userId
-                                                    ? Color(
-                                                        red: 239 / 255,
-                                                        green: 68 / 255,
-                                                        blue: 68 / 255
-                                                    ).opacity(0.5)
+                                                    ? Theme.mutedRed.opacity(0.5)
                                                     : Color.white.opacity(0.2),
                                                 lineWidth: Auth.auth()
                                                     .currentUser?.uid
@@ -2095,10 +2059,7 @@ struct RegionalWeeklyLeaderboard: View {
                     .stroke(
                         LinearGradient(
                             colors: [
-                                Color(
-                                    red: 239 / 255, green: 68 / 255,
-                                    blue: 68 / 255
-                                ).opacity(0.5),
+                                Theme.mutedRed.opacity(0.5),
                                 Color(
                                     red: 220 / 255, green: 38 / 255,
                                     blue: 38 / 255

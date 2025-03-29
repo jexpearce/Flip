@@ -277,35 +277,24 @@ struct EnhancedFriendCard: View {
                             HStack(spacing: 6) {
                                 Image(systemName: "pause.circle.fill")
                                     .foregroundColor(
-                                        Color(
-                                            red: 239 / 255, green: 68 / 255,
-                                            blue: 68 / 255))
+                                        Theme.mutedRed)
 
                                 Text("PAUSED")
                                     .font(.system(size: 12, weight: .bold))
                                     .foregroundColor(
-                                        Color(
-                                            red: 239 / 255, green: 68 / 255,
-                                            blue: 68 / 255))
+                                        Theme.mutedRed)
                             }
                             .padding(.horizontal, 10)
                             .padding(.vertical, 4)
                             .background(
                                 RoundedRectangle(cornerRadius: 10)
                                     .fill(
-                                        Color(
-                                            red: 239 / 255, green: 68 / 255,
-                                            blue: 68 / 255
-                                        ).opacity(0.2)
+                                        Theme.mutedRed.opacity(0.2)
                                     )
                                     .overlay(
                                         RoundedRectangle(cornerRadius: 10)
                                             .stroke(
-                                                Color(
-                                                    red: 239 / 255,
-                                                    green: 68 / 255,
-                                                    blue: 68 / 255
-                                                ).opacity(0.3), lineWidth: 1)
+                                                Theme.mutedRed.opacity(0.3), lineWidth: 1)
                                     )
                             )
                         } else {

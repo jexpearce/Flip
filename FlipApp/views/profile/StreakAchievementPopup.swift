@@ -49,7 +49,7 @@ struct StreakAchievementAlert: View {
 
     private var mainColor: Color {
         streakStatus == .redFlame
-            ? Color(red: 239 / 255, green: 68 / 255, blue: 68 / 255)
+            ? Theme.mutedRed
             :  // Red
             Color(red: 249 / 255, green: 115 / 255, blue: 22 / 255)  // Orange
     }

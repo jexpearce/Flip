@@ -71,9 +71,7 @@ struct RegionalLeaderboard: View {
                         viewModel.isBuildingSpecific
                             ? LinearGradient(
                                 colors: [
-                                    Color(
-                                        red: 234 / 255, green: 179 / 255,
-                                        blue: 8 / 255),
+                                    Theme.yellowyOrange,
                                     Color(
                                         red: 202 / 255, green: 138 / 255,
                                         blue: 4 / 255),
@@ -83,9 +81,7 @@ struct RegionalLeaderboard: View {
                             )
                             : LinearGradient(
                                 colors: [
-                                    Color(
-                                        red: 239 / 255, green: 68 / 255,
-                                        blue: 68 / 255),
+                                    Theme.mutedRed,
                                     Color(
                                         red: 185 / 255, green: 28 / 255,
                                         blue: 28 / 255),
@@ -96,12 +92,8 @@ struct RegionalLeaderboard: View {
                     )
                     .shadow(
                         color: viewModel.isBuildingSpecific
-                            ? Color(
-                                red: 234 / 255, green: 179 / 255, blue: 8 / 255
-                            ).opacity(0.5)
-                            : Color(
-                                red: 239 / 255, green: 68 / 255, blue: 68 / 255
-                            ).opacity(0.5), radius: 4)
+                            ? Theme.yellowyOrange.opacity(0.5)
+                            : Theme.mutedRed.opacity(0.5), radius: 4)
 
                     Text(
                         viewModel.isBuildingSpecific
@@ -114,9 +106,7 @@ struct RegionalLeaderboard: View {
                         viewModel.isBuildingSpecific
                             ? LinearGradient(
                                 colors: [
-                                    Color(
-                                        red: 234 / 255, green: 179 / 255,
-                                        blue: 8 / 255),
+                                    Theme.yellowyOrange,
                                     Color(
                                         red: 202 / 255, green: 138 / 255,
                                         blue: 4 / 255),
@@ -126,9 +116,7 @@ struct RegionalLeaderboard: View {
                             )
                             : LinearGradient(
                                 colors: [
-                                    Color(
-                                        red: 239 / 255, green: 68 / 255,
-                                        blue: 68 / 255),
+                                    Theme.mutedRed,
                                     Color(
                                         red: 185 / 255, green: 28 / 255,
                                         blue: 28 / 255),
@@ -139,12 +127,8 @@ struct RegionalLeaderboard: View {
                     )
                     .shadow(
                         color: viewModel.isBuildingSpecific
-                            ? Color(
-                                red: 234 / 255, green: 179 / 255, blue: 8 / 255
-                            ).opacity(0.5)
-                            : Color(
-                                red: 239 / 255, green: 68 / 255, blue: 68 / 255
-                            ).opacity(0.5), radius: 4
+                            ? Theme.yellowyOrange.opacity(0.5)
+                            : Theme.mutedRed.opacity(0.5), radius: 4
                     )
                     .frame(maxWidth: .infinity, alignment: .center)
                 }
@@ -166,10 +150,7 @@ struct RegionalLeaderboard: View {
                         viewModel.isBuildingSpecific
                             ? LinearGradient(
                                 colors: [
-                                    Color(
-                                        red: 234 / 255, green: 179 / 255,
-                                        blue: 8 / 255
-                                    ).opacity(0.3),
+                                    Theme.yellowyOrange.opacity(0.3),
                                     Color(
                                         red: 202 / 255, green: 138 / 255,
                                         blue: 4 / 255
@@ -180,10 +161,7 @@ struct RegionalLeaderboard: View {
                             )
                             : LinearGradient(
                                 colors: [
-                                    Color(
-                                        red: 239 / 255, green: 68 / 255,
-                                        blue: 68 / 255
-                                    ).opacity(0.3),
+                                    Theme.mutedRed.opacity(0.3),
                                     Color(
                                         red: 185 / 255, green: 28 / 255,
                                         blue: 28 / 255
@@ -251,14 +229,8 @@ struct RegionalLeaderboard: View {
                         .tracking(1)
                         .foregroundColor(
                             viewModel.isBuildingSpecific
-                                ? Color(
-                                    red: 234 / 255, green: 179 / 255,
-                                    blue: 8 / 255
-                                ).opacity(0.9)
-                                : Color(
-                                    red: 239 / 255, green: 68 / 255,
-                                    blue: 68 / 255
-                                ).opacity(0.9)
+                                ? Theme.yellowyOrange.opacity(0.9)
+                                : Theme.mutedRed.opacity(0.9)
                         )
                         .frame(width: 50, alignment: .center)
 
@@ -267,14 +239,8 @@ struct RegionalLeaderboard: View {
                         .tracking(1)
                         .foregroundColor(
                             viewModel.isBuildingSpecific
-                                ? Color(
-                                    red: 234 / 255, green: 179 / 255,
-                                    blue: 8 / 255
-                                ).opacity(0.9)
-                                : Color(
-                                    red: 239 / 255, green: 68 / 255,
-                                    blue: 68 / 255
-                                ).opacity(0.9)
+                                ? Theme.yellowyOrange.opacity(0.9)
+                                : Theme.mutedRed.opacity(0.9)
                         )
                         .frame(alignment: .leading)
 
@@ -285,14 +251,8 @@ struct RegionalLeaderboard: View {
                         .tracking(1)
                         .foregroundColor(
                             viewModel.isBuildingSpecific
-                                ? Color(
-                                    red: 234 / 255, green: 179 / 255,
-                                    blue: 8 / 255
-                                ).opacity(0.9)
-                                : Color(
-                                    red: 239 / 255, green: 68 / 255,
-                                    blue: 68 / 255
-                                ).opacity(0.9)
+                                ? Theme.yellowyOrange.opacity(0.9)
+                                : Theme.mutedRed.opacity(0.9)
                         )
                         .frame(width: 80, alignment: .trailing)
                 }
@@ -427,27 +387,13 @@ struct RegionalLeaderboard: View {
                                         .font(.system(size: 18, weight: .black))
                                         .foregroundColor(
                                             viewModel.isBuildingSpecific
-                                                ? Color(
-                                                    red: 234 / 255,
-                                                    green: 179 / 255,
-                                                    blue: 8 / 255)
-                                                : Color(
-                                                    red: 239 / 255,
-                                                    green: 68 / 255,
-                                                    blue: 68 / 255)
+                                                ? Theme.yellowyOrange
+                                                : Theme.mutedRed
                                         )
                                         .shadow(
                                             color: viewModel.isBuildingSpecific
-                                                ? Color(
-                                                    red: 234 / 255,
-                                                    green: 179 / 255,
-                                                    blue: 8 / 255
-                                                ).opacity(0.3)
-                                                : Color(
-                                                    red: 239 / 255,
-                                                    green: 68 / 255,
-                                                    blue: 68 / 255
-                                                ).opacity(0.3), radius: 4)
+                                                ? Theme.yellowyOrange.opacity(0.3)
+                                                : Theme.mutedRed.opacity(0.3), radius: 4)
 
                                     Text("sessions")
                                         .font(
@@ -466,16 +412,8 @@ struct RegionalLeaderboard: View {
                                             ? LinearGradient(
                                                 colors: index < 3
                                                     ? [
-                                                        Color(
-                                                            red: 234 / 255,
-                                                            green: 179 / 255,
-                                                            blue: 8 / 255
-                                                        ).opacity(0.2),
-                                                        Color(
-                                                            red: 234 / 255,
-                                                            green: 179 / 255,
-                                                            blue: 8 / 255
-                                                        ).opacity(0.1),
+                                                        Theme.yellowyOrange.opacity(0.2),
+                                                        Theme.yellowyOrange.opacity(0.1),
                                                     ]
                                                     : [
                                                         Color.white.opacity(
@@ -489,16 +427,8 @@ struct RegionalLeaderboard: View {
                                             : LinearGradient(
                                                 colors: index < 3
                                                     ? [
-                                                        Color(
-                                                            red: 239 / 255,
-                                                            green: 68 / 255,
-                                                            blue: 68 / 255
-                                                        ).opacity(0.2),
-                                                        Color(
-                                                            red: 239 / 255,
-                                                            green: 68 / 255,
-                                                            blue: 68 / 255
-                                                        ).opacity(0.1),
+                                                        Theme.mutedRed.opacity(0.2),
+                                                        Theme.mutedRed.opacity(0.1),
                                                     ]
                                                     : [
                                                         Color.white.opacity(
@@ -518,16 +448,8 @@ struct RegionalLeaderboard: View {
                                                     == entry.userId
                                                     ? (viewModel
                                                         .isBuildingSpecific
-                                                        ? Color(
-                                                            red: 234 / 255,
-                                                            green: 179 / 255,
-                                                            blue: 8 / 255
-                                                        ).opacity(0.5)
-                                                        : Color(
-                                                            red: 239 / 255,
-                                                            green: 68 / 255,
-                                                            blue: 68 / 255
-                                                        ).opacity(0.5))
+                                                        ? Theme.yellowyOrange.opacity(0.5)
+                                                        : Theme.mutedRed.opacity(0.5))
                                                     : Color.white.opacity(0.2),
                                                 lineWidth: Auth.auth()
                                                     .currentUser?.uid
@@ -624,24 +546,15 @@ struct RegionalLeaderboard: View {
                         viewModel.isBuildingSpecific
                             ? LinearGradient(
                                 colors: [
-                                    Color(
-                                        red: 234 / 255, green: 179 / 255,
-                                        blue: 8 / 255
-                                    ).opacity(0.5),
-                                    Color(
-                                        red: 234 / 255, green: 179 / 255,
-                                        blue: 8 / 255
-                                    ).opacity(0.2),
+                                    Theme.yellowyOrange.opacity(0.5),
+                                    Theme.yellowyOrange.opacity(0.2),
                                 ],
                                 startPoint: .topLeading,
                                 endPoint: .bottomTrailing
                             )
                             : LinearGradient(
                                 colors: [
-                                    Color(
-                                        red: 239 / 255, green: 68 / 255,
-                                        blue: 68 / 255
-                                    ).opacity(0.5),
+                                    Theme.mutedRed.opacity(0.5),
                                     Color(
                                         red: 185 / 255, green: 28 / 255,
                                         blue: 28 / 255

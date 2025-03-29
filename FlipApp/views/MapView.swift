@@ -395,7 +395,7 @@ struct FriendMapMarker: View {
                 friend.lastFlipWasSuccessful
                 ? Theme.mutedGreen
                 :  // Success green
-                Color(red: 239 / 255, green: 68 / 255, blue: 68 / 255)  // Failure red
+                Theme.mutedRed  // Failure red
 
             // Apply opacity based on session index
             switch friend.sessionIndex {
@@ -414,7 +414,7 @@ struct FriendMapMarker: View {
                 return Theme.mutedGreen
             } else {
                 // Failed - red - ENSURE this branch is properly reached
-                return Color(red: 239 / 255, green: 68 / 255, blue: 68 / 255)
+                return Theme.mutedRed
             }
         }
     }
@@ -898,7 +898,7 @@ struct FriendPreviewCard: View {
             // Historical sessions - use gray shades
             return friend.lastFlipWasSuccessful
                 ? Color.gray.opacity(0.8)
-                : Color(red: 239 / 255, green: 68 / 255, blue: 68 / 255)
+                : Theme.mutedRed
                     .opacity(0.6)  // Red for failed
         } else if friend.isCurrentlyFlipped {
             // Active session - blue
@@ -907,7 +907,7 @@ struct FriendPreviewCard: View {
             // Completed or failed session
             if !friend.lastFlipWasSuccessful {
                 // Failed - red (explicit check)
-                return Color(red: 239 / 255, green: 68 / 255, blue: 68 / 255)
+                return Theme.mutedRed
             } else {
                 // Success - green
                 return Theme.mutedGreen

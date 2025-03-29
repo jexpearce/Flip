@@ -531,9 +531,7 @@ struct ParticipantList: View {
                         .foregroundColor(
                             participant.wasSuccessful
                                 ? Theme.mutedGreen
-                                : Color(
-                                    red: 239 / 255, green: 68 / 255,
-                                    blue: 68 / 255)
+                                : Theme.mutedRed
                         )
                         .font(.system(size: 14))
 

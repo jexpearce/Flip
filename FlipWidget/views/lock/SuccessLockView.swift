@@ -62,8 +62,7 @@ struct SuccessLockView: View {
                     LinearGradient(
                         colors: [
                             Theme.yellow,  // Yellow
-                            Color(
-                                red: 234 / 255, green: 179 / 255, blue: 8 / 255),
+                            Theme.yellowyOrange,
                         ],
                         startPoint: .top,
                         endPoint: .bottom

@@ -35,8 +35,7 @@ struct ActiveLockView: View {
                 if context.state.isPaused {
                     StatusPill(
                         text: "PAUSED",
-                        color: Color(
-                            red: 239 / 255, green: 68 / 255, blue: 68 / 255))
+                        color: Theme.mutedRed)
                 } else {
                     StatusPill(
                         text: "ACTIVE",
@@ -173,9 +172,7 @@ struct ActiveLockView: View {
                         ZStack {
                             LinearGradient(
                                 colors: [
-                                    Color(
-                                        red: 239 / 255, green: 68 / 255,
-                                        blue: 68 / 255),
+                                    Theme.mutedRed,
                                     Color(
                                         red: 185 / 255, green: 28 / 255,
                                         blue: 28 / 255),

@@ -34,9 +34,7 @@ struct RemoveFriendAlert: View {
                         .fill(
                             LinearGradient(
                                 colors: [
-                                    Color(
-                                        red: 239 / 255, green: 68 / 255,
-                                        blue: 68 / 255),
+                                    Theme.mutedRed,
                                     Color(
                                         red: 185 / 255, green: 28 / 255,
                                         blue: 28 / 255),
@@ -53,9 +51,7 @@ struct RemoveFriendAlert: View {
                         .foregroundStyle(
                             LinearGradient(
                                 colors: [
-                                    Color(
-                                        red: 239 / 255, green: 68 / 255,
-                                        blue: 68 / 255),
+                                    Theme.mutedRed,
                                     Color(
                                         red: 185 / 255, green: 28 / 255,
                                         blue: 28 / 255),
@@ -145,10 +141,7 @@ struct RemoveFriendAlert: View {
                                         .fill(
                                             LinearGradient(
                                                 colors: [
-                                                    Color(
-                                                        red: 239 / 255,
-                                                        green: 68 / 255,
-                                                        blue: 68 / 255),
+                                                    Theme.mutedRed,
                                                     Color(
                                                         red: 185 / 255,
                                                         green: 28 / 255,

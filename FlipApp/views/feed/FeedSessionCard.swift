@@ -182,10 +182,7 @@ struct FeedSessionCard: View {
                             .foregroundColor(
                                 session.wasSuccessful
                                     ? Theme.mutedGreen.opacity(0.9)
-                                    : Color(
-                                        red: 239 / 255, green: 68 / 255,
-                                        blue: 68 / 255
-                                    ).opacity(0.9)
+                                    : Theme.mutedRed.opacity(0.9)
                             )
                             .shadow(color: statusGlow.opacity(0.4), radius: 4)
 
@@ -391,10 +388,7 @@ struct FeedSessionCard: View {
                                 Color.white.opacity(0.7),
                                 session.wasSuccessful
                                     ? Theme.mutedGreen.opacity(0.3)
-                                    : Color(
-                                        red: 239 / 255, green: 68 / 255,
-                                        blue: 68 / 255
-                                    ).opacity(0.3),
+                                    : Theme.mutedRed.opacity(0.3),
                                 Color.white.opacity(0.2),
                             ],
                             startPoint: .topLeading,
@@ -408,9 +402,7 @@ struct FeedSessionCard: View {
                     .fill(
                         session.wasSuccessful
                             ? Theme.mutedGreen.opacity(0.8)
-                            : Color(
-                                red: 239 / 255, green: 68 / 255, blue: 68 / 255
-                            ).opacity(0.8)
+                            : Theme.mutedRed.opacity(0.8)
                     )
                     .frame(width: 40, height: 3)
                     .padding(.top, 8)
@@ -527,7 +519,7 @@ struct FeedSessionCard: View {
             )
             : LinearGradient(
                 colors: [
-                    Color(red: 239 / 255, green: 68 / 255, blue: 68 / 255),
+                    Theme.mutedRed,
                     Color(red: 185 / 255, green: 28 / 255, blue: 28 / 255),
                 ],
                 startPoint: .top,
@@ -540,7 +532,7 @@ struct FeedSessionCard: View {
         session.wasSuccessful
             ? Theme.mutedGreen.opacity(
                 0.6)
-            : Color(red: 239 / 255, green: 68 / 255, blue: 68 / 255).opacity(
+            : Theme.mutedRed.opacity(
                 0.6)
     }
 
@@ -645,13 +637,13 @@ struct GroupParticipantBadge: View {
             .foregroundColor(
                 wasSuccessful
                     ? Theme.mutedGreen
-                    : Color(red: 239 / 255, green: 68 / 255, blue: 68 / 255)
+                    : Theme.mutedRed
             )
             .shadow(
                 color: wasSuccessful
                     ? Theme.mutedGreen
                         .opacity(0.6)
-                    : Color(red: 239 / 255, green: 68 / 255, blue: 68 / 255)
+                    : Theme.mutedRed
                         .opacity(0.6),
                 radius: 4)
 

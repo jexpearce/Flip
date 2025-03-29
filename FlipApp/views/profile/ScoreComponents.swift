@@ -613,7 +613,7 @@ struct RankSegment: View {
         case 150.0..<180.0:
             return Color(red: 249 / 255, green: 115 / 255, blue: 22 / 255)  // Orange
         case 180.0..<210.0:
-            return Color(red: 239 / 255, green: 68 / 255, blue: 68 / 255)  // Red
+            return Theme.mutedRed  // Red
         case 210.0..<240.0:
             return Color(red: 236 / 255, green: 72 / 255, blue: 153 / 255)  // Pink
         case 240.0..<270.0:
@@ -1005,7 +1005,7 @@ struct ScoreInfoView: View {
         case 150.0..<180.0:
             return Color(red: 249 / 255, green: 115 / 255, blue: 22 / 255)  // Orange
         case 180.0..<210.0:
-            return Color(red: 239 / 255, green: 68 / 255, blue: 68 / 255)  // Red
+            return Theme.mutedRed  // Red
         case 210.0..<240.0:
             return Color(red: 236 / 255, green: 72 / 255, blue: 153 / 255)  // Pink
         case 240.0..<270.0:

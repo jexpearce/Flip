@@ -25,9 +25,7 @@ func DynamicIslandView(context: ActivityViewContext<FlipActivityAttributes>)
                         LinearGradient(
                             colors: [
                                 context.state.isPaused
-                                    ? Color(
-                                        red: 239 / 255, green: 68 / 255,
-                                        blue: 68 / 255)
+                                    ? Theme.mutedRed
                                     : Theme.lightTealBlue,
                                 context.state.isPaused
                                     ? Color(
@@ -173,9 +171,7 @@ func DynamicIslandView(context: ActivityViewContext<FlipActivityAttributes>)
                             .foregroundStyle(
                                 LinearGradient(
                                     colors: [
-                                        Color(
-                                            red: 239 / 255, green: 68 / 255,
-                                            blue: 68 / 255),
+                                        Theme.mutedRed,
                                         Color(
                                             red: 185 / 255, green: 28 / 255,
                                             blue: 28 / 255),
@@ -202,7 +198,7 @@ func DynamicIslandView(context: ActivityViewContext<FlipActivityAttributes>)
             LinearGradient(
                 colors: [
                     context.state.isPaused
-                        ? Color(red: 239 / 255, green: 68 / 255, blue: 68 / 255)
+                        ? Theme.mutedRed
                         : Color.white,
                     context.state.isPaused
                         ? Color(red: 185 / 255, green: 28 / 255, blue: 28 / 255)
@@ -223,8 +219,7 @@ func DynamicIslandView(context: ActivityViewContext<FlipActivityAttributes>)
                     LinearGradient(
                         colors: [
                             Theme.yellow,
-                            Color(
-                                red: 234 / 255, green: 179 / 255, blue: 8 / 255),
+                            Theme.yellowyOrange,
                         ],
                         startPoint: .top,
                         endPoint: .bottom
@@ -251,7 +246,7 @@ func DynamicIslandView(context: ActivityViewContext<FlipActivityAttributes>)
             LinearGradient(
                 colors: [
                     context.state.isPaused
-                        ? Color(red: 239 / 255, green: 68 / 255, blue: 68 / 255)
+                        ? Theme.mutedRed
                         : Color.white,
                     context.state.isPaused
                         ? Color(red: 185 / 255, green: 28 / 255, blue: 28 / 255)

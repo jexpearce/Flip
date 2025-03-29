@@ -82,11 +82,7 @@ struct EnhancedFriendRequestCard: View {
                                         .fill(
                                             LinearGradient(
                                                 colors: [
-                                                    Color(
-                                                        red: 239 / 255,
-                                                        green: 68 / 255,
-                                                        blue: 68 / 255
-                                                    ).opacity(0.8),
+                                                    Theme.mutedRed.opacity(0.8),
                                                     Color(
                                                         red: 185 / 255,
                                                         green: 28 / 255,

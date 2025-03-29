@@ -62,10 +62,7 @@ struct MixedOutcomeView: View {
                                         Theme.darkerGreen.opacity(0.2),
                                     ]
                                     : [
-                                        Color(
-                                            red: 239 / 255, green: 68 / 255,
-                                            blue: 68 / 255
-                                        ).opacity(0.3),
+                                        Theme.mutedRed.opacity(0.3),
                                         Color(
                                             red: 185 / 255, green: 28 / 255,
                                             blue: 28 / 255
@@ -104,9 +101,7 @@ struct MixedOutcomeView: View {
                                     Theme.darkerGreen,
                                 ]
                                 : [
-                                    Color(
-                                        red: 239 / 255, green: 68 / 255,
-                                        blue: 68 / 255),
+                                    Theme.mutedRed,
                                     Color(
                                         red: 185 / 255, green: 28 / 255,
                                         blue: 28 / 255),
@@ -118,9 +113,7 @@ struct MixedOutcomeView: View {
                     .shadow(
                         color: currentUserSucceeded
                             ? Theme.mutedGreen.opacity(isGlowing ? 0.6 : 0.3)
-                            : Color(
-                                red: 239 / 255, green: 68 / 255, blue: 68 / 255
-                            ).opacity(isGlowing ? 0.6 : 0.3),
+                            : Theme.mutedRed.opacity(isGlowing ? 0.6 : 0.3),
                         radius: isGlowing ? 15 : 8)
                 }
                 .scaleEffect(showIcon ? 1 : 0)
@@ -133,9 +126,7 @@ struct MixedOutcomeView: View {
                     .shadow(
                         color: currentUserSucceeded
                             ? Theme.mutedGreen.opacity(0.5)
-                            : Color(
-                                red: 239 / 255, green: 68 / 255, blue: 68 / 255
-                            ).opacity(0.5),
+                            : Theme.mutedRed.opacity(0.5),
                         radius: 8
                     )
                     .offset(y: showTitle ? 0 : 50)
@@ -401,9 +392,7 @@ struct MixedOutcomeView: View {
                             .foregroundColor(
                                 participant.wasSuccessful
                                     ? Theme.mutedGreen
-                                    : Color(
-                                        red: 239 / 255, green: 68 / 255,
-                                        blue: 68 / 255)
+                                    : Theme.mutedRed
                             )
                             .font(.system(size: 14))
 

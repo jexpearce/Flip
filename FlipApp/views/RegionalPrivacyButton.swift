@@ -27,8 +27,7 @@ struct RegionalPrivacySheet: View {
     @State private var regionalOptOut: Bool
 
     private let cyanBlueAccent = Theme.lightTealBlue
-    private let redAccent = Color(
-        red: 239 / 255, green: 68 / 255, blue: 68 / 255)
+    private let redAccent = Theme.mutedRed
 
     init() {
         // Initialize state directly from the shared instance

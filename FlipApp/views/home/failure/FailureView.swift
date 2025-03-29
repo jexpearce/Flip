@@ -35,10 +35,7 @@ struct FailureView: View {
                             .fill(
                                 LinearGradient(
                                     colors: [
-                                        Color(
-                                            red: 239 / 255, green: 68 / 255,
-                                            blue: 68 / 255
-                                        ).opacity(0.3),
+                                        Theme.mutedRed.opacity(0.3),
                                         Color(
                                             red: 185 / 255, green: 28 / 255,
                                             blue: 28 / 255
@@ -69,9 +66,7 @@ struct FailureView: View {
                             .foregroundStyle(
                                 LinearGradient(
                                     colors: [
-                                        Color(
-                                            red: 239 / 255, green: 68 / 255,
-                                            blue: 68 / 255),
+                                        Theme.mutedRed,
                                         Color(
                                             red: 185 / 255, green: 28 / 255,
                                             blue: 28 / 255),
@@ -81,10 +76,7 @@ struct FailureView: View {
                                 )
                             )
                             .shadow(
-                                color: Color(
-                                    red: 239 / 255, green: 68 / 255,
-                                    blue: 68 / 255
-                                ).opacity(isGlowing ? 0.6 : 0.3),
+                                color: Theme.mutedRed.opacity(isGlowing ? 0.6 : 0.3),
                                 radius: isGlowing ? 15 : 10)
                     }
                     .scaleEffect(showIcon ? 1 : 0)
@@ -98,9 +90,7 @@ struct FailureView: View {
                     .tracking(6)
                     .foregroundColor(.white)
                     .shadow(
-                        color: Color(
-                            red: 239 / 255, green: 68 / 255, blue: 68 / 255
-                        ).opacity(0.5), radius: 8
+                        color: Theme.mutedRed.opacity(0.5), radius: 8
                     )
                     .offset(y: showTitle ? 0 : 50)
                     .opacity(showTitle ? 1 : 0)

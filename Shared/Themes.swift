@@ -48,6 +48,10 @@ struct Theme {
     static let mutedPurple = Color(red: 26 / 255, green: 14 / 255, blue: 47 / 255)
     static let blueishPurple = Color(red: 16 / 255, green: 24 / 255, blue: 57 / 255)
 
+    static let yellowyOrange = Color(red: 234 / 255, green: 179 / 255, blue: 8 / 255)
+
+    static let mutedRed = Theme.mutedRed
+
     // Gradients
     static let mainGradient = LinearGradient(
         colors: [

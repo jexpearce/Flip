@@ -49,9 +49,7 @@ struct SessionNotesView: View {
                         .foregroundColor(
                             titleRemainingWords > 0
                                 ? .white.opacity(0.5)
-                                : Color(
-                                    red: 239 / 255, green: 68 / 255,
-                                    blue: 68 / 255))
+                                : Theme.mutedRed)
                 }
 
                 TextField("Add a title (optional)", text: $sessionTitle)
@@ -106,9 +104,7 @@ struct SessionNotesView: View {
                         .foregroundColor(
                             notesRemainingWords > 0
                                 ? .white.opacity(0.5)
-                                : Color(
-                                    red: 239 / 255, green: 68 / 255,
-                                    blue: 68 / 255))
+                                : Theme.mutedRed)
                 }
 
                 ZStack(alignment: .topLeading) {

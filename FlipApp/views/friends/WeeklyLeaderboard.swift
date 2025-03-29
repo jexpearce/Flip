@@ -17,18 +17,14 @@ struct WeeklyLeaderboard: View {
                         LinearGradient(
                             colors: [
                                 Theme.yellow,
-                                Color(
-                                    red: 234 / 255, green: 179 / 255,
-                                    blue: 8 / 255),
+                                Theme.yellowyOrange,
                             ],
                             startPoint: .top,
                             endPoint: .bottom
                         )
                     )
                     .shadow(
-                        color: Color(
-                            red: 234 / 255, green: 179 / 255, blue: 8 / 255
-                        ).opacity(0.6), radius: 8)
+                        color: Theme.yellowyOrange.opacity(0.6), radius: 8)
 
                 Text("WEEKLY CHAMPIONS")
                     .font(.system(size: 18, weight: .black))
@@ -37,18 +33,14 @@ struct WeeklyLeaderboard: View {
                         LinearGradient(
                             colors: [
                                 Theme.yellow,
-                                Color(
-                                    red: 234 / 255, green: 179 / 255,
-                                    blue: 8 / 255),
+                                Theme.yellowyOrange,
                             ],
                             startPoint: .top,
                             endPoint: .bottom
                         )
                     )
                     .shadow(
-                        color: Color(
-                            red: 234 / 255, green: 179 / 255, blue: 8 / 255
-                        ).opacity(0.6), radius: 8)
+                        color: Theme.yellowyOrange.opacity(0.6), radius: 8)
 
                 Spacer()
 
@@ -68,18 +60,12 @@ struct WeeklyLeaderboard: View {
                         .background(
                             RoundedRectangle(cornerRadius: 12)
                                 .fill(
-                                    Color(
-                                        red: 234 / 255, green: 179 / 255,
-                                        blue: 8 / 255
-                                    ).opacity(0.15)
+                                    Theme.yellowyOrange.opacity(0.15)
                                 )
                                 .overlay(
                                     RoundedRectangle(cornerRadius: 12)
                                         .stroke(
-                                            Color(
-                                                red: 234 / 255,
-                                                green: 179 / 255, blue: 8 / 255
-                                            ).opacity(0.3), lineWidth: 1)
+                                            Theme.yellowyOrange.opacity(0.3), lineWidth: 1)
                                 )
                         )
                 }
@@ -140,19 +126,14 @@ struct WeeklyLeaderboard: View {
                                 LinearGradient(
                                     colors: [
                                         Theme.yellow,
-                                        Color(
-                                            red: 234 / 255, green: 179 / 255,
-                                            blue: 8 / 255),
+                                        Theme.yellowyOrange,
                                     ],
                                     startPoint: .top,
                                     endPoint: .bottom
                                 )
                             )
                             .shadow(
-                                color: Color(
-                                    red: 234 / 255, green: 179 / 255,
-                                    blue: 8 / 255
-                                ).opacity(0.6), radius: 8)
+                                color: Theme.yellowyOrange.opacity(0.6), radius: 8)
 
                         Text("No sessions recorded this week")
                             .font(.system(size: 16, weight: .medium))
@@ -214,10 +195,7 @@ struct WeeklyLeaderboard: View {
                         LinearGradient(
                             colors: [
                                 Theme.yellow.opacity(0.6),
-                                Color(
-                                    red: 234 / 255, green: 179 / 255,
-                                    blue: 8 / 255
-                                ).opacity(0.3),
+                                Theme.yellowyOrange.opacity(0.3),
                             ],
                             startPoint: .topLeading,
                             endPoint: .bottomTrailing
@@ -227,7 +205,7 @@ struct WeeklyLeaderboard: View {
             }
         )
         .shadow(
-            color: Color(red: 234 / 255, green: 179 / 255, blue: 8 / 255)
+            color: Theme.yellowyOrange
                 .opacity(0.2), radius: 10
         )
         .onAppear {
@@ -255,7 +233,7 @@ struct WeeklyLeaderboard: View {
             return LinearGradient(
                 colors: [
                     Color(red: 253 / 255, green: 224 / 255, blue: 71 / 255),
-                    Color(red: 234 / 255, green: 179 / 255, blue: 8 / 255),
+                    Theme.yellowyOrange,
                 ],
                 startPoint: .top,
                 endPoint: .bottom
@@ -291,7 +269,7 @@ struct WeeklyLeaderboard: View {
     private func medalShadowColor(for index: Int) -> Color {
         switch index {
         case 0:
-            return Color(red: 234 / 255, green: 179 / 255, blue: 8 / 255)
+            return Theme.yellowyOrange
                 .opacity(0.6)
         case 1:
             return Color(red: 148 / 255, green: 163 / 255, blue: 184 / 255)
@@ -389,14 +367,8 @@ struct EnhancedLeaderboardRow: View {
                         LinearGradient(
                             colors: rank <= 3
                                 ? [
-                                    Color(
-                                        red: 234 / 255, green: 179 / 255,
-                                        blue: 8 / 255
-                                    ).opacity(0.3),
-                                    Color(
-                                        red: 234 / 255, green: 179 / 255,
-                                        blue: 8 / 255
-                                    ).opacity(0.1),
+                                    Theme.yellowyOrange.opacity(0.3),
+                                    Theme.yellowyOrange.opacity(0.1),
                                 ]
                                 : [
                                     Color.white.opacity(0.08),
@@ -470,7 +442,7 @@ struct EnhancedLeaderboardRow: View {
             return LinearGradient(
                 colors: [
                     Color(red: 253 / 255, green: 224 / 255, blue: 71 / 255),
-                    Color(red: 234 / 255, green: 179 / 255, blue: 8 / 255),
+                    Theme.yellowyOrange,
                 ],
                 startPoint: .top,
                 endPoint: .bottom
@@ -506,7 +478,7 @@ struct EnhancedLeaderboardRow: View {
     private func medalShadowColor(for index: Int) -> Color {
         switch index {
         case 0:
-            return Color(red: 234 / 255, green: 179 / 255, blue: 8 / 255)
+            return Theme.yellowyOrange
                 .opacity(0.6)
         case 1:
             return Color(red: 148 / 255, green: 163 / 255, blue: 184 / 255)
