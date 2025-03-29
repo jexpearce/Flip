@@ -294,14 +294,7 @@ struct TrackingView: View {
                                 RoundedRectangle(cornerRadius: 15)
                                     .fill(
                                         LinearGradient(
-                                            colors: [
-                                                Theme.mutedRed,
-                                                Color(
-                                                    red: 185 / 255,
-                                                    green: 28 / 255,
-                                                    blue: 28 / 255
-                                                ),
-                                            ],
+                                            colors: [Theme.mutedRed, Theme.darkerRed],
                                             startPoint: .top,
                                             endPoint: .bottom
                                         )

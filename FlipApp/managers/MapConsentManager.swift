@@ -105,12 +105,7 @@ struct MapPrivacyAlert: View {
                         // Map icon with pulse animation
                         ZStack {
                             // Outer pulse
-                            Circle()
-                                .fill(
-                                    Color(red: 220 / 255, green: 38 / 255, blue: 38 / 255)
-                                        .opacity(0.3)
-                                )
-                                .frame(width: 90, height: 90)
+                            Circle().fill(Theme.darkRed.opacity(0.3)).frame(width: 90, height: 90)
                                 .scaleEffect(animateContent ? 1.3 : 0.8)
                                 .opacity(animateContent ? 0.0 : 0.5)
 
@@ -118,10 +113,7 @@ struct MapPrivacyAlert: View {
                             Circle()
                                 .fill(
                                     LinearGradient(
-                                        colors: [
-                                            Color(red: 220 / 255, green: 38 / 255, blue: 38 / 255),
-                                            Color(red: 185 / 255, green: 28 / 255, blue: 28 / 255),
-                                        ],
+                                        colors: [Theme.darkRed, Theme.darkerRed],
                                         startPoint: .top,
                                         endPoint: .bottom
                                     )
@@ -136,11 +128,7 @@ struct MapPrivacyAlert: View {
 
                         Text("FRIENDS MAP PRIVACY").font(.system(size: 20, weight: .black))
                             .tracking(4).foregroundColor(.white)
-                            .shadow(
-                                color: Color(red: 220 / 255, green: 38 / 255, blue: 38 / 255)
-                                    .opacity(0.6),
-                                radius: 8
-                            )
+                            .shadow(color: Theme.darkRed.opacity(0.6), radius: 8)
                     }
                     .padding(.top, 10)
 
@@ -191,10 +179,7 @@ struct MapPrivacyAlert: View {
                                 .foregroundColor(.white).frame(maxWidth: .infinity)
                                 .padding(.vertical, 15)
                                 .background(
-                                    RoundedRectangle(cornerRadius: 12)
-                                        .fill(
-                                            Color(red: 220 / 255, green: 38 / 255, blue: 38 / 255)
-                                        )
+                                    RoundedRectangle(cornerRadius: 12).fill(Theme.darkRed)
                                         .overlay(
                                             RoundedRectangle(cornerRadius: 12)
                                                 .stroke(Color.white.opacity(0.3), lineWidth: 1)
@@ -289,9 +274,8 @@ struct MapPrivacyAlert: View {
 
     private func privacyPoint(icon: String, text: String) -> some View {
         HStack(alignment: .top, spacing: 12) {
-            Image(systemName: icon)
-                .foregroundColor(Color(red: 220 / 255, green: 38 / 255, blue: 38 / 255))
-                .font(.system(size: 16)).frame(width: 24, alignment: .center)
+            Image(systemName: icon).foregroundColor(Theme.darkRed).font(.system(size: 16))
+                .frame(width: 24, alignment: .center)
 
             Text(text).font(.system(size: 15)).foregroundColor(.white)
                 .multilineTextAlignment(.leading)

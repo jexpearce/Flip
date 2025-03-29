@@ -45,11 +45,7 @@ struct OthersActiveView: View {
                                         Theme.mutedGreen.opacity(0.3),
                                         Theme.darkerGreen.opacity(0.2),
                                     ]
-                                    : [
-                                        Theme.mutedRed.opacity(0.3),
-                                        Color(red: 185 / 255, green: 28 / 255, blue: 28 / 255)
-                                            .opacity(0.2),
-                                    ],
+                                    : [Theme.mutedRed.opacity(0.3), Theme.darkerRed.opacity(0.2)],
                                 startPoint: .topLeading,
                                 endPoint: .bottomTrailing
                             )
@@ -76,10 +72,7 @@ struct OthersActiveView: View {
                         LinearGradient(
                             colors: currentUserSucceeded
                                 ? [Theme.mutedGreen, Theme.darkerGreen]
-                                : [
-                                    Theme.mutedRed,
-                                    Color(red: 185 / 255, green: 28 / 255, blue: 28 / 255),
-                                ],
+                                : [Theme.mutedRed, Theme.darkerRed],
                             startPoint: .top,
                             endPoint: .bottom
                         )

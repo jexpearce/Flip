@@ -33,8 +33,7 @@ struct CustomLocationCreationView: View {
                     .fill(
                         RadialGradient(
                             gradient: Gradient(colors: [
-                                Color(red: 220 / 255, green: 38 / 255, blue: 38 / 255)
-                                    .opacity(0.15),
+                                Theme.darkRed.opacity(0.15),
                                 Color(red: 127 / 255, green: 29 / 255, blue: 29 / 255)
                                     .opacity(0.05),
                             ]),
@@ -52,20 +51,12 @@ struct CustomLocationCreationView: View {
                 // Header with icon and title
                 HStack {
                     Image(systemName: "mappin.and.ellipse").font(.system(size: 24))
-                        .foregroundColor(Color(red: 220 / 255, green: 38 / 255, blue: 38 / 255))
-                        .shadow(
-                            color: Color(red: 220 / 255, green: 38 / 255, blue: 38 / 255)
-                                .opacity(0.5),
-                            radius: 4
-                        )
+                        .foregroundColor(Theme.darkRed)
+                        .shadow(color: Theme.darkRed.opacity(0.5), radius: 4)
 
                     Text("ADD CUSTOM LOCATION").font(.system(size: 20, weight: .black)).tracking(4)
                         .foregroundColor(.white)
-                        .shadow(
-                            color: Color(red: 220 / 255, green: 38 / 255, blue: 38 / 255)
-                                .opacity(0.5),
-                            radius: 8
-                        )
+                        .shadow(color: Theme.darkRed.opacity(0.5), radius: 8)
                 }
 
                 Text("Create a new location at your current position").font(.system(size: 14))
@@ -106,8 +97,7 @@ struct CustomLocationCreationView: View {
 
                     HStack {
                         Image(systemName: "location.fill").font(.system(size: 16))
-                            .foregroundColor(Color(red: 220 / 255, green: 38 / 255, blue: 38 / 255))
-                            .padding(.trailing, 8)
+                            .foregroundColor(Theme.darkRed).padding(.trailing, 8)
 
                         Text(
                             "\(String(format: "%.6f", coordinate.latitude)), \(String(format: "%.6f", coordinate.longitude))"
@@ -138,8 +128,7 @@ struct CustomLocationCreationView: View {
 
                 // Error message
                 if let errorMessage = errorMessage {
-                    Text(errorMessage).font(.system(size: 14))
-                        .foregroundColor(Color(red: 220 / 255, green: 38 / 255, blue: 38 / 255))
+                    Text(errorMessage).font(.system(size: 14)).foregroundColor(Theme.darkRed)
                         .padding(.top, 10)
                 }
 
@@ -168,10 +157,8 @@ struct CustomLocationCreationView: View {
                                 else {
                                     LinearGradient(
                                         colors: [
-                                            Color(red: 220 / 255, green: 38 / 255, blue: 38 / 255)
-                                                .opacity(0.8),
-                                            Color(red: 185 / 255, green: 28 / 255, blue: 28 / 255)
-                                                .opacity(0.8),
+                                            Theme.darkRed.opacity(0.8),
+                                            Theme.darkerRed.opacity(0.8),
                                         ],
                                         startPoint: .leading,
                                         endPoint: .trailing
@@ -197,9 +184,7 @@ struct CustomLocationCreationView: View {
                         }
                     )
                     .shadow(
-                        color: locationName.isEmpty
-                            ? Color.clear
-                            : Color(red: 220 / 255, green: 38 / 255, blue: 38 / 255).opacity(0.5),
+                        color: locationName.isEmpty ? Color.clear : Theme.darkRed.opacity(0.5),
                         radius: 8
                     )
                     .padding(.horizontal).padding(.top, 15)

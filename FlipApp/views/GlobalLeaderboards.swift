@@ -1375,7 +1375,7 @@ struct RegionalWeeklyLeaderboard: View {
     private let redGradient = LinearGradient(
         colors: [
             Theme.mutedRed,  // Red 500
-            Color(red: 220 / 255, green: 38 / 255, blue: 38 / 255),  // Red 600
+            Theme.darkRed,  // Red 600
         ],
         startPoint: .top,
         endPoint: .bottom
@@ -1439,10 +1439,7 @@ struct RegionalWeeklyLeaderboard: View {
                         Image(systemName: "mappin.circle.fill").font(.system(size: 20))
                             .foregroundStyle(
                                 LinearGradient(
-                                    colors: [
-                                        Theme.mutedRed,
-                                        Color(red: 220 / 255, green: 38 / 255, blue: 38 / 255),
-                                    ],
+                                    colors: [Theme.mutedRed, Theme.darkRed],
                                     startPoint: .top,
                                     endPoint: .bottom
                                 )
@@ -1452,10 +1449,7 @@ struct RegionalWeeklyLeaderboard: View {
                         Text("REGIONAL WEEKLY").font(.system(size: 13, weight: .black)).tracking(2)
                             .foregroundStyle(
                                 LinearGradient(
-                                    colors: [
-                                        Theme.mutedRed,
-                                        Color(red: 220 / 255, green: 38 / 255, blue: 38 / 255),
-                                    ],
+                                    colors: [Theme.mutedRed, Theme.darkRed],
                                     startPoint: .top,
                                     endPoint: .bottom
                                 )
@@ -1487,10 +1481,7 @@ struct RegionalWeeklyLeaderboard: View {
                 RoundedRectangle(cornerRadius: 12)
                     .fill(
                         LinearGradient(
-                            colors: [
-                                Theme.mutedRed.opacity(0.3),
-                                Color(red: 220 / 255, green: 38 / 255, blue: 38 / 255).opacity(0.2),
-                            ],
+                            colors: [Theme.mutedRed.opacity(0.3), Theme.darkRed.opacity(0.2)],
                             startPoint: .leading,
                             endPoint: .trailing
                         )
@@ -1713,10 +1704,7 @@ struct RegionalWeeklyLeaderboard: View {
                 RoundedRectangle(cornerRadius: 18)
                     .stroke(
                         LinearGradient(
-                            colors: [
-                                Theme.mutedRed.opacity(0.5),
-                                Color(red: 220 / 255, green: 38 / 255, blue: 38 / 255).opacity(0.2),
-                            ],
+                            colors: [Theme.mutedRed.opacity(0.5), Theme.darkRed.opacity(0.2)],
                             startPoint: .topLeading,
                             endPoint: .bottomTrailing
                         ),

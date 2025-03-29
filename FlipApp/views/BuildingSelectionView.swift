@@ -37,7 +37,7 @@ struct BuildingSelectionView: View {
                     .fill(
                         RadialGradient(
                             gradient: Gradient(colors: [
-                                Color(red: 220 / 255, green: 38 / 255, blue: 38 / 255).opacity(0.1),
+                                Theme.darkRed.opacity(0.1),
                                 Color(red: 127 / 255, green: 29 / 255, blue: 29 / 255).opacity(0.0),
                             ]),
                             center: .center,
@@ -52,11 +52,7 @@ struct BuildingSelectionView: View {
 
             VStack(spacing: 20) {
                 Text("SELECT YOUR BUILDING").font(.system(size: 24, weight: .black)).tracking(4)
-                    .foregroundColor(.white)
-                    .shadow(
-                        color: Color(red: 220 / 255, green: 38 / 255, blue: 38 / 255).opacity(0.5),
-                        radius: 8
-                    )
+                    .foregroundColor(.white).shadow(color: Theme.darkRed.opacity(0.5), radius: 8)
 
                 if buildings.isEmpty {
                     // No buildings view
@@ -76,9 +72,7 @@ struct BuildingSelectionView: View {
                         Button(action: { showCustomLocationCreation = true }) {
                             HStack {
                                 Image(systemName: "plus.circle.fill").font(.system(size: 20))
-                                    .foregroundColor(
-                                        Color(red: 220 / 255, green: 38 / 255, blue: 38 / 255)
-                                    )
+                                    .foregroundColor(Theme.darkRed)
 
                                 Text("Create Custom Location")
                                     .font(.system(size: 18, weight: .bold)).foregroundColor(.white)
@@ -88,15 +82,7 @@ struct BuildingSelectionView: View {
                                 RoundedRectangle(cornerRadius: 12).fill(Color.white.opacity(0.15))
                                     .overlay(
                                         RoundedRectangle(cornerRadius: 12)
-                                            .stroke(
-                                                Color(
-                                                    red: 220 / 255,
-                                                    green: 38 / 255,
-                                                    blue: 38 / 255
-                                                )
-                                                .opacity(0.5),
-                                                lineWidth: 1.5
-                                            )
+                                            .stroke(Theme.darkRed.opacity(0.5), lineWidth: 1.5)
                                     )
                             )
                             .padding(.horizontal, 20)
@@ -126,26 +112,12 @@ struct BuildingSelectionView: View {
                                     HStack {
                                         // Building icon
                                         ZStack {
-                                            Circle()
-                                                .fill(
-                                                    Color(
-                                                        red: 220 / 255,
-                                                        green: 38 / 255,
-                                                        blue: 38 / 255
-                                                    )
-                                                    .opacity(0.2)
-                                                )
+                                            Circle().fill(Theme.darkRed.opacity(0.2))
                                                 .frame(width: 36, height: 36)
 
                                             Image(systemName: "building.2.fill")
                                                 .font(.system(size: 16))
-                                                .foregroundColor(
-                                                    Color(
-                                                        red: 220 / 255,
-                                                        green: 38 / 255,
-                                                        blue: 38 / 255
-                                                    )
-                                                )
+                                                .foregroundColor(Theme.darkRed)
                                         }
                                         .padding(.trailing, 8)
 
@@ -168,34 +140,14 @@ struct BuildingSelectionView: View {
                                                 // Distance indicator
                                                 Text(formatDistance(to: building))
                                                     .font(.system(size: 12, weight: .medium))
-                                                    .foregroundColor(
-                                                        Color(
-                                                            red: 220 / 255,
-                                                            green: 38 / 255,
-                                                            blue: 38 / 255
-                                                        )
-                                                        .opacity(0.9)
-                                                    )
+                                                    .foregroundColor(Theme.darkRed.opacity(0.9))
                                                     .padding(.horizontal, 8).padding(.vertical, 2)
                                                     .background(
-                                                        Capsule()
-                                                            .fill(
-                                                                Color(
-                                                                    red: 220 / 255,
-                                                                    green: 38 / 255,
-                                                                    blue: 38 / 255
-                                                                )
-                                                                .opacity(0.1)
-                                                            )
+                                                        Capsule().fill(Theme.darkRed.opacity(0.1))
                                                             .overlay(
                                                                 Capsule()
                                                                     .stroke(
-                                                                        Color(
-                                                                            red: 220 / 255,
-                                                                            green: 38 / 255,
-                                                                            blue: 38 / 255
-                                                                        )
-                                                                        .opacity(0.3),
+                                                                        Theme.darkRed.opacity(0.3),
                                                                         lineWidth: 1
                                                                     )
                                                             )
@@ -214,24 +166,11 @@ struct BuildingSelectionView: View {
                                                 .foregroundColor(.white).padding(.horizontal, 8)
                                                 .padding(.vertical, 4)
                                                 .background(
-                                                    Capsule()
-                                                        .fill(
-                                                            Color(
-                                                                red: 220 / 255,
-                                                                green: 38 / 255,
-                                                                blue: 38 / 255
-                                                            )
-                                                            .opacity(0.3)
-                                                        )
+                                                    Capsule().fill(Theme.darkRed.opacity(0.3))
                                                         .overlay(
                                                             Capsule()
                                                                 .stroke(
-                                                                    Color(
-                                                                        red: 220 / 255,
-                                                                        green: 38 / 255,
-                                                                        blue: 38 / 255
-                                                                    )
-                                                                    .opacity(0.5),
+                                                                    Theme.darkRed.opacity(0.5),
                                                                     lineWidth: 1
                                                                 )
                                                         )
@@ -287,26 +226,12 @@ struct BuildingSelectionView: View {
                                             HStack {
                                                 // Clock icon
                                                 ZStack {
-                                                    Circle()
-                                                        .fill(
-                                                            Color(
-                                                                red: 220 / 255,
-                                                                green: 38 / 255,
-                                                                blue: 38 / 255
-                                                            )
-                                                            .opacity(0.2)
-                                                        )
+                                                    Circle().fill(Theme.darkRed.opacity(0.2))
                                                         .frame(width: 36, height: 36)
 
                                                     Image(systemName: "clock.arrow.circlepath")
                                                         .font(.system(size: 16))
-                                                        .foregroundColor(
-                                                            Color(
-                                                                red: 220 / 255,
-                                                                green: 38 / 255,
-                                                                blue: 38 / 255
-                                                            )
-                                                        )
+                                                        .foregroundColor(Theme.darkRed)
                                                 }
                                                 .padding(.trailing, 8)
 
@@ -351,26 +276,11 @@ struct BuildingSelectionView: View {
                                 HStack {
                                     // Plus icon
                                     ZStack {
-                                        Circle()
-                                            .fill(
-                                                Color(
-                                                    red: 220 / 255,
-                                                    green: 38 / 255,
-                                                    blue: 38 / 255
-                                                )
-                                                .opacity(0.2)
-                                            )
+                                        Circle().fill(Theme.darkRed.opacity(0.2))
                                             .frame(width: 36, height: 36)
 
                                         Image(systemName: "plus.circle.fill")
-                                            .font(.system(size: 16))
-                                            .foregroundColor(
-                                                Color(
-                                                    red: 220 / 255,
-                                                    green: 38 / 255,
-                                                    blue: 38 / 255
-                                                )
-                                            )
+                                            .font(.system(size: 16)).foregroundColor(Theme.darkRed)
                                     }
                                     .padding(.trailing, 8)
 
@@ -393,18 +303,8 @@ struct BuildingSelectionView: View {
                                             .stroke(
                                                 LinearGradient(
                                                     colors: [
-                                                        Color(
-                                                            red: 220 / 255,
-                                                            green: 38 / 255,
-                                                            blue: 38 / 255
-                                                        )
-                                                        .opacity(0.4),
-                                                        Color(
-                                                            red: 220 / 255,
-                                                            green: 38 / 255,
-                                                            blue: 38 / 255
-                                                        )
-                                                        .opacity(0.1),
+                                                        Theme.darkRed.opacity(0.4),
+                                                        Theme.darkRed.opacity(0.1),
                                                     ],
                                                     startPoint: .topLeading,
                                                     endPoint: .bottomTrailing

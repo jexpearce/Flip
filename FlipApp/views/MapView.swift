@@ -144,18 +144,7 @@ struct MapView: View {
                                         Circle()
                                             .fill(
                                                 LinearGradient(
-                                                    colors: [
-                                                        Color(
-                                                            red: 220 / 255,
-                                                            green: 38 / 255,
-                                                            blue: 38 / 255
-                                                        ),
-                                                        Color(
-                                                            red: 185 / 255,
-                                                            green: 28 / 255,
-                                                            blue: 28 / 255
-                                                        ),
-                                                    ],
+                                                    colors: [Theme.darkRed, Theme.darkerRed],
                                                     startPoint: .top,
                                                     endPoint: .bottom
                                                 )
@@ -179,18 +168,7 @@ struct MapView: View {
                                         Circle()
                                             .fill(
                                                 LinearGradient(
-                                                    colors: [
-                                                        Color(
-                                                            red: 220 / 255,
-                                                            green: 38 / 255,
-                                                            blue: 38 / 255
-                                                        ),
-                                                        Color(
-                                                            red: 185 / 255,
-                                                            green: 28 / 255,
-                                                            blue: 28 / 255
-                                                        ),
-                                                    ],
+                                                    colors: [Theme.darkRed, Theme.darkerRed],
                                                     startPoint: .top,
                                                     endPoint: .bottom
                                                 )
@@ -215,18 +193,7 @@ struct MapView: View {
                                         Circle()
                                             .fill(
                                                 LinearGradient(
-                                                    colors: [
-                                                        Color(
-                                                            red: 220 / 255,
-                                                            green: 38 / 255,
-                                                            blue: 38 / 255
-                                                        ),
-                                                        Color(
-                                                            red: 185 / 255,
-                                                            green: 28 / 255,
-                                                            blue: 28 / 255
-                                                        ),
-                                                    ],
+                                                    colors: [Theme.darkRed, Theme.darkerRed],
                                                     startPoint: .top,
                                                     endPoint: .bottom
                                                 )

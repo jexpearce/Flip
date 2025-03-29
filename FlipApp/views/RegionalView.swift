@@ -123,7 +123,7 @@ struct RegionalView: View {
     )
 
     // Red glow effect for accents
-    private let redGlow = Color(red: 220 / 255, green: 38 / 255, blue: 38 / 255).opacity(0.5)
+    private let redGlow = Theme.darkRed.opacity(0.5)
 
     var body: some View {
         NavigationStack {
@@ -140,8 +140,7 @@ struct RegionalView: View {
                             .fill(
                                 RadialGradient(
                                     gradient: Gradient(colors: [
-                                        Color(red: 220 / 255, green: 38 / 255, blue: 38 / 255)
-                                            .opacity(0.15),
+                                        Theme.darkRed.opacity(0.15),
                                         Color(red: 127 / 255, green: 29 / 255, blue: 29 / 255)
                                             .opacity(0.05),
                                     ]),
@@ -157,8 +156,7 @@ struct RegionalView: View {
                             .fill(
                                 RadialGradient(
                                     gradient: Gradient(colors: [
-                                        Color(red: 220 / 255, green: 38 / 255, blue: 38 / 255)
-                                            .opacity(0.1),
+                                        Theme.darkRed.opacity(0.1),
                                         Color(red: 127 / 255, green: 29 / 255, blue: 29 / 255)
                                             .opacity(0.05),
                                     ]),
@@ -316,18 +314,8 @@ struct RegionalView: View {
                                     .fill(
                                         LinearGradient(
                                             colors: [
-                                                Color(
-                                                    red: 220 / 255,
-                                                    green: 38 / 255,
-                                                    blue: 38 / 255
-                                                )
-                                                .opacity(0.8),
-                                                Color(
-                                                    red: 185 / 255,
-                                                    green: 28 / 255,
-                                                    blue: 28 / 255
-                                                )
-                                                .opacity(0.8),
+                                                Theme.darkRed.opacity(0.8),
+                                                Theme.darkerRed.opacity(0.8),
                                             ],
                                             startPoint: .topLeading,
                                             endPoint: .bottomTrailing
@@ -348,12 +336,7 @@ struct RegionalView: View {
                                             )
                                     )
                                     .shadow(
-                                        color: Color(
-                                            red: 220 / 255,
-                                            green: 38 / 255,
-                                            blue: 38 / 255
-                                        )
-                                        .opacity(0.5),
+                                        color: Theme.darkRed.opacity(0.5),
                                         radius: 15,
                                         x: 0,
                                         y: 0

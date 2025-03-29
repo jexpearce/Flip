@@ -19,10 +19,7 @@ struct FailedLockView: View {
                 Circle()
                     .fill(
                         LinearGradient(
-                            colors: [
-                                Theme.mutedRed,
-                                Color(red: 185 / 255, green: 28 / 255, blue: 28 / 255),
-                            ],
+                            colors: [Theme.mutedRed, Theme.darkerRed],
                             startPoint: .top,
                             endPoint: .bottom
                         )
@@ -34,10 +31,7 @@ struct FailedLockView: View {
                 Image(systemName: "xmark.circle.fill").font(.system(size: 40, weight: .bold))
                     .foregroundStyle(
                         LinearGradient(
-                            colors: [
-                                Theme.mutedRed,
-                                Color(red: 185 / 255, green: 28 / 255, blue: 28 / 255),
-                            ],
+                            colors: [Theme.mutedRed, Theme.darkerRed],
                             startPoint: .top,
                             endPoint: .bottom
                         )
@@ -49,9 +43,7 @@ struct FailedLockView: View {
             Text("SESSION FAILED").font(.system(size: 24, weight: .black)).tracking(4)
                 .foregroundStyle(
                     LinearGradient(
-                        colors: [
-                            Theme.mutedRed, Color(red: 185 / 255, green: 28 / 255, blue: 28 / 255),
-                        ],
+                        colors: [Theme.mutedRed, Theme.darkerRed],
                         startPoint: .top,
                         endPoint: .bottom
                     )

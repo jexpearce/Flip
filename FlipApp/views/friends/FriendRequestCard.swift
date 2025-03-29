@@ -70,12 +70,7 @@ struct EnhancedFriendRequestCard: View {
                                             LinearGradient(
                                                 colors: [
                                                     Theme.mutedRed.opacity(0.8),
-                                                    Color(
-                                                        red: 185 / 255,
-                                                        green: 28 / 255,
-                                                        blue: 28 / 255
-                                                    )
-                                                    .opacity(0.8),
+                                                    Theme.darkerRed.opacity(0.8),
                                                 ],
                                                 startPoint: .top,
                                                 endPoint: .bottom

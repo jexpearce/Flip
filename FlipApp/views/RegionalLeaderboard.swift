@@ -13,7 +13,7 @@ struct RegionalLeaderboard: View {
     private let silverRedGradient = LinearGradient(
         colors: [
             Color(red: 226 / 255, green: 232 / 255, blue: 240 / 255),  // Light silver
-            Color(red: 185 / 255, green: 28 / 255, blue: 28 / 255),  // Deep red
+            Theme.darkerRed,  // Deep red
         ],
         startPoint: .top,
         endPoint: .bottom
@@ -75,10 +75,7 @@ struct RegionalLeaderboard: View {
                                     endPoint: .bottom
                                 )
                                 : LinearGradient(
-                                    colors: [
-                                        Theme.mutedRed,
-                                        Color(red: 185 / 255, green: 28 / 255, blue: 28 / 255),
-                                    ],
+                                    colors: [Theme.mutedRed, Theme.darkerRed],
                                     startPoint: .top,
                                     endPoint: .bottom
                                 )
@@ -105,10 +102,7 @@ struct RegionalLeaderboard: View {
                                 endPoint: .bottom
                             )
                             : LinearGradient(
-                                colors: [
-                                    Theme.mutedRed,
-                                    Color(red: 185 / 255, green: 28 / 255, blue: 28 / 255),
-                                ],
+                                colors: [Theme.mutedRed, Theme.darkerRed],
                                 startPoint: .top,
                                 endPoint: .bottom
                             )
@@ -144,9 +138,7 @@ struct RegionalLeaderboard: View {
                             )
                             : LinearGradient(
                                 colors: [
-                                    Theme.mutedRed.opacity(0.3),
-                                    Color(red: 185 / 255, green: 28 / 255, blue: 28 / 255)
-                                        .opacity(0.2),
+                                    Theme.mutedRed.opacity(0.3), Theme.darkerRed.opacity(0.2),
                                 ],
                                 startPoint: .leading,
                                 endPoint: .trailing
@@ -465,9 +457,7 @@ struct RegionalLeaderboard: View {
                             )
                             : LinearGradient(
                                 colors: [
-                                    Theme.mutedRed.opacity(0.5),
-                                    Color(red: 185 / 255, green: 28 / 255, blue: 28 / 255)
-                                        .opacity(0.2),
+                                    Theme.mutedRed.opacity(0.5), Theme.darkerRed.opacity(0.2),
                                 ],
                                 startPoint: .topLeading,
                                 endPoint: .bottomTrailing

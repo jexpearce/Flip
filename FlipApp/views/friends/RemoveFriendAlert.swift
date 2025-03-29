@@ -28,10 +28,7 @@ struct RemoveFriendAlert: View {
                     Circle()
                         .fill(
                             LinearGradient(
-                                colors: [
-                                    Theme.mutedRed,
-                                    Color(red: 185 / 255, green: 28 / 255, blue: 28 / 255),
-                                ],
+                                colors: [Theme.mutedRed, Theme.darkerRed],
                                 startPoint: .top,
                                 endPoint: .bottom
                             )
@@ -41,10 +38,7 @@ struct RemoveFriendAlert: View {
                     Image(systemName: "person.fill.badge.minus").font(.system(size: 36))
                         .foregroundStyle(
                             LinearGradient(
-                                colors: [
-                                    Theme.mutedRed,
-                                    Color(red: 185 / 255, green: 28 / 255, blue: 28 / 255),
-                                ],
+                                colors: [Theme.mutedRed, Theme.darkerRed],
                                 startPoint: .top,
                                 endPoint: .bottom
                             )
@@ -109,14 +103,7 @@ struct RemoveFriendAlert: View {
                                     RoundedRectangle(cornerRadius: 22)
                                         .fill(
                                             LinearGradient(
-                                                colors: [
-                                                    Theme.mutedRed,
-                                                    Color(
-                                                        red: 185 / 255,
-                                                        green: 28 / 255,
-                                                        blue: 28 / 255
-                                                    ),
-                                                ],
+                                                colors: [Theme.mutedRed, Theme.darkerRed],
                                                 startPoint: .top,
                                                 endPoint: .bottom
                                             )

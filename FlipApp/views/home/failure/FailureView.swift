@@ -35,9 +35,7 @@ struct FailureView: View {
                             .fill(
                                 LinearGradient(
                                     colors: [
-                                        Theme.mutedRed.opacity(0.3),
-                                        Color(red: 185 / 255, green: 28 / 255, blue: 28 / 255)
-                                            .opacity(0.2),
+                                        Theme.mutedRed.opacity(0.3), Theme.darkerRed.opacity(0.2),
                                     ],
                                     startPoint: .topLeading,
                                     endPoint: .bottomTrailing
@@ -59,10 +57,7 @@ struct FailureView: View {
                         Image(systemName: "xmark.circle.fill").font(.system(size: 60))
                             .foregroundStyle(
                                 LinearGradient(
-                                    colors: [
-                                        Theme.mutedRed,
-                                        Color(red: 185 / 255, green: 28 / 255, blue: 28 / 255),
-                                    ],
+                                    colors: [Theme.mutedRed, Theme.darkerRed],
                                     startPoint: .top,
                                     endPoint: .bottom
                                 )

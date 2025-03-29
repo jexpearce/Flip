@@ -16,7 +16,7 @@ struct SessionHistoryCard: View {
             : LinearGradient(
                 colors: [
                     Theme.mutedRed,  // Failure red
-                    Color(red: 185 / 255, green: 28 / 255, blue: 28 / 255),  // Darker failure red
+                    Theme.darkerRed,  // Darker failure red
                 ],
                 startPoint: .leading,
                 endPoint: .trailing
