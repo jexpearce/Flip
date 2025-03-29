@@ -3,8 +3,7 @@ import SwiftUI
 
 struct AuthView: View {
     @StateObject private var authManager = AuthManager.shared
-    @StateObject private var locationPermissionManager =
-        LocationPermissionManager.shared
+    @StateObject private var locationPermissionManager = LocationPermissionManager.shared
     @State private var email = ""
     @State private var password = ""
     @State private var username = ""
@@ -20,9 +19,7 @@ struct AuthView: View {
     @State private var isFlipAnimating = false
     @State private var logoScale: CGFloat = 1.0
 
-    private enum Field: Hashable {
-        case email, password, username
-    }
+    private enum Field: Hashable { case email, password, username }
 
     var body: some View {
         ZStack {
@@ -34,42 +31,30 @@ struct AuthView: View {
                         VStack(spacing: 0) {
                             // Stylized FLIP logo with flipped "i"
                             HStack(spacing: 2) {
-                                Text("F")
-                                    .font(.system(size: 80, weight: .black))
-                                    .tracking(2)
+                                Text("F").font(.system(size: 80, weight: .black)).tracking(2)
                                     .foregroundColor(.white)
 
-                                Text("L")
-                                    .font(.system(size: 80, weight: .black))
-                                    .tracking(2)
+                                Text("L").font(.system(size: 80, weight: .black)).tracking(2)
                                     .foregroundColor(.white)
 
                                 // Upside-down "i"
-                                Text("i")
-                                    .font(.system(size: 80, weight: .black))
-                                    .tracking(2)
-                                    .foregroundColor(.white)
-                                    .rotationEffect(.degrees(180))
+                                Text("i").font(.system(size: 80, weight: .black)).tracking(2)
+                                    .foregroundColor(.white).rotationEffect(.degrees(180))
 
-                                Text("P")
-                                    .font(.system(size: 80, weight: .black))
-                                    .tracking(2)
+                                Text("P").font(.system(size: 80, weight: .black)).tracking(2)
                                     .foregroundColor(.white)
                             }
-                            .shadow(color: Theme.indigoGlow, radius: 10)
-                            .scaleEffect(logoScale)
+                            .shadow(color: Theme.indigoGlow, radius: 10).scaleEffect(logoScale)
                             .animation(
                                 .spring(response: 0.5, dampingFraction: 0.6),
-                                value: logoScale)
+                                value: logoScale
+                            )
 
                             // Animated arrow icon
                             Image(systemName: "arrow.2.squarepath")
-                                .font(.system(size: 50, weight: .bold))
-                                .foregroundColor(.white)
+                                .font(.system(size: 50, weight: .bold)).foregroundColor(.white)
                                 .shadow(color: Theme.indigoGlow, radius: 6)
-                                .rotationEffect(
-                                    .degrees(isFlipAnimating ? 360 : 0)
-                                )
+                                .rotationEffect(.degrees(isFlipAnimating ? 360 : 0))
                                 .animation(
                                     .spring(response: 2.0, dampingFraction: 0.6)
                                         .repeatForever(autoreverses: false),
@@ -77,15 +62,11 @@ struct AuthView: View {
                                 )
                             VStack(spacing: 4) {
 
-                                Text(
-                                    isSignUp ? "Create Account" : "Welcome Back"
-                                )
-                                .font(.system(size: 24, weight: .bold))
-                                .foregroundColor(.white)
-                                .shadow(color: Theme.indigoGlow, radius: 6)
+                                Text(isSignUp ? "Create Account" : "Welcome Back")
+                                    .font(.system(size: 24, weight: .bold)).foregroundColor(.white)
+                                    .shadow(color: Theme.indigoGlow, radius: 6)
                             }
-                            .padding(.top, 8)
-                            .scaleEffect(isKeyboardVisible ? 0.9 : 1.0)
+                            .padding(.top, 8).scaleEffect(isKeyboardVisible ? 0.9 : 1.0)
                         }
                         .scaleEffect(isKeyboardVisible ? 0.8 : 1.0)
                         .padding(.top, isKeyboardVisible ? 20 : 60)
@@ -101,9 +82,7 @@ struct AuthView: View {
                                     accentColor: Theme.indigoAccent,
                                     onTap: { selectedField = .username }
                                 )
-                                .transition(
-                                    .move(edge: .trailing).combined(
-                                        with: .opacity))
+                                .transition(.move(edge: .trailing).combined(with: .opacity))
                             }
 
                             EnhancedAuthField(
@@ -120,45 +99,36 @@ struct AuthView: View {
                             HStack(spacing: 15) {
                                 Image(systemName: "lock.fill")
                                     .foregroundColor(
-                                        selectedField == .password
-                                            ? .white : .white.opacity(0.7)
+                                        selectedField == .password ? .white : .white.opacity(0.7)
                                     )
                                     .frame(width: 20)
-                                    .scaleEffect(
-                                        selectedField == .password ? 1.1 : 1.0
-                                    )
+                                    .scaleEffect(selectedField == .password ? 1.1 : 1.0)
                                     .shadow(color: Theme.indigoGlow, radius: 4)
 
                                 Group {
                                     if showPassword {
                                         TextField(
-                                            "", text: $password,
+                                            "",
+                                            text: $password,
                                             prompt: Text("Password")
-                                                .foregroundColor(
-                                                    .white.opacity(0.4))
+                                                .foregroundColor(.white.opacity(0.4))
                                         )
                                         .textInputAutocapitalization(.never)
-                                    } else {
+                                    }
+                                    else {
                                         SecureField(
-                                            "", text: $password,
+                                            "",
+                                            text: $password,
                                             prompt: Text("Password")
-                                                .foregroundColor(
-                                                    .white.opacity(0.4)))
+                                                .foregroundColor(.white.opacity(0.4))
+                                        )
                                     }
                                 }
                                 .foregroundColor(.white)
 
-                                Button(action: {
-                                    withAnimation {
-                                        showPassword.toggle()
-                                    }
-                                }) {
-                                    Image(
-                                        systemName: showPassword
-                                            ? "eye.slash.fill" : "eye.fill"
-                                    )
-                                    .foregroundColor(.white.opacity(0.6))
-                                    .frame(width: 20)
+                                Button(action: { withAnimation { showPassword.toggle() } }) {
+                                    Image(systemName: showPassword ? "eye.slash.fill" : "eye.fill")
+                                        .foregroundColor(.white.opacity(0.6)).frame(width: 20)
                                 }
                             }
                             .padding()
@@ -172,30 +142,24 @@ struct AuthView: View {
                                             LinearGradient(
                                                 colors: [
                                                     Color.white.opacity(
-                                                        selectedField
-                                                            == .password
-                                                            ? 0.5 : 0.2),
+                                                        selectedField == .password ? 0.5 : 0.2
+                                                    ),
                                                     Color.white.opacity(
-                                                        selectedField
-                                                            == .password
-                                                            ? 0.2 : 0.1),
+                                                        selectedField == .password ? 0.2 : 0.1
+                                                    ),
                                                 ],
                                                 startPoint: .topLeading,
                                                 endPoint: .bottomTrailing
                                             ),
-                                            lineWidth: selectedField
-                                                == .password ? 2 : 1
+                                            lineWidth: selectedField == .password ? 2 : 1
                                         )
                                 }
                             )
                             .shadow(
-                                color: selectedField == .password
-                                    ? Theme.indigoGlow : .clear,
+                                color: selectedField == .password ? Theme.indigoGlow : .clear,
                                 radius: 4
                             )
-                            .onTapGesture {
-                                selectedField = .password
-                            }
+                            .onTapGesture { selectedField = .password }
                             .animation(.spring(), value: selectedField)
                         }
                         .padding(.horizontal, 30)
@@ -207,41 +171,31 @@ struct AuthView: View {
                                 logoScale = 1.1
                                 handleAuth()
                             }
-                            DispatchQueue.main.asyncAfter(
-                                deadline: .now() + 0.3
-                            ) {
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
                                 isButtonPressed = false
                                 logoScale = 1.0
                             }
                         }) {
                             ZStack {
                                 Text(isSignUp ? "Create Account" : "Sign In")
-                                    .font(.system(size: 24, weight: .black))
-                                    .tracking(4)
-                                    .foregroundColor(.white)
-                                    .opacity(isLoading ? 0 : 1)
+                                    .font(.system(size: 24, weight: .black)).tracking(4)
+                                    .foregroundColor(.white).opacity(isLoading ? 0 : 1)
 
                                 if isLoading {
                                     ProgressView()
-                                        .progressViewStyle(
-                                            CircularProgressViewStyle(
-                                                tint: .white)
-                                        )
+                                        .progressViewStyle(CircularProgressViewStyle(tint: .white))
                                         .scaleEffect(1.2)
                                 }
                             }
-                            .frame(maxWidth: .infinity)
-                            .frame(height: 60)
+                            .frame(maxWidth: .infinity).frame(height: 60)
                             .background(
                                 ZStack {
                                     RoundedRectangle(cornerRadius: 30)
                                         .fill(
                                             LinearGradient(
                                                 colors: [
-                                                    Theme.indigoAccent.opacity(
-                                                        0.8),
-                                                    Theme.indigoAccent.opacity(
-                                                        0.5),
+                                                    Theme.indigoAccent.opacity(0.8),
+                                                    Theme.indigoAccent.opacity(0.5),
                                                 ],
                                                 startPoint: .topLeading,
                                                 endPoint: .bottomTrailing
@@ -265,15 +219,10 @@ struct AuthView: View {
                                         )
                                 }
                             )
-                            .shadow(
-                                color: Theme.indigoGlow,
-                                radius: isButtonPressed ? 15 : 8
-                            )
-                            .scaleEffect(
-                                isButtonPressed || isLoading ? 0.95 : 1.0)
+                            .shadow(color: Theme.indigoGlow, radius: isButtonPressed ? 15 : 8)
+                            .scaleEffect(isButtonPressed || isLoading ? 0.95 : 1.0)
                         }
-                        .disabled(isLoading)
-                        .padding(.horizontal, 30)
+                        .disabled(isLoading).padding(.horizontal, 30)
 
                         // Toggle Sign In/Up with indigo glow effect
                         Button(action: {
@@ -296,44 +245,32 @@ struct AuthView: View {
                         // Google Sign-In Button
                         Button(action: {
                             authManager.signInWithGoogle { success in
-                                if !success {
-                                    isLoading = false
-                                }
+                                if !success { isLoading = false }
                             }
                         }) {
                             Image("google-logo")  // Ensure this matches the name in Assets.xcassets
-                                .resizable()
-                                .aspectRatio(contentMode: .fit)
-                                .frame(height: 50)  // Adjust as needed
+                                .resizable().aspectRatio(contentMode: .fit).frame(height: 50)  // Adjust as needed
                         }
                         .padding(.horizontal, 30)
                     }
-                    .padding(.horizontal)
-                    .frame(minHeight: geometry.size.height)
+                    .padding(.horizontal).frame(minHeight: geometry.size.height)
                 }
             }
             .onTapGesture {
                 selectedField = nil
                 UIApplication.shared.sendAction(
                     #selector(UIResponder.resignFirstResponder),
-                    to: nil, from: nil, for: nil)
+                    to: nil,
+                    from: nil,
+                    for: nil
+                )
             }
             .onReceive(
-                NotificationCenter.default.publisher(
-                    for: UIResponder.keyboardWillShowNotification)
-            ) { _ in
-                withAnimation(.spring()) {
-                    isKeyboardVisible = true
-                }
-            }
+                NotificationCenter.default.publisher(for: UIResponder.keyboardWillShowNotification)
+            ) { _ in withAnimation(.spring()) { isKeyboardVisible = true } }
             .onReceive(
-                NotificationCenter.default.publisher(
-                    for: UIResponder.keyboardWillHideNotification)
-            ) { _ in
-                withAnimation(.spring()) {
-                    isKeyboardVisible = false
-                }
-            }
+                NotificationCenter.default.publisher(for: UIResponder.keyboardWillHideNotification)
+            ) { _ in withAnimation(.spring()) { isKeyboardVisible = false } }
 
             // Error Alert
             .alert(isPresented: $authManager.showAlert) {
@@ -346,51 +283,36 @@ struct AuthView: View {
 
             // Enhanced Success Overlay with animations
             if showSuccessOverlay {
-                Color.black.opacity(0.7)
-                    .edgesIgnoringSafeArea(.all)
+                Color.black.opacity(0.7).edgesIgnoringSafeArea(.all)
                     .overlay(
                         VStack(spacing: 20) {
                             // Success Icon
-                            Image(systemName: "checkmark.circle.fill")
-                                .font(.system(size: 56))
+                            Image(systemName: "checkmark.circle.fill").font(.system(size: 56))
                                 .foregroundStyle(
                                     LinearGradient(
-                                        colors: [
-                                            Theme.mutedGreen,
-                                            Theme.darkerGreen,
-                                        ],
+                                        colors: [Theme.mutedGreen, Theme.darkerGreen],
                                         startPoint: .top,
                                         endPoint: .bottom
                                     )
                                 )
-                                .shadow(
-                                    color: Color.green.opacity(0.5), radius: 10
-                                )
+                                .shadow(color: Color.green.opacity(0.5), radius: 10)
                                 .padding(.top, 30)
 
                             // Success Title
                             VStack(spacing: 4) {
-                                Text("SUCCESS")
-                                    .font(.system(size: 28, weight: .black))
-                                    .tracking(8)
+                                Text("SUCCESS").font(.system(size: 28, weight: .black)).tracking(8)
                                     .foregroundColor(.white)
-                                    .shadow(
-                                        color: Color.green.opacity(0.5),
-                                        radius: 8)
+                                    .shadow(color: Color.green.opacity(0.5), radius: 8)
 
-                                Text("成功")
-                                    .font(.system(size: 14))
-                                    .tracking(4)
+                                Text("成功").font(.system(size: 14)).tracking(4)
                                     .foregroundColor(.white.opacity(0.7))
                             }
 
                             // Message
                             Text("Your account has been created successfully!")
                                 .font(.system(size: 18, weight: .medium))
-                                .multilineTextAlignment(.center)
-                                .foregroundColor(.white)
-                                .padding(.horizontal, 30)
-                                .padding(.vertical, 10)
+                                .multilineTextAlignment(.center).foregroundColor(.white)
+                                .padding(.horizontal, 30).padding(.vertical, 10)
 
                             // Continue Button
                             Button(action: {
@@ -399,44 +321,31 @@ struct AuthView: View {
                                     authManager.signUpSuccess = false
 
                                     // Add a slight delay before sign in to ensure state is updated
-                                    DispatchQueue.main.asyncAfter(
-                                        deadline: .now() + 0.3
-                                    ) {
-                                        authManager.signIn(
-                                            email: email, password: password
-                                        ) { success in
+                                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                                        authManager.signIn(email: email, password: password) {
+                                            success in
                                             // Only proceed if sign in was successful
                                             if !success {
                                                 // Handle sign in failure
-                                                print(
-                                                    "Auto sign-in failed after account creation"
-                                                )
+                                                print("Auto sign-in failed after account creation")
                                             }
                                         }
                                     }
                                 }
                             }) {
-                                Text("CONTINUE")
-                                    .font(.system(size: 20, weight: .black))
-                                    .tracking(2)
-                                    .foregroundColor(.white)
-                                    .frame(width: 200, height: 50)
+                                Text("CONTINUE").font(.system(size: 20, weight: .black)).tracking(2)
+                                    .foregroundColor(.white).frame(width: 200, height: 50)
                                     .background(
                                         ZStack {
                                             RoundedRectangle(cornerRadius: 25)
                                                 .fill(
                                                     LinearGradient(
                                                         colors: [
-                                                            Theme.indigoAccent
-                                                                .opacity(
-                                                                    0.8),
-                                                            Theme.indigoAccent
-                                                                .opacity(
-                                                                    0.5),
+                                                            Theme.indigoAccent.opacity(0.8),
+                                                            Theme.indigoAccent.opacity(0.5),
                                                         ],
                                                         startPoint: .topLeading,
-                                                        endPoint:
-                                                            .bottomTrailing
+                                                        endPoint: .bottomTrailing
                                                     )
                                                 )
 
@@ -447,14 +356,11 @@ struct AuthView: View {
                                                 .stroke(
                                                     LinearGradient(
                                                         colors: [
-                                                            Color.white.opacity(
-                                                                0.6),
-                                                            Color.white.opacity(
-                                                                0.2),
+                                                            Color.white.opacity(0.6),
+                                                            Color.white.opacity(0.2),
                                                         ],
                                                         startPoint: .topLeading,
-                                                        endPoint:
-                                                            .bottomTrailing
+                                                        endPoint: .bottomTrailing
                                                     ),
                                                     lineWidth: 1
                                                 )
@@ -467,18 +373,15 @@ struct AuthView: View {
                         .frame(width: 320)
                         .background(
                             ZStack {
-                                RoundedRectangle(cornerRadius: 20)
-                                    .fill(Theme.darkGray)
+                                RoundedRectangle(cornerRadius: 20).fill(Theme.darkGray)
 
-                                RoundedRectangle(cornerRadius: 20)
-                                    .fill(Color.black.opacity(0.3))
+                                RoundedRectangle(cornerRadius: 20).fill(Color.black.opacity(0.3))
 
                                 RoundedRectangle(cornerRadius: 20)
                                     .stroke(
                                         LinearGradient(
                                             colors: [
-                                                Color.white.opacity(0.5),
-                                                Color.white.opacity(0.1),
+                                                Color.white.opacity(0.5), Color.white.opacity(0.1),
                                             ],
                                             startPoint: .topLeading,
                                             endPoint: .bottomTrailing
@@ -488,8 +391,7 @@ struct AuthView: View {
                             }
                         )
                         .shadow(color: Color.black.opacity(0.5), radius: 20)
-                        .transition(
-                            .scale(scale: 0.85).combined(with: .opacity))
+                        .transition(.scale(scale: 0.85).combined(with: .opacity))
                     )
                     .transition(.opacity)
             }
@@ -506,45 +408,35 @@ struct AuthView: View {
             }
 
             // Background gradient
-            Theme.indigoPurpleGradient
-                .edgesIgnoringSafeArea(.all)
-                .zIndex(-1)
+            Theme.indigoPurpleGradient.edgesIgnoringSafeArea(.all).zIndex(-1)
 
             // Decorative elements - top glow
             Circle()
                 .fill(
                     RadialGradient(
                         gradient: Gradient(colors: [
-                            Theme.indigoAccent.opacity(0.2),
-                            Theme.indigoAccent.opacity(0.05),
+                            Theme.indigoAccent.opacity(0.2), Theme.indigoAccent.opacity(0.05),
                         ]),
                         center: .center,
                         startRadius: 10,
                         endRadius: 300
                     )
                 )
-                .frame(width: 300, height: 300)
-                .offset(x: 150, y: -150)
-                .blur(radius: 50)
-                .zIndex(-1)
+                .frame(width: 300, height: 300).offset(x: 150, y: -150).blur(radius: 50).zIndex(-1)
 
             // Bottom decorative glow
             Circle()
                 .fill(
                     RadialGradient(
                         gradient: Gradient(colors: [
-                            Theme.indigoAccent.opacity(0.15),
-                            Theme.indigoAccent.opacity(0.03),
+                            Theme.indigoAccent.opacity(0.15), Theme.indigoAccent.opacity(0.03),
                         ]),
                         center: .center,
                         startRadius: 5,
                         endRadius: 200
                     )
                 )
-                .frame(width: 250, height: 250)
-                .offset(x: -120, y: 350)
-                .blur(radius: 40)
-                .zIndex(-1)
+                .frame(width: 250, height: 250).offset(x: -120, y: 350).blur(radius: 40).zIndex(-1)
         }
         .onAppear {
             // Start animation for the flip icon
@@ -560,12 +452,12 @@ struct AuthView: View {
                 // Start the permission flow after successful sign-up (with delay)
                 DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
                     // Make sure isPotentialFirstTimeUser is true to trigger InitialView
-                    UserDefaults.standard.set(
-                        true, forKey: "isPotentialFirstTimeUser")
+                    UserDefaults.standard.set(true, forKey: "isPotentialFirstTimeUser")
                     // Post notification to app to check and show permission flow
                     NotificationCenter.default.post(
                         name: NSNotification.Name("ShowPermissionsFlow"),
-                        object: nil)
+                        object: nil
+                    )
                 }
             }
         }
@@ -575,22 +467,17 @@ struct AuthView: View {
         isLoading = true
 
         if isSignUp {
-            authManager.signUp(
-                email: email, password: password, username: username
-            ) {
+            authManager.signUp(email: email, password: password, username: username) {
                 // Loading state is maintained if sign-up is successful
                 // The success overlay will appear and handle dismissal
-                if !authManager.signUpSuccess {
-                    isLoading = false
-                }
+                if !authManager.signUpSuccess { isLoading = false }
             }
-        } else {
+        }
+        else {
             authManager.signIn(email: email, password: password) { success in
                 // Only reset loading if sign in failed
                 // If success is true, the app will transition to main screen
-                if !success {
-                    isLoading = false
-                }
+                if !success { isLoading = false }
             }
         }
     }
@@ -609,27 +496,25 @@ struct EnhancedAuthField: View {
 
     var body: some View {
         HStack(spacing: 15) {
-            Image(systemName: icon)
-                .foregroundColor(isSelected ? .white : .white.opacity(0.7))
-                .frame(width: 20)
-                .scaleEffect(isSelected ? 1.1 : 1.0)
-                .shadow(
-                    color: accentColor.opacity(0.5), radius: isSelected ? 4 : 0)
+            Image(systemName: icon).foregroundColor(isSelected ? .white : .white.opacity(0.7))
+                .frame(width: 20).scaleEffect(isSelected ? 1.1 : 1.0)
+                .shadow(color: accentColor.opacity(0.5), radius: isSelected ? 4 : 0)
 
             Group {
                 if isSecure {
                     SecureField(
-                        "", text: $text,
-                        prompt: Text(placeholder)
-                            .foregroundColor(.white.opacity(0.4)))
-                } else {
-                    TextField(
-                        "", text: $text,
-                        prompt: Text(placeholder)
-                            .foregroundColor(.white.opacity(0.4))
+                        "",
+                        text: $text,
+                        prompt: Text(placeholder).foregroundColor(.white.opacity(0.4))
                     )
-                    .keyboardType(keyboardType)
-                    .textInputAutocapitalization(.never)
+                }
+                else {
+                    TextField(
+                        "",
+                        text: $text,
+                        prompt: Text(placeholder).foregroundColor(.white.opacity(0.4))
+                    )
+                    .keyboardType(keyboardType).textInputAutocapitalization(.never)
                 }
             }
             .foregroundColor(.white)
@@ -637,8 +522,7 @@ struct EnhancedAuthField: View {
         .padding()
         .background(
             ZStack {
-                RoundedRectangle(cornerRadius: 15)
-                    .fill(Color.white.opacity(0.05))
+                RoundedRectangle(cornerRadius: 15).fill(Color.white.opacity(0.05))
 
                 RoundedRectangle(cornerRadius: 15)
                     .stroke(
@@ -654,13 +538,7 @@ struct EnhancedAuthField: View {
                     )
             }
         )
-        .shadow(
-            color: isSelected ? accentColor.opacity(0.2) : .clear,
-            radius: 4
-        )
-        .onTapGesture {
-            onTap()
-        }
-        .animation(.spring(), value: isSelected)
+        .shadow(color: isSelected ? accentColor.opacity(0.2) : .clear, radius: 4)
+        .onTapGesture { onTap() }.animation(.spring(), value: isSelected)
     }
 }

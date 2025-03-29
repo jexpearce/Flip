@@ -11,8 +11,7 @@ enum RegionalDisplayMode: String, CaseIterable {
 
 class UserSettingsManager: ObservableObject {
     static let shared = UserSettingsManager()
-    @Published private(set) var regionalDisplayMode: RegionalDisplayMode =
-        .normal
+    @Published private(set) var regionalDisplayMode: RegionalDisplayMode = .normal
     @Published private(set) var regionalOptOut: Bool = false
     @Published private(set) var friendFailureNotifications: Bool = true
     @Published private(set) var commentNotifications: Bool = true
@@ -23,9 +22,7 @@ class UserSettingsManager: ObservableObject {
     private var userSettingsCache: [String: Any]?
     private var userSettingsListener: ListenerRegistration?
 
-    private init() {
-        setupSettingsListener()
-    }
+    private init() { setupSettingsListener() }
 
     // Setup a listener for real-time updates to user settings
     private func setupSettingsListener() {
@@ -40,9 +37,7 @@ class UserSettingsManager: ObservableObject {
                 guard let self = self else { return }
 
                 if let error = error {
-                    print(
-                        "Error listening for settings updates: \(error.localizedDescription)"
-                    )
+                    print("Error listening for settings updates: \(error.localizedDescription)")
                     return
                 }
 
@@ -51,31 +46,25 @@ class UserSettingsManager: ObservableObject {
 
                     // Update @Published properties from data
                     if let data = document.data() {
-                        if let modeString = data["regionalDisplayMode"]
-                            as? String,
+                        if let modeString = data["regionalDisplayMode"] as? String,
                             let mode = RegionalDisplayMode(rawValue: modeString)
                         {
                             self.regionalDisplayMode = mode
                         }
-                        self.regionalOptOut =
-                            data["regionalOptOut"] as? Bool ?? false
+                        self.regionalOptOut = data["regionalOptOut"] as? Bool ?? false
                         self.friendFailureNotifications =
                             data["friendFailureNotifications"] as? Bool ?? true
-                        self.commentNotifications =
-                            data["commentNotifications"] as? Bool ?? true
-                        self.visibilityLevel =
-                            data["visibilityLevel"] as? String ?? "friendsOnly"
-                        self.showSessionHistory =
-                            data["showSessionHistory"] as? Bool ?? true
+                        self.commentNotifications = data["commentNotifications"] as? Bool ?? true
+                        self.visibilityLevel = data["visibilityLevel"] as? String ?? "friendsOnly"
+                        self.showSessionHistory = data["showSessionHistory"] as? Bool ?? true
                     }
-                } else {
+                }
+                else {
                     // Initialize with default settings if document doesn't exist
                     self.userSettingsCache = [
-                        "friendFailureNotifications": true,
-                        "visibilityLevel": "friendsOnly",
+                        "friendFailureNotifications": true, "visibilityLevel": "friendsOnly",
                         "showSessionHistory": true,
-                        "regionalDisplayMode": RegionalDisplayMode.normal
-                            .rawValue,
+                        "regionalDisplayMode": RegionalDisplayMode.normal.rawValue,
                         "regionalOptOut": false,
                     ]
 
@@ -88,16 +77,13 @@ class UserSettingsManager: ObservableObject {
                     self.showSessionHistory = true
 
                     // Create the settings document with defaults
-                    self.saveSettingsToFirestore(
-                        settings: self.userSettingsCache!)
+                    self.saveSettingsToFirestore(settings: self.userSettingsCache!)
                 }
             }
     }
 
     // Called when user signs in
-    func onUserSignIn() {
-        setupSettingsListener()
-    }
+    func onUserSignIn() { setupSettingsListener() }
 
     // Called when user signs out
     func onUserSignOut() {
@@ -112,13 +98,12 @@ class UserSettingsManager: ObservableObject {
         var updatedSettings = settings
         updatedSettings["updatedAt"] = FieldValue.serverTimestamp()
 
-        db.collection("user_settings").document(userId).setData(
-            updatedSettings, merge: true
-        ) { error in
-            if let error = error {
-                print("Error saving settings: \(error.localizedDescription)")
+        db.collection("user_settings").document(userId)
+            .setData(updatedSettings, merge: true) { error in
+                if let error = error {
+                    print("Error saving settings: \(error.localizedDescription)")
+                }
             }
-        }
     }
 
     // Update a specific setting
@@ -126,11 +111,9 @@ class UserSettingsManager: ObservableObject {
         guard var settings = userSettingsCache else {
             // Initialize with defaults if cache is empty
             userSettingsCache = [
-                "friendFailureNotifications": true,
-                "visibilityLevel": "friendsOnly",
+                "friendFailureNotifications": true, "visibilityLevel": "friendsOnly",
                 "showSessionHistory": true,
-                "regionalDisplayMode": RegionalDisplayMode.normal.rawValue,
-                "regionalOptOut": false,
+                "regionalDisplayMode": RegionalDisplayMode.normal.rawValue, "regionalOptOut": false,
             ]
             updateSetting(key: key, value: value)
             return
@@ -143,8 +126,7 @@ class UserSettingsManager: ObservableObject {
 
     // Get a specific setting with a default value
     func getSetting<T>(key: String, defaultValue: T) -> T {
-        guard let settings = userSettingsCache, let value = settings[key] as? T
-        else {
+        guard let settings = userSettingsCache, let value = settings[key] as? T else {
             return defaultValue
         }
         return value

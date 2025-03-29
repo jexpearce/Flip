@@ -3,8 +3,7 @@ import SwiftUI
 struct HomeView: View {
     @EnvironmentObject var appManager: AppManager
     @EnvironmentObject var sessionManager: SessionManager
-    @ObservedObject private var sessionJoinCoordinator = SessionJoinCoordinator
-        .shared
+    @ObservedObject private var sessionJoinCoordinator = SessionJoinCoordinator.shared
     @ObservedObject private var liveSessionManager = LiveSessionManager.shared
     @State private var showRules = false
 
@@ -13,31 +12,20 @@ struct HomeView: View {
             // Main content based on app state
             VStack(spacing: 30) {
                 switch appManager.currentState {
-                case .initial:
-                    SetupView()
-                case .paused:
-                    PausedView()
-                case .countdown:
-                    CountdownView()
-                case .tracking:
-                    TrackingView()
-                case .failed:
-                    FailureView()
-                case .completed:
-                    CompletionView()
-                case .joinedCompleted:
-                    JoinedCompletionView()
-                case .mixedOutcome:
-                    MixedOutcomeView()
-                case .othersActive:
-                    OthersActiveView()
+                case .initial: SetupView()
+                case .paused: PausedView()
+                case .countdown: CountdownView()
+                case .tracking: TrackingView()
+                case .failed: FailureView()
+                case .completed: CompletionView()
+                case .joinedCompleted: JoinedCompletionView()
+                case .mixedOutcome: MixedOutcomeView()
+                case .othersActive: OthersActiveView()
                 }
             }
 
             // Rules overlay
-            if showRules {
-                RulesView(showRules: $showRules)
-            }
+            if showRules { RulesView(showRules: $showRules) }
 
             // Rank Promotion Alert
             if sessionManager.showPromotionAlert {
@@ -67,12 +55,13 @@ struct HomeView: View {
                 liveSessionManager.isJoiningSession = true
 
                 // First get session details
-                liveSessionManager.getSessionDetails(sessionId: sessionId) {
-                    sessionData in
+                liveSessionManager.getSessionDetails(sessionId: sessionId) { sessionData in
                     if let _session = sessionData {
                         // Join the session
                         liveSessionManager.joinSession(sessionId: sessionId) {
-                            success, remainingSeconds, totalDuration in
+                            success,
+                            remainingSeconds,
+                            totalDuration in
                             if success {
                                 // Actually join the live session with proper timing values
                                 DispatchQueue.main.async {
@@ -91,7 +80,8 @@ struct HomeView: View {
                                 liveSessionManager.isJoiningSession = false
                             }
                         }
-                    } else {
+                    }
+                    else {
                         // No valid session found
                         DispatchQueue.main.async {
                             sessionJoinCoordinator.clearPendingSession()

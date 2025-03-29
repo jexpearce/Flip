@@ -41,8 +41,11 @@ class SessionJoinCoordinator: ObservableObject {
 
                     // Switch to home tab to show the join UI
                     NotificationCenter.default.post(
-                        name: Notification.Name("SwitchToHomeTab"), object: nil)
-                } else {
+                        name: Notification.Name("SwitchToHomeTab"),
+                        object: nil
+                    )
+                }
+                else {
                     // User needs to complete their first session
                     self.showFirstSessionRequiredAlert = true
                 }
@@ -61,15 +64,12 @@ class SessionJoinCoordinator: ObservableObject {
 
     // Get the current join session if valid
     func getJoinSession() -> (id: String, name: String)? {
-        if shouldJoinSession, let id = pendingSessionId,
-            let name = pendingSessionName
-        {
+        if shouldJoinSession, let id = pendingSessionId, let name = pendingSessionName {
             // Check for timeout
-            if let timestamp = pendingTimestamp,
-                Date().timeIntervalSince(timestamp) < joinTimeout
-            {
+            if let timestamp = pendingTimestamp, Date().timeIntervalSince(timestamp) < joinTimeout {
                 return (id: id, name: name)
-            } else {
+            }
+            else {
                 // Clear if timed out
                 clearPendingSession()
                 return nil
@@ -88,8 +88,7 @@ class SessionJoinCoordinator: ObservableObject {
 
     // Check for and clean up stale join requests
     private func checkForStaleRequests() {
-        if let timestamp = pendingTimestamp,
-            Date().timeIntervalSince(timestamp) >= joinTimeout,
+        if let timestamp = pendingTimestamp, Date().timeIntervalSince(timestamp) >= joinTimeout,
             shouldJoinSession
         {
             print("Join session request timed out after \(joinTimeout) seconds")

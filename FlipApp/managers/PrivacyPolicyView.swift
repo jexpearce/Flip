@@ -8,8 +8,7 @@ struct PrivacyPolicyView: View {
             // Background gradient
             LinearGradient(
                 colors: [
-                    Theme.deepMidnightPurple,
-                    Color(red: 30 / 255, green: 18 / 255, blue: 60 / 255),
+                    Theme.deepMidnightPurple, Color(red: 30 / 255, green: 18 / 255, blue: 60 / 255),
                 ],
                 startPoint: .top,
                 endPoint: .bottom
@@ -19,22 +18,17 @@ struct PrivacyPolicyView: View {
             VStack {
                 // Header with dismiss button
                 HStack {
-                    Text("Privacy Policy")
-                        .font(.system(size: 22, weight: .bold))
+                    Text("Privacy Policy").font(.system(size: 22, weight: .bold))
                         .foregroundColor(.white)
 
                     Spacer()
 
-                    Button(action: {
-                        presentationMode.wrappedValue.dismiss()
-                    }) {
-                        Image(systemName: "xmark.circle.fill")
-                            .font(.system(size: 24))
+                    Button(action: { presentationMode.wrappedValue.dismiss() }) {
+                        Image(systemName: "xmark.circle.fill").font(.system(size: 24))
                             .foregroundColor(.white.opacity(0.8))
                     }
                 }
-                .padding(.horizontal)
-                .padding(.top, 20)
+                .padding(.horizontal).padding(.top, 20)
 
                 // Policy content in a scroll view
                 ScrollView {
@@ -76,68 +70,52 @@ struct PrivacyPolicyView: View {
 
                         VStack(alignment: .leading, spacing: 15) {
                             Text("🔒 Your Privacy, Your Choice")
-                                .font(.system(size: 18, weight: .bold))
-                                .foregroundColor(.white)
+                                .font(.system(size: 18, weight: .bold)).foregroundColor(.white)
 
                             Text(
                                 "Flip is designed with privacy-first principles. You are in complete control of your data, and you can disable location tracking, anonymize your profile, or opt out of leaderboards at any time."
                             )
-                            .font(.system(size: 15))
-                            .foregroundColor(.white.opacity(0.9))
+                            .font(.system(size: 15)).foregroundColor(.white.opacity(0.9))
                             .lineSpacing(4)
 
                             Text("For any questions, contact jex@jajajeev.com")
-                                .font(.system(size: 15))
-                                .foregroundColor(.white.opacity(0.9))
+                                .font(.system(size: 15)).foregroundColor(.white.opacity(0.9))
                                 .padding(.top, 5)
 
                             Text("Last Updated: March 22, 2025")
                                 .font(.system(size: 14, weight: .medium))
-                                .foregroundColor(.white.opacity(0.7))
-                                .padding(.top, 10)
+                                .foregroundColor(.white.opacity(0.7)).padding(.top, 10)
                         }
                         .padding()
                         .background(
-                            RoundedRectangle(cornerRadius: 12)
-                                .fill(Color.white.opacity(0.05))
+                            RoundedRectangle(cornerRadius: 12).fill(Color.white.opacity(0.05))
                                 .overlay(
                                     RoundedRectangle(cornerRadius: 12)
-                                        .stroke(
-                                            Color.white.opacity(0.1),
-                                            lineWidth: 1)
+                                        .stroke(Color.white.opacity(0.1), lineWidth: 1)
                                 )
                         )
                     }
-                    .padding(.horizontal)
-                    .padding(.bottom, 30)
+                    .padding(.horizontal).padding(.bottom, 30)
                 }
             }
             .padding(.top, 10)
         }
     }
 
-    private func policySection(emoji: String, title: String, content: String)
-        -> some View
-    {
+    private func policySection(emoji: String, title: String, content: String) -> some View {
         VStack(alignment: .leading, spacing: 12) {
             HStack(alignment: .center, spacing: 10) {
-                Text(emoji)
-                    .font(.system(size: 24))
+                Text(emoji).font(.system(size: 24))
 
-                Text(title)
-                    .font(.system(size: 18, weight: .bold))
-                    .foregroundColor(.white)
+                Text(title).font(.system(size: 18, weight: .bold)).foregroundColor(.white)
             }
 
-            Text(content)
-                .font(.system(size: 15))
-                .foregroundColor(.white.opacity(0.9))
+            Text(content).font(.system(size: 15)).foregroundColor(.white.opacity(0.9))
                 .lineSpacing(4)
         }
         .padding()
         .background(
-            RoundedRectangle(cornerRadius: 12)
-                .fill(Color.white.opacity(0.05))
+            RoundedRectangle(cornerRadius: 12).fill(Color.white.opacity(0.05))
                 .overlay(
                     RoundedRectangle(cornerRadius: 12)
                         .stroke(Color.white.opacity(0.1), lineWidth: 1)

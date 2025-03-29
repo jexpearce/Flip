@@ -14,26 +14,18 @@ import SwiftUI
     @Published var isStationary = false
     @Published var count = 0
 
-    @Published
-    var updatesStarted: Bool = UserDefaults.standard.bool(
-        forKey: "liveUpdatesStarted")
-    {
-        didSet {
-            UserDefaults.standard.set(
-                updatesStarted, forKey: "liveUpdatesStarted")
-        }
+    @Published var updatesStarted: Bool = UserDefaults.standard.bool(forKey: "liveUpdatesStarted") {
+        didSet { UserDefaults.standard.set(updatesStarted, forKey: "liveUpdatesStarted") }
     }
 
-    @Published
-    var backgroundActivity: Bool = UserDefaults.standard.bool(
-        forKey: "BGActivitySessionStarted")
+    @Published var backgroundActivity: Bool = UserDefaults.standard.bool(
+        forKey: "BGActivitySessionStarted"
+    )
     {
         didSet {
             backgroundActivity
-                ? self.background = CLBackgroundActivitySession()
-                : self.background?.invalidate()
-            UserDefaults.standard.set(
-                backgroundActivity, forKey: "BGActivitySessionStarted")
+                ? self.background = CLBackgroundActivitySession() : self.background?.invalidate()
+            UserDefaults.standard.set(backgroundActivity, forKey: "BGActivitySessionStarted")
         }
     }
 
@@ -48,8 +40,7 @@ import SwiftUI
 
         let appManager = AppManager.shared
         let isInSession =
-            appManager.currentState == .tracking
-            || appManager.currentState == .countdown
+            appManager.currentState == .tracking || appManager.currentState == .countdown
 
         // Configure the location manager
         self.locationManager.allowsBackgroundLocationUpdates = isInSession
@@ -59,9 +50,9 @@ import SwiftUI
             self.locationManager.desiredAccuracy = kCLLocationAccuracyKilometer
             self.locationManager.distanceFilter = 1000
             self.locationManager.pausesLocationUpdatesAutomatically = true
-        } else {
-            self.locationManager.desiredAccuracy =
-                kCLLocationAccuracyNearestTenMeters
+        }
+        else {
+            self.locationManager.desiredAccuracy = kCLLocationAccuracyNearestTenMeters
             self.locationManager.distanceFilter = 10
             self.locationManager.pausesLocationUpdatesAutomatically = false
         }
@@ -84,12 +75,12 @@ import SwiftUI
                             self.count += 1
                         }
                     }
-                } catch {
-                    print("Could not start location updates: \(error)")
                 }
+                catch { print("Could not start location updates: \(error)") }
                 return
             }
-        } else {
+        }
+        else {
             print("Cannot start location updates: No permission")
             // Don't request here - let PermissionManager handle it
         }

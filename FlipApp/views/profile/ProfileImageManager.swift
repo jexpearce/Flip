@@ -22,9 +22,7 @@ class ProfileImageManager: NSObject, ObservableObject {
     private let db = Firestore.firestore()
 
     // Select image from photo library
-    func selectImage() {
-        isImagePickerPresented = true
-    }
+    func selectImage() { isImagePickerPresented = true }
 
     // Upload the cropped image to Firebase Storage
     func uploadImage() {
@@ -52,8 +50,7 @@ class ProfileImageManager: NSObject, ObservableObject {
                 self.isUploading = false
 
                 if let error = error {
-                    self.showError(
-                        "Upload failed: \(error.localizedDescription)")
+                    self.showError("Upload failed: \(error.localizedDescription)")
                     return
                 }
 
@@ -62,9 +59,7 @@ class ProfileImageManager: NSObject, ObservableObject {
                     guard let self = self else { return }
 
                     if let error = error {
-                        self.showError(
-                            "Couldn't get download URL: \(error.localizedDescription)"
-                        )
+                        self.showError("Couldn't get download URL: \(error.localizedDescription)")
                         return
                     }
 
@@ -81,14 +76,11 @@ class ProfileImageManager: NSObject, ObservableObject {
 
         // Track upload progress
         uploadTask.observe(.progress) { [weak self] snapshot in
-            guard let self = self, let progress = snapshot.progress else {
-                return
-            }
+            guard let self = self, let progress = snapshot.progress else { return }
 
             DispatchQueue.main.async {
                 self.uploadProgress =
-                    Double(progress.completedUnitCount)
-                    / Double(progress.totalUnitCount)
+                    Double(progress.completedUnitCount) / Double(progress.totalUnitCount)
             }
         }
     }
@@ -100,50 +92,46 @@ class ProfileImageManager: NSObject, ObservableObject {
             return
         }
 
-        db.collection("users").document(currentUserId).updateData([
-            "profileImageURL": imageURL
-        ]) { [weak self] error in
-            guard let self = self else { return }
+        db.collection("users").document(currentUserId)
+            .updateData(["profileImageURL": imageURL]) { [weak self] error in
+                guard let self = self else { return }
 
-            if let error = error {
-                self.showError(
-                    "Failed to update profile: \(error.localizedDescription)")
-                return
+                if let error = error {
+                    self.showError("Failed to update profile: \(error.localizedDescription)")
+                    return
+                }
+
+                // Notify listeners that the image has been uploaded
+                self.onImageUploaded?(imageURL)
+
+                // Also update the FirebaseManager's currentUser
+                if var currentUser = FirebaseManager.shared.currentUser {
+                    currentUser.profileImageURL = imageURL
+                    FirebaseManager.shared.currentUser = currentUser
+                }
             }
-
-            // Notify listeners that the image has been uploaded
-            self.onImageUploaded?(imageURL)
-
-            // Also update the FirebaseManager's currentUser
-            if var currentUser = FirebaseManager.shared.currentUser {
-                currentUser.profileImageURL = imageURL
-                FirebaseManager.shared.currentUser = currentUser
-            }
-        }
     }
 
     // Load the current user's profile image
     func loadProfileImage() {
         guard let currentUserId = Auth.auth().currentUser?.uid else { return }
 
-        db.collection("users").document(currentUserId).getDocument {
-            [weak self] document, error in
-            if let userData = try? document?.data(
-                as: FirebaseManager.FlipUser.self),
-                let imageURL = userData.profileImageURL,
-                !imageURL.isEmpty,
-                let url = URL(string: imageURL)
-            {
+        db.collection("users").document(currentUserId)
+            .getDocument { [weak self] document, error in
+                if let userData = try? document?.data(as: FirebaseManager.FlipUser.self),
+                    let imageURL = userData.profileImageURL, !imageURL.isEmpty,
+                    let url = URL(string: imageURL)
+                {
 
-                URLSession.shared.dataTask(with: url) { data, response, error in
-                    if let data = data, let image = UIImage(data: data) {
-                        DispatchQueue.main.async {
-                            self?.profileImage = image
+                    URLSession.shared
+                        .dataTask(with: url) { data, response, error in
+                            if let data = data, let image = UIImage(data: data) {
+                                DispatchQueue.main.async { self?.profileImage = image }
+                            }
                         }
-                    }
-                }.resume()
+                        .resume()
+                }
             }
-        }
     }
 
     private func showError(_ message: String) {
@@ -171,31 +159,21 @@ struct PHPickerRepresentable: UIViewControllerRepresentable {
         return picker
     }
 
-    func updateUIViewController(
-        _ uiViewController: PHPickerViewController, context: Context
-    ) {}
+    func updateUIViewController(_ uiViewController: PHPickerViewController, context: Context) {}
 
-    func makeCoordinator() -> Coordinator {
-        Coordinator(self)
-    }
+    func makeCoordinator() -> Coordinator { Coordinator(self) }
 
     class Coordinator: NSObject, PHPickerViewControllerDelegate {
         let parent: PHPickerRepresentable
 
-        init(_ parent: PHPickerRepresentable) {
-            self.parent = parent
-        }
+        init(_ parent: PHPickerRepresentable) { self.parent = parent }
 
-        func picker(
-            _ picker: PHPickerViewController,
-            didFinishPicking results: [PHPickerResult]
-        ) {
+        func picker(_ picker: PHPickerViewController, didFinishPicking results: [PHPickerResult]) {
             parent.isPresented = false
 
             guard let result = results.first else { return }
 
-            result.itemProvider.loadObject(ofClass: UIImage.self) {
-                [weak self] reading, error in
+            result.itemProvider.loadObject(ofClass: UIImage.self) { [weak self] reading, error in
                 if let image = reading as? UIImage {
                     DispatchQueue.main.async {
                         self?.parent.selectedImage = image

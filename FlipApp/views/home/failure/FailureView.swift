@@ -36,10 +36,8 @@ struct FailureView: View {
                                 LinearGradient(
                                     colors: [
                                         Theme.mutedRed.opacity(0.3),
-                                        Color(
-                                            red: 185 / 255, green: 28 / 255,
-                                            blue: 28 / 255
-                                        ).opacity(0.2),
+                                        Color(red: 185 / 255, green: 28 / 255, blue: 28 / 255)
+                                            .opacity(0.2),
                                     ],
                                     startPoint: .topLeading,
                                     endPoint: .bottomTrailing
@@ -50,10 +48,7 @@ struct FailureView: View {
                         Circle()
                             .stroke(
                                 LinearGradient(
-                                    colors: [
-                                        Color.white.opacity(0.6),
-                                        Color.white.opacity(0.1),
-                                    ],
+                                    colors: [Color.white.opacity(0.6), Color.white.opacity(0.1)],
                                     startPoint: .topLeading,
                                     endPoint: .bottomTrailing
                                 ),
@@ -61,15 +56,12 @@ struct FailureView: View {
                             )
                             .frame(width: 110, height: 110)
 
-                        Image(systemName: "xmark.circle.fill")
-                            .font(.system(size: 60))
+                        Image(systemName: "xmark.circle.fill").font(.system(size: 60))
                             .foregroundStyle(
                                 LinearGradient(
                                     colors: [
                                         Theme.mutedRed,
-                                        Color(
-                                            red: 185 / 255, green: 28 / 255,
-                                            blue: 28 / 255),
+                                        Color(red: 185 / 255, green: 28 / 255, blue: 28 / 255),
                                     ],
                                     startPoint: .top,
                                     endPoint: .bottom
@@ -77,23 +69,16 @@ struct FailureView: View {
                             )
                             .shadow(
                                 color: Theme.mutedRed.opacity(isGlowing ? 0.6 : 0.3),
-                                radius: isGlowing ? 15 : 10)
+                                radius: isGlowing ? 15 : 10
+                            )
                     }
                     .scaleEffect(showIcon ? 1 : 0)
 
                     // Title
-                    Text(
-                        isFirstSession
-                            ? "FIRST SESSION FAILED" : "SESSION FAILED"
-                    )
-                    .font(.system(size: 28, weight: .black))
-                    .tracking(6)
-                    .foregroundColor(.white)
-                    .shadow(
-                        color: Theme.mutedRed.opacity(0.5), radius: 8
-                    )
-                    .offset(y: showTitle ? 0 : 50)
-                    .opacity(showTitle ? 1 : 0)
+                    Text(isFirstSession ? "FIRST SESSION FAILED" : "SESSION FAILED")
+                        .font(.system(size: 28, weight: .black)).tracking(6).foregroundColor(.white)
+                        .shadow(color: Theme.mutedRed.opacity(0.5), radius: 8)
+                        .offset(y: showTitle ? 0 : 50).opacity(showTitle ? 1 : 0)
 
                     // Stats card
                     VStack(spacing: 12) {
@@ -102,27 +87,22 @@ struct FailureView: View {
                                 ? "Your phone was moved during your first session"
                                 : "Your phone was moved during the session"
                         )
-                        .font(.system(size: 18, weight: .medium))
-                        .foregroundColor(.white)
+                        .font(.system(size: 18, weight: .medium)).foregroundColor(.white)
                         .multilineTextAlignment(.center)
 
                         // Calculate the actual duration in minutes
                         let actualDuration =
-                            (appManager.selectedMinutes * 60
-                                - appManager.remainingSeconds) / 60
+                            (appManager.selectedMinutes * 60 - appManager.remainingSeconds) / 60
 
                         if actualDuration > 0 {
                             HStack(alignment: .firstTextBaseline, spacing: 10) {
-                                Text("\(actualDuration)")
-                                    .font(.system(size: 42, weight: .black))
+                                Text("\(actualDuration)").font(.system(size: 42, weight: .black))
                                     .foregroundColor(.white)
-                                    .shadow(
-                                        color: Theme.lightTealBlue.opacity(0.6), radius: 10)
+                                    .shadow(color: Theme.lightTealBlue.opacity(0.6), radius: 10)
 
                                 Text(actualDuration == 1 ? "minute" : "minutes")
                                     .font(.system(size: 18, weight: .medium))
-                                    .foregroundColor(.white.opacity(0.8))
-                                    .padding(.leading, 4)
+                                    .foregroundColor(.white.opacity(0.8)).padding(.leading, 4)
                             }
 
                             Text("completed before failure")
@@ -130,37 +110,30 @@ struct FailureView: View {
                                 .foregroundColor(.white.opacity(0.8))
                         }
                     }
-                    .padding(.vertical, 20)
-                    .padding(.horizontal, 25)
+                    .padding(.vertical, 20).padding(.horizontal, 25)
                     .background(
                         ZStack {
                             RoundedRectangle(cornerRadius: 20)
                                 .fill(
                                     LinearGradient(
                                         colors: [
-                                            Color(
-                                                red: 60 / 255, green: 30 / 255,
-                                                blue: 110 / 255
-                                            ).opacity(0.5),
-                                            Color(
-                                                red: 40 / 255, green: 20 / 255,
-                                                blue: 80 / 255
-                                            ).opacity(0.3),
+                                            Color(red: 60 / 255, green: 30 / 255, blue: 110 / 255)
+                                                .opacity(0.5),
+                                            Color(red: 40 / 255, green: 20 / 255, blue: 80 / 255)
+                                                .opacity(0.3),
                                         ],
                                         startPoint: .topLeading,
                                         endPoint: .bottomTrailing
                                     )
                                 )
 
-                            RoundedRectangle(cornerRadius: 20)
-                                .fill(Color.white.opacity(0.05))
+                            RoundedRectangle(cornerRadius: 20).fill(Color.white.opacity(0.05))
 
                             RoundedRectangle(cornerRadius: 20)
                                 .stroke(
                                     LinearGradient(
                                         colors: [
-                                            Color.white.opacity(0.5),
-                                            Color.white.opacity(0.1),
+                                            Color.white.opacity(0.5), Color.white.opacity(0.1),
                                         ],
                                         startPoint: .topLeading,
                                         endPoint: .bottomTrailing
@@ -170,44 +143,35 @@ struct FailureView: View {
                         }
                     )
                     .shadow(color: Color.black.opacity(0.2), radius: 10)
-                    .offset(y: showStats ? 0 : 50)
-                    .opacity(showStats ? 1 : 0)
+                    .offset(y: showStats ? 0 : 50).opacity(showStats ? 1 : 0)
                 }
 
                 // Conditional content: First-time leaderboard or session notes
                 if isCheckingFirstSession {
                     // Loading placeholder
-                    ProgressView()
-                        .scaleEffect(1.5)
-                        .tint(.white)
-                        .frame(height: 150)
+                    ProgressView().scaleEffect(1.5).tint(.white).frame(height: 150)
                         .transition(.opacity)
-                } else if isFirstSession {
+                }
+                else if isFirstSession {
                     // First-time leaderboard
-                    if showLeaderboard,
-                        let userId = Auth.auth().currentUser?.uid
-                    {
+                    if showLeaderboard, let userId = Auth.auth().currentUser?.uid {
                         // Calculate the actual duration
                         let actualDuration =
-                            (appManager.selectedMinutes * 60
-                                - appManager.remainingSeconds) / 60
+                            (appManager.selectedMinutes * 60 - appManager.remainingSeconds) / 60
 
                         FirstTimeLeaderboardView(
                             userId: userId,
-                            username: FirebaseManager.shared.currentUser?
-                                .username ?? "User",
+                            username: FirebaseManager.shared.currentUser?.username ?? "User",
                             duration: actualDuration,
                             wasSuccessful: false
                         )
                         .transition(.scale.combined(with: .opacity))
                     }
-                } else if showNotes {
+                }
+                else if showNotes {
                     // Regular session notes for returning users
-                    SessionNotesView(
-                        sessionTitle: $sessionTitle,
-                        sessionNotes: $sessionNotes
-                    )
-                    .transition(.scale.combined(with: .opacity))
+                    SessionNotesView(sessionTitle: $sessionTitle, sessionNotes: $sessionNotes)
+                        .transition(.scale.combined(with: .opacity))
                 }
 
                 // Action Buttons
@@ -224,12 +188,9 @@ struct FailureView: View {
 
                         // For first-time users, set a default title
                         if isFirstSession {
-                            let rank = FirstTimeLeaderboardManager.shared
-                                .userRank
-                            let total = FirstTimeLeaderboardManager.shared
-                                .totalUsers
-                            sessionTitle =
-                                "My First Session!: Ranked \(rank)th of \(total)"
+                            let rank = FirstTimeLeaderboardManager.shared.userRank
+                            let total = FirstTimeLeaderboardManager.shared.totalUsers
+                            sessionTitle = "My First Session!: Ranked \(rank)th of \(total)"
                         }
 
                         // FIXED: Only save NEW session if it hasn't been recorded already
@@ -240,23 +201,21 @@ struct FailureView: View {
                                 wasSuccessful: false,
                                 actualDuration: (appManager.selectedMinutes * 60
                                     - appManager.remainingSeconds) / 60,
-                                sessionTitle: sessionTitle.isEmpty
-                                    ? nil : sessionTitle,
-                                sessionNotes: sessionNotes.isEmpty
-                                    ? nil : sessionNotes
+                                sessionTitle: sessionTitle.isEmpty ? nil : sessionTitle,
+                                sessionNotes: sessionNotes.isEmpty ? nil : sessionNotes
                             )
                             // Mark as recorded to prevent duplicates
                             appManager.sessionAlreadyRecorded = true
-                        } else {
+                        }
+                        else {
                             // If already recorded, update the most recent session with the notes
                             if !sessionTitle.isEmpty || !sessionNotes.isEmpty {
                                 // Find and update the most recent session for this user
-                                guard let userId = Auth.auth().currentUser?.uid
-                                else { return }
+                                guard let userId = Auth.auth().currentUser?.uid else { return }
                                 // Take the first session (most recent) that matches the user ID
-                                if let index = sessionManager.sessions
-                                    .firstIndex(where: { $0.userId == userId })
-                                {
+                                if let index = sessionManager.sessions.firstIndex(where: {
+                                    $0.userId == userId
+                                }) {
                                     let session = sessionManager.sessions[index]
                                     // Create a new session with updated notes
                                     let updatedSession = Session(
@@ -267,15 +226,11 @@ struct FailureView: View {
                                         duration: session.duration,
                                         wasSuccessful: session.wasSuccessful,
                                         actualDuration: session.actualDuration,
-                                        sessionTitle: sessionTitle.isEmpty
-                                            ? nil : sessionTitle,
-                                        sessionNotes: sessionNotes.isEmpty
-                                            ? nil : sessionNotes,
+                                        sessionTitle: sessionTitle.isEmpty ? nil : sessionTitle,
+                                        sessionNotes: sessionNotes.isEmpty ? nil : sessionNotes,
                                         participants: session.participants,
-                                        originalStarterId: session
-                                            .originalStarterId,
-                                        wasJoinedSession: session
-                                            .wasJoinedSession,
+                                        originalStarterId: session.originalStarterId,
+                                        wasJoinedSession: session.wasJoinedSession,
                                         comment: session.comment,
                                         commentorId: session.commentorId,
                                         commentorName: session.commentorName,
@@ -283,11 +238,9 @@ struct FailureView: View {
                                         liveSessionId: session.liveSessionId
                                     )
                                     // Update the session in Firebase
-                                    try? FirebaseManager.shared.db.collection(
-                                        "sessions"
-                                    )
-                                    .document(session.id.uuidString)
-                                    .setData(from: updatedSession)
+                                    try? FirebaseManager.shared.db.collection("sessions")
+                                        .document(session.id.uuidString)
+                                        .setData(from: updatedSession)
                                 }
                             }
                         }
@@ -301,29 +254,22 @@ struct FailureView: View {
                     }) {
                         HStack {
                             if showSavingIndicator && isTryAgainPressed {
-                                ProgressView()
-                                    .tint(.white)
-                                    .scaleEffect(0.8)
-                                    .padding(.trailing, 8)
+                                ProgressView().tint(.white).scaleEffect(0.8).padding(.trailing, 8)
                             }
 
                             Text(
-                                showSavingIndicator && isTryAgainPressed
-                                    ? "SAVING..." : "TRY AGAIN"
+                                showSavingIndicator && isTryAgainPressed ? "SAVING..." : "TRY AGAIN"
                             )
-                            .font(.system(size: 18, weight: .black))
-                            .tracking(2)
+                            .font(.system(size: 18, weight: .black)).tracking(2)
                             .foregroundColor(.white)
 
                             if !showSavingIndicator || !isTryAgainPressed {
                                 Text("(\(appManager.selectedMinutes) MIN)")
                                     .font(.system(size: 14, weight: .bold))
-                                    .foregroundColor(.white.opacity(0.7))
-                                    .padding(.leading, 5)
+                                    .foregroundColor(.white.opacity(0.7)).padding(.leading, 5)
                             }
                         }
-                        .frame(height: 56)
-                        .frame(maxWidth: .infinity)
+                        .frame(height: 56).frame(maxWidth: .infinity)
                         .background(
                             ZStack {
                                 RoundedRectangle(cornerRadius: 16)
@@ -333,26 +279,26 @@ struct FailureView: View {
                                                 Color(
                                                     red: 168 / 255,
                                                     green: 85 / 255,
-                                                    blue: 247 / 255),
+                                                    blue: 247 / 255
+                                                ),
                                                 Color(
                                                     red: 88 / 255,
                                                     green: 28 / 255,
-                                                    blue: 135 / 255),
+                                                    blue: 135 / 255
+                                                ),
                                             ],
                                             startPoint: .topLeading,
                                             endPoint: .bottomTrailing
                                         )
                                     )
 
-                                RoundedRectangle(cornerRadius: 16)
-                                    .fill(Color.white.opacity(0.1))
+                                RoundedRectangle(cornerRadius: 16).fill(Color.white.opacity(0.1))
 
                                 RoundedRectangle(cornerRadius: 16)
                                     .stroke(
                                         LinearGradient(
                                             colors: [
-                                                Color.white.opacity(0.6),
-                                                Color.white.opacity(0.2),
+                                                Color.white.opacity(0.6), Color.white.opacity(0.2),
                                             ],
                                             startPoint: .topLeading,
                                             endPoint: .bottomTrailing
@@ -362,9 +308,9 @@ struct FailureView: View {
                             }
                         )
                         .shadow(
-                            color: Color(
-                                red: 168 / 255, green: 85 / 255, blue: 247 / 255
-                            ).opacity(0.5), radius: 8
+                            color: Color(red: 168 / 255, green: 85 / 255, blue: 247 / 255)
+                                .opacity(0.5),
+                            radius: 8
                         )
                         .scaleEffect(isTryAgainPressed ? 0.97 : 1.0)
                     }
@@ -381,12 +327,9 @@ struct FailureView: View {
 
                         // For first-time users, set a default title
                         if isFirstSession {
-                            let rank = FirstTimeLeaderboardManager.shared
-                                .userRank
-                            let total = FirstTimeLeaderboardManager.shared
-                                .totalUsers
-                            sessionTitle =
-                                "My First Session!: Ranked \(rank)th of \(total)"
+                            let rank = FirstTimeLeaderboardManager.shared.userRank
+                            let total = FirstTimeLeaderboardManager.shared.totalUsers
+                            sessionTitle = "My First Session!: Ranked \(rank)th of \(total)"
                         }
 
                         // FIXED: Only save NEW session if it hasn't been recorded already
@@ -397,23 +340,21 @@ struct FailureView: View {
                                 wasSuccessful: false,
                                 actualDuration: (appManager.selectedMinutes * 60
                                     - appManager.remainingSeconds) / 60,
-                                sessionTitle: sessionTitle.isEmpty
-                                    ? nil : sessionTitle,
-                                sessionNotes: sessionNotes.isEmpty
-                                    ? nil : sessionNotes
+                                sessionTitle: sessionTitle.isEmpty ? nil : sessionTitle,
+                                sessionNotes: sessionNotes.isEmpty ? nil : sessionNotes
                             )
                             // Mark as recorded to prevent duplicates
                             appManager.sessionAlreadyRecorded = true
-                        } else {
+                        }
+                        else {
                             // If already recorded, update the most recent session with the notes
                             if !sessionTitle.isEmpty || !sessionNotes.isEmpty {
                                 // Find and update the most recent session for this user
-                                guard let userId = Auth.auth().currentUser?.uid
-                                else { return }
+                                guard let userId = Auth.auth().currentUser?.uid else { return }
                                 // Take the first session (most recent) that matches the user ID
-                                if let index = sessionManager.sessions
-                                    .firstIndex(where: { $0.userId == userId })
-                                {
+                                if let index = sessionManager.sessions.firstIndex(where: {
+                                    $0.userId == userId
+                                }) {
                                     let session = sessionManager.sessions[index]
                                     // Create a new session with updated notes
                                     let updatedSession = Session(
@@ -424,15 +365,11 @@ struct FailureView: View {
                                         duration: session.duration,
                                         wasSuccessful: session.wasSuccessful,
                                         actualDuration: session.actualDuration,
-                                        sessionTitle: sessionTitle.isEmpty
-                                            ? nil : sessionTitle,
-                                        sessionNotes: sessionNotes.isEmpty
-                                            ? nil : sessionNotes,
+                                        sessionTitle: sessionTitle.isEmpty ? nil : sessionTitle,
+                                        sessionNotes: sessionNotes.isEmpty ? nil : sessionNotes,
                                         participants: session.participants,
-                                        originalStarterId: session
-                                            .originalStarterId,
-                                        wasJoinedSession: session
-                                            .wasJoinedSession,
+                                        originalStarterId: session.originalStarterId,
+                                        wasJoinedSession: session.wasJoinedSession,
                                         comment: session.comment,
                                         commentorId: session.commentorId,
                                         commentorName: session.commentorName,
@@ -440,11 +377,9 @@ struct FailureView: View {
                                         liveSessionId: session.liveSessionId
                                     )
                                     // Update the session in Firebase
-                                    try? FirebaseManager.shared.db.collection(
-                                        "sessions"
-                                    )
-                                    .document(session.id.uuidString)
-                                    .setData(from: updatedSession)
+                                    try? FirebaseManager.shared.db.collection("sessions")
+                                        .document(session.id.uuidString)
+                                        .setData(from: updatedSession)
                                 }
                             }
                         }
@@ -457,33 +392,26 @@ struct FailureView: View {
                     }) {
                         HStack {
                             if showSavingIndicator && isChangeTimePressed {
-                                ProgressView()
-                                    .tint(.white)
-                                    .scaleEffect(0.8)
-                                    .padding(.trailing, 8)
+                                ProgressView().tint(.white).scaleEffect(0.8).padding(.trailing, 8)
                             }
 
                             Text(
                                 showSavingIndicator && isChangeTimePressed
                                     ? "SAVING..." : "CHANGE TIME"
                             )
-                            .font(.system(size: 16, weight: .bold))
-                            .tracking(2)
+                            .font(.system(size: 16, weight: .bold)).tracking(2)
                             .foregroundColor(.white.opacity(0.9))
                         }
-                        .frame(height: 50)
-                        .frame(maxWidth: .infinity)
+                        .frame(height: 50).frame(maxWidth: .infinity)
                         .background(
                             ZStack {
-                                RoundedRectangle(cornerRadius: 16)
-                                    .fill(Color.white.opacity(0.1))
+                                RoundedRectangle(cornerRadius: 16).fill(Color.white.opacity(0.1))
 
                                 RoundedRectangle(cornerRadius: 16)
                                     .stroke(
                                         LinearGradient(
                                             colors: [
-                                                Color.white.opacity(0.5),
-                                                Color.white.opacity(0.2),
+                                                Color.white.opacity(0.5), Color.white.opacity(0.2),
                                             ],
                                             startPoint: .topLeading,
                                             endPoint: .bottomTrailing
@@ -496,24 +424,22 @@ struct FailureView: View {
                         .scaleEffect(isChangeTimePressed ? 0.97 : 1.0)
                     }
                 }
-                .padding(.horizontal, 30)
-                .offset(y: showActions ? 0 : 50)
+                .padding(.horizontal, 30).offset(y: showActions ? 0 : 50)
                 .opacity(showActions ? 1 : 0)
             }
-            .padding(.horizontal, 25)
-            .padding(.vertical, 30)
-        }
-        // Make the screen scrollable when keyboard is shown
+            .padding(.horizontal, 25).padding(.vertical, 30)
+        }  // Make the screen scrollable when keyboard is shown
         .offset(y: keyboardOffset)
         .onAppear {
             // Set up keyboard notifications
             NotificationCenter.default.addObserver(
-                forName: UIResponder.keyboardWillShowNotification, object: nil,
+                forName: UIResponder.keyboardWillShowNotification,
+                object: nil,
                 queue: .main
             ) { notification in
                 if let keyboardFrame = notification.userInfo?[
-                    UIResponder.keyboardFrameEndUserInfoKey] as? CGRect
-                {
+                    UIResponder.keyboardFrameEndUserInfoKey
+                ] as? CGRect {
                     withAnimation(.easeOut(duration: 0.3)) {
                         self.keyboardOffset = -keyboardFrame.height / 3
                     }
@@ -521,56 +447,36 @@ struct FailureView: View {
             }
 
             NotificationCenter.default.addObserver(
-                forName: UIResponder.keyboardWillHideNotification, object: nil,
+                forName: UIResponder.keyboardWillHideNotification,
+                object: nil,
                 queue: .main
-            ) { _ in
-                withAnimation(.easeOut(duration: 0.3)) {
-                    self.keyboardOffset = 0
-                }
-            }
+            ) { _ in withAnimation(.easeOut(duration: 0.3)) { self.keyboardOffset = 0 } }
 
             // Check if this is the user's first session
             checkFirstSession()
 
             // Stagger animations for a nice effect
-            withAnimation(.spring(response: 0.6, dampingFraction: 0.7)) {
-                showIcon = true
-            }
+            withAnimation(.spring(response: 0.6, dampingFraction: 0.7)) { showIcon = true }
 
-            withAnimation(
-                .spring(response: 0.6, dampingFraction: 0.8).delay(0.2)
-            ) {
+            withAnimation(.spring(response: 0.6, dampingFraction: 0.8).delay(0.2)) {
                 showTitle = true
             }
 
-            withAnimation(
-                .spring(response: 0.6, dampingFraction: 0.8).delay(0.4)
-            ) {
+            withAnimation(.spring(response: 0.6, dampingFraction: 0.8).delay(0.4)) {
                 showStats = true
             }
 
-            withAnimation(
-                .spring(response: 0.6, dampingFraction: 0.8).delay(0.6)
-            ) {
-                if !isFirstSession {
-                    showNotes = true
-                }
+            withAnimation(.spring(response: 0.6, dampingFraction: 0.8).delay(0.6)) {
+                if !isFirstSession { showNotes = true }
             }
 
-            withAnimation(
-                .spring(response: 0.6, dampingFraction: 0.8).delay(0.8)
-            ) {
+            withAnimation(.spring(response: 0.6, dampingFraction: 0.8).delay(0.8)) {
                 showActions = true
             }
 
-            withAnimation(.easeInOut(duration: 1.5).repeatForever()) {
-                isGlowing = true
-            }
+            withAnimation(.easeInOut(duration: 1.5).repeatForever()) { isGlowing = true }
         }
-        .background(Theme.mainGradient.edgesIgnoringSafeArea(.all))
-        .onTapGesture {
-            hideKeyboard()
-        }
+        .background(Theme.mainGradient.edgesIgnoringSafeArea(.all)).onTapGesture { hideKeyboard() }
     }
 
     private func checkFirstSession() {
@@ -587,8 +493,7 @@ struct FailureView: View {
             if self.isFirstSession {
                 // Calculate actual duration for the failed session
                 let actualDuration =
-                    (self.appManager.selectedMinutes * 60
-                        - self.appManager.remainingSeconds) / 60
+                    (self.appManager.selectedMinutes * 60 - self.appManager.remainingSeconds) / 60
 
                 // Record the first session to the first_sessions collection
                 FirebaseManager.shared.recordFirstSession(
@@ -599,20 +504,17 @@ struct FailureView: View {
                         self.isCheckingFirstSession = false
 
                         // Show the leaderboard with animation
-                        withAnimation(.spring()) {
-                            self.showLeaderboard = true
-                        }
+                        withAnimation(.spring()) { self.showLeaderboard = true }
                     }
                 }
-            } else {
+            }
+            else {
                 // Not a first-time user
                 DispatchQueue.main.async {
                     self.isCheckingFirstSession = false
 
                     // Show notes section instead
-                    withAnimation(.spring()) {
-                        self.showNotes = true
-                    }
+                    withAnimation(.spring()) { self.showNotes = true }
                 }
             }
         }
@@ -620,7 +522,10 @@ struct FailureView: View {
 
     private func hideKeyboard() {
         UIApplication.shared.sendAction(
-            #selector(UIResponder.resignFirstResponder), to: nil, from: nil,
-            for: nil)
+            #selector(UIResponder.resignFirstResponder),
+            to: nil,
+            from: nil,
+            for: nil
+        )
     }
 }

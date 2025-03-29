@@ -22,8 +22,7 @@ struct FeedView: View {
         NavigationView {
             ZStack {
                 // Enhanced Background Gradient
-                feedGradient
-                    .edgesIgnoringSafeArea(.all)
+                feedGradient.edgesIgnoringSafeArea(.all)
 
                 // Enhanced decorative elements
                 VStack {
@@ -42,8 +41,7 @@ struct FeedView: View {
                                     endRadius: 250
                                 )
                             )
-                            .frame(width: 400, height: 400)
-                            .offset(x: 150, y: -250)
+                            .frame(width: 400, height: 400).offset(x: 150, y: -250)
 
                         // Smaller, more intense center
                         Circle()
@@ -58,9 +56,7 @@ struct FeedView: View {
                                     endRadius: 100
                                 )
                             )
-                            .frame(width: 200, height: 200)
-                            .offset(x: 180, y: -220)
-                            .blur(radius: 20)
+                            .frame(width: 200, height: 200).offset(x: 180, y: -220).blur(radius: 20)
                     }
 
                     Spacer()
@@ -80,8 +76,7 @@ struct FeedView: View {
                                     endRadius: 200
                                 )
                             )
-                            .frame(width: 350, height: 350)
-                            .offset(x: -150, y: 120)
+                            .frame(width: 350, height: 350).offset(x: -150, y: 120)
 
                         // Secondary glow - creates depth
                         Circle()
@@ -96,9 +91,7 @@ struct FeedView: View {
                                     endRadius: 150
                                 )
                             )
-                            .frame(width: 250, height: 250)
-                            .offset(x: -180, y: 80)
-                            .blur(radius: 15)
+                            .frame(width: 250, height: 250).offset(x: -180, y: 80).blur(radius: 15)
                     }
                 }
 
@@ -106,16 +99,11 @@ struct FeedView: View {
                     VStack(spacing: 35) {
                         // Enhanced Header with better typography and glow
                         VStack(spacing: 8) {
-                            Text("FEED")
-                                .font(.system(size: 36, weight: .black))
-                                .tracking(8)
+                            Text("FEED").font(.system(size: 36, weight: .black)).tracking(8)
                                 .foregroundColor(.white)
-                                .shadow(
-                                    color: Theme.mutedGreen.opacity(0.7), radius: 15
-                                )
+                                .shadow(color: Theme.mutedGreen.opacity(0.7), radius: 15)
                                 .padding(.top, 40)
-                            Spacer()
-                                .frame(height: 24)
+                            Spacer().frame(height: 24)
 
                             if viewModel.isLoading {
                                 // Enhanced loading indicator with glass effect
@@ -134,30 +122,23 @@ struct FeedView: View {
                                                     endRadius: 50
                                                 )
                                             )
-                                            .frame(width: 80, height: 80)
-                                            .blur(radius: 10)
+                                            .frame(width: 80, height: 80).blur(radius: 10)
 
                                         // Spinner
-                                        ProgressView()
-                                            .scaleEffect(2)
-                                            .tint(
-                                                Theme.mutedGreen)
+                                        ProgressView().scaleEffect(2).tint(Theme.mutedGreen)
                                     }
                                     .padding(.bottom, 5)
 
                                     // Loading text with animated dots
                                     Text("Loading sessions")
-                                        .font(
-                                            .system(size: 18, weight: .semibold)
-                                        )
+                                        .font(.system(size: 18, weight: .semibold))
                                         .foregroundColor(.white)
 
                                     Text("Please wait while we load your feed")
                                         .font(.system(size: 14))
                                         .foregroundColor(.white.opacity(0.7))
                                 }
-                                .frame(maxWidth: .infinity)
-                                .frame(height: 220)
+                                .frame(maxWidth: .infinity).frame(height: 220)
                                 .background(
                                     ZStack {
                                         // Glass effect background
@@ -169,10 +150,8 @@ struct FeedView: View {
                                             .fill(
                                                 LinearGradient(
                                                     colors: [
-                                                        Color.white.opacity(
-                                                            0.1),
-                                                        Color.white.opacity(
-                                                            0.05),
+                                                        Color.white.opacity(0.1),
+                                                        Color.white.opacity(0.05),
                                                     ],
                                                     startPoint: .topLeading,
                                                     endPoint: .bottomTrailing
@@ -184,10 +163,8 @@ struct FeedView: View {
                                             .stroke(
                                                 LinearGradient(
                                                     colors: [
-                                                        Color.white.opacity(
-                                                            0.6),
-                                                        Color.white.opacity(
-                                                            0.1),
+                                                        Color.white.opacity(0.6),
+                                                        Color.white.opacity(0.1),
                                                     ],
                                                     startPoint: .topLeading,
                                                     endPoint: .bottomTrailing
@@ -196,32 +173,25 @@ struct FeedView: View {
                                             )
                                     }
                                 )
-                                .shadow(
-                                    color: Color.black.opacity(0.2), radius: 10
-                                )
-                                .padding(.horizontal, 20)
-                                .padding(.top, 20)
-                            } else if viewModel.feedSessions.isEmpty {
+                                .shadow(color: Color.black.opacity(0.2), radius: 10)
+                                .padding(.horizontal, 20).padding(.top, 20)
+                            }
+                            else if viewModel.feedSessions.isEmpty {
                                 // Enhanced empty state view
-                                EmptyFeedView()
-                                    .padding(.top, 20)
-                            } else {
+                                EmptyFeedView().padding(.top, 20)
+                            }
+                            else {
                                 // Session cards with subtle spacing improvements
                                 ForEach(
                                     Array(viewModel.feedSessions.enumerated()),
                                     id: \.element.id
                                 ) { index, session in
-                                    FeedSessionCard(
-                                        session: session,
-                                        viewModel: viewModel
-                                    )
-                                    .transition(.opacity)
-                                    .padding(.bottom, 16)
+                                    FeedSessionCard(session: session, viewModel: viewModel)
+                                        .transition(.opacity).padding(.bottom, 16)
                                 }
                             }
                         }
-                        .padding(.horizontal)
-                        .padding(.bottom, 20)
+                        .padding(.horizontal).padding(.bottom, 20)
                     }
                     .refreshable {
                         print("FeedView refreshed - reloading feed data")
@@ -260,26 +230,21 @@ struct EmptyFeedView: View {
                         RadialGradient(
                             gradient: Gradient(colors: [
                                 Theme.mutedGreen.opacity(0.5),
-                                Color(
-                                    red: 20 / 255, green: 83 / 255,
-                                    blue: 45 / 255
-                                ).opacity(0.0),
+                                Color(red: 20 / 255, green: 83 / 255, blue: 45 / 255).opacity(0.0),
                             ]),
                             center: .center,
                             startRadius: 10,
                             endRadius: 100
                         )
                     )
-                    .frame(width: 150, height: 150)
-                    .blur(radius: 15)
+                    .frame(width: 150, height: 150).blur(radius: 15)
 
                 // Inner glow
                 Circle()
                     .fill(
                         RadialGradient(
                             gradient: Gradient(colors: [
-                                Theme.mutedGreen.opacity(0.7),
-                                Theme.mutedGreen.opacity(0.1),
+                                Theme.mutedGreen.opacity(0.7), Theme.mutedGreen.opacity(0.1),
                             ]),
                             center: .center,
                             startRadius: 5,
@@ -289,42 +254,28 @@ struct EmptyFeedView: View {
                     .frame(width: 90, height: 90)
 
                 // Icon with glow
-                Image(systemName: "doc.text.image")
-                    .font(.system(size: 50))
-                    .foregroundColor(.white)
-                    .shadow(
-                        color: Theme.mutedGreen.opacity(0.8), radius: 10)
+                Image(systemName: "doc.text.image").font(.system(size: 50)).foregroundColor(.white)
+                    .shadow(color: Theme.mutedGreen.opacity(0.8), radius: 10)
             }
             .padding(.top, 20)
 
             // Enhanced headline with layered text
             VStack(spacing: 6) {
-                Text("NO SESSIONS YET")
-                    .font(.system(size: 28, weight: .black))
-                    .tracking(6)
-                    .foregroundColor(.white)
-                    .shadow(
-                        color: Theme.mutedGreen.opacity(0.6), radius: 8)
+                Text("NO SESSIONS YET").font(.system(size: 28, weight: .black)).tracking(6)
+                    .foregroundColor(.white).shadow(color: Theme.mutedGreen.opacity(0.6), radius: 8)
 
-                Text("No sessions available")
-                    .font(.system(size: 14))
-                    .tracking(2)
+                Text("No sessions available").font(.system(size: 14)).tracking(2)
                     .foregroundColor(.white.opacity(0.7))
             }
 
             // Supportive text with better styling
             Text("Add friends to see their focus sessions in your feed")
-                .font(.system(size: 16, weight: .medium))
-                .foregroundColor(.white.opacity(0.9))
-                .multilineTextAlignment(.center)
-                .padding(.horizontal, 30)
-                .padding(.top, 5)
+                .font(.system(size: 16, weight: .medium)).foregroundColor(.white.opacity(0.9))
+                .multilineTextAlignment(.center).padding(.horizontal, 30).padding(.top, 5)
 
             // Button removed as requested
         }
-        .padding()
-        .padding(.horizontal, 20)
-        .padding(.bottom, 40)
+        .padding().padding(.horizontal, 20).padding(.bottom, 40)
     }
 }
 struct NavigationFeedSessionCard: View {
@@ -350,10 +301,8 @@ struct NavigationFeedSessionCard: View {
 
         // Initialize likes from the viewModel
         let sessionId = session.id.uuidString
-        self._isLiked = State(
-            initialValue: viewModel.isLikedByUser(sessionId: sessionId))
-        self._likesCount = State(
-            initialValue: viewModel.getLikesForSession(sessionId: sessionId))
+        self._isLiked = State(initialValue: viewModel.isLikedByUser(sessionId: sessionId))
+        self._likesCount = State(initialValue: viewModel.getLikesForSession(sessionId: sessionId))
     }
 
     var body: some View {
@@ -361,8 +310,7 @@ struct NavigationFeedSessionCard: View {
             // Top section with user info
             HStack(spacing: 12) {
                 NavigationLink(
-                    destination: UserProfileView(
-                        user: viewModel.getUser(for: session.userId))
+                    destination: UserProfileView(user: viewModel.getUser(for: session.userId))
                 ) {
                     // Profile pic
                     ProfileAvatarView(
@@ -376,20 +324,15 @@ struct NavigationFeedSessionCard: View {
                 // Username and time
                 VStack(alignment: .leading, spacing: 4) {
                     NavigationLink(
-                        destination: UserProfileView(
-                            user: viewModel.getUser(for: session.userId))
+                        destination: UserProfileView(user: viewModel.getUser(for: session.userId))
                     ) {
-                        Text(session.username)
-                            .font(.system(size: 16, weight: .bold))
+                        Text(session.username).font(.system(size: 16, weight: .bold))
                             .foregroundColor(.white)
-                            .shadow(
-                                color: Theme.lightTealBlue.opacity(0.5),
-                                radius: 6)
+                            .shadow(color: Theme.lightTealBlue.opacity(0.5), radius: 6)
                     }
                     .buttonStyle(PlainButtonStyle())
 
-                    Text(session.formattedStartTime)
-                        .font(.system(size: 12))
+                    Text(session.formattedStartTime).font(.system(size: 12))
                         .foregroundColor(.white.opacity(0.7))
                 }
 
@@ -401,34 +344,30 @@ struct NavigationFeedSessionCard: View {
                         .fill(
                             session.wasSuccessful
                                 ? LinearGradient(
-                                    colors: [
-                                        Color.green, Color.green.opacity(0.7),
-                                    ], startPoint: .top, endPoint: .bottom)
+                                    colors: [Color.green, Color.green.opacity(0.7)],
+                                    startPoint: .top,
+                                    endPoint: .bottom
+                                )
                                 : LinearGradient(
-                                    colors: [
-                                        Color.red, Color.red.opacity(0.7),
-                                    ], startPoint: .top, endPoint: .bottom)
+                                    colors: [Color.red, Color.red.opacity(0.7)],
+                                    startPoint: .top,
+                                    endPoint: .bottom
+                                )
                         )
                         .frame(width: 30, height: 30)
 
-                    Image(
-                        systemName: session.wasSuccessful
-                            ? "checkmark" : "xmark"
-                    )
-                    .font(.system(size: 14, weight: .bold))
-                    .foregroundColor(.white)
+                    Image(systemName: session.wasSuccessful ? "checkmark" : "xmark")
+                        .font(.system(size: 14, weight: .bold)).foregroundColor(.white)
                 }
             }
 
             // Session info
             HStack {
-                Text("\(session.duration) min session")
-                    .font(.system(size: 18, weight: .bold))
+                Text("\(session.duration) min session").font(.system(size: 18, weight: .bold))
                     .foregroundColor(.white)
 
                 if !session.wasSuccessful {
-                    Text("• Lasted \(session.actualDuration) min")
-                        .font(.system(size: 14))
+                    Text("• Lasted \(session.actualDuration) min").font(.system(size: 14))
                         .foregroundColor(.white.opacity(0.7))
                 }
 
@@ -437,41 +376,33 @@ struct NavigationFeedSessionCard: View {
 
             // Content sections - only if content exists
             if let title = session.sessionTitle, !title.isEmpty {
-                Text(title)
-                    .font(.system(size: 16, weight: .bold))
-                    .foregroundColor(.white)
+                Text(title).font(.system(size: 16, weight: .bold)).foregroundColor(.white)
                     .lineLimit(1)
             }
 
             if let notes = session.sessionNotes, !notes.isEmpty {
-                Text(notes)
-                    .font(.system(size: 14))
-                    .foregroundColor(.white.opacity(0.9))
+                Text(notes).font(.system(size: 14)).foregroundColor(.white.opacity(0.9))
                     .lineLimit(2)
             }
 
             // Existing comment display
             if let comment = session.comment, !comment.isEmpty {
                 HStack(alignment: .top, spacing: 8) {
-                    Image(systemName: "text.bubble.fill")
-                        .font(.system(size: 14))
+                    Image(systemName: "text.bubble.fill").font(.system(size: 14))
                         .foregroundColor(.white.opacity(0.6))
 
                     VStack(alignment: .leading, spacing: 2) {
                         NavigationLink(
                             destination: UserProfileView(
-                                user: viewModel.getUser(for: session.userId))
+                                user: viewModel.getUser(for: session.userId)
+                            )
                         ) {
-                            Text(session.username)
-                                .font(.system(size: 12, weight: .semibold))
-                                .foregroundColor(
-                                    Theme.lightTealBlue.opacity(0.9))
+                            Text(session.username).font(.system(size: 12, weight: .semibold))
+                                .foregroundColor(Theme.lightTealBlue.opacity(0.9))
                         }
                         .buttonStyle(PlainButtonStyle())
 
-                        Text(comment)
-                            .font(.system(size: 14))
-                            .foregroundColor(.white.opacity(0.9))
+                        Text(comment).font(.system(size: 14)).foregroundColor(.white.opacity(0.9))
                             .lineLimit(2)
                     }
                 }
@@ -480,13 +411,9 @@ struct NavigationFeedSessionCard: View {
 
             // Participant list for group sessions
             if let participants = session.participants, !participants.isEmpty {
-                Divider()
-                    .background(Color.white.opacity(0.2))
-                    .padding(.vertical, 4)
+                Divider().background(Color.white.opacity(0.2)).padding(.vertical, 4)
 
-                Text("GROUP SESSION")
-                    .font(.system(size: 12, weight: .medium))
-                    .tracking(1)
+                Text("GROUP SESSION").font(.system(size: 12, weight: .medium)).tracking(1)
                     .foregroundColor(.white.opacity(0.7))
 
                 // Vertical layout for participants
@@ -494,21 +421,18 @@ struct NavigationFeedSessionCard: View {
                     ForEach(participants) { participant in
                         NavigationLink(
                             destination: UserProfileView(
-                                user: viewModel.getUser(for: participant.id))
+                                user: viewModel.getUser(for: participant.id)
+                            )
                         ) {
                             HStack(spacing: 8) {
                                 // Small profile icon
-                                Circle()
-                                    .fill(Color.white.opacity(0.1))
-                                    .frame(width: 24, height: 24)
+                                Circle().fill(Color.white.opacity(0.1)).frame(width: 24, height: 24)
                                     .overlay(
-                                        Image(systemName: "person.fill")
-                                            .font(.system(size: 10))
+                                        Image(systemName: "person.fill").font(.system(size: 10))
                                             .foregroundColor(.white)
                                     )
 
-                                Text(participant.username)
-                                    .font(.system(size: 14, weight: .medium))
+                                Text(participant.username).font(.system(size: 14, weight: .medium))
                                     .foregroundColor(.white)
 
                                 Spacer()
@@ -516,12 +440,9 @@ struct NavigationFeedSessionCard: View {
                                 // Success/failure icon
                                 Image(
                                     systemName: participant.wasSuccessful
-                                        ? "checkmark.circle.fill"
-                                        : "xmark.circle.fill"
+                                        ? "checkmark.circle.fill" : "xmark.circle.fill"
                                 )
-                                .foregroundColor(
-                                    participant.wasSuccessful ? .green : .red
-                                )
+                                .foregroundColor(participant.wasSuccessful ? .green : .red)
                                 .font(.system(size: 14))
                             }
                         }
@@ -532,28 +453,23 @@ struct NavigationFeedSessionCard: View {
 
             // Like info section - Only show if there are likes
             if likesCount > 0 {
-                Button(action: {
-                    showLikesSheet = true
-                }) {
+                Button(action: { showLikesSheet = true }) {
                     HStack(spacing: 4) {
-                        Image(systemName: "heart.fill")
-                            .font(.system(size: 12))
+                        Image(systemName: "heart.fill").font(.system(size: 12))
                             .foregroundColor(Theme.pink.opacity(0.8))
 
                         if likesCount == 1 {
-                            Text("1 like")
-                                .font(.system(size: 12))
+                            Text("1 like").font(.system(size: 12))
                                 .foregroundColor(.white.opacity(0.7))
-                        } else {
-                            Text("\(likesCount) likes")
-                                .font(.system(size: 12))
+                        }
+                        else {
+                            Text("\(likesCount) likes").font(.system(size: 12))
                                 .foregroundColor(.white.opacity(0.7))
                         }
                     }
                     .frame(maxWidth: .infinity, alignment: .leading)
                 }
-                .buttonStyle(PlainButtonStyle())
-                .padding(.top, 4)
+                .buttonStyle(PlainButtonStyle()).padding(.top, 4)
             }
 
             // Action buttons
@@ -571,22 +487,19 @@ struct NavigationFeedSessionCard: View {
                     // Update the count for immediate feedback
                     if isLiked {
                         likesCount += 1
-                    } else if likesCount > 0 {
+                    }
+                    else if likesCount > 0 {
                         likesCount -= 1
                     }
                 }) {
                     ZStack {
-                        Circle()
-                            .fill(Color.white.opacity(0.1))
-                            .frame(width: 36, height: 36)
+                        Circle().fill(Color.white.opacity(0.1)).frame(width: 36, height: 36)
 
-                        Image(systemName: isLiked ? "heart.fill" : "heart")
-                            .font(.system(size: 16))
+                        Image(systemName: isLiked ? "heart.fill" : "heart").font(.system(size: 16))
                             .foregroundColor(isLiked ? Theme.pink : .white)
                     }
                 }
-                .buttonStyle(BorderlessButtonStyle())
-                .padding(.trailing, 6)
+                .buttonStyle(BorderlessButtonStyle()).padding(.trailing, 6)
 
                 // Comment button
                 Button(action: {
@@ -594,25 +507,19 @@ struct NavigationFeedSessionCard: View {
                         showCommentField.toggle()
                         if showCommentField {
                             // Focus the comment field after a brief delay
-                            DispatchQueue.main.asyncAfter(
-                                deadline: .now() + 0.3
-                            ) {
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
                                 isCommentFocused = true
                             }
                         }
                     }
                 }) {
                     ZStack {
-                        Circle()
-                            .fill(Color.white.opacity(0.1))
-                            .frame(width: 36, height: 36)
+                        Circle().fill(Color.white.opacity(0.1)).frame(width: 36, height: 36)
 
                         Image(
-                            systemName: session.comment != nil
-                                ? "text.bubble.fill" : "text.bubble"
+                            systemName: session.comment != nil ? "text.bubble.fill" : "text.bubble"
                         )
-                        .font(.system(size: 16))
-                        .foregroundColor(.white)
+                        .font(.system(size: 16)).foregroundColor(.white)
                     }
                 }
                 .buttonStyle(BorderlessButtonStyle())
@@ -626,16 +533,12 @@ struct NavigationFeedSessionCard: View {
                     isFocused: _isCommentFocused,
                     showSavedIndicator: $showSavedIndicator,
                     showCommentField: $showCommentField,
-                    onSubmit: { newComment in
-                        saveComment(newComment)
-                    }
+                    onSubmit: { newComment in saveComment(newComment) }
                 )
-                .transition(.move(edge: .bottom).combined(with: .opacity))
-                .padding(.top, 8)
+                .transition(.move(edge: .bottom).combined(with: .opacity)).padding(.top, 8)
             }
         }
-        .padding(.vertical, 16)
-        .padding(.horizontal, 16)
+        .padding(.vertical, 16).padding(.horizontal, 16)
         .background(
             ZStack {
                 RoundedRectangle(cornerRadius: 20)
@@ -643,44 +546,32 @@ struct NavigationFeedSessionCard: View {
                         session.wasSuccessful
                             ? LinearGradient(
                                 colors: [
-                                    Color(
-                                        red: 26 / 255, green: 32 / 255,
-                                        blue: 58 / 255
-                                    ).opacity(0.6),
-                                    Color(
-                                        red: 17 / 255, green: 54 / 255,
-                                        blue: 71 / 255
-                                    ).opacity(0.5),
+                                    Color(red: 26 / 255, green: 32 / 255, blue: 58 / 255)
+                                        .opacity(0.6),
+                                    Color(red: 17 / 255, green: 54 / 255, blue: 71 / 255)
+                                        .opacity(0.5),
                                 ],
                                 startPoint: .topLeading,
                                 endPoint: .bottomTrailing
                             )
                             : LinearGradient(
                                 colors: [
-                                    Color(
-                                        red: 45 / 255, green: 21 / 255,
-                                        blue: 38 / 255
-                                    ).opacity(0.9),
-                                    Color(
-                                        red: 26 / 255, green: 32 / 255,
-                                        blue: 58 / 255
-                                    ).opacity(0.8),
+                                    Color(red: 45 / 255, green: 21 / 255, blue: 38 / 255)
+                                        .opacity(0.9),
+                                    Color(red: 26 / 255, green: 32 / 255, blue: 58 / 255)
+                                        .opacity(0.8),
                                 ],
                                 startPoint: .topLeading,
                                 endPoint: .bottomTrailing
                             )
                     )
 
-                RoundedRectangle(cornerRadius: 15)
-                    .fill(Color.white.opacity(0.05))
+                RoundedRectangle(cornerRadius: 15).fill(Color.white.opacity(0.05))
 
                 RoundedRectangle(cornerRadius: 15)
                     .stroke(
                         LinearGradient(
-                            colors: [
-                                Color.white.opacity(0.5),
-                                Color.white.opacity(0.1),
-                            ],
+                            colors: [Color.white.opacity(0.5), Color.white.opacity(0.1)],
                             startPoint: .topLeading,
                             endPoint: .bottomTrailing
                         ),
@@ -688,28 +579,21 @@ struct NavigationFeedSessionCard: View {
                     )
             }
         )
-        .shadow(color: Color.black.opacity(0.2), radius: 4, x: 0, y: 2)
-        .contentShape(Rectangle())
+        .shadow(color: Color.black.opacity(0.2), radius: 4, x: 0, y: 2).contentShape(Rectangle())
         .onTapGesture {
             // Dismiss keyboard when tapping on the card
-            if isCommentFocused {
-                isCommentFocused = false
-            }
+            if isCommentFocused { isCommentFocused = false }
         }
         .popover(isPresented: $showLikesSheet, arrowEdge: .top) {
             CompactLikesListView(
-                sessionId: session.id.uuidString, likesCount: likesCount,
-                viewModel: viewModel)
+                sessionId: session.id.uuidString,
+                likesCount: likesCount,
+                viewModel: viewModel
+            )
         }
-        .onAppear {
-            updateLikeState()
-        }
-        .onChange(of: viewModel.likedByUser[session.id.uuidString]) {
-            updateLikeState()
-        }
-        .onChange(of: viewModel.sessionLikes[session.id.uuidString]) {
-            updateLikeState()
-        }
+        .onAppear { updateLikeState() }
+        .onChange(of: viewModel.likedByUser[session.id.uuidString]) { updateLikeState() }
+        .onChange(of: viewModel.sessionLikes[session.id.uuidString]) { updateLikeState() }
     }
 
     private func updateLikeState() {
@@ -724,13 +608,10 @@ struct NavigationFeedSessionCard: View {
         guard !newComment.isEmpty else { return }
 
         // Save comment to Firestore
-        viewModel.saveComment(
-            sessionId: session.id.uuidString, comment: newComment)
+        viewModel.saveComment(sessionId: session.id.uuidString, comment: newComment)
 
         // Show the saved indicator
-        withAnimation {
-            showSavedIndicator = true
-        }
+        withAnimation { showSavedIndicator = true }
 
         DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
             withAnimation {
@@ -754,9 +635,11 @@ struct SessionComment: Codable, Identifiable {
         if Calendar.current.isDateInToday(timestamp) {
             formatter.dateFormat = "h:mm a"
             return "Today at \(formatter.string(from: timestamp))"
-        } else if Calendar.current.isDateInYesterday(timestamp) {
+        }
+        else if Calendar.current.isDateInYesterday(timestamp) {
             return "Yesterday"
-        } else {
+        }
+        else {
             formatter.dateFormat = "MMM d"
             return formatter.string(from: timestamp)
         }
@@ -791,9 +674,7 @@ class FeedViewModel: ObservableObject {
         firebaseManager.db.collection("users").document(userId)
             .getDocument { [weak self] document, error in
                 if let error = error {
-                    print(
-                        "❌ Error fetching user data: \(error.localizedDescription)"
-                    )
+                    print("❌ Error fetching user data: \(error.localizedDescription)")
                     DispatchQueue.main.async {
                         self?.showError = true
                         self?.errorMessage = error.localizedDescription
@@ -802,21 +683,17 @@ class FeedViewModel: ObservableObject {
                     return
                 }
 
-                guard
-                    let userData = try? document?.data(
-                        as: FirebaseManager.FlipUser.self)
-                else {
+                guard let userData = try? document?.data(as: FirebaseManager.FlipUser.self) else {
                     print("❌ Failed to decode user data")
-                    DispatchQueue.main.async {
-                        self?.isLoading = false
-                    }
+                    DispatchQueue.main.async { self?.isLoading = false }
                     return
                 }
 
                 // Proactively check current user data
                 if !userData.username.isEmpty {
                     print("✅ Current user username: \(userData.username)")
-                } else {
+                }
+                else {
                     print("⚠️ Current user has EMPTY username!")
                 }
 
@@ -834,40 +711,35 @@ class FeedViewModel: ObservableObject {
                 for friendId in allUserIds {
                     group.enter()
 
-                    self?.firebaseManager.db.collection("users").document(
-                        friendId
-                    ).getDocument { document, error in
-                        defer { group.leave() }
+                    self?.firebaseManager.db.collection("users").document(friendId)
+                        .getDocument { document, error in
+                            defer { group.leave() }
 
-                        if let error = error {
-                            print(
-                                "❌ Error loading user \(friendId): \(error.localizedDescription)"
-                            )
-                            return
-                        }
+                            if let error = error {
+                                print(
+                                    "❌ Error loading user \(friendId): \(error.localizedDescription)"
+                                )
+                                return
+                            }
 
-                        // Try to get username
-                        if let userData = document?.data(),
-                            let username = userData["username"] as? String,
-                            !username.isEmpty
-                        {
-                            print(
-                                "✅ Loaded username for \(friendId): \(username)"
-                            )
-                            usernames[friendId] = username
-
-                            // Also cache in the users dictionary
-                            if let userData = try? document?.data(
-                                as: FirebaseManager.FlipUser.self)
+                            // Try to get username
+                            if let userData = document?.data(),
+                                let username = userData["username"] as? String, !username.isEmpty
                             {
-                                DispatchQueue.main.async {
-                                    self?.users[friendId] = userData
+                                print("✅ Loaded username for \(friendId): \(username)")
+                                usernames[friendId] = username
+
+                                // Also cache in the users dictionary
+                                if let userData = try? document?
+                                    .data(as: FirebaseManager.FlipUser.self)
+                                {
+                                    DispatchQueue.main.async { self?.users[friendId] = userData }
                                 }
                             }
-                        } else {
-                            print("⚠️ Failed to load username for \(friendId)")
+                            else {
+                                print("⚠️ Failed to load username for \(friendId)")
+                            }
                         }
-                    }
                 }
 
                 // Continue loading sessions only after all user data is fetched
@@ -877,7 +749,8 @@ class FeedViewModel: ObservableObject {
                     if allUserIds.isEmpty {
                         // If you have no friends, just load your own sessions
                         self?.loadCurrentUserSessions(userId: userId)
-                    } else {
+                    }
+                    else {
                         // Load sessions from both you and your friends
                         self?.loadFriendSessions(userIds: allUserIds)
                     }
@@ -889,9 +762,7 @@ class FeedViewModel: ObservableObject {
         if let existingUser = users[userId],
             !existingUser.username.isEmpty && existingUser.username != "User"
         {
-            print(
-                "📋 Using cached user data for \(userId): \(existingUser.username)"
-            )
+            print("📋 Using cached user data for \(userId): \(existingUser.username)")
             completion?()
             return
         }
@@ -901,9 +772,7 @@ class FeedViewModel: ObservableObject {
         firebaseManager.db.collection("users").document(userId)
             .getDocument { [weak self] document, error in
                 if let error = error {
-                    print(
-                        "❌ Error loading user data for \(userId): \(error.localizedDescription)"
-                    )
+                    print("❌ Error loading user data for \(userId): \(error.localizedDescription)")
                     completion?()
                     return
                 }
@@ -912,30 +781,21 @@ class FeedViewModel: ObservableObject {
                     // First try to get raw username data directly
                     let rawData = document.data()
 
-                    if let rawUsername = rawData?["username"] as? String,
-                        !rawUsername.isEmpty
-                    {
-                        print(
-                            "✅ Found raw username for \(userId): \(rawUsername)"
-                        )
+                    if let rawUsername = rawData?["username"] as? String, !rawUsername.isEmpty {
+                        print("✅ Found raw username for \(userId): \(rawUsername)")
 
                         // Try to decode full user data
-                        if let userData = try? document.data(
-                            as: FirebaseManager.FlipUser.self)
-                        {
+                        if let userData = try? document.data(as: FirebaseManager.FlipUser.self) {
                             // Verify username isn't empty in decoded data
                             if !userData.username.isEmpty {
                                 DispatchQueue.main.async {
                                     self?.users[userId] = userData
-                                    print(
-                                        "✅ Stored full user data for: \(userData.username)"
-                                    )
+                                    print("✅ Stored full user data for: \(userData.username)")
                                 }
-                            } else {
+                            }
+                            else {
                                 // Username is empty in decoded data, create a fixed version
-                                print(
-                                    "⚠️ Username empty in decoded data, creating fixed version"
-                                )
+                                print("⚠️ Username empty in decoded data, creating fixed version")
                                 let fixedUser = FirebaseManager.FlipUser(
                                     id: userId,
                                     username: rawUsername,
@@ -948,15 +808,12 @@ class FeedViewModel: ObservableObject {
                                     profileImageURL: userData.profileImageURL
                                 )
 
-                                DispatchQueue.main.async {
-                                    self?.users[userId] = fixedUser
-                                }
+                                DispatchQueue.main.async { self?.users[userId] = fixedUser }
                             }
-                        } else {
+                        }
+                        else {
                             // Couldn't decode full user, create minimal version with username
-                            print(
-                                "⚠️ Couldn't decode full user, creating minimal version"
-                            )
+                            print("⚠️ Couldn't decode full user, creating minimal version")
                             let fallbackUser = FirebaseManager.FlipUser(
                                 id: userId,
                                 username: rawUsername,
@@ -968,25 +825,21 @@ class FeedViewModel: ObservableObject {
                                 sentRequests: []
                             )
 
-                            DispatchQueue.main.async {
-                                self?.users[userId] = fallbackUser
-                            }
+                            DispatchQueue.main.async { self?.users[userId] = fallbackUser }
                         }
-                    } else {
-                        print(
-                            "❌ No valid username for \(userId) in document data"
-                        )
                     }
-                } else {
+                    else {
+                        print("❌ No valid username for \(userId) in document data")
+                    }
+                }
+                else {
                     print("❌ No user document found for ID: \(userId)")
                 }
 
                 completion?()
             }
     }
-    func loadUserStreakStatus(
-        userId: String, completion: @escaping (StreakStatus) -> Void
-    ) {
+    func loadUserStreakStatus(userId: String, completion: @escaping (StreakStatus) -> Void) {
         // Check if we already have the status cached
         if let cachedStatus = userStreakStatus[userId] {
             completion(cachedStatus)
@@ -994,21 +847,18 @@ class FeedViewModel: ObservableObject {
         }
 
         // Otherwise load from Firestore
-        firebaseManager.db.collection("users").document(userId)
-            .collection("streak").document("current")
+        firebaseManager.db.collection("users").document(userId).collection("streak")
+            .document("current")
             .getDocument { [weak self] snapshot, error in
                 var status: StreakStatus = .none
 
-                if let data = snapshot?.data(),
-                    let statusString = data["streakStatus"] as? String,
+                if let data = snapshot?.data(), let statusString = data["streakStatus"] as? String,
                     let streakStatus = StreakStatus(rawValue: statusString)
                 {
                     status = streakStatus
 
                     // Cache the result
-                    DispatchQueue.main.async {
-                        self?.userStreakStatus[userId] = status
-                    }
+                    DispatchQueue.main.async { self?.userStreakStatus[userId] = status }
                 }
 
                 // Return the status
@@ -1029,9 +879,7 @@ class FeedViewModel: ObservableObject {
 
         // If we don't have it cached, make sure we load it for next time
         // Use a higher priority for this immediate request
-        DispatchQueue.global(qos: .userInitiated).async {
-            self.loadUserData(userId: userId)
-        }
+        DispatchQueue.global(qos: .userInitiated).async { self.loadUserData(userId: userId) }
 
         // Return a placeholder user until the data loads
         // Use userId prefix as fallback for better identification
@@ -1057,22 +905,16 @@ class FeedViewModel: ObservableObject {
         for session in sessions {
             userIds.insert(session.userId)
             dispatchGroup.enter()
-            loadUserStreakStatus(userId: session.userId) { _ in
-                dispatchGroup.leave()
-            }
+            loadUserStreakStatus(userId: session.userId) { _ in dispatchGroup.leave() }
 
-            if let commentorId = session.commentorId {
-                userIds.insert(commentorId)
-            }
+            if let commentorId = session.commentorId { userIds.insert(commentorId) }
 
             // Include participants from group sessions
             if let participants = session.participants {
                 for participant in participants {
                     userIds.insert(participant.id)
                     dispatchGroup.enter()
-                    loadUserStreakStatus(userId: participant.id) { _ in
-                        dispatchGroup.leave()
-                    }
+                    loadUserStreakStatus(userId: participant.id) { _ in dispatchGroup.leave() }
                 }
             }
         }
@@ -1082,9 +924,7 @@ class FeedViewModel: ObservableObject {
         // Load each user in parallel but track with dispatch group
         for userId in userIds {
             dispatchGroup.enter()
-            loadUserData(userId: userId) {
-                dispatchGroup.leave()
-            }
+            loadUserData(userId: userId) { dispatchGroup.leave() }
         }
 
         // After all users are loaded, refresh the UI
@@ -1108,8 +948,7 @@ class FeedViewModel: ObservableObject {
         //        var processedSessionIds = Set<String>()
 
         sessionListener = firebaseManager.db.collection("sessions")
-            .whereField("userId", in: userIds)
-            .order(by: "startTime", descending: true)
+            .whereField("userId", in: userIds).order(by: "startTime", descending: true)
             .limit(to: 50)
             .addSnapshotListener { [weak self] snapshot, error in
                 guard let self = self else { return }
@@ -1118,37 +957,31 @@ class FeedViewModel: ObservableObject {
                     if let error = error {
                         self.showError = true
                         self.errorMessage = error.localizedDescription
-                        print(
-                            "Error loading sessions: \(error.localizedDescription)"
-                        )
-                    } else if let documents = snapshot?.documents {
+                        print("Error loading sessions: \(error.localizedDescription)")
+                    }
+                    else if let documents = snapshot?.documents {
                         print("Loaded \(documents.count) sessions")
 
                         // Process documents into sessions, filtering out duplicates
                         var uniqueSessions: [Session] = []
 
                         for document in documents {
-                            guard
-                                let session = try? document.data(
-                                    as: Session.self)
-                            else {
+                            guard let session = try? document.data(as: Session.self) else {
                                 continue
                             }
 
                             let sessionId = session.id.uuidString
 
                             // First check against our global session ID set
-                            if !self.globalProcessedSessionIds.contains(
-                                sessionId)
+                            if !self.globalProcessedSessionIds.contains(sessionId)
                                 && !localProcessedSessionIds.contains(sessionId)
                             {
                                 self.globalProcessedSessionIds.insert(sessionId)
                                 localProcessedSessionIds.insert(sessionId)
                                 uniqueSessions.append(session)
-                            } else {
-                                print(
-                                    "Skipping duplicate session ID: \(sessionId)"
-                                )
+                            }
+                            else {
+                                print("Skipping duplicate session ID: \(sessionId)")
                             }
                         }
 
@@ -1157,19 +990,16 @@ class FeedViewModel: ObservableObject {
 
                         if self.feedSessions.isEmpty {
                             self.feedSessions = uniqueSessions
-                        } else {
+                        }
+                        else {
                             // Add new sessions from this batch that aren't already in feedSessions
                             for session in uniqueSessions {
-                                if !self.feedSessions.contains(where: {
-                                    $0.id == session.id
-                                }) {
+                                if !self.feedSessions.contains(where: { $0.id == session.id }) {
                                     self.feedSessions.append(session)
                                 }
                             }
                             // Re-sort the combined list
-                            self.feedSessions.sort {
-                                $0.startTime > $1.startTime
-                            }
+                            self.feedSessions.sort { $0.startTime > $1.startTime }
                         }
                         // Preload all user data before loading other session data
                         self.preloadUserData(for: self.feedSessions)
@@ -1197,8 +1027,7 @@ class FeedViewModel: ObservableObject {
         var processedSessionIds = Set<String>()
 
         sessionListener = firebaseManager.db.collection("sessions")
-            .whereField("userId", isEqualTo: userId)
-            .order(by: "startTime", descending: true)
+            .whereField("userId", isEqualTo: userId).order(by: "startTime", descending: true)
             .limit(to: 50)
             .addSnapshotListener { [weak self] snapshot, error in
                 guard let self = self else { return }
@@ -1207,20 +1036,16 @@ class FeedViewModel: ObservableObject {
                     if let error = error {
                         self.showError = true
                         self.errorMessage = error.localizedDescription
-                        print(
-                            "Error loading sessions: \(error.localizedDescription)"
-                        )
-                    } else if let documents = snapshot?.documents {
+                        print("Error loading sessions: \(error.localizedDescription)")
+                    }
+                    else if let documents = snapshot?.documents {
                         print("Loaded \(documents.count) sessions")
 
                         // Process documents into sessions, filtering out duplicates
                         var uniqueSessions: [Session] = []
 
                         for document in documents {
-                            guard
-                                let session = try? document.data(
-                                    as: Session.self)
-                            else {
+                            guard let session = try? document.data(as: Session.self) else {
                                 continue
                             }
 
@@ -1230,10 +1055,9 @@ class FeedViewModel: ObservableObject {
                             if !processedSessionIds.contains(sessionId) {
                                 processedSessionIds.insert(sessionId)
                                 uniqueSessions.append(session)
-                            } else {
-                                print(
-                                    "Skipping duplicate session ID: \(sessionId)"
-                                )
+                            }
+                            else {
+                                print("Skipping duplicate session ID: \(sessionId)")
                             }
                         }
 
@@ -1254,29 +1078,19 @@ class FeedViewModel: ObservableObject {
         commentsListeners[sessionId]?.remove()
 
         // Create a new listener for comments
-        let listener = firebaseManager.db.collection("sessions")
-            .document(sessionId)
-            .collection("comments")
-            .order(by: "timestamp", descending: false)
+        let listener = firebaseManager.db.collection("sessions").document(sessionId)
+            .collection("comments").order(by: "timestamp", descending: false)
             .addSnapshotListener { [weak self] snapshot, error in
-                guard let self = self, let documents = snapshot?.documents
-                else {
-                    return
-                }
+                guard let self = self, let documents = snapshot?.documents else { return }
 
                 DispatchQueue.main.async {
                     // Parse comments
-                    self.sessionComments[sessionId] = documents.compactMap {
-                        document in
+                    self.sessionComments[sessionId] = documents.compactMap { document in
                         guard let userId = document.data()["userId"] as? String,
-                            let username = document.data()["username"]
-                                as? String,
+                            let username = document.data()["username"] as? String,
                             let comment = document.data()["comment"] as? String,
-                            let timestamp = document.data()["timestamp"]
-                                as? Timestamp
-                        else {
-                            return nil
-                        }
+                            let timestamp = document.data()["timestamp"] as? Timestamp
+                        else { return nil }
 
                         return SessionComment(
                             id: document.documentID,
@@ -1298,21 +1112,16 @@ class FeedViewModel: ObservableObject {
     }
 
     // Add this method to add a new comment (instead of updating)
-    func addComment(
-        sessionId: String, comment: String, userId: String, username: String
-    ) {
+    func addComment(sessionId: String, comment: String, userId: String, username: String) {
         guard !comment.isEmpty else { return }
 
         // First, get the session details to find the session owner
-        firebaseManager.db.collection("sessions")
-            .document(sessionId)
+        firebaseManager.db.collection("sessions").document(sessionId)
             .getDocument { [weak self] document, error in
                 guard let self = self else { return }
 
                 if let error = error {
-                    print(
-                        "Error getting session for comment: \(error.localizedDescription)"
-                    )
+                    print("Error getting session for comment: \(error.localizedDescription)")
                     return
                 }
 
@@ -1325,15 +1134,12 @@ class FeedViewModel: ObservableObject {
 
                 // Create comment data
                 let commentData: [String: Any] = [
-                    "userId": userId,
-                    "username": username,
-                    "comment": comment,
+                    "userId": userId, "username": username, "comment": comment,
                     "timestamp": Timestamp(date: Date()),
                 ]
 
                 // Add to the comments subcollection
-                self.firebaseManager.db.collection("sessions")
-                    .document(sessionId)
+                self.firebaseManager.db.collection("sessions").document(sessionId)
                     .collection("comments")
                     .addDocument(data: commentData) { error in
                         if let error = error {
@@ -1341,11 +1147,10 @@ class FeedViewModel: ObservableObject {
                                 self.showError = true
                                 self.errorMessage =
                                     "Failed to save comment: \(error.localizedDescription)"
-                                print(
-                                    "Error saving comment: \(error.localizedDescription)"
-                                )
+                                print("Error saving comment: \(error.localizedDescription)")
                             }
-                        } else {
+                        }
+                        else {
                             print("Comment saved successfully")
 
                             // Send notification to session owner if it's not the current user
@@ -1359,46 +1164,37 @@ class FeedViewModel: ObservableObject {
                             }
 
                             // Explicitly reload the comments for this session
-                            DispatchQueue.main.async {
-                                self.loadCommentsForSession(sessionId)
-                            }
+                            DispatchQueue.main.async { self.loadCommentsForSession(sessionId) }
                         }
                     }
             }
     }
     private func sendCommentNotification(
-        to recipientId: String, from senderId: String, fromUsername: String,
+        to recipientId: String,
+        from senderId: String,
+        fromUsername: String,
         comment: String
     ) {
         // Create notification data
         let notificationData: [String: Any] = [
-            "type": "comment",
-            "fromUserId": senderId,
-            "fromUsername": fromUsername,
-            "timestamp": Timestamp(date: Date()),
-            "comment": comment,
-            "read": false,
+            "type": "comment", "fromUserId": senderId, "fromUsername": fromUsername,
+            "timestamp": Timestamp(date: Date()), "comment": comment, "read": false,
             "silent": false,  // This makes it not vibrate/sound but still show badge & banner
         ]
 
         // Add to the recipient's notifications collection
-        firebaseManager.db.collection("users")
-            .document(recipientId)
-            .collection("notifications")
+        firebaseManager.db.collection("users").document(recipientId).collection("notifications")
             .addDocument(data: notificationData) { error in
                 if let error = error {
-                    print(
-                        "Error creating comment notification: \(error.localizedDescription)"
-                    )
-                } else {
+                    print("Error creating comment notification: \(error.localizedDescription)")
+                }
+                else {
                     print("Comment notification sent to user: \(recipientId)")
                 }
             }
     }
     func deleteComment(sessionId: String, commentId: String) {
-        firebaseManager.db.collection("sessions")
-            .document(sessionId)
-            .collection("comments")
+        firebaseManager.db.collection("sessions").document(sessionId).collection("comments")
             .document(commentId)
             .delete { [weak self] error in
                 if let error = error {
@@ -1413,61 +1209,48 @@ class FeedViewModel: ObservableObject {
 
     // Add this method to cleanup listeners
     func cleanupCommentsListeners() {
-        for (_, listener) in commentsListeners {
-            listener.remove()
-        }
+        for (_, listener) in commentsListeners { listener.remove() }
         commentsListeners.removeAll()
     }
 
     func cleanupLikesListeners() {
-        for (_, listener) in likesListeners {
-            listener.remove()
-        }
+        for (_, listener) in likesListeners { listener.remove() }
         likesListeners.removeAll()
     }
 
     // Original comment method - kept for backward compatibility
     func saveComment(sessionId: String, comment: String) {
-        guard !comment.isEmpty, let _currentUserId = Auth.auth().currentUser?.uid
-        else { return }
+        guard !comment.isEmpty, let _currentUserId = Auth.auth().currentUser?.uid else { return }
 
         // Update the Firestore document
-        firebaseManager.db.collection("sessions")
-            .document(sessionId)
+        firebaseManager.db.collection("sessions").document(sessionId)
             .updateData(["comment": comment]) { [weak self] error in
                 if let error = error {
                     DispatchQueue.main.async {
                         self?.showError = true
-                        self?.errorMessage =
-                            "Failed to save comment: \(error.localizedDescription)"
+                        self?.errorMessage = "Failed to save comment: \(error.localizedDescription)"
                     }
                 }
             }
     }
 
     // New method to save comment with commentor information
-    func saveCommentWithUser(
-        sessionId: String, comment: String, userId: String, username: String
-    ) {
+    func saveCommentWithUser(sessionId: String, comment: String, userId: String, username: String) {
         guard !comment.isEmpty else { return }
 
         // Store more information about the comment
         let commentData: [String: Any] = [
-            "comment": comment,
-            "commentorId": userId,
-            "commentorName": username,
+            "comment": comment, "commentorId": userId, "commentorName": username,
             "commentTime": Timestamp(date: Date()),
         ]
 
         // Update the Firestore document
-        firebaseManager.db.collection("sessions")
-            .document(sessionId)
+        firebaseManager.db.collection("sessions").document(sessionId)
             .updateData(commentData) { [weak self] error in
                 if let error = error {
                     DispatchQueue.main.async {
                         self?.showError = true
-                        self?.errorMessage =
-                            "Failed to save comment: \(error.localizedDescription)"
+                        self?.errorMessage = "Failed to save comment: \(error.localizedDescription)"
                     }
                 }
             }
@@ -1484,19 +1267,14 @@ class FeedViewModel: ObservableObject {
 
         // Add commentor IDs if they exist
         for session in feedSessions {
-            if let commentorId = session.commentorId {
-                userIds.insert(commentorId)
-            }
+            if let commentorId = session.commentorId { userIds.insert(commentorId) }
 
             // Also include participants from group sessions
             if let participants = session.participants {
-                let filteredParticipants = participants.filter {
-                    participant in
+                let filteredParticipants = participants.filter { participant in
                     participant.id != Auth.auth().currentUser?.uid
                 }
-                for participant in filteredParticipants {
-                    userIds.insert(participant.id)
-                }
+                for participant in filteredParticipants { userIds.insert(participant.id) }
             }
         }
 
@@ -1507,9 +1285,7 @@ class FeedViewModel: ObservableObject {
 
         for userId in userIds {
             dispatchGroup.enter()
-            loadUserData(userId: userId) {
-                dispatchGroup.leave()
-            }
+            loadUserData(userId: userId) { dispatchGroup.leave() }
         }
 
         // Then load likes and comments for each visible session
@@ -1534,17 +1310,14 @@ class FeedViewModel: ObservableObject {
         let likeId = "\(sessionId)_\(currentUserId)"
         let likeRef = firebaseManager.db.collection("likes").document(likeId)
 
-        print(
-            "Processing like toggle for session: \(sessionId), user: \(currentUserId)"
-        )
+        print("Processing like toggle for session: \(sessionId), user: \(currentUserId)")
 
         // Check if user already liked this session
         likeRef.getDocument { [weak self] document, error in
             guard let self = self else { return }
 
             if let error = error {
-                print(
-                    "Error checking like status: \(error.localizedDescription)")
+                print("Error checking like status: \(error.localizedDescription)")
                 return
             }
 
@@ -1553,17 +1326,17 @@ class FeedViewModel: ObservableObject {
                 print("Unlike action: Removing existing like")
                 likeRef.delete { error in
                     if let error = error {
-                        print(
-                            "Error removing like: \(error.localizedDescription)"
-                        )
-                    } else {
+                        print("Error removing like: \(error.localizedDescription)")
+                    }
+                    else {
                         print("Like removed successfully")
 
                         // Don't update UI here - let the listener handle it
                         // This prevents race conditions
                     }
                 }
-            } else {
+            }
+            else {
                 // User hasn't liked the session yet, so add a like
                 print("Like action: Adding new like")
                 let timestamp = Timestamp(date: Date())
@@ -1573,17 +1346,15 @@ class FeedViewModel: ObservableObject {
 
                 // Store like data
                 let likeData: [String: Any] = [
-                    "userId": currentUserId,
-                    "username": username,
-                    "sessionId": sessionId,
+                    "userId": currentUserId, "username": username, "sessionId": sessionId,
                     "timestamp": timestamp,
                 ]
 
                 likeRef.setData(likeData) { error in
                     if let error = error {
-                        print(
-                            "Error adding like: \(error.localizedDescription)")
-                    } else {
+                        print("Error adding like: \(error.localizedDescription)")
+                    }
+                    else {
                         print("Like added successfully")
 
                     }
@@ -1624,8 +1395,7 @@ class FeedViewModel: ObservableObject {
                     return
                 }
 
-                print(
-                    "Found \(documents.count) likes for session: \(sessionId)")
+                print("Found \(documents.count) likes for session: \(sessionId)")
 
                 DispatchQueue.main.async {
                     // Get all user IDs who liked this session
@@ -1635,8 +1405,7 @@ class FeedViewModel: ObservableObject {
 
                     // Update the session likes info
                     self.sessionLikes[sessionId] = userIds.count
-                    self.likedByUser[sessionId] = userIds.contains(
-                        currentUserId)
+                    self.likedByUser[sessionId] = userIds.contains(currentUserId)
                     self.likesUsers[sessionId] = userIds
 
                     // Trigger UI update
@@ -1649,20 +1418,14 @@ class FeedViewModel: ObservableObject {
     }
 
     // Get likes count for a session
-    func getLikesForSession(sessionId: String) -> Int {
-        return sessionLikes[sessionId] ?? 0
-    }
+    func getLikesForSession(sessionId: String) -> Int { return sessionLikes[sessionId] ?? 0 }
 
     // Check if current user liked a session
-    func isLikedByUser(sessionId: String) -> Bool {
-        return likedByUser[sessionId] ?? false
-    }
+    func isLikedByUser(sessionId: String) -> Bool { return likedByUser[sessionId] ?? false }
 
     // Get users who liked a session
-    func getLikeUsers(
-        sessionId: String,
-        completion: @escaping ([FirebaseManager.FlipUser]) -> Void
-    ) {
+    func getLikeUsers(sessionId: String, completion: @escaping ([FirebaseManager.FlipUser]) -> Void)
+    {
         let userIds = likesUsers[sessionId] ?? []
 
         if userIds.isEmpty {
@@ -1677,7 +1440,8 @@ class FeedViewModel: ObservableObject {
         for userId in userIds {
             if let user = users[userId] {
                 likeUsers.append(user)
-            } else {
+            }
+            else {
                 missingUserIds.append(userId)
             }
         }
@@ -1694,23 +1458,19 @@ class FeedViewModel: ObservableObject {
         for userId in missingUserIds {
             group.enter()
 
-            firebaseManager.db.collection("users").document(userId).getDocument {
-                [weak self] document, error in
-                if let userData = try? document?.data(
-                    as: FirebaseManager.FlipUser.self)
-                {
-                    likeUsers.append(userData)
+            firebaseManager.db.collection("users").document(userId)
+                .getDocument { [weak self] document, error in
+                    if let userData = try? document?.data(as: FirebaseManager.FlipUser.self) {
+                        likeUsers.append(userData)
 
-                    // Cache the user for future use
-                    self?.users[userId] = userData
+                        // Cache the user for future use
+                        self?.users[userId] = userData
+                    }
+                    group.leave()
                 }
-                group.leave()
-            }
         }
 
-        group.notify(queue: .main) {
-            completion(likeUsers)
-        }
+        group.notify(queue: .main) { completion(likeUsers) }
     }
 
     deinit {

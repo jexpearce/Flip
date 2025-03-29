@@ -1,8 +1,7 @@
 import ActivityKit
 import Foundation
 
-@available(iOS 16.1, *)
-struct FlipActivityAttributes: ActivityAttributes {
+@available(iOS 16.1, *) struct FlipActivityAttributes: ActivityAttributes {
     public struct ContentState: Codable, Hashable {
         var remainingTime: String
         var remainingPauses: Int  // Changed from remainingFlips

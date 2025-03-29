@@ -7,10 +7,10 @@
   "indentation" : {
     "spaces" : 4
   },
-  "lineBreakAroundMultilineExpressionChainComponents" : false,
-  "lineBreakBeforeControlFlowKeywords" : false,
-  "lineBreakBeforeEachArgument" : false,
-  "lineBreakBeforeEachGenericRequirement" : false,
+  "lineBreakAroundMultilineExpressionChainComponents" : true,
+  "lineBreakBeforeControlFlowKeywords" : true,
+  "lineBreakBeforeEachArgument" : true,
+  "lineBreakBeforeEachGenericRequirement" : true,
   "lineLength" : 100,
   "maximumBlankLines" : 1,
   "multiElementCollectionTrailingCommas" : true,
@@ -20,7 +20,7 @@
     ]
   },
   "prioritizeKeepingFunctionOutputTogether" : false,
-  "respectsExistingLineBreaks" : true,
+  "respectsExistingLineBreaks" : false,
   "rules" : {
     "AllPublicDeclarationsHaveDocumentation" : false,
     "AlwaysUseLiteralForEmptyCollectionInit" : false,

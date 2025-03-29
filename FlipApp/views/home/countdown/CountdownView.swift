@@ -11,41 +11,29 @@ struct CountdownView: View {
     var body: some View {
         VStack(spacing: 25) {
             // Title with animated glow
-            Text("GET READY")
-                .font(.system(size: 28, weight: .black))
-                .tracking(8)
+            Text("GET READY").font(.system(size: 28, weight: .black)).tracking(8)
                 .foregroundColor(.white)
                 .shadow(
                     color: Theme.lightTealBlue.opacity(isGlowing ? 0.7 : 0.3),
                     radius: isGlowing ? 15 : 8
                 )
                 .onAppear {
-                    withAnimation(
-                        .easeInOut(duration: 1.5).repeatForever(
-                            autoreverses: true)
-                    ) {
+                    withAnimation(.easeInOut(duration: 1.5).repeatForever(autoreverses: true)) {
                         isGlowing = true
                     }
                 }
 
             // Animated Countdown Number
-            Text("\(appManager.countdownSeconds)")
-                .font(.system(size: 120, weight: .black))
-                .foregroundColor(.white)
-                .scaleEffect(numberScale)
-                .opacity(numberOpacity)
-                .shadow(
-                    color: Theme.lightTealBlue.opacity(0.6), radius: 15
-                )
+            Text("\(appManager.countdownSeconds)").font(.system(size: 120, weight: .black))
+                .foregroundColor(.white).scaleEffect(numberScale).opacity(numberOpacity)
+                .shadow(color: Theme.lightTealBlue.opacity(0.6), radius: 15)
                 .onChange(of: appManager.countdownSeconds) {
                     withAnimation(.spring(response: 0.3, dampingFraction: 0.6)) {
                         numberScale = 1.4
                         numberOpacity = 0.7
                     }
                     DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
-                        withAnimation(
-                            .spring(response: 0.3, dampingFraction: 0.6)
-                        ) {
+                        withAnimation(.spring(response: 0.3, dampingFraction: 0.6)) {
                             numberScale = 1.0
                             numberOpacity = 1.0
                         }
@@ -54,9 +42,7 @@ struct CountdownView: View {
 
             // Warning for users without full location permission
             if appManager.usingLimitedLocationPermission {
-                locationWarningBanner()
-                    .padding(.horizontal, 20)
-                    .padding(.vertical, 5)
+                locationWarningBanner().padding(.horizontal, 20).padding(.vertical, 5)
             }
 
             // Instructions
@@ -69,10 +55,7 @@ struct CountdownView: View {
                 )
 
                 // Step 2
-                instructionRow(
-                    number: "2",
-                    text: "FLIP PHONE"
-                )
+                instructionRow(number: "2", text: "FLIP PHONE")
             }
             .padding(.top, 15)
         }
@@ -84,11 +67,9 @@ struct CountdownView: View {
                     Circle()
                         .fill(
                             appManager.usingLimitedLocationPermission
-                                ? Theme.yellowAccentGradient
-                                : Theme.buttonGradient
+                                ? Theme.yellowAccentGradient : Theme.buttonGradient
                         )
-                        .frame(width: 200, height: 200)
-                        .opacity(0.05)
+                        .frame(width: 200, height: 200).opacity(0.05)
                         .offset(
                             x: CGFloat.random(in: -100...100),
                             y: CGFloat.random(in: -100...100)
@@ -99,10 +80,7 @@ struct CountdownView: View {
         )
         .onAppear {
             // Start the pulse animation
-            withAnimation(
-                Animation.easeInOut(duration: 2).repeatForever(
-                    autoreverses: true)
-            ) {
+            withAnimation(Animation.easeInOut(duration: 2).repeatForever(autoreverses: true)) {
                 showPulse = true
             }
         }
@@ -111,20 +89,16 @@ struct CountdownView: View {
     private func locationWarningBanner() -> some View {
         HStack(spacing: 8) {
             // Warning icon
-            Image(systemName: "exclamationmark.triangle.fill")
-                .font(.system(size: 18))
+            Image(systemName: "exclamationmark.triangle.fill").font(.system(size: 18))
                 .foregroundColor(Theme.yellow)
 
             // Concise warning text
-            Text("Keep phone on during session")
-                .font(.system(size: 16, weight: .bold))
+            Text("Keep phone on during session").font(.system(size: 16, weight: .bold))
                 .foregroundColor(Theme.yellow)
         }
-        .padding(.horizontal, 20)
-        .padding(.vertical, 12)
+        .padding(.horizontal, 20).padding(.vertical, 12)
         .background(
-            RoundedRectangle(cornerRadius: 16)
-                .fill(Color.black.opacity(0.3))
+            RoundedRectangle(cornerRadius: 16).fill(Color.black.opacity(0.3))
                 .overlay(
                     RoundedRectangle(cornerRadius: 16)
                         .stroke(Theme.yellow.opacity(0.3), lineWidth: 1)
@@ -147,31 +121,23 @@ struct CountdownView: View {
                 Circle()
                     .stroke(
                         LinearGradient(
-                            colors: [
-                                Color.white.opacity(0.6),
-                                Color.white.opacity(0.2),
-                            ],
+                            colors: [Color.white.opacity(0.6), Color.white.opacity(0.2)],
                             startPoint: .topLeading,
                             endPoint: .bottomTrailing
                         ),
                         lineWidth: 1
                     )
 
-                Text(number)
-                    .font(.system(size: 24, weight: .black))
-                    .foregroundColor(.white)
+                Text(number).font(.system(size: 24, weight: .black)).foregroundColor(.white)
             }
             .frame(width: 40, height: 40)
 
-            Text(text)
-                .font(.system(size: 20, weight: .heavy))
-                .tracking(2)
-                .foregroundColor(.white)
+            Text(text).font(.system(size: 20, weight: .heavy)).tracking(2).foregroundColor(.white)
                 .shadow(
                     color: appManager.usingLimitedLocationPermission
-                        ? Theme.yellowShadow.opacity(0.7)
-                        : Theme.lightTealBlue.opacity(0.5),
-                    radius: 8)
+                        ? Theme.yellowShadow.opacity(0.7) : Theme.lightTealBlue.opacity(0.5),
+                    radius: 8
+                )
         }
     }
 }

@@ -6,22 +6,18 @@ import GoogleSignIn
 import UIKit
 import UserNotifications
 
-class FlipAppDelegate: NSObject, UIApplicationDelegate,
-    UNUserNotificationCenterDelegate, MessagingDelegate
+class FlipAppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCenterDelegate,
+    MessagingDelegate
 {
 
     func application(
         _ application: UIApplication,
-        didFinishLaunchingWithOptions launchOptions: [UIApplication
-            .LaunchOptionsKey: Any]? = nil
+        didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]? = nil
     ) -> Bool {
 
-        if FirebaseApp.app() == nil {
-            FirebaseApp.configure()
-        }
+        if FirebaseApp.app() == nil { FirebaseApp.configure() }
         if let clientID = FirebaseApp.app()?.options.clientID {
-            GIDSignIn.sharedInstance.configuration = GIDConfiguration(
-                clientID: clientID)
+            GIDSignIn.sharedInstance.configuration = GIDConfiguration(clientID: clientID)
         }
         let defaults = UserDefaults.standard
         let isFirstLaunch = !defaults.bool(forKey: "hasLaunchedBefore")
@@ -33,8 +29,8 @@ class FlipAppDelegate: NSObject, UIApplicationDelegate,
 
             // Clear keychain data to ensure credentials are removed
             let secItemClasses = [
-                kSecClassGenericPassword, kSecClassInternetPassword,
-                kSecClassCertificate, kSecClassKey, kSecClassIdentity,
+                kSecClassGenericPassword, kSecClassInternetPassword, kSecClassCertificate,
+                kSecClassKey, kSecClassIdentity,
             ]
             for secItemClass in secItemClasses {
                 let query = [kSecClass as String: secItemClass]
@@ -56,23 +52,17 @@ class FlipAppDelegate: NSObject, UIApplicationDelegate,
         let locationHandler = LocationHandler.shared
         // Only restart location if actually in a session
         let appManager = AppManager.shared
-        if appManager.currentState == .tracking
-            || appManager.currentState == .countdown
-        {
+        if appManager.currentState == .tracking || appManager.currentState == .countdown {
             if locationHandler.updatesStarted {
-                if PermissionManager.shared.locationAuthStatus
-                    == .authorizedWhenInUse
-                    || PermissionManager.shared.locationAuthStatus
-                        == .authorizedAlways
+                if PermissionManager.shared.locationAuthStatus == .authorizedWhenInUse
+                    || PermissionManager.shared.locationAuthStatus == .authorizedAlways
                 {
                     // Start location updates
                     locationHandler.startLocationUpdates()
                 }
             }
             // If a background activity session was previously active, reinstantiate it
-            if locationHandler.backgroundActivity {
-                locationHandler.backgroundActivity = true
-            }
+            if locationHandler.backgroundActivity { locationHandler.backgroundActivity = true }
         }
 
         // Create test session to ensure collection exists - call after a delay
@@ -98,37 +88,32 @@ class FlipAppDelegate: NSObject, UIApplicationDelegate,
         return true
     }
 
-    func messaging(
-        _ messaging: Messaging, didReceiveRegistrationToken fcmToken: String?
-    ) {
+    func messaging(_ messaging: Messaging, didReceiveRegistrationToken fcmToken: String?) {
         print("Firebase registration token: \(String(describing: fcmToken))")
 
         // Store the token in Firestore for this user
         if let token = fcmToken, let userId = Auth.auth().currentUser?.uid {
             let dataDict: [String: Any] = [
-                "fcmToken": token,
-                "updatedAt": FieldValue.serverTimestamp(),
+                "fcmToken": token, "updatedAt": FieldValue.serverTimestamp(),
             ]
 
             // Save token to Firestore
             FirebaseManager.shared.db.collection("users").document(userId)
                 .updateData(dataDict) { error in
                     if let error = error {
-                        print(
-                            "Error updating FCM token: \(error.localizedDescription)"
-                        )
-                    } else {
+                        print("Error updating FCM token: \(error.localizedDescription)")
+                    }
+                    else {
                         print("FCM token successfully stored in Firestore")
                     }
                 }
         }
     }
     func application(
-        _ app: UIApplication, open url: URL,
+        _ app: UIApplication,
+        open url: URL,
         options: [UIApplication.OpenURLOptionsKey: Any] = [:]
-    ) -> Bool {
-        return GIDSignIn.sharedInstance.handle(url)
-    }
+    ) -> Bool { return GIDSignIn.sharedInstance.handle(url) }
 
     func application(
         _ application: UIApplication,
@@ -137,9 +122,7 @@ class FlipAppDelegate: NSObject, UIApplicationDelegate,
         Messaging.messaging().apnsToken = deviceToken
 
         // Convert token to string for logging
-        let tokenParts = deviceToken.map { data in
-            String(format: "%02.2hhx", data)
-        }
+        let tokenParts = deviceToken.map { data in String(format: "%02.2hhx", data) }
         let token = tokenParts.joined()
         print("Device Token: \(token)")
     }
@@ -147,18 +130,13 @@ class FlipAppDelegate: NSObject, UIApplicationDelegate,
     func application(
         _ application: UIApplication,
         didFailToRegisterForRemoteNotificationsWithError error: Error
-    ) {
-        print(
-            "Failed to register for remote notifications: \(error.localizedDescription)"
-        )
-    }
+    ) { print("Failed to register for remote notifications: \(error.localizedDescription)") }
 
     func userNotificationCenter(
         _ center: UNUserNotificationCenter,
         willPresent notification: UNNotification,
-        withCompletionHandler completionHandler: @escaping (
-            UNNotificationPresentationOptions
-        ) -> Void
+        withCompletionHandler completionHandler: @escaping (UNNotificationPresentationOptions) ->
+            Void
     ) {
         // Show notification even when app is in foreground
         completionHandler([.banner, .sound, .badge])
@@ -179,21 +157,15 @@ class FlipAppDelegate: NSObject, UIApplicationDelegate,
     func applicationDidEnterBackground(_ application: UIApplication) {
         // Check if in an active session
         let appManager = AppManager.shared
-        if appManager.currentState != .tracking
-            && appManager.currentState != .countdown
-        {
+        if appManager.currentState != .tracking && appManager.currentState != .countdown {
             // Not in an active session, so completely stop location tracking
-            Task { @MainActor in
-                LocationHandler.shared.completelyStopLocationUpdates()
-            }
+            Task { @MainActor in LocationHandler.shared.completelyStopLocationUpdates() }
         }
     }
 
     func applicationWillTerminate(_ application: UIApplication) {
         // Always stop location tracking when app terminates
-        Task { @MainActor in
-            LocationHandler.shared.completelyStopLocationUpdates()
-        }
+        Task { @MainActor in LocationHandler.shared.completelyStopLocationUpdates() }
 
         // Stop notification listener
         NotificationListener.shared.stopListening()
@@ -247,8 +219,10 @@ extension FlipAppDelegate {
 
         guard
             let nextCleanup = calendar.nextDate(
-                after: now, matching: nextCleanupComponents,
-                matchingPolicy: .nextTime)
+                after: now,
+                matching: nextCleanupComponents,
+                matchingPolicy: .nextTime
+            )
         else {
             print("Could not schedule next cleanup")
             return
@@ -256,8 +230,7 @@ extension FlipAppDelegate {
 
         let timeInterval = nextCleanup.timeIntervalSince(now)
 
-        Timer.scheduledTimer(withTimeInterval: timeInterval, repeats: false) {
-            [weak self] _ in
+        Timer.scheduledTimer(withTimeInterval: timeInterval, repeats: false) { [weak self] _ in
             FirebaseManager.shared.cleanupOldLocationData()
 
             // Schedule the next cleanup

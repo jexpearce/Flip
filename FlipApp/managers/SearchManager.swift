@@ -30,9 +30,7 @@ class SearchManager: ObservableObject {
 
         firebaseManager.db.collection("users").document(userId)
             .getDocument { [weak self] document, error in
-                if let userData = try? document?.data(
-                    as: FirebaseManager.FlipUser.self)
-                {
+                if let userData = try? document?.data(as: FirebaseManager.FlipUser.self) {
                     self?.currentUserData = userData
                     // After loading current user, calculate mutual friends
                     self?.calculateMutualFriends()
@@ -49,14 +47,10 @@ class SearchManager: ObservableObject {
 
         for user in allUsers {
             // Skip calculating for self
-            if user.id == currentUser.id {
-                continue
-            }
+            if user.id == currentUser.id { continue }
 
             // Find mutual friends (intersection of friends arrays)
-            let mutualCount = Set(currentUser.friends).intersection(
-                Set(user.friends)
-            ).count
+            let mutualCount = Set(currentUser.friends).intersection(Set(user.friends)).count
             mutualFriendCounts[user.id] = mutualCount
         }
 
@@ -91,8 +85,7 @@ class SearchManager: ObservableObject {
         isSearching = true
 
         // First, check for exact matches
-        firebaseManager.db.collection("users")
-            .whereField("username", isGreaterThanOrEqualTo: query)
+        firebaseManager.db.collection("users").whereField("username", isGreaterThanOrEqualTo: query)
             .whereField("username", isLessThanOrEqualTo: query + "\u{f8ff}")
             .getDocuments { [weak self] snapshot, error in
                 guard let self = self else { return }
@@ -109,9 +102,11 @@ class SearchManager: ObservableObject {
                 var exactMatches = [FirebaseManager.FlipUser]()
 
                 if let documents = snapshot?.documents {
-                    exactMatches = documents.compactMap { document in
-                        try? document.data(as: FirebaseManager.FlipUser.self)
-                    }.filter { $0.id != Auth.auth().currentUser?.uid }
+                    exactMatches =
+                        documents.compactMap { document in
+                            try? document.data(as: FirebaseManager.FlipUser.self)
+                        }
+                        .filter { $0.id != Auth.auth().currentUser?.uid }
                 }
 
                 // Now handle fuzzy search for users with mutual friends
@@ -119,7 +114,9 @@ class SearchManager: ObservableObject {
 
                 // Combine results, removing duplicates
                 let combinedResults = self.combinedUniqueResults(
-                    exact: exactMatches, fuzzy: fuzzyMatches)
+                    exact: exactMatches,
+                    fuzzy: fuzzyMatches
+                )
 
                 DispatchQueue.main.async {
                     self.searchResults = combinedResults
@@ -135,9 +132,7 @@ class SearchManager: ObservableObject {
         // Only apply fuzzy search to users with mutual friends
         return allUsers.filter { user in
             // Skip current user
-            if user.id == Auth.auth().currentUser?.uid {
-                return false
-            }
+            if user.id == Auth.auth().currentUser?.uid { return false }
 
             // Get mutual count
             let mutualCount = mutualFriendCounts[user.id] ?? 0
@@ -147,16 +142,13 @@ class SearchManager: ObservableObject {
                 let username = user.username.lowercased()
 
                 // Simple fuzzy matching - calculate the edit distance
-                let distance = calculateLevenshteinDistance(
-                    username, lowercaseQuery)
+                let distance = calculateLevenshteinDistance(username, lowercaseQuery)
 
                 // The more mutual friends, the more typo tolerance we allow
                 let maxAllowedDistance = min(2 + (mutualCount / 2), 4)
 
                 // If the distance is within our tolerance
-                if distance <= maxAllowedDistance {
-                    return true
-                }
+                if distance <= maxAllowedDistance { return true }
 
                 // Also check if query is contained within username
                 return username.contains(lowercaseQuery)
@@ -169,17 +161,14 @@ class SearchManager: ObservableObject {
 
     // Combine exact and fuzzy search results, removing duplicates
     private func combinedUniqueResults(
-        exact: [FirebaseManager.FlipUser], fuzzy: [FirebaseManager.FlipUser]
+        exact: [FirebaseManager.FlipUser],
+        fuzzy: [FirebaseManager.FlipUser]
     ) -> [FirebaseManager.FlipUser] {
         var combinedResults = exact
         let exactIds = Set(exact.map { $0.id })
 
         // Add fuzzy matches that aren't already in exact matches
-        for user in fuzzy {
-            if !exactIds.contains(user.id) {
-                combinedResults.append(user)
-            }
-        }
+        for user in fuzzy { if !exactIds.contains(user.id) { combinedResults.append(user) } }
 
         // Sort by mutual friend count (descending)
         combinedResults.sort { userA, userB in
@@ -205,17 +194,11 @@ class SearchManager: ObservableObject {
         if aCount == 0 { return bCount }
         if bCount == 0 { return aCount }
 
-        var matrix = Array(
-            repeating: Array(repeating: 0, count: bCount + 1), count: aCount + 1
-        )
+        var matrix = Array(repeating: Array(repeating: 0, count: bCount + 1), count: aCount + 1)
 
-        for i in 0...aCount {
-            matrix[i][0] = i
-        }
+        for i in 0...aCount { matrix[i][0] = i }
 
-        for j in 0...bCount {
-            matrix[0][j] = j
-        }
+        for j in 0...bCount { matrix[0][j] = j }
 
         let aChars = Array(a)
         let bChars = Array(b)
@@ -245,18 +228,17 @@ class SearchManager: ObservableObject {
 
                 if let documents = snapshot?.documents {
                     // Filter out only the current user
-                    self.allUsers = documents.compactMap { document in
-                        try? document.data(as: FirebaseManager.FlipUser.self)
-                    }.filter { user in
-                        return user.id != userId  // Only filter out self
-                    }
+                    self.allUsers =
+                        documents.compactMap { document in
+                            try? document.data(as: FirebaseManager.FlipUser.self)
+                        }
+                        .filter { user in return user.id != userId  // Only filter out self
+                        }
 
                     // Calculate mutual friends
                     self.calculateMutualFriends()
 
-                    DispatchQueue.main.async {
-                        self.recommendations = self.allUsers
-                    }
+                    DispatchQueue.main.async { self.recommendations = self.allUsers }
                 }
             }
     }
@@ -264,19 +246,13 @@ class SearchManager: ObservableObject {
     func requestStatus(for userId: String) -> RequestStatus {
         guard let currentUser = currentUserData else { return .none }
 
-        if currentUser.friends.contains(userId) {
-            return .friends
-        }
-        if currentUser.sentRequests.contains(userId) {
-            return .sent
-        }
+        if currentUser.friends.contains(userId) { return .friends }
+        if currentUser.sentRequests.contains(userId) { return .sent }
         return .none
     }
 
     // Get mutual friend count for a user
-    func mutualFriendCount(for userId: String) -> Int {
-        return mutualFriendCounts[userId] ?? 0
-    }
+    func mutualFriendCount(for userId: String) -> Int { return mutualFriendCounts[userId] ?? 0 }
 
     func sendFriendRequest(to userId: String) {
         guard let currentUserId = Auth.auth().currentUser?.uid,
@@ -287,45 +263,36 @@ class SearchManager: ObservableObject {
 
         // Update current user's "sentRequests" array
         FirebaseManager.shared.db.collection("users").document(currentUserId)
-            .updateData([
-                "sentRequests": FieldValue.arrayUnion([userId])
-            ])
+            .updateData(["sentRequests": FieldValue.arrayUnion([userId])])
 
         // Update target user's "friendRequests" array
         FirebaseManager.shared.db.collection("users").document(userId)
-            .updateData([
-                "friendRequests": FieldValue.arrayUnion([currentUserId])
-            ])
+            .updateData(["friendRequests": FieldValue.arrayUnion([currentUserId])])
 
         // Create a notification document for the friend request
         let notificationData: [String: Any] = [
-            "type": "friend_request",
-            "fromUserId": currentUserId,
-            "fromUsername": currentUsername,
+            "type": "friend_request", "fromUserId": currentUserId, "fromUsername": currentUsername,
             "timestamp": FieldValue.serverTimestamp(),
-            "message": "\(currentUsername) wants to add you as a friend",
-            "read": false,
+            "message": "\(currentUsername) wants to add you as a friend", "read": false,
             "silent": false,
         ]
 
         // Add to the target user's notifications collection
-        FirebaseManager.shared.db.collection("users").document(userId)
-            .collection("notifications")
+        FirebaseManager.shared.db.collection("users").document(userId).collection("notifications")
             .document()
             .setData(notificationData) { error in
                 if let error = error {
                     print(
                         "Error creating friend request notification: \(error.localizedDescription)"
                     )
-                } else {
+                }
+                else {
                     print("Friend request notification created successfully")
                 }
             }
 
         // Update local state
-        DispatchQueue.main.async {
-            self.updateRequestStatus(for: userId, to: .sent)
-        }
+        DispatchQueue.main.async { self.updateRequestStatus(for: userId, to: .sent) }
     }
 
     func updateRequestStatus(for userId: String, to status: RequestStatus) {
@@ -336,24 +303,18 @@ class SearchManager: ObservableObject {
         // Force UI update
         DispatchQueue.main.async {
             // If we have search results, update the status in those
-            if let _index = self.searchResults.firstIndex(where: {
-                $0.id == userId
-            }) {
+            if let _index = self.searchResults.firstIndex(where: { $0.id == userId }) {
                 self.objectWillChange.send()
             }
 
             // If we have recommendations, update the status in those
-            if let _index = self.recommendations.firstIndex(where: {
-                $0.id == userId
-            }) {
+            if let _index = self.recommendations.firstIndex(where: { $0.id == userId }) {
                 self.objectWillChange.send()
             }
         }
 
         // Prompt to cancel the request if needed
-        if status == .sent {
-            print("Request sent to user \(userId)")
-        }
+        if status == .sent { print("Request sent to user \(userId)") }
     }
 
     func promptCancelRequest(for user: FirebaseManager.FlipUser) {
@@ -366,38 +327,30 @@ class SearchManager: ObservableObject {
 
         // Update current user's "sentRequests" array
         FirebaseManager.shared.db.collection("users").document(currentUserId)
-            .updateData([
-                "sentRequests": FieldValue.arrayRemove([userId])
-            ])
+            .updateData(["sentRequests": FieldValue.arrayRemove([userId])])
 
         // Update target user's "friendRequests" array
         FirebaseManager.shared.db.collection("users").document(userId)
-            .updateData([
-                "friendRequests": FieldValue.arrayRemove([currentUserId])
-            ])
+            .updateData(["friendRequests": FieldValue.arrayRemove([currentUserId])])
 
         // Remove any pending friend request notifications
-        FirebaseManager.shared.db.collection("users").document(userId)
-            .collection("notifications")
+        FirebaseManager.shared.db.collection("users").document(userId).collection("notifications")
             .whereField("type", isEqualTo: "friend_request")
             .whereField("fromUserId", isEqualTo: currentUserId)
             .getDocuments { snapshot, error in
                 if let documents = snapshot?.documents {
                     let batch = FirebaseManager.shared.db.batch()
 
-                    for document in documents {
-                        batch.deleteDocument(document.reference)
-                    }
+                    for document in documents { batch.deleteDocument(document.reference) }
 
                     batch.commit { error in
                         if let error = error {
                             print(
                                 "Error removing friend request notifications: \(error.localizedDescription)"
                             )
-                        } else {
-                            print(
-                                "Friend request notifications removed successfully"
-                            )
+                        }
+                        else {
+                            print("Friend request notifications removed successfully")
                         }
                     }
                 }
@@ -413,9 +366,7 @@ class SearchManager: ObservableObject {
     }
 
     // Toggle show more recommendations
-    func toggleShowMoreRecommendations() {
-        showMoreRecommendations.toggle()
-    }
+    func toggleShowMoreRecommendations() { showMoreRecommendations.toggle() }
 }
 
 // MARK: - SearchManager Extensions
@@ -442,16 +393,15 @@ extension SearchManager {
     var otherUsersToShow: [FirebaseManager.FlipUser] {
         if showMoreRecommendations {
             return otherUsers
-        } else {
+        }
+        else {
             // Show first 5 users when not expanded
             return Array(otherUsers.prefix(5))
         }
     }
 
     // Has more recommendations to show
-    var hasMoreOtherUsers: Bool {
-        return otherUsers.count > 5
-    }
+    var hasMoreOtherUsers: Bool { return otherUsers.count > 5 }
 
     // Filter out users who are already friends from search results
     var filteredSearchResults: [FirebaseManager.FlipUser] {

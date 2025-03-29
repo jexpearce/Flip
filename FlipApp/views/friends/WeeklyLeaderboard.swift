@@ -11,61 +11,39 @@ struct WeeklyLeaderboard: View {
         VStack(spacing: 8) {
             // Rich golden title with icon
             HStack {
-                Image(systemName: "crown.fill")
-                    .font(.system(size: 18))
+                Image(systemName: "crown.fill").font(.system(size: 18))
                     .foregroundStyle(
                         LinearGradient(
-                            colors: [
-                                Theme.yellow,
-                                Theme.yellowyOrange,
-                            ],
+                            colors: [Theme.yellow, Theme.yellowyOrange],
                             startPoint: .top,
                             endPoint: .bottom
                         )
                     )
-                    .shadow(
-                        color: Theme.yellowyOrange.opacity(0.6), radius: 8)
+                    .shadow(color: Theme.yellowyOrange.opacity(0.6), radius: 8)
 
-                Text("WEEKLY CHAMPIONS")
-                    .font(.system(size: 18, weight: .black))
-                    .tracking(2)
+                Text("WEEKLY CHAMPIONS").font(.system(size: 18, weight: .black)).tracking(2)
                     .foregroundStyle(
                         LinearGradient(
-                            colors: [
-                                Theme.yellow,
-                                Theme.yellowyOrange,
-                            ],
+                            colors: [Theme.yellow, Theme.yellowyOrange],
                             startPoint: .top,
                             endPoint: .bottom
                         )
                     )
-                    .shadow(
-                        color: Theme.yellowyOrange.opacity(0.6), radius: 8)
+                    .shadow(color: Theme.yellowyOrange.opacity(0.6), radius: 8)
 
                 Spacer()
 
                 // Show more/less toggle
-                Button(action: {
-                    withAnimation(.spring()) {
-                        isShowingAll.toggle()
-                    }
-                }) {
+                Button(action: { withAnimation(.spring()) { isShowingAll.toggle() } }) {
                     Text(isShowingAll ? "Show Less" : "Show All")
-                        .font(.system(size: 12, weight: .bold))
-                        .foregroundColor(
-                            Theme.yellow
-                        )
-                        .padding(.horizontal, 10)
-                        .padding(.vertical, 4)
+                        .font(.system(size: 12, weight: .bold)).foregroundColor(Theme.yellow)
+                        .padding(.horizontal, 10).padding(.vertical, 4)
                         .background(
                             RoundedRectangle(cornerRadius: 12)
-                                .fill(
-                                    Theme.yellowyOrange.opacity(0.15)
-                                )
+                                .fill(Theme.yellowyOrange.opacity(0.15))
                                 .overlay(
                                     RoundedRectangle(cornerRadius: 12)
-                                        .stroke(
-                                            Theme.yellowyOrange.opacity(0.3), lineWidth: 1)
+                                        .stroke(Theme.yellowyOrange.opacity(0.3), lineWidth: 1)
                                 )
                         )
                 }
@@ -77,71 +55,46 @@ struct WeeklyLeaderboard: View {
                 // Loading indicator
                 HStack {
                     Spacer()
-                    ProgressView()
-                        .tint(
-                            Theme.yellow
-                        )
-                        .scaleEffect(1.2)
-                        .padding(.vertical, 25)
+                    ProgressView().tint(Theme.yellow).scaleEffect(1.2).padding(.vertical, 25)
                     Spacer()
                 }
-            } else {
+            }
+            else {
                 // Column Headers
                 HStack {
-                    Text("RANK")
-                        .font(.system(size: 12, weight: .bold))
-                        .tracking(1)
-                        .foregroundColor(
-                            Theme.yellow
-                        )
-                        .frame(width: 50, alignment: .center)
+                    Text("RANK").font(.system(size: 12, weight: .bold)).tracking(1)
+                        .foregroundColor(Theme.yellow).frame(width: 50, alignment: .center)
 
-                    Text("USER")
-                        .font(.system(size: 12, weight: .bold))
-                        .tracking(1)
-                        .foregroundColor(
-                            Theme.yellow
-                        )
-                        .frame(alignment: .leading)
+                    Text("USER").font(.system(size: 12, weight: .bold)).tracking(1)
+                        .foregroundColor(Theme.yellow).frame(alignment: .leading)
 
                     Spacer()
 
-                    Text("TIME")
-                        .font(.system(size: 12, weight: .bold))
-                        .tracking(1)
-                        .foregroundColor(
-                            Theme.yellow
-                        )
-                        .frame(width: 70, alignment: .trailing)
+                    Text("TIME").font(.system(size: 12, weight: .bold)).tracking(1)
+                        .foregroundColor(Theme.yellow).frame(width: 70, alignment: .trailing)
                 }
-                .padding(.horizontal, 12)
-                .padding(.bottom, 4)
+                .padding(.horizontal, 12).padding(.bottom, 4)
 
                 if viewModel.leaderboardEntries.isEmpty {
                     // Empty State
                     VStack(spacing: 15) {
-                        Image(systemName: "crown")
-                            .font(.system(size: 40))
+                        Image(systemName: "crown").font(.system(size: 40))
                             .foregroundStyle(
                                 LinearGradient(
-                                    colors: [
-                                        Theme.yellow,
-                                        Theme.yellowyOrange,
-                                    ],
+                                    colors: [Theme.yellow, Theme.yellowyOrange],
                                     startPoint: .top,
                                     endPoint: .bottom
                                 )
                             )
-                            .shadow(
-                                color: Theme.yellowyOrange.opacity(0.6), radius: 8)
+                            .shadow(color: Theme.yellowyOrange.opacity(0.6), radius: 8)
 
                         Text("No sessions recorded this week")
                             .font(.system(size: 16, weight: .medium))
                             .foregroundColor(.white.opacity(0.7))
                     }
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 30)
-                } else {
+                    .frame(maxWidth: .infinity).padding(.vertical, 30)
+                }
+                else {
                     // Users List with rich styling
                     LazyVStack(spacing: 10) {
                         let displayEntries =
@@ -149,14 +102,13 @@ struct WeeklyLeaderboard: View {
                             ? viewModel.leaderboardEntries
                             : Array(viewModel.leaderboardEntries.prefix(3))
 
-                        ForEach(
-                            Array(displayEntries.enumerated()), id: \.element.id
-                        ) { index, entry in
+                        ForEach(Array(displayEntries.enumerated()), id: \.element.id) {
+                            index,
+                            entry in
                             EnhancedLeaderboardRow(
                                 rank: index + 1,
                                 entry: entry,
-                                isCurrentUser: Auth.auth().currentUser?.uid
-                                    == entry.id
+                                isCurrentUser: Auth.auth().currentUser?.uid == entry.id
                             )
                         }
                     }
@@ -171,14 +123,8 @@ struct WeeklyLeaderboard: View {
                     .fill(
                         LinearGradient(
                             colors: [
-                                Color(
-                                    red: 133 / 255, green: 77 / 255,
-                                    blue: 14 / 255
-                                ).opacity(0.3),
-                                Color(
-                                    red: 113 / 255, green: 63 / 255,
-                                    blue: 18 / 255
-                                ).opacity(0.2),
+                                Color(red: 133 / 255, green: 77 / 255, blue: 14 / 255).opacity(0.3),
+                                Color(red: 113 / 255, green: 63 / 255, blue: 18 / 255).opacity(0.2),
                             ],
                             startPoint: .topLeading,
                             endPoint: .bottomTrailing
@@ -186,17 +132,13 @@ struct WeeklyLeaderboard: View {
                     )
 
                 // Glass effect
-                RoundedRectangle(cornerRadius: 16)
-                    .fill(Color.white.opacity(0.05))
+                RoundedRectangle(cornerRadius: 16).fill(Color.white.opacity(0.05))
 
                 // Glowing golden border
                 RoundedRectangle(cornerRadius: 16)
                     .stroke(
                         LinearGradient(
-                            colors: [
-                                Theme.yellow.opacity(0.6),
-                                Theme.yellowyOrange.opacity(0.3),
-                            ],
+                            colors: [Theme.yellow.opacity(0.6), Theme.yellowyOrange.opacity(0.3)],
                             startPoint: .topLeading,
                             endPoint: .bottomTrailing
                         ),
@@ -204,24 +146,16 @@ struct WeeklyLeaderboard: View {
                     )
             }
         )
-        .shadow(
-            color: Theme.yellowyOrange
-                .opacity(0.2), radius: 10
-        )
-        .onAppear {
-            viewModel.loadLeaderboard()
-        }
+        .shadow(color: Theme.yellowyOrange.opacity(0.2), radius: 10)
+        .onAppear { viewModel.loadLeaderboard() }
     }
 
     // Medal view for top 3
     private func medalView(for index: Int) -> some View {
         ZStack {
             // Medal color based on rank
-            Image(systemName: "medal.fill")
-                .font(.system(size: 22))
-                .foregroundStyle(
-                    medalGradient(for: index)
-                )
+            Image(systemName: "medal.fill").font(.system(size: 22))
+                .foregroundStyle(medalGradient(for: index))
                 .shadow(color: medalShadowColor(for: index), radius: 4)
         }
     }
@@ -232,8 +166,7 @@ struct WeeklyLeaderboard: View {
         case 0:  // Gold
             return LinearGradient(
                 colors: [
-                    Color(red: 253 / 255, green: 224 / 255, blue: 71 / 255),
-                    Theme.yellowyOrange,
+                    Color(red: 253 / 255, green: 224 / 255, blue: 71 / 255), Theme.yellowyOrange,
                 ],
                 startPoint: .top,
                 endPoint: .bottom
@@ -268,15 +201,9 @@ struct WeeklyLeaderboard: View {
     // Medal shadow colors
     private func medalShadowColor(for index: Int) -> Color {
         switch index {
-        case 0:
-            return Theme.yellowyOrange
-                .opacity(0.6)
-        case 1:
-            return Color(red: 148 / 255, green: 163 / 255, blue: 184 / 255)
-                .opacity(0.6)
-        case 2:
-            return Color(red: 180 / 255, green: 83 / 255, blue: 9 / 255)
-                .opacity(0.6)
+        case 0: return Theme.yellowyOrange.opacity(0.6)
+        case 1: return Color(red: 148 / 255, green: 163 / 255, blue: 184 / 255).opacity(0.6)
+        case 2: return Color(red: 180 / 255, green: 83 / 255, blue: 9 / 255).opacity(0.6)
         default: return Color.gray.opacity(0.6)
         }
     }
@@ -293,12 +220,10 @@ struct EnhancedLeaderboardRow: View {
         HStack {
             // Rank with medal for top 3
             if rank <= 3 {
-                medalView(for: rank - 1)
-                    .frame(width: 40, alignment: .center)
-            } else {
-                Text("\(rank)")
-                    .font(.system(size: 16, weight: .bold))
-                    .foregroundColor(.white)
+                medalView(for: rank - 1).frame(width: 40, alignment: .center)
+            }
+            else {
+                Text("\(rank)").font(.system(size: 16, weight: .bold)).foregroundColor(.white)
                     .frame(width: 40, alignment: .center)
             }
 
@@ -306,8 +231,7 @@ struct EnhancedLeaderboardRow: View {
             HStack(spacing: 10) {
                 // Score circle if available
                 if let score = entry.score {
-                    RankCircle(
-                        score: score, size: 26, showStreakIndicator: false)
+                    RankCircle(score: score, size: 26, showStreakIndicator: false)
                 }
 
                 // Profile picture
@@ -319,32 +243,24 @@ struct EnhancedLeaderboardRow: View {
                         Circle()
                             .stroke(
                                 streakStatus == .redFlame
-                                    ? Color.red.opacity(0.8)
-                                    : Color.orange.opacity(0.8),
+                                    ? Color.red.opacity(0.8) : Color.orange.opacity(0.8),
                                 lineWidth: 2
                             )
                             .frame(width: 32, height: 32)
 
                         // Flame icon
                         ZStack {
-                            Circle()
-                                .fill(
-                                    streakStatus == .redFlame
-                                        ? Color.red : Color.orange
-                                )
+                            Circle().fill(streakStatus == .redFlame ? Color.red : Color.orange)
                                 .frame(width: 12, height: 12)
 
-                            Image(systemName: "flame.fill")
-                                .font(.system(size: 8))
+                            Image(systemName: "flame.fill").font(.system(size: 8))
                                 .foregroundColor(.white)
                         }
                         .position(x: 24, y: 8)
                     }
                 }
 
-                Text(entry.username)
-                    .font(.system(size: 14, weight: .bold))
-                    .lineLimit(1)
+                Text(entry.username).font(.system(size: 14, weight: .bold)).lineLimit(1)
                     .foregroundColor(.white)
             }
             .frame(width: 150, alignment: .leading)
@@ -352,13 +268,10 @@ struct EnhancedLeaderboardRow: View {
             Spacer()
 
             // Focus time
-            Text("\(entry.totalTime)m")
-                .font(.system(size: 16, weight: .bold))
-                .foregroundColor(.white)
-                .frame(width: 60, alignment: .trailing)
+            Text("\(entry.totalTime)m").font(.system(size: 16, weight: .bold))
+                .foregroundColor(.white).frame(width: 60, alignment: .trailing)
         }
-        .padding(.vertical, 8)
-        .padding(.horizontal, 12)
+        .padding(.vertical, 8).padding(.horizontal, 12)
         .background(
             ZStack {
                 // Different background for top 3
@@ -369,11 +282,7 @@ struct EnhancedLeaderboardRow: View {
                                 ? [
                                     Theme.yellowyOrange.opacity(0.3),
                                     Theme.yellowyOrange.opacity(0.1),
-                                ]
-                                : [
-                                    Color.white.opacity(0.08),
-                                    Color.white.opacity(0.05),
-                                ],
+                                ] : [Color.white.opacity(0.08), Color.white.opacity(0.05)],
                             startPoint: .top,
                             endPoint: .bottom
                         )
@@ -384,16 +293,14 @@ struct EnhancedLeaderboardRow: View {
                     RoundedRectangle(cornerRadius: 10)
                         .stroke(
                             LinearGradient(
-                                colors: [
-                                    Theme.yellow.opacity(0.7),
-                                    Theme.yellow.opacity(0.3),
-                                ],
+                                colors: [Theme.yellow.opacity(0.7), Theme.yellow.opacity(0.3)],
                                 startPoint: .topLeading,
                                 endPoint: .bottomTrailing
                             ),
                             lineWidth: 1.5
                         )
-                } else {
+                }
+                else {
                     RoundedRectangle(cornerRadius: 10)
                         .stroke(Color.white.opacity(0.1), lineWidth: 1)
                 }
@@ -407,17 +314,14 @@ struct EnhancedLeaderboardRow: View {
 
     // Helper method to load streak status
     private func loadStreakStatus() {
-        FirebaseManager.shared.db.collection("users").document(entry.id)
-            .collection("streak").document("current")
+        FirebaseManager.shared.db.collection("users").document(entry.id).collection("streak")
+            .document("current")
             .getDocument { snapshot, error in
-                if let data = snapshot?.data(),
-                    let statusString = data["streakStatus"] as? String,
+                if let data = snapshot?.data(), let statusString = data["streakStatus"] as? String,
                     let status = StreakStatus(rawValue: statusString)
                 {
 
-                    DispatchQueue.main.async {
-                        self.streakStatus = status
-                    }
+                    DispatchQueue.main.async { self.streakStatus = status }
                 }
             }
     }
@@ -426,11 +330,8 @@ struct EnhancedLeaderboardRow: View {
     private func medalView(for index: Int) -> some View {
         ZStack {
             // Medal color based on rank
-            Image(systemName: "medal.fill")
-                .font(.system(size: 22))
-                .foregroundStyle(
-                    medalGradient(for: index)
-                )
+            Image(systemName: "medal.fill").font(.system(size: 22))
+                .foregroundStyle(medalGradient(for: index))
                 .shadow(color: medalShadowColor(for: index), radius: 4)
         }
     }
@@ -441,8 +342,7 @@ struct EnhancedLeaderboardRow: View {
         case 0:  // Gold
             return LinearGradient(
                 colors: [
-                    Color(red: 253 / 255, green: 224 / 255, blue: 71 / 255),
-                    Theme.yellowyOrange,
+                    Color(red: 253 / 255, green: 224 / 255, blue: 71 / 255), Theme.yellowyOrange,
                 ],
                 startPoint: .top,
                 endPoint: .bottom
@@ -477,15 +377,9 @@ struct EnhancedLeaderboardRow: View {
     // Medal shadow colors
     private func medalShadowColor(for index: Int) -> Color {
         switch index {
-        case 0:
-            return Theme.yellowyOrange
-                .opacity(0.6)
-        case 1:
-            return Color(red: 148 / 255, green: 163 / 255, blue: 184 / 255)
-                .opacity(0.6)
-        case 2:
-            return Color(red: 180 / 255, green: 83 / 255, blue: 9 / 255)
-                .opacity(0.6)
+        case 0: return Theme.yellowyOrange.opacity(0.6)
+        case 1: return Color(red: 148 / 255, green: 163 / 255, blue: 184 / 255).opacity(0.6)
+        case 2: return Color(red: 180 / 255, green: 83 / 255, blue: 9 / 255).opacity(0.6)
         default: return Color.gray.opacity(0.6)
         }
     }
@@ -518,17 +412,12 @@ class LeaderboardViewModel: ObservableObject {
                 guard let self = self else { return }
 
                 if let error = error {
-                    print(
-                        "Error fetching user data: \(error.localizedDescription)"
-                    )
+                    print("Error fetching user data: \(error.localizedDescription)")
                     self.isLoading = false
                     return
                 }
 
-                guard
-                    let userData = try? document?.data(
-                        as: FirebaseManager.FlipUser.self)
-                else {
+                guard let userData = try? document?.data(as: FirebaseManager.FlipUser.self) else {
                     print("Failed to decode user data")
                     self.isLoading = false
                     return
@@ -538,8 +427,7 @@ class LeaderboardViewModel: ObservableObject {
                 var userIds = userData.friends
                 userIds.append(currentUserId)
 
-                print(
-                    "Fetching data for \(userIds.count) users (self + friends)")
+                print("Fetching data for \(userIds.count) users (self + friends)")
                 self.fetchWeeklyTotalFocusTime(for: userIds)
             }
     }
@@ -550,7 +438,9 @@ class LeaderboardViewModel: ObservableObject {
 
         // Calculate week start - more robust method
         var components = calendar.dateComponents(
-            [.yearForWeekOfYear, .weekOfYear], from: currentDate)
+            [.yearForWeekOfYear, .weekOfYear],
+            from: currentDate
+        )
         components.weekday = 1  // Sunday
         components.hour = 0
         components.minute = 0
@@ -574,40 +464,37 @@ class LeaderboardViewModel: ObservableObject {
         for userId in userIds {
             group.enter()
 
-            firebaseManager.db.collection("users").document(userId).getDocument { document, error in
-                defer { group.leave() }
+            firebaseManager.db.collection("users").document(userId)
+                .getDocument { document, error in
+                    defer { group.leave() }
 
-                if let document = document, let data = document.data() {
-                    if let username = data["username"] as? String {
-                        usernames[userId] = username
+                    if let document = document, let data = document.data() {
+                        if let username = data["username"] as? String {
+                            usernames[userId] = username
+                        }
+
+                        if let score = data["score"] as? Double { userScores[userId] = score }
+
+                        print(
+                            "Fetched user data for \(userId): name=\(usernames[userId] ?? "unknown"), score=\(userScores[userId] ?? 0)"
+                        )
                     }
-
-                    if let score = data["score"] as? Double {
-                        userScores[userId] = score
+                    else {
+                        print("Failed to fetch user data for \(userId)")
                     }
-
-                    print(
-                        "Fetched user data for \(userId): name=\(usernames[userId] ?? "unknown"), score=\(userScores[userId] ?? 0)"
-                    )
-                } else {
-                    print("Failed to fetch user data for \(userId)")
                 }
-            }
         }
 
         group.notify(queue: .main) {
             // Fetch all sessions from this week for these users
-            self.firebaseManager.db.collection("sessions")
-                .whereField("userId", in: userIds)
+            self.firebaseManager.db.collection("sessions").whereField("userId", in: userIds)
                 .whereField("wasSuccessful", isEqualTo: true)
                 .order(by: "startTime", descending: true)
                 .getDocuments { [weak self] snapshot, error in
                     guard let self = self else { return }
 
                     if let error = error {
-                        print(
-                            "Error fetching sessions: \(error.localizedDescription)"
-                        )
+                        print("Error fetching sessions: \(error.localizedDescription)")
                         self.isLoading = false
                         return
                     }
@@ -624,14 +511,11 @@ class LeaderboardViewModel: ObservableObject {
                     var allSessions: [Session] = []
                     for document in documents {
                         do {
-                            if let session = try? document.data(
-                                as: Session.self)
-                            {
+                            if let session = try? document.data(as: Session.self) {
                                 allSessions.append(session)
-                            } else {
-                                print(
-                                    "Failed to decode session: \(document.documentID)"
-                                )
+                            }
+                            else {
+                                print("Failed to decode session: \(document.documentID)")
                             }
                         }
                     }
@@ -640,19 +524,14 @@ class LeaderboardViewModel: ObservableObject {
 
                     // Filter for this week's sessions with more debugging
                     let thisWeeksSessions = allSessions.filter { session in
-                        let isThisWeek = calendar.isDate(
-                            session.startTime, inSameWeekAs: weekStart)
+                        let isThisWeek = calendar.isDate(session.startTime, inSameWeekAs: weekStart)
                         if isThisWeek {
-                            print(
-                                "Session \(session.id) from \(session.startTime) is in this week"
-                            )
+                            print("Session \(session.id) from \(session.startTime) is in this week")
                         }
                         return isThisWeek
                     }
 
-                    print(
-                        "Found \(thisWeeksSessions.count) sessions from this week"
-                    )
+                    print("Found \(thisWeeksSessions.count) sessions from this week")
 
                     // Group by user, sum up total time for each
                     var userTotalTimes: [String: Int] = [:]
@@ -664,7 +543,8 @@ class LeaderboardViewModel: ObservableObject {
                         if let existingTime = userTotalTimes[userId] {
                             // Add to existing total
                             userTotalTimes[userId] = existingTime + sessionTime
-                        } else {
+                        }
+                        else {
                             // Create new entry
                             userTotalTimes[userId] = sessionTime
                         }
@@ -672,9 +552,7 @@ class LeaderboardViewModel: ObservableObject {
 
                     // Even if no sessions this week, include all users with zero time
                     for userId in userIds {
-                        if userTotalTimes[userId] == nil {
-                            userTotalTimes[userId] = 0
-                        }
+                        if userTotalTimes[userId] == nil { userTotalTimes[userId] = 0 }
                     }
 
                     // Convert to leaderboard entries and sort
@@ -682,8 +560,7 @@ class LeaderboardViewModel: ObservableObject {
 
                     for (userId, totalTime) in userTotalTimes {
                         // Use username from our cache, or fallback to user ID
-                        let username =
-                            usernames[userId] ?? "User \(userId.prefix(5))"
+                        let username = usernames[userId] ?? "User \(userId.prefix(5))"
 
                         // Include score if available
                         entries.append(
@@ -692,7 +569,8 @@ class LeaderboardViewModel: ObservableObject {
                                 username: username,
                                 totalTime: totalTime,
                                 score: userScores[userId]
-                            ))
+                            )
+                        )
                     }
 
                     // Sort by total time (descending)

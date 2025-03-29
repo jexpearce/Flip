@@ -15,34 +15,21 @@ struct RulesView: View {
     var body: some View {
         ZStack {
             // Background overlay
-            Color.black.opacity(0.7)
-                .edgesIgnoringSafeArea(.all)
-                .onTapGesture {
-                    dismissRules()
-                }
+            Color.black.opacity(0.7).edgesIgnoringSafeArea(.all).onTapGesture { dismissRules() }
 
             // Rules card
             VStack(spacing: 20) {
                 // Title
-                Text("RULES")
-                    .font(.system(size: 36, weight: .black))
-                    .tracking(8)
-                    .foregroundColor(.white)
-                    .retroGlow()
+                Text("RULES").font(.system(size: 36, weight: .black)).tracking(8)
+                    .foregroundColor(.white).retroGlow()
                     .overlay(
-                        Rectangle()
-                            .frame(height: 2)
-                            .offset(y: 8)
-                            .foregroundColor(Theme.orange),
+                        Rectangle().frame(height: 2).offset(y: 8).foregroundColor(Theme.orange),
                         alignment: .bottom
                     )
 
                 // Subtitle
-                Text("True Productivity")
-                    .font(.system(size: 16, weight: .bold))
-                    .italic()
-                    .foregroundColor(.white.opacity(0.8))
-                    .padding(.bottom, 5)
+                Text("True Productivity").font(.system(size: 16, weight: .bold)).italic()
+                    .foregroundColor(.white.opacity(0.8)).padding(.bottom, 5)
 
                 // Rules content in a scrollable area
                 ScrollView {
@@ -57,8 +44,7 @@ struct RulesView: View {
                         RuleSection(
                             number: "02",
                             title: "Pause Mode",
-                            content:
-                                "When enabled, you can temporarily flip your phone face up."
+                            content: "When enabled, you can temporarily flip your phone face up."
                         )
 
                         VStack(alignment: .leading, spacing: 12) {
@@ -67,10 +53,8 @@ struct RulesView: View {
                             )
                             .ruleText()
 
-                            Text(
-                                "• The pause button appears when you flip your phone up."
-                            )
-                            .ruleText()
+                            Text("• The pause button appears when you flip your phone up.")
+                                .ruleText()
 
                             Text(
                                 "• After pausing, you can resume anytime. You'll have 5 seconds to flip your phone back down."
@@ -80,8 +64,7 @@ struct RulesView: View {
                             Text(
                                 "• You can set how many pauses you get per session (0-10), and their duration."
                             )
-                            .ruleText()
-                            .padding(.bottom, 5)
+                            .ruleText().padding(.bottom, 5)
                         }
                         .padding(.leading, 45)
 
@@ -104,28 +87,20 @@ struct RulesView: View {
                 .frame(maxHeight: 400)
 
                 // Close button
-                Button(action: {
-                    dismissRules()
-                }) {
-                    Text("CLOSE")
-                        .font(.system(size: 18, weight: .black))
-                        .tracking(2)
-                        .foregroundColor(.white)
-                        .frame(width: 180, height: 44)
+                Button(action: { dismissRules() }) {
+                    Text("CLOSE").font(.system(size: 18, weight: .black)).tracking(2)
+                        .foregroundColor(.white).frame(width: 180, height: 44)
                         .background(
                             ZStack {
-                                RoundedRectangle(cornerRadius: 22)
-                                    .fill(Theme.buttonGradient)
+                                RoundedRectangle(cornerRadius: 22).fill(Theme.buttonGradient)
 
-                                RoundedRectangle(cornerRadius: 22)
-                                    .fill(Color.white.opacity(0.1))
+                                RoundedRectangle(cornerRadius: 22).fill(Color.white.opacity(0.1))
 
                                 RoundedRectangle(cornerRadius: 22)
                                     .stroke(
                                         LinearGradient(
                                             colors: [
-                                                Color.white.opacity(0.6),
-                                                Color.white.opacity(0.2),
+                                                Color.white.opacity(0.6), Color.white.opacity(0.2),
                                             ],
                                             startPoint: .topLeading,
                                             endPoint: .bottomTrailing
@@ -134,28 +109,21 @@ struct RulesView: View {
                                     )
                             }
                         )
-                        .shadow(
-                            color: Theme.lightTealBlue.opacity(0.5), radius: 8)
+                        .shadow(color: Theme.lightTealBlue.opacity(0.5), radius: 8)
                 }
                 .padding(.bottom, 20)
             }
-            .padding(.horizontal, 25)
-            .padding(.vertical, 30)
+            .padding(.horizontal, 25).padding(.vertical, 30)
             .background(
                 ZStack {
-                    RoundedRectangle(cornerRadius: 20)
-                        .fill(Theme.darkGray)
+                    RoundedRectangle(cornerRadius: 20).fill(Theme.darkGray)
 
-                    RoundedRectangle(cornerRadius: 20)
-                        .fill(Color.black.opacity(0.3))
+                    RoundedRectangle(cornerRadius: 20).fill(Color.black.opacity(0.3))
 
                     RoundedRectangle(cornerRadius: 20)
                         .stroke(
                             LinearGradient(
-                                colors: [
-                                    Color.white.opacity(0.5),
-                                    Color.white.opacity(0.1),
-                                ],
+                                colors: [Color.white.opacity(0.5), Color.white.opacity(0.1)],
                                 startPoint: .topLeading,
                                 endPoint: .bottomTrailing
                             ),
@@ -163,9 +131,7 @@ struct RulesView: View {
                         )
                 }
             )
-            .frame(maxWidth: 380)
-            .offset(y: animateContent ? 0 : 50)
-            .opacity(animateContent ? 1 : 0)
+            .frame(maxWidth: 380).offset(y: animateContent ? 0 : 50).opacity(animateContent ? 1 : 0)
             .onAppear {
                 withAnimation(.spring(response: 0.5, dampingFraction: 0.8)) {
                     animateContent = true
@@ -176,14 +142,10 @@ struct RulesView: View {
     }
 
     private func dismissRules() {
-        withAnimation(.spring(response: 0.3, dampingFraction: 0.75)) {
-            animateContent = false
-        }
+        withAnimation(.spring(response: 0.3, dampingFraction: 0.75)) { animateContent = false }
 
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-            withAnimation {
-                showRules = false
-            }
+            withAnimation { showRules = false }
         }
     }
 }
@@ -196,20 +158,15 @@ struct RuleSection: View {
     var body: some View {
         HStack(alignment: .top, spacing: 15) {
             // Rule number
-            Text(number)
-                .font(.system(size: 20, weight: .black))
-                .foregroundColor(Theme.orange)
+            Text(number).font(.system(size: 20, weight: .black)).foregroundColor(Theme.orange)
                 .frame(width: 30, alignment: .leading)
 
             VStack(alignment: .leading, spacing: 8) {
                 // Rule title
-                Text(title)
-                    .font(.system(size: 18, weight: .bold))
-                    .foregroundColor(.white)
+                Text(title).font(.system(size: 18, weight: .bold)).foregroundColor(.white)
 
                 // Rule content
-                Text(content)
-                    .ruleText()
+                Text(content).ruleText()
             }
         }
     }
@@ -217,10 +174,7 @@ struct RuleSection: View {
 
 extension Text {
     func ruleText() -> some View {
-        self
-            .font(.system(size: 16))
-            .foregroundColor(.white.opacity(0.8))
-            .lineSpacing(4)
+        self.font(.system(size: 16)).foregroundColor(.white.opacity(0.8)).lineSpacing(4)
             .fixedSize(horizontal: false, vertical: true)
     }
 }

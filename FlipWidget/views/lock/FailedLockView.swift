@@ -4,10 +4,7 @@ import WidgetKit
 
 struct FailedLockView: View {
     private let gradientBackground = LinearGradient(
-        colors: [
-            Theme.deepMidnightPurple,
-            Theme.darkPurpleBlue,
-        ],
+        colors: [Theme.deepMidnightPurple, Theme.darkPurpleBlue],
         startPoint: .top,
         endPoint: .bottom
     )
@@ -24,30 +21,22 @@ struct FailedLockView: View {
                         LinearGradient(
                             colors: [
                                 Theme.mutedRed,
-                                Color(
-                                    red: 185 / 255, green: 28 / 255,
-                                    blue: 28 / 255),
+                                Color(red: 185 / 255, green: 28 / 255, blue: 28 / 255),
                             ],
                             startPoint: .top,
                             endPoint: .bottom
                         )
                     )
-                    .frame(width: 60, height: 60)
-                    .opacity(0.2)
+                    .frame(width: 60, height: 60).opacity(0.2)
 
-                Circle()
-                    .fill(Color.white.opacity(0.1))
-                    .frame(width: 65, height: 65)
+                Circle().fill(Color.white.opacity(0.1)).frame(width: 65, height: 65)
 
-                Image(systemName: "xmark.circle.fill")
-                    .font(.system(size: 40, weight: .bold))
+                Image(systemName: "xmark.circle.fill").font(.system(size: 40, weight: .bold))
                     .foregroundStyle(
                         LinearGradient(
                             colors: [
                                 Theme.mutedRed,
-                                Color(
-                                    red: 185 / 255, green: 28 / 255,
-                                    blue: 28 / 255),
+                                Color(red: 185 / 255, green: 28 / 255, blue: 28 / 255),
                             ],
                             startPoint: .top,
                             endPoint: .bottom
@@ -55,39 +44,26 @@ struct FailedLockView: View {
                     )
                     .shadow(color: Color.red.opacity(0.5), radius: 8)
             }
-            .scaleEffect(scale)
-            .opacity(opacity)
+            .scaleEffect(scale).opacity(opacity)
 
-            Text("SESSION FAILED")
-                .font(.system(size: 24, weight: .black))
-                .tracking(4)
+            Text("SESSION FAILED").font(.system(size: 24, weight: .black)).tracking(4)
                 .foregroundStyle(
                     LinearGradient(
                         colors: [
-                            Theme.mutedRed,
-                            Color(
-                                red: 185 / 255, green: 28 / 255, blue: 28 / 255),
+                            Theme.mutedRed, Color(red: 185 / 255, green: 28 / 255, blue: 28 / 255),
                         ],
                         startPoint: .top,
                         endPoint: .bottom
                     )
                 )
-                .shadow(color: Color.red.opacity(0.5), radius: 8)
-                .scaleEffect(scale)
+                .shadow(color: Color.red.opacity(0.5), radius: 8).scaleEffect(scale)
                 .opacity(opacity)
 
-            Text("Phone was flipped during session")
-                .font(.system(size: 16, weight: .medium))
-                .foregroundColor(.white.opacity(0.9))
-                .multilineTextAlignment(.center)
-                .padding(.horizontal, 10)
-                .padding(.vertical, 8)
-                .background(
-                    RoundedRectangle(cornerRadius: 10)
-                        .fill(Color.white.opacity(0.08))
-                )
-                .scaleEffect(scale)
-                .opacity(opacity)
+            Text("Phone was flipped during session").font(.system(size: 16, weight: .medium))
+                .foregroundColor(.white.opacity(0.9)).multilineTextAlignment(.center)
+                .padding(.horizontal, 10).padding(.vertical, 8)
+                .background(RoundedRectangle(cornerRadius: 10).fill(Color.white.opacity(0.08)))
+                .scaleEffect(scale).opacity(opacity)
         }
         .padding()
         .background(
@@ -98,12 +74,9 @@ struct FailedLockView: View {
                 // Subtle pattern
                 GeometryReader { geometry in
                     Path { path in
-                        for i in stride(
-                            from: 0, to: geometry.size.width, by: 20)
-                        {
+                        for i in stride(from: 0, to: geometry.size.width, by: 20) {
                             path.move(to: CGPoint(x: i, y: 0))
-                            path.addLine(
-                                to: CGPoint(x: i, y: geometry.size.height))
+                            path.addLine(to: CGPoint(x: i, y: geometry.size.height))
                         }
                     }
                     .stroke(Color.white.opacity(0.05), lineWidth: 1)

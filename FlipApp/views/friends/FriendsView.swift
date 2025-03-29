@@ -33,47 +33,30 @@ struct FriendsView: View {
                 ScrollView {
                     VStack(spacing: 22) {
                         // Vibrant title with glow
-                        Text("FRIENDS")
-                            .font(.system(size: 32, weight: .black))
-                            .tracking(8)
+                        Text("FRIENDS").font(.system(size: 32, weight: .black)).tracking(8)
                             .foregroundColor(.white)
-                            .shadow(
-                                color: Theme.yellow.opacity(0.6), radius: 10
-                            )
-                            .padding(.top, 20)
+                            .shadow(color: Theme.yellow.opacity(0.6), radius: 10).padding(.top, 20)
 
                         // Golden Weekly Leaderboard - Redesigned component
-                        WeeklyLeaderboard(
-                            viewModel: leaderboardViewModel
-                        )
-                        .padding(.horizontal)
+                        WeeklyLeaderboard(viewModel: leaderboardViewModel).padding(.horizontal)
 
                         // Friend Requests Section - Enhanced with vibrant colors
                         if !viewModel.friendRequests.isEmpty {
                             VStack(alignment: .leading, spacing: 15) {
-                                Text("FRIEND REQUESTS")
-                                    .font(.system(size: 16, weight: .black))
-                                    .tracking(5)
-                                    .foregroundColor(
-                                        Theme.yellow
-                                    )
-                                    .shadow(
-                                        color: Theme.yellow.opacity(0.6), radius: 6)
+                                Text("FRIEND REQUESTS").font(.system(size: 16, weight: .black))
+                                    .tracking(5).foregroundColor(Theme.yellow)
+                                    .shadow(color: Theme.yellow.opacity(0.6), radius: 6)
 
                                 ForEach(viewModel.friendRequests) { user in
-                                    EnhancedFriendRequestCard(user: user) {
-                                        accepted in
+                                    EnhancedFriendRequestCard(user: user) { accepted in
                                         if accepted {
-                                            viewModel.acceptFriendRequest(
-                                                from: user.id)
-                                        } else {
-                                            viewModel.declineFriendRequest(
-                                                from: user.id)
+                                            viewModel.acceptFriendRequest(from: user.id)
+                                        }
+                                        else {
+                                            viewModel.declineFriendRequest(from: user.id)
                                         }
                                     }
-                                    .transition(
-                                        .scale(scale: 0.9).combined(
-                                            with: .opacity))
+                                    .transition(.scale(scale: 0.9).combined(with: .opacity))
                                 }
                             }
                             .padding(.horizontal)
@@ -85,9 +68,7 @@ struct FriendsView: View {
                                 isButtonPressed = true
                                 showingSearch = true
                             }
-                            DispatchQueue.main.asyncAfter(
-                                deadline: .now() + 0.1
-                            ) {
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
                                 isButtonPressed = false
                             }
                         }) {
@@ -101,11 +82,13 @@ struct FriendsView: View {
                                                     Color(
                                                         red: 249 / 255,
                                                         green: 115 / 255,
-                                                        blue: 22 / 255),
+                                                        blue: 22 / 255
+                                                    ),
                                                     Color(
                                                         red: 234 / 255,
                                                         green: 88 / 255,
-                                                        blue: 12 / 255),
+                                                        blue: 12 / 255
+                                                    ),
                                                 ],
                                                 startPoint: .topLeading,
                                                 endPoint: .bottomTrailing
@@ -116,17 +99,13 @@ struct FriendsView: View {
                                     Image(systemName: "person.badge.plus")
                                         .font(.system(size: 18, weight: .bold))
                                         .foregroundColor(.white)
-                                        .shadow(
-                                            color: Color.white.opacity(0.5),
-                                            radius: 2)
+                                        .shadow(color: Color.white.opacity(0.5), radius: 2)
                                 }
 
-                                Text("Find Friends")
-                                    .font(.system(size: 18, weight: .bold))
+                                Text("Find Friends").font(.system(size: 18, weight: .bold))
                                     .foregroundColor(.white)
                             }
-                            .frame(maxWidth: .infinity)
-                            .padding(.vertical, 14)
+                            .frame(maxWidth: .infinity).padding(.vertical, 14)
                             .background(
                                 ZStack {
                                     // Vibrant orange-yellow gradient
@@ -138,12 +117,14 @@ struct FriendsView: View {
                                                         red: 249 / 255,
                                                         green: 115 / 255,
                                                         blue: 22 / 255
-                                                    ).opacity(0.7),
+                                                    )
+                                                    .opacity(0.7),
                                                     Color(
                                                         red: 234 / 255,
                                                         green: 88 / 255,
                                                         blue: 12 / 255
-                                                    ).opacity(0.7),
+                                                    )
+                                                    .opacity(0.7),
                                                 ],
                                                 startPoint: .topLeading,
                                                 endPoint: .bottomTrailing
@@ -170,10 +151,9 @@ struct FriendsView: View {
                                 }
                             )
                             .shadow(
-                                color: Color(
-                                    red: 249 / 255, green: 115 / 255,
-                                    blue: 22 / 255
-                                ).opacity(0.5), radius: 8
+                                color: Color(red: 249 / 255, green: 115 / 255, blue: 22 / 255)
+                                    .opacity(0.5),
+                                radius: 8
                             )
                             .scaleEffect(isButtonPressed ? 0.96 : 1.0)
                         }
@@ -181,15 +161,9 @@ struct FriendsView: View {
 
                         // Friends list title - Enhanced with color
                         if !viewModel.friends.isEmpty {
-                            Text("YOUR FRIENDS")
-                                .font(.system(size: 16, weight: .black))
-                                .tracking(5)
-                                .foregroundColor(
-                                    Theme.lightTealBlue
-                                )
-                                .shadow(
-                                    color: Theme.lightTealBlue.opacity(0.6), radius: 6
-                                )
+                            Text("YOUR FRIENDS").font(.system(size: 16, weight: .black)).tracking(5)
+                                .foregroundColor(Theme.lightTealBlue)
+                                .shadow(color: Theme.lightTealBlue.opacity(0.6), radius: 6)
                                 .frame(maxWidth: .infinity, alignment: .leading)
                                 .padding(.horizontal)
                         }
@@ -208,7 +182,8 @@ struct FriendsView: View {
                                                         red: 14 / 255,
                                                         green: 165 / 255,
                                                         blue: 233 / 255
-                                                    ).opacity(0.3),
+                                                    )
+                                                    .opacity(0.3),
                                                 ]),
                                                 center: .center,
                                                 startRadius: 0,
@@ -217,30 +192,22 @@ struct FriendsView: View {
                                         )
                                         .frame(width: 100, height: 100)
 
-                                    Image(systemName: "person.2")
-                                        .font(.system(size: 50))
+                                    Image(systemName: "person.2").font(.system(size: 50))
                                         .foregroundColor(.white)
-                                        .shadow(
-                                            color: Color.white.opacity(0.8),
-                                            radius: 10)
+                                        .shadow(color: Color.white.opacity(0.8), radius: 10)
                                 }
-                                .shadow(
-                                    color: Theme.lightTealBlue.opacity(0.6), radius: 15)
+                                .shadow(color: Theme.lightTealBlue.opacity(0.6), radius: 15)
 
-                                Text("No Friends Yet")
-                                    .font(.system(size: 26, weight: .bold))
+                                Text("No Friends Yet").font(.system(size: 26, weight: .bold))
                                     .foregroundColor(.white)
-                                    .shadow(
-                                        color: Color.white.opacity(0.5),
-                                        radius: 8)
+                                    .shadow(color: Color.white.opacity(0.5), radius: 8)
 
                                 Text("Add friends to see their focus sessions")
-                                    .font(.system(size: 18))
-                                    .foregroundColor(.white.opacity(0.8))
+                                    .font(.system(size: 18)).foregroundColor(.white.opacity(0.8))
                             }
-                            .padding(.top, 30)
-                            .padding(.bottom, 50)
-                        } else {
+                            .padding(.top, 30).padding(.bottom, 50)
+                        }
+                        else {
                             // Enhanced Friends List with better visuals
                             LazyVStack(spacing: 15) {
                                 // Sort friends - live sessions first, then normal friends
@@ -249,8 +216,7 @@ struct FriendsView: View {
                                     ZStack(alignment: .topTrailing) {
                                         // NavigationLink for profile view - make it disabled when joining
                                         NavigationLink(
-                                            destination: UserProfileLoader(
-                                                userId: friend.id)
+                                            destination: UserProfileLoader(userId: friend.id)
                                         ) {
                                             // Enhanced friend card with vibrant colors for live sessions
                                             EnhancedFriendCard(
@@ -271,9 +237,7 @@ struct FriendsView: View {
                 }
             }
             .background(Theme.mainGradient.edgesIgnoringSafeArea(.all))
-            .sheet(isPresented: $showingSearch) {
-                FriendsSearchView()
-            }
+            .sheet(isPresented: $showingSearch) { FriendsSearchView() }
             .refreshable {
                 viewModel.loadFriends()
                 leaderboardViewModel.loadLeaderboard()
@@ -311,45 +275,35 @@ struct FriendsView: View {
         // First add friends with live sessions
         for friend in viewModel.friends {
             // Check if this friend has an active session
-            let session = liveSessionManager.activeFriendSessions.first {
-                sessionId, sessionData in
+            let session = liveSessionManager.activeFriendSessions.first { sessionId, sessionData in
                 return sessionData.participants.contains(friend.id)
             }
 
             // Add this after you find the session
             if let (sessionId, sessionData) = session {
                 // Additional checks to filter out stale sessions
-                let isSessionTooOld =
-                    Date().timeIntervalSince(sessionData.lastUpdateTime) > 300  // 5 minutes
+                let isSessionTooOld = Date().timeIntervalSince(sessionData.lastUpdateTime) > 300  // 5 minutes
                 let sessionEndTime = sessionData.startTime.addingTimeInterval(
-                    TimeInterval(sessionData.targetDuration * 60))
+                    TimeInterval(sessionData.targetDuration * 60)
+                )
                 let isSessionEnded = Date() > sessionEndTime
 
-                if !isSessionTooOld && !isSessionEnded
-                    && sessionData.remainingSeconds > 0
-                {
+                if !isSessionTooOld && !isSessionEnded && sessionData.remainingSeconds > 0 {
                     result.append(
                         FriendWithSession(
                             user: friend,
                             sessionId: sessionId,
                             sessionData: sessionData
-                        ))
-                } else {
-                    // Add without session data if it's stale
-                    result.append(
-                        FriendWithSession(
-                            user: friend,
-                            sessionId: nil,
-                            sessionData: nil
-                        ))
+                        )
+                    )
                 }
-            } else {
-                result.append(
-                    FriendWithSession(
-                        user: friend,
-                        sessionId: nil,
-                        sessionData: nil
-                    ))
+                else {
+                    // Add without session data if it's stale
+                    result.append(FriendWithSession(user: friend, sessionId: nil, sessionData: nil))
+                }
+            }
+            else {
+                result.append(FriendWithSession(user: friend, sessionId: nil, sessionData: nil))
             }
         }
 
@@ -357,9 +311,11 @@ struct FriendsView: View {
         return result.sorted { a, b in
             if a.sessionData != nil && b.sessionData == nil {
                 return true
-            } else if a.sessionData == nil && b.sessionData != nil {
+            }
+            else if a.sessionData == nil && b.sessionData != nil {
                 return false
-            } else {
+            }
+            else {
                 return a.user.username < b.user.username
             }
         }
@@ -371,9 +327,7 @@ struct FriendsView: View {
         let sessionId: String?
         let sessionData: LiveSessionManager.LiveSessionData?
 
-        var id: String {
-            return user.id
-        }
+        var id: String { return user.id }
     }
 
     // Handle join session logic
@@ -399,12 +353,13 @@ struct FriendsView: View {
         appManager.resetJoinState()
 
         // Get fresh session data
-        LiveSessionManager.shared.getSessionDetails(sessionId: sessionId) {
-            sessionData in
+        LiveSessionManager.shared.getSessionDetails(sessionId: sessionId) { sessionData in
             if let data = sessionData, data.canJoin {
                 // Proceed with joining a valid session
                 LiveSessionManager.shared.joinSession(sessionId: sessionId) {
-                    success, remainingSeconds, totalDuration in
+                    success,
+                    remainingSeconds,
+                    totalDuration in
                     DispatchQueue.main.async {
                         self.isJoiningSession = false
 
@@ -423,7 +378,8 @@ struct FriendsView: View {
                                 name: Notification.Name("SwitchToHomeTab"),
                                 object: nil
                             )
-                        } else {
+                        }
+                        else {
                             // Failed to join
                             self.alertMessage =
                                 "Unable to join session. It may have ended or reached maximum participants."
@@ -431,12 +387,12 @@ struct FriendsView: View {
                         }
                     }
                 }
-            } else {
+            }
+            else {
                 // Session not available
                 DispatchQueue.main.async {
                     self.isJoiningSession = false
-                    self.alertMessage =
-                        "This session is no longer available for joining."
+                    self.alertMessage = "This session is no longer available for joining."
                     self.showAlert = true
                 }
             }

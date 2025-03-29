@@ -9,62 +9,42 @@ struct SessionNotesView: View {
     @State private var isTitleFocused: Bool = false
     @State private var isNotesFocused: Bool = false
 
-    private var titleWordCount: Int {
-        sessionTitle.split(separator: " ").count
-    }
+    private var titleWordCount: Int { sessionTitle.split(separator: " ").count }
 
-    private var notesWordCount: Int {
-        sessionNotes.split(separator: " ").count
-    }
+    private var notesWordCount: Int { sessionNotes.split(separator: " ").count }
 
-    private var titleRemainingWords: Int {
-        max(0, titleLimit - titleWordCount)
-    }
+    private var titleRemainingWords: Int { max(0, titleLimit - titleWordCount) }
 
-    private var notesRemainingWords: Int {
-        max(0, notesLimit - notesWordCount)
-    }
+    private var notesRemainingWords: Int { max(0, notesLimit - notesWordCount) }
 
     var body: some View {
         VStack(spacing: 15) {
-            Text("SESSION NOTES")
-                .font(.system(size: 16, weight: .bold))
-                .tracking(2)
-                .foregroundColor(
-                    Theme.yellow
-                )
-                .frame(maxWidth: .infinity, alignment: .center)
+            Text("SESSION NOTES").font(.system(size: 16, weight: .bold)).tracking(2)
+                .foregroundColor(Theme.yellow).frame(maxWidth: .infinity, alignment: .center)
 
             // Title input
             VStack(alignment: .leading, spacing: 8) {
                 HStack {
-                    Text("Title")
-                        .font(.system(size: 14, weight: .medium))
+                    Text("Title").font(.system(size: 14, weight: .medium))
                         .foregroundColor(.white.opacity(0.8))
 
                     Spacer()
 
-                    Text("\(titleRemainingWords) words left")
-                        .font(.system(size: 12))
+                    Text("\(titleRemainingWords) words left").font(.system(size: 12))
                         .foregroundColor(
-                            titleRemainingWords > 0
-                                ? .white.opacity(0.5)
-                                : Theme.mutedRed)
+                            titleRemainingWords > 0 ? .white.opacity(0.5) : Theme.mutedRed
+                        )
                 }
 
                 TextField("Add a title (optional)", text: $sessionTitle)
-                    .font(.system(size: 14, weight: .medium))
-                    .foregroundColor(.white)
-                    .padding(12)
+                    .font(.system(size: 14, weight: .medium)).foregroundColor(.white).padding(12)
                     .background(
-                        RoundedRectangle(cornerRadius: 12)
-                            .fill(Color.white.opacity(0.1))
+                        RoundedRectangle(cornerRadius: 12).fill(Color.white.opacity(0.1))
                             .overlay(
                                 RoundedRectangle(cornerRadius: 12)
                                     .stroke(
                                         isTitleFocused
-                                            ? Theme.yellow.opacity(0.5)
-                                            : Color.white.opacity(0.3),
+                                            ? Theme.yellow.opacity(0.5) : Color.white.opacity(0.3),
                                         lineWidth: isTitleFocused ? 1.5 : 1
                                     )
                             )
@@ -73,18 +53,13 @@ struct SessionNotesView: View {
                         isTitleFocused = true
                         isNotesFocused = false
                     }
-                    .onSubmit {
-                        isTitleFocused = false
-                    }
+                    .onSubmit { isTitleFocused = false }
                     .onChange(of: sessionTitle) {
                         let words = sessionTitle.split(separator: " ")
                         if words.count > titleLimit && words.count > 0 {
                             DispatchQueue.main.async {
-                                sessionTitle = words.prefix(titleLimit).joined(
-                                    separator: " ")
-                                if sessionTitle.hasSuffix(" ") {
-                                    sessionTitle += " "
-                                }
+                                sessionTitle = words.prefix(titleLimit).joined(separator: " ")
+                                if sessionTitle.hasSuffix(" ") { sessionTitle += " " }
                             }
                         }
                     }
@@ -93,38 +68,27 @@ struct SessionNotesView: View {
             // Notes input
             VStack(alignment: .leading, spacing: 8) {
                 HStack {
-                    Text("Notes")
-                        .font(.system(size: 14, weight: .medium))
+                    Text("Notes").font(.system(size: 14, weight: .medium))
                         .foregroundColor(.white.opacity(0.8))
 
                     Spacer()
 
-                    Text("\(notesRemainingWords) words left")
-                        .font(.system(size: 12))
+                    Text("\(notesRemainingWords) words left").font(.system(size: 12))
                         .foregroundColor(
-                            notesRemainingWords > 0
-                                ? .white.opacity(0.5)
-                                : Theme.mutedRed)
+                            notesRemainingWords > 0 ? .white.opacity(0.5) : Theme.mutedRed
+                        )
                 }
 
                 ZStack(alignment: .topLeading) {
                     if sessionNotes.isEmpty {
-                        Text(
-                            "Share your thoughts about this session (optional)"
-                        )
-                        .font(.system(size: 14))
-                        .foregroundColor(.white.opacity(0.4))
-                        .padding(.horizontal, 12)
-                        .padding(.top, 12)
+                        Text("Share your thoughts about this session (optional)")
+                            .font(.system(size: 14)).foregroundColor(.white.opacity(0.4))
+                            .padding(.horizontal, 12).padding(.top, 12)
                     }
 
-                    TextEditor(text: $sessionNotes)
-                        .font(.system(size: 14))
-                        .foregroundColor(.white)
-                        .frame(minHeight: 120, maxHeight: 150)
-                        .padding(3)  // TextEditor has internal padding
-                        .background(Color.clear)
-                        .scrollContentBackground(.hidden)
+                    TextEditor(text: $sessionNotes).font(.system(size: 14)).foregroundColor(.white)
+                        .frame(minHeight: 120, maxHeight: 150).padding(3)  // TextEditor has internal padding
+                        .background(Color.clear).scrollContentBackground(.hidden)
                         .onTapGesture {
                             isTitleFocused = false
                             isNotesFocused = true
@@ -133,27 +97,20 @@ struct SessionNotesView: View {
                             let words = sessionNotes.split(separator: " ")
                             if words.count > notesLimit && words.count > 0 {
                                 // Use a small delay to not interfere with typing
-                                DispatchQueue.main.asyncAfter(
-                                    deadline: .now() + 0.05
-                                ) {
-                                    sessionNotes = words.prefix(notesLimit)
-                                        .joined(separator: " ")
-                                    if sessionNotes.hasSuffix(" ") {
-                                        sessionNotes += " "
-                                    }
+                                DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
+                                    sessionNotes = words.prefix(notesLimit).joined(separator: " ")
+                                    if sessionNotes.hasSuffix(" ") { sessionNotes += " " }
                                 }
                             }
                         }
                 }
                 .background(
-                    RoundedRectangle(cornerRadius: 12)
-                        .fill(Color.white.opacity(0.1))
+                    RoundedRectangle(cornerRadius: 12).fill(Color.white.opacity(0.1))
                         .overlay(
                             RoundedRectangle(cornerRadius: 12)
                                 .stroke(
                                     isNotesFocused
-                                        ? Theme.yellow.opacity(0.5)
-                                        : Color.white.opacity(0.3),
+                                        ? Theme.yellow.opacity(0.5) : Color.white.opacity(0.3),
                                     lineWidth: isNotesFocused ? 1.5 : 1
                                 )
                         )
@@ -167,30 +124,20 @@ struct SessionNotesView: View {
                     .fill(
                         LinearGradient(
                             colors: [
-                                Color(
-                                    red: 60 / 255, green: 30 / 255,
-                                    blue: 110 / 255
-                                ).opacity(0.4),
-                                Color(
-                                    red: 40 / 255, green: 20 / 255,
-                                    blue: 80 / 255
-                                ).opacity(0.2),
+                                Color(red: 60 / 255, green: 30 / 255, blue: 110 / 255).opacity(0.4),
+                                Color(red: 40 / 255, green: 20 / 255, blue: 80 / 255).opacity(0.2),
                             ],
                             startPoint: .topLeading,
                             endPoint: .bottomTrailing
                         )
                     )
 
-                RoundedRectangle(cornerRadius: 16)
-                    .fill(Color.white.opacity(0.05))
+                RoundedRectangle(cornerRadius: 16).fill(Color.white.opacity(0.05))
 
                 RoundedRectangle(cornerRadius: 16)
                     .stroke(
                         LinearGradient(
-                            colors: [
-                                Color.white.opacity(0.4),
-                                Color.white.opacity(0.1),
-                            ],
+                            colors: [Color.white.opacity(0.4), Color.white.opacity(0.1)],
                             startPoint: .topLeading,
                             endPoint: .bottomTrailing
                         ),
@@ -207,8 +154,11 @@ struct SessionNotesView: View {
 
     private func hideKeyboard() {
         UIApplication.shared.sendAction(
-            #selector(UIResponder.resignFirstResponder), to: nil, from: nil,
-            for: nil)
+            #selector(UIResponder.resignFirstResponder),
+            to: nil,
+            from: nil,
+            for: nil
+        )
         isTitleFocused = false
         isNotesFocused = false
     }

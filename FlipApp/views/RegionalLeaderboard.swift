@@ -62,54 +62,44 @@ struct RegionalLeaderboard: View {
             VStack(spacing: 4) {
                 // Main title with icon
                 HStack {
-                    Image(
-                        systemName: viewModel.isBuildingSpecific
-                            ? "building.2.fill" : "map.fill"
-                    )
-                    .font(.system(size: 20))
-                    .foregroundStyle(
-                        viewModel.isBuildingSpecific
-                            ? LinearGradient(
-                                colors: [
-                                    Theme.yellowyOrange,
-                                    Color(
-                                        red: 202 / 255, green: 138 / 255,
-                                        blue: 4 / 255),
-                                ],
-                                startPoint: .top,
-                                endPoint: .bottom
-                            )
-                            : LinearGradient(
-                                colors: [
-                                    Theme.mutedRed,
-                                    Color(
-                                        red: 185 / 255, green: 28 / 255,
-                                        blue: 28 / 255),
-                                ],
-                                startPoint: .top,
-                                endPoint: .bottom
-                            )
-                    )
-                    .shadow(
-                        color: viewModel.isBuildingSpecific
-                            ? Theme.yellowyOrange.opacity(0.5)
-                            : Theme.mutedRed.opacity(0.5), radius: 4)
+                    Image(systemName: viewModel.isBuildingSpecific ? "building.2.fill" : "map.fill")
+                        .font(.system(size: 20))
+                        .foregroundStyle(
+                            viewModel.isBuildingSpecific
+                                ? LinearGradient(
+                                    colors: [
+                                        Theme.yellowyOrange,
+                                        Color(red: 202 / 255, green: 138 / 255, blue: 4 / 255),
+                                    ],
+                                    startPoint: .top,
+                                    endPoint: .bottom
+                                )
+                                : LinearGradient(
+                                    colors: [
+                                        Theme.mutedRed,
+                                        Color(red: 185 / 255, green: 28 / 255, blue: 28 / 255),
+                                    ],
+                                    startPoint: .top,
+                                    endPoint: .bottom
+                                )
+                        )
+                        .shadow(
+                            color: viewModel.isBuildingSpecific
+                                ? Theme.yellowyOrange.opacity(0.5) : Theme.mutedRed.opacity(0.5),
+                            radius: 4
+                        )
 
                     Text(
                         viewModel.isBuildingSpecific
-                            ? "MOST SESSIONS OF THE WEEK"
-                            : "REGIONAL LEADERBOARD"
+                            ? "MOST SESSIONS OF THE WEEK" : "REGIONAL LEADERBOARD"
                     )
-                    .font(.system(size: 13, weight: .black))
-                    .tracking(2)
+                    .font(.system(size: 13, weight: .black)).tracking(2)
                     .foregroundStyle(
                         viewModel.isBuildingSpecific
                             ? LinearGradient(
                                 colors: [
                                     Theme.yellowyOrange,
-                                    Color(
-                                        red: 202 / 255, green: 138 / 255,
-                                        blue: 4 / 255),
+                                    Color(red: 202 / 255, green: 138 / 255, blue: 4 / 255),
                                 ],
                                 startPoint: .top,
                                 endPoint: .bottom
@@ -117,9 +107,7 @@ struct RegionalLeaderboard: View {
                             : LinearGradient(
                                 colors: [
                                     Theme.mutedRed,
-                                    Color(
-                                        red: 185 / 255, green: 28 / 255,
-                                        blue: 28 / 255),
+                                    Color(red: 185 / 255, green: 28 / 255, blue: 28 / 255),
                                 ],
                                 startPoint: .top,
                                 endPoint: .bottom
@@ -127,23 +115,20 @@ struct RegionalLeaderboard: View {
                     )
                     .shadow(
                         color: viewModel.isBuildingSpecific
-                            ? Theme.yellowyOrange.opacity(0.5)
-                            : Theme.mutedRed.opacity(0.5), radius: 4
+                            ? Theme.yellowyOrange.opacity(0.5) : Theme.mutedRed.opacity(0.5),
+                        radius: 4
                     )
                     .frame(maxWidth: .infinity, alignment: .center)
                 }
 
                 // Subtitle with location name
                 if let locationName = viewModel.locationName {
-                    Text("in \(locationName)")
-                        .font(.system(size: 14, weight: .medium))
-                        .foregroundColor(.white.opacity(0.8))
-                        .lineLimit(1)
+                    Text("in \(locationName)").font(.system(size: 14, weight: .medium))
+                        .foregroundColor(.white.opacity(0.8)).lineLimit(1)
                         .frame(maxWidth: .infinity, alignment: .center)
                 }
             }
-            .padding(.vertical, 12)
-            .padding(.horizontal, 16)
+            .padding(.vertical, 12).padding(.horizontal, 16)
             .background(
                 RoundedRectangle(cornerRadius: 12)
                     .fill(
@@ -151,10 +136,8 @@ struct RegionalLeaderboard: View {
                             ? LinearGradient(
                                 colors: [
                                     Theme.yellowyOrange.opacity(0.3),
-                                    Color(
-                                        red: 202 / 255, green: 138 / 255,
-                                        blue: 4 / 255
-                                    ).opacity(0.2),
+                                    Color(red: 202 / 255, green: 138 / 255, blue: 4 / 255)
+                                        .opacity(0.2),
                                 ],
                                 startPoint: .leading,
                                 endPoint: .trailing
@@ -162,10 +145,8 @@ struct RegionalLeaderboard: View {
                             : LinearGradient(
                                 colors: [
                                     Theme.mutedRed.opacity(0.3),
-                                    Color(
-                                        red: 185 / 255, green: 28 / 255,
-                                        blue: 28 / 255
-                                    ).opacity(0.2),
+                                    Color(red: 185 / 255, green: 28 / 255, blue: 28 / 255)
+                                        .opacity(0.2),
                                 ],
                                 startPoint: .leading,
                                 endPoint: .trailing
@@ -175,10 +156,7 @@ struct RegionalLeaderboard: View {
                         RoundedRectangle(cornerRadius: 12)
                             .stroke(
                                 LinearGradient(
-                                    colors: [
-                                        Color.white.opacity(0.5),
-                                        Color.white.opacity(0.2),
-                                    ],
+                                    colors: [Color.white.opacity(0.5), Color.white.opacity(0.2)],
                                     startPoint: .topLeading,
                                     endPoint: .bottomTrailing
                                 ),
@@ -190,20 +168,17 @@ struct RegionalLeaderboard: View {
             if viewModel.isLoading {
                 HStack {
                     Spacer()
-                    ProgressView()
-                        .tint(.white)
-                        .scaleEffect(1.2)
-                        .padding(.vertical, 25)
+                    ProgressView().tint(.white).scaleEffect(1.2).padding(.vertical, 25)
                     Spacer()
                 }
-            } else if viewModel.leaderboardEntries.isEmpty {
+            }
+            else if viewModel.leaderboardEntries.isEmpty {
                 VStack(spacing: 12) {
                     Image(
                         systemName: viewModel.isBuildingSpecific
                             ? "building.2.crop.circle" : "mappin.circle"
                     )
-                    .font(.system(size: 40))
-                    .foregroundColor(.white.opacity(0.5))
+                    .font(.system(size: 40)).foregroundColor(.white.opacity(0.5))
                     .padding(.bottom, 5)
 
                     Text(
@@ -211,62 +186,48 @@ struct RegionalLeaderboard: View {
                             ? "No sessions in this building yet"
                             : "No active users in your area this week"
                     )
-                    .font(.system(size: 16, weight: .medium))
-                    .foregroundColor(.white.opacity(0.7))
+                    .font(.system(size: 16, weight: .medium)).foregroundColor(.white.opacity(0.7))
                     .multilineTextAlignment(.center)
 
-                    Text("Complete a session to be the first!")
-                        .font(.system(size: 14))
+                    Text("Complete a session to be the first!").font(.system(size: 14))
                         .foregroundColor(.white.opacity(0.5))
                 }
-                .frame(maxWidth: .infinity)
-                .padding(.vertical, 30)
-            } else {
+                .frame(maxWidth: .infinity).padding(.vertical, 30)
+            }
+            else {
                 // Column headers for clarity
                 HStack {
-                    Text("RANK")
-                        .font(.system(size: 12, weight: .bold))
-                        .tracking(1)
+                    Text("RANK").font(.system(size: 12, weight: .bold)).tracking(1)
                         .foregroundColor(
                             viewModel.isBuildingSpecific
-                                ? Theme.yellowyOrange.opacity(0.9)
-                                : Theme.mutedRed.opacity(0.9)
+                                ? Theme.yellowyOrange.opacity(0.9) : Theme.mutedRed.opacity(0.9)
                         )
                         .frame(width: 50, alignment: .center)
 
-                    Text("USER")
-                        .font(.system(size: 12, weight: .bold))
-                        .tracking(1)
+                    Text("USER").font(.system(size: 12, weight: .bold)).tracking(1)
                         .foregroundColor(
                             viewModel.isBuildingSpecific
-                                ? Theme.yellowyOrange.opacity(0.9)
-                                : Theme.mutedRed.opacity(0.9)
+                                ? Theme.yellowyOrange.opacity(0.9) : Theme.mutedRed.opacity(0.9)
                         )
                         .frame(alignment: .leading)
 
                     Spacer()
 
-                    Text("SESSIONS")
-                        .font(.system(size: 12, weight: .bold))
-                        .tracking(1)
+                    Text("SESSIONS").font(.system(size: 12, weight: .bold)).tracking(1)
                         .foregroundColor(
                             viewModel.isBuildingSpecific
-                                ? Theme.yellowyOrange.opacity(0.9)
-                                : Theme.mutedRed.opacity(0.9)
+                                ? Theme.yellowyOrange.opacity(0.9) : Theme.mutedRed.opacity(0.9)
                         )
                         .frame(width: 80, alignment: .trailing)
                 }
-                .padding(.horizontal, 16)
-                .padding(.top, 4)
-                .padding(.bottom, 8)
+                .padding(.horizontal, 16).padding(.top, 4).padding(.bottom, 8)
 
                 // Leaderboard entries - LIMIT TO 10 ENTRIES
                 VStack(spacing: 8) {
                     // Only show first 10 entries without any "Show more" button
                     ForEach(
-                        Array(
-                            viewModel.leaderboardEntries.prefix(10).enumerated()
-                        ), id: \.element.id
+                        Array(viewModel.leaderboardEntries.prefix(10).enumerated()),
+                        id: \.element.id
                     ) { index, entry in
                         Button(action: {
                             // Only show profile for non-anonymous users
@@ -283,23 +244,18 @@ struct RegionalLeaderboard: View {
                                             .fill(
                                                 index == 0
                                                     ? goldColor
-                                                    : (index == 1
-                                                        ? silverColor
-                                                        : bronzeColor)
+                                                    : (index == 1 ? silverColor : bronzeColor)
                                             )
                                             .frame(width: 26, height: 26)
 
-                                        Image(systemName: "medal.fill")
-                                            .font(.system(size: 14))
+                                        Image(systemName: "medal.fill").font(.system(size: 14))
                                             .foregroundColor(.white)
-                                            .shadow(
-                                                color: Color.black.opacity(0.2),
-                                                radius: 1)
+                                            .shadow(color: Color.black.opacity(0.2), radius: 1)
                                     }
                                     .frame(width: 32, alignment: .center)
-                                } else {
-                                    Text("\(index + 1)")
-                                        .font(.system(size: 16, weight: .bold))
+                                }
+                                else {
+                                    Text("\(index + 1)").font(.system(size: 16, weight: .bold))
                                         .foregroundColor(.white)
                                         .frame(width: 32, alignment: .center)
                                 }
@@ -308,42 +264,34 @@ struct RegionalLeaderboard: View {
                                 if entry.isAnonymous {
                                     // Show question mark for anonymous users
                                     ZStack {
-                                        Circle()
-                                            .fill(Color.gray.opacity(0.3))
+                                        Circle().fill(Color.gray.opacity(0.3))
                                             .frame(width: 26, height: 26)
 
-                                        Text("?")
-                                            .font(
-                                                .system(size: 16, weight: .bold)
-                                            )
+                                        Text("?").font(.system(size: 16, weight: .bold))
                                             .foregroundColor(.white)
                                     }
-                                } else if let score = entry.score {
+                                }
+                                else if let score = entry.score {
                                     // Show normal rank for non-anonymous users
-                                    RankCircle(
-                                        score: score, size: 26,
-                                        showStreakIndicator: false)
+                                    RankCircle(score: score, size: 26, showStreakIndicator: false)
                                 }
 
                                 // Profile picture with streak indicator
                                 ZStack {
                                     // Use anonymous profile picture for anonymous users
                                     if entry.isAnonymous {
-                                        DefaultProfileImage(
-                                            username: "A", size: 32)
-                                    } else {
-                                        ProfileImage(
-                                            userId: entry.userId, size: 32)
+                                        DefaultProfileImage(username: "A", size: 32)
+                                    }
+                                    else {
+                                        ProfileImage(userId: entry.userId, size: 32)
 
                                         // Optional streak indicator - only for non-anonymous users
                                         if entry.streakStatus != .none {
                                             Circle()
                                                 .stroke(
-                                                    entry.streakStatus
-                                                        == .redFlame
+                                                    entry.streakStatus == .redFlame
                                                         ? Color.red.opacity(0.8)
-                                                        : Color.orange.opacity(
-                                                            0.8),
+                                                        : Color.orange.opacity(0.8),
                                                     lineWidth: 2
                                                 )
                                                 .frame(width: 32, height: 32)
@@ -352,17 +300,13 @@ struct RegionalLeaderboard: View {
                                             ZStack {
                                                 Circle()
                                                     .fill(
-                                                        entry.streakStatus
-                                                            == .redFlame
-                                                            ? Color.red
-                                                            : Color.orange
+                                                        entry.streakStatus == .redFlame
+                                                            ? Color.red : Color.orange
                                                     )
-                                                    .frame(
-                                                        width: 12, height: 12)
+                                                    .frame(width: 12, height: 12)
 
                                                 Image(systemName: "flame.fill")
-                                                    .font(.system(size: 8))
-                                                    .foregroundColor(.white)
+                                                    .font(.system(size: 8)).foregroundColor(.white)
                                             }
                                             .position(x: 24, y: 8)
                                         }
@@ -370,16 +314,12 @@ struct RegionalLeaderboard: View {
                                 }
 
                                 // Username with underline to indicate it's clickable (only for non-anonymous)
-                                Text(entry.username)
-                                    .font(.system(size: 16, weight: .bold))
-                                    .foregroundColor(.white)
-                                    .lineLimit(1)
-                                    .frame(
-                                        maxWidth: .infinity, alignment: .leading
-                                    )
+                                Text(entry.username).font(.system(size: 16, weight: .bold))
+                                    .foregroundColor(.white).lineLimit(1)
+                                    .frame(maxWidth: .infinity, alignment: .leading)
                                     .underline(
-                                        color: entry.isAnonymous
-                                            ? .clear : .white.opacity(0.3))
+                                        color: entry.isAnonymous ? .clear : .white.opacity(0.3)
+                                    )
 
                                 // Duration
                                 VStack(alignment: .trailing, spacing: 2) {
@@ -387,24 +327,21 @@ struct RegionalLeaderboard: View {
                                         .font(.system(size: 18, weight: .black))
                                         .foregroundColor(
                                             viewModel.isBuildingSpecific
-                                                ? Theme.yellowyOrange
-                                                : Theme.mutedRed
+                                                ? Theme.yellowyOrange : Theme.mutedRed
                                         )
                                         .shadow(
                                             color: viewModel.isBuildingSpecific
                                                 ? Theme.yellowyOrange.opacity(0.3)
-                                                : Theme.mutedRed.opacity(0.3), radius: 4)
-
-                                    Text("sessions")
-                                        .font(
-                                            .system(size: 10, weight: .medium)
+                                                : Theme.mutedRed.opacity(0.3),
+                                            radius: 4
                                         )
+
+                                    Text("sessions").font(.system(size: 10, weight: .medium))
                                         .foregroundColor(.white.opacity(0.7))
                                 }
                                 .frame(width: 70, alignment: .trailing)
                             }
-                            .padding(.vertical, 10)
-                            .padding(.horizontal, 16)
+                            .padding(.vertical, 10).padding(.horizontal, 16)
                             .background(
                                 RoundedRectangle(cornerRadius: 12)
                                     .fill(
@@ -416,10 +353,8 @@ struct RegionalLeaderboard: View {
                                                         Theme.yellowyOrange.opacity(0.1),
                                                     ]
                                                     : [
-                                                        Color.white.opacity(
-                                                            0.08),
-                                                        Color.white.opacity(
-                                                            0.05),
+                                                        Color.white.opacity(0.08),
+                                                        Color.white.opacity(0.05),
                                                     ],
                                                 startPoint: .top,
                                                 endPoint: .bottom
@@ -431,10 +366,8 @@ struct RegionalLeaderboard: View {
                                                         Theme.mutedRed.opacity(0.1),
                                                     ]
                                                     : [
-                                                        Color.white.opacity(
-                                                            0.08),
-                                                        Color.white.opacity(
-                                                            0.05),
+                                                        Color.white.opacity(0.08),
+                                                        Color.white.opacity(0.05),
                                                     ],
                                                 startPoint: .top,
                                                 endPoint: .bottom
@@ -444,22 +377,18 @@ struct RegionalLeaderboard: View {
                                         RoundedRectangle(cornerRadius: 12)
                                             .stroke(
                                                 // Highlight current user
-                                                Auth.auth().currentUser?.uid
-                                                    == entry.userId
-                                                    ? (viewModel
-                                                        .isBuildingSpecific
+                                                Auth.auth().currentUser?.uid == entry.userId
+                                                    ? (viewModel.isBuildingSpecific
                                                         ? Theme.yellowyOrange.opacity(0.5)
                                                         : Theme.mutedRed.opacity(0.5))
                                                     : Color.white.opacity(0.2),
-                                                lineWidth: Auth.auth()
-                                                    .currentUser?.uid
+                                                lineWidth: Auth.auth().currentUser?.uid
                                                     == entry.userId ? 1.5 : 1
                                             )
                                     )
                             )
                         }
-                        .buttonStyle(PlainButtonStyle())
-                        .padding(.vertical, 2)
+                        .buttonStyle(PlainButtonStyle()).padding(.vertical, 2)
                         // Disable the button for anonymous users
                         .disabled(entry.isAnonymous)
                     }
@@ -469,26 +398,18 @@ struct RegionalLeaderboard: View {
                         HStack {
                             Spacer()
 
-                            Button(action: {
-                                viewModel.decreaseRadius()
-                            }) {
-                                Image(systemName: "minus.circle.fill")
-                                    .font(.system(size: 24))
+                            Button(action: { viewModel.decreaseRadius() }) {
+                                Image(systemName: "minus.circle.fill").font(.system(size: 24))
                                     .foregroundColor(.white.opacity(0.8))
                             }
                             .disabled(viewModel.radius <= 1)
                             .opacity(viewModel.radius <= 1 ? 0.5 : 1.0)
 
-                            Text("\(viewModel.radius) mi")
-                                .font(.system(size: 14, weight: .bold))
-                                .foregroundColor(.white)
-                                .frame(width: 40)
+                            Text("\(viewModel.radius) mi").font(.system(size: 14, weight: .bold))
+                                .foregroundColor(.white).frame(width: 40)
 
-                            Button(action: {
-                                viewModel.increaseRadius()
-                            }) {
-                                Image(systemName: "plus.circle.fill")
-                                    .font(.system(size: 24))
+                            Button(action: { viewModel.increaseRadius() }) {
+                                Image(systemName: "plus.circle.fill").font(.system(size: 24))
                                     .foregroundColor(.white.opacity(0.8))
                             }
                             .disabled(viewModel.radius >= 20)
@@ -501,8 +422,7 @@ struct RegionalLeaderboard: View {
                 }
             }
         }
-        .padding(.vertical, 16)
-        .padding(.horizontal, 18)
+        .padding(.vertical, 16).padding(.horizontal, 18)
         .background(
             ZStack {
                 RoundedRectangle(cornerRadius: 18)
@@ -510,36 +430,27 @@ struct RegionalLeaderboard: View {
                         viewModel.isBuildingSpecific
                             ? LinearGradient(
                                 colors: [
-                                    Color(
-                                        red: 146 / 255, green: 123 / 255,
-                                        blue: 21 / 255
-                                    ).opacity(0.3),
-                                    Color(
-                                        red: 133 / 255, green: 109 / 255,
-                                        blue: 7 / 255
-                                    ).opacity(0.2),
+                                    Color(red: 146 / 255, green: 123 / 255, blue: 21 / 255)
+                                        .opacity(0.3),
+                                    Color(red: 133 / 255, green: 109 / 255, blue: 7 / 255)
+                                        .opacity(0.2),
                                 ],
                                 startPoint: .topLeading,
                                 endPoint: .bottomTrailing
                             )
                             : LinearGradient(
                                 colors: [
-                                    Color(
-                                        red: 153 / 255, green: 27 / 255,
-                                        blue: 27 / 255
-                                    ).opacity(0.3),
-                                    Color(
-                                        red: 127 / 255, green: 29 / 255,
-                                        blue: 29 / 255
-                                    ).opacity(0.2),
+                                    Color(red: 153 / 255, green: 27 / 255, blue: 27 / 255)
+                                        .opacity(0.3),
+                                    Color(red: 127 / 255, green: 29 / 255, blue: 29 / 255)
+                                        .opacity(0.2),
                                 ],
                                 startPoint: .topLeading,
                                 endPoint: .bottomTrailing
                             )
                     )
 
-                RoundedRectangle(cornerRadius: 18)
-                    .fill(Color.white.opacity(0.05))
+                RoundedRectangle(cornerRadius: 18).fill(Color.white.opacity(0.05))
 
                 RoundedRectangle(cornerRadius: 18)
                     .stroke(
@@ -555,10 +466,8 @@ struct RegionalLeaderboard: View {
                             : LinearGradient(
                                 colors: [
                                     Theme.mutedRed.opacity(0.5),
-                                    Color(
-                                        red: 185 / 255, green: 28 / 255,
-                                        blue: 28 / 255
-                                    ).opacity(0.2),
+                                    Color(red: 185 / 255, green: 28 / 255, blue: 28 / 255)
+                                        .opacity(0.2),
                                 ],
                                 startPoint: .topLeading,
                                 endPoint: .bottomTrailing
@@ -570,11 +479,8 @@ struct RegionalLeaderboard: View {
         .shadow(color: Color.black.opacity(0.25), radius: 8, x: 0, y: 3)
         .sheet(
             isPresented: $showUserProfile,
-            content: {
-                if let userId = selectedUserId {
-                    UserProfileLoader(userId: userId)
-                }
-            })
+            content: { if let userId = selectedUserId { UserProfileLoader(userId: userId) } }
+        )
     }
 }
 
@@ -586,9 +492,7 @@ struct UserProfileSheet: View {
         NavigationView {
             UserProfileLoader(userId: userId)
                 .navigationBarItems(
-                    trailing: Button("Close") {
-                        presentationMode.wrappedValue.dismiss()
-                    }
+                    trailing: Button("Close") { presentationMode.wrappedValue.dismiss() }
                 )
                 .navigationBarTitleDisplayMode(.inline)
         }
@@ -610,31 +514,24 @@ struct ProfileImage: View {
                     switch phase {
                     case .empty:
                         if isLoading {
-                            ProgressView()
-                                .frame(width: size, height: size)
-                        } else {
+                            ProgressView().frame(width: size, height: size)
+                        }
+                        else {
                             DefaultProfileImage(username: username, size: size)
                         }
                     case .success(let image):
-                        image
-                            .resizable()
-                            .aspectRatio(contentMode: .fill)
-                            .frame(width: size, height: size)
-                            .clipShape(Circle())
-                    case .failure:
-                        DefaultProfileImage(username: username, size: size)
-                    @unknown default:
-                        DefaultProfileImage(username: username, size: size)
+                        image.resizable().aspectRatio(contentMode: .fill)
+                            .frame(width: size, height: size).clipShape(Circle())
+                    case .failure: DefaultProfileImage(username: username, size: size)
+                    @unknown default: DefaultProfileImage(username: username, size: size)
                     }
                 }
-            } else {
+            }
+            else {
                 DefaultProfileImage(username: username, size: size)
             }
         }
-        .frame(width: size, height: size)
-        .onAppear {
-            loadUserData()
-        }
+        .frame(width: size, height: size).onAppear { loadUserData() }
     }
     private func loadUserData() {
         isLoading = true
@@ -643,8 +540,7 @@ struct ProfileImage: View {
 
         // First check if user is the current user
         if let currentUserId = Auth.auth().currentUser?.uid,
-            let currentUser = FirebaseManager.shared.currentUser,
-            userId == currentUserId,
+            let currentUser = FirebaseManager.shared.currentUser, userId == currentUserId,
             !currentUser.username.isEmpty
         {
 
@@ -659,14 +555,12 @@ struct ProfileImage: View {
                 username: currentUser.username,
                 profileImageURL: currentUser.profileImageURL
             )
-            RegionalViewModel.shared.leaderboardViewModel.userCache[userId] =
-                userCache
+            RegionalViewModel.shared.leaderboardViewModel.userCache[userId] = userCache
             return
         }
 
         // Next check our local cache in RegionalLeaderboardViewModel
-        if let cachedUser = RegionalViewModel.shared.leaderboardViewModel
-            .userCache[userId],
+        if let cachedUser = RegionalViewModel.shared.leaderboardViewModel.userCache[userId],
             !cachedUser.username.isEmpty && cachedUser.username != "User"
         {
             print("✅ Using cached username: \(cachedUser.username)")
@@ -677,15 +571,9 @@ struct ProfileImage: View {
         }
 
         // Check in leaderboard entries
-        for entry in RegionalViewModel.shared.leaderboardViewModel
-            .leaderboardEntries
-        {
-            if entry.userId == userId && !entry.username.isEmpty
-                && entry.username != "User"
-            {
-                print(
-                    "✅ Found username in leaderboard entries: \(entry.username)"
-                )
+        for entry in RegionalViewModel.shared.leaderboardViewModel.leaderboardEntries {
+            if entry.userId == userId && !entry.username.isEmpty && entry.username != "User" {
+                print("✅ Found username in leaderboard entries: \(entry.username)")
                 self.username = entry.username
 
                 // Save to cache
@@ -694,8 +582,7 @@ struct ProfileImage: View {
                     username: entry.username,
                     profileImageURL: nil  // Will fetch this below
                 )
-                RegionalViewModel.shared.leaderboardViewModel.userCache[
-                    userId] = cacheItem
+                RegionalViewModel.shared.leaderboardViewModel.userCache[userId] = cacheItem
 
                 // We found the username but still need to get profile image
                 fetchProfileImage()
@@ -717,8 +604,7 @@ struct ProfileImage: View {
                     username: friend.username,
                     profileImageURL: friend.profileImageURL
                 )
-                RegionalViewModel.shared.leaderboardViewModel.userCache[
-                    userId] = userCache
+                RegionalViewModel.shared.leaderboardViewModel.userCache[userId] = userCache
                 return
             }
         }
@@ -730,9 +616,7 @@ struct ProfileImage: View {
     // Helper method to just fetch the profile image for a user we already know the username for
     private func fetchProfileImage() {
         // Check if we already have a cached image
-        if let _cachedImage = ProfileImageCache.shared.getCachedImage(
-            for: userId)
-        {
+        if let _cachedImage = ProfileImageCache.shared.getCachedImage(for: userId) {
             self.imageURL = "cached"  // Just a placeholder, we won't use this value
             self.isLoading = false
             return
@@ -742,8 +626,7 @@ struct ProfileImage: View {
         FirebaseManager.shared.db.collection("users").document(userId)
             .getDocument(source: .default) { snapshot, error in
 
-                if let data = snapshot?.data(),
-                    let profileURL = data["profileImageURL"] as? String,
+                if let data = snapshot?.data(), let profileURL = data["profileImageURL"] as? String,
                     !profileURL.isEmpty
                 {
                     DispatchQueue.main.async {
@@ -751,32 +634,29 @@ struct ProfileImage: View {
                         self.isLoading = false
 
                         // Update cache with profile URL
-                        if var cachedUser = RegionalViewModel.shared
-                            .leaderboardViewModel.userCache[userId]
-                        {
+                        if var cachedUser = RegionalViewModel.shared.leaderboardViewModel.userCache[
+                            userId
+                        ] {
                             cachedUser.profileImageURL = profileURL
-                            RegionalViewModel.shared.leaderboardViewModel
-                                .userCache[userId] = cachedUser
+                            RegionalViewModel.shared.leaderboardViewModel.userCache[userId] =
+                                cachedUser
                         }
 
                         // Also download and cache the actual image
                         if let url = URL(string: profileURL) {
-                            URLSession.shared.dataTask(with: url) {
-                                data, response, error in
-                                if let data = data,
-                                    let image = UIImage(data: data)
-                                {
-                                    // Store in ProfileImageCache for map markers
-                                    ProfileImageCache.shared.storeImage(
-                                        image, for: self.userId)
+                            URLSession.shared
+                                .dataTask(with: url) { data, response, error in
+                                    if let data = data, let image = UIImage(data: data) {
+                                        // Store in ProfileImageCache for map markers
+                                        ProfileImageCache.shared.storeImage(image, for: self.userId)
+                                    }
                                 }
-                            }.resume()
+                                .resume()
                         }
                     }
-                } else {
-                    DispatchQueue.main.async {
-                        self.isLoading = false
-                    }
+                }
+                else {
+                    DispatchQueue.main.async { self.isLoading = false }
                 }
             }
     }
@@ -800,12 +680,9 @@ struct ProfileImage: View {
                         if retryCount < maxRetries {
                             retryCount += 1
                             print("🔄 Retrying fetch...")
-                            DispatchQueue.main.asyncAfter(
-                                deadline: .now() + 0.5
-                            ) {
-                                attemptFetch()
-                            }
-                        } else {
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { attemptFetch() }
+                        }
+                        else {
                             print("⚠️ All retries failed, using fallback name")
                             DispatchQueue.main.async {
                                 self.username = "User \(userId.prefix(4))"
@@ -820,13 +697,10 @@ struct ProfileImage: View {
                         if let fetchedUsername = data["username"] as? String,
                             !fetchedUsername.isEmpty
                         {
-                            print(
-                                "✅ Successfully loaded username: \(fetchedUsername)"
-                            )
+                            print("✅ Successfully loaded username: \(fetchedUsername)")
 
                             // Get profile image URL if available
-                            let profileImageURL =
-                                data["profileImageURL"] as? String
+                            let profileImageURL = data["profileImageURL"] as? String
 
                             // Cache this user
                             let userCache = UserCacheItem(
@@ -834,8 +708,8 @@ struct ProfileImage: View {
                                 username: fetchedUsername,
                                 profileImageURL: profileImageURL
                             )
-                            RegionalViewModel.shared.leaderboardViewModel
-                                .userCache[userId] = userCache
+                            RegionalViewModel.shared.leaderboardViewModel.userCache[userId] =
+                                userCache
 
                             DispatchQueue.main.async {
                                 self.username = fetchedUsername
@@ -844,45 +718,38 @@ struct ProfileImage: View {
                             }
 
                             // Also update Firebase sessions with correct username
-                            RegionalViewModel.shared.leaderboardViewModel
-                                .updateSessionUsernames(
-                                    userId: self.userId,
-                                    username: fetchedUsername)
+                            RegionalViewModel.shared.leaderboardViewModel.updateSessionUsernames(
+                                userId: self.userId,
+                                username: fetchedUsername
+                            )
 
                             // If we have an image URL, cache the actual image
-                            if let imageURL = profileImageURL,
-                                let url = URL(string: imageURL)
-                            {
-                                URLSession.shared.dataTask(with: url) {
-                                    data, response, error in
-                                    if let data = data,
-                                        let image = UIImage(data: data)
-                                    {
-                                        // Store in ProfileImageCache for map markers
-                                        ProfileImageCache.shared.storeImage(
-                                            image, for: self.userId)
+                            if let imageURL = profileImageURL, let url = URL(string: imageURL) {
+                                URLSession.shared
+                                    .dataTask(with: url) { data, response, error in
+                                        if let data = data, let image = UIImage(data: data) {
+                                            // Store in ProfileImageCache for map markers
+                                            ProfileImageCache.shared.storeImage(
+                                                image,
+                                                for: self.userId
+                                            )
+                                        }
                                     }
-                                }.resume()
+                                    .resume()
                             }
-                        } else {
+                        }
+                        else {
                             // Try alternative methods to get a name
                             print("⚠️ Username field is empty or missing")
 
                             // Check if user's document has any other identifying fields
-                            if let email = data["email"] as? String,
-                                !email.isEmpty
-                            {
-                                let username =
-                                    email.components(separatedBy: "@").first
-                                    ?? "User"
-                                print(
-                                    "🔤 Using email-derived username: \(username)"
-                                )
+                            if let email = data["email"] as? String, !email.isEmpty {
+                                let username = email.components(separatedBy: "@").first ?? "User"
+                                print("🔤 Using email-derived username: \(username)")
 
                                 DispatchQueue.main.async {
                                     self.username = username
-                                    self.imageURL =
-                                        data["profileImageURL"] as? String
+                                    self.imageURL = data["profileImageURL"] as? String
                                     self.isLoading = false
                                 }
 
@@ -890,23 +757,21 @@ struct ProfileImage: View {
                                 let userCache = UserCacheItem(
                                     userId: userId,
                                     username: username,
-                                    profileImageURL: data["profileImageURL"]
-                                        as? String
+                                    profileImageURL: data["profileImageURL"] as? String
                                 )
-                                RegionalViewModel.shared.leaderboardViewModel
-                                    .userCache[userId] = userCache
-                            } else {
-                                print(
-                                    "❌ No usable identifying info for user: \(userId)"
-                                )
+                                RegionalViewModel.shared.leaderboardViewModel.userCache[userId] =
+                                    userCache
+                            }
+                            else {
+                                print("❌ No usable identifying info for user: \(userId)")
                                 DispatchQueue.main.async {
-                                    self.username =
-                                        "User \(self.userId.prefix(4))"
+                                    self.username = "User \(self.userId.prefix(4))"
                                     self.isLoading = false
                                 }
                             }
                         }
-                    } else {
+                    }
+                    else {
                         print("❌ No user data found for ID: \(userId)")
                         DispatchQueue.main.async {
                             self.username = "User \(self.userId.prefix(4))"
@@ -937,16 +802,13 @@ struct DefaultProfileImage: View {
             Circle()
                 .fill(
                     LinearGradient(
-                        colors: [
-                            Color.blue.opacity(0.7), Color.blue.opacity(0.4),
-                        ],
+                        colors: [Color.blue.opacity(0.7), Color.blue.opacity(0.4)],
                         startPoint: .topLeading,
                         endPoint: .bottomTrailing
-                    ))
+                    )
+                )
 
-            Text(initials)
-                .font(.system(size: size * 0.4, weight: .bold))
-                .foregroundColor(.white)
+            Text(initials).font(.system(size: size * 0.4, weight: .bold)).foregroundColor(.white)
         }
         .frame(width: size, height: size)
     }
@@ -984,8 +846,7 @@ class RegionalLeaderboardViewModel: ObservableObject {
         firebaseManager.db.collection("users").document(currentUserId)
             .getDocument { [weak self] document, error in
                 guard let self = self,
-                    let userData = try? document?.data(
-                        as: FirebaseManager.FlipUser.self)
+                    let userData = try? document?.data(as: FirebaseManager.FlipUser.self)
                 else {
                     self?.isLoading = false
                     return
@@ -994,8 +855,7 @@ class RegionalLeaderboardViewModel: ObservableObject {
                 let friendIds = userData.friends
 
                 // Now call fetchBuildingTopSessions with the friends list
-                self.fetchBuildingTopSessions(
-                    building: building, friendIds: friendIds)
+                self.fetchBuildingTopSessions(building: building, friendIds: friendIds)
             }
     }
     func fetchBuildingTopSessions(building: BuildingInfo, friendIds: [String]) {
@@ -1007,7 +867,9 @@ class RegionalLeaderboardViewModel: ObservableObject {
         let calendar = Calendar.current
         let currentDate = Date()
         var components = calendar.dateComponents(
-            [.yearForWeekOfYear, .weekOfYear], from: currentDate)
+            [.yearForWeekOfYear, .weekOfYear],
+            from: currentDate
+        )
         components.weekday = 2  // Monday (2 = Monday in iOS Calendar)
         components.hour = 0
         components.minute = 0
@@ -1031,18 +893,13 @@ class RegionalLeaderboardViewModel: ObservableObject {
         let radius = 100.0  // Search within 100 meters of the building
 
         // First, fetch all sessions from this week in and near this building
-        db.collection("session_locations")
-            .whereField("lastFlipWasSuccessful", isEqualTo: true)
-            .whereField(
-                "sessionStartTime", isGreaterThan: Timestamp(date: weekStart)
-            )
+        db.collection("session_locations").whereField("lastFlipWasSuccessful", isEqualTo: true)
+            .whereField("sessionStartTime", isGreaterThan: Timestamp(date: weekStart))
             .getDocuments(source: .default) { [weak self] snapshot, error in
                 guard let self = self else { return }
 
                 if let error = error {
-                    print(
-                        "Error fetching sessions: \(error.localizedDescription)"
-                    )
+                    print("Error fetching sessions: \(error.localizedDescription)")
                     self.isLoading = false
                     return
                 }
@@ -1057,8 +914,8 @@ class RegionalLeaderboardViewModel: ObservableObject {
                 // Dictionary to track each user's total time and session count
                 var userWeeklyData:
                     [String: (
-                        userId: String, username: String, sessionCount: Int,
-                        distance: Double, isFriend: Bool, isCurrentUser: Bool
+                        userId: String, username: String, sessionCount: Int, distance: Double,
+                        isFriend: Bool, isCurrentUser: Bool
                     )] = [:]
 
                 // Collection of user IDs we need to fetch usernames for
@@ -1066,9 +923,7 @@ class RegionalLeaderboardViewModel: ObservableObject {
 
                 // First, fetch all user privacy settings to filter out opted-out users
                 self.fetchUserPrivacySettings(
-                    userIds: documents.compactMap {
-                        $0.data()["userId"] as? String
-                    }
+                    userIds: documents.compactMap { $0.data()["userId"] as? String }
                 ) { privacySettings in
                     // Process each session document
                     for document in documents {
@@ -1077,14 +932,10 @@ class RegionalLeaderboardViewModel: ObservableObject {
                         // Extract basic session info
                         guard let userId = data["userId"] as? String,
                             let geoPoint = data["location"] as? GeoPoint
-                        else {
-                            continue
-                        }
+                        else { continue }
 
                         // Check if user has opted out of the leaderboard
-                        if let userPrivacy = privacySettings[userId],
-                            userPrivacy.optOut
-                        {
+                        if let userPrivacy = privacySettings[userId], userPrivacy.optOut {
                             // Skip this user entirely if they've opted out
                             continue
                         }
@@ -1094,8 +945,7 @@ class RegionalLeaderboardViewModel: ObservableObject {
 
                         // Check if this session is in or near our target building
                         // Either by exact buildingId match OR by proximity
-                        let isExactBuildingMatch =
-                            (data["buildingId"] as? String) == buildingId
+                        let isExactBuildingMatch = (data["buildingId"] as? String) == buildingId
 
                         if !isExactBuildingMatch {
                             // Not an exact match, check proximity
@@ -1103,24 +953,18 @@ class RegionalLeaderboardViewModel: ObservableObject {
                                 latitude: geoPoint.latitude,
                                 longitude: geoPoint.longitude
                             )
-                            let distance = sessionLocation.distance(
-                                from: buildingLocation)
+                            let distance = sessionLocation.distance(from: buildingLocation)
 
                             // Skip if not within radius
-                            if distance > radius {
-                                continue
-                            }
+                            if distance > radius { continue }
                         }
 
                         // Get session data like duration
-                        let sessionDuration =
-                            data["actualDuration"] as? Int ?? 0
+                        let sessionDuration = data["actualDuration"] as? Int ?? 0
 
                         // Check if user is anonymous in privacy settings
                         var tempUsername = data["username"] as? String ?? "User"
-                        if let userPrivacy = privacySettings[userId],
-                            userPrivacy.isAnonymous
-                        {
+                        if let userPrivacy = privacySettings[userId], userPrivacy.isAnonymous {
                             tempUsername = "Anonymous"
                         }
 
@@ -1129,34 +973,27 @@ class RegionalLeaderboardViewModel: ObservableObject {
                             latitude: geoPoint.latitude,
                             longitude: geoPoint.longitude
                         )
-                        let distance = sessionLocation.distance(
-                            from: buildingLocation)
+                        let distance = sessionLocation.distance(from: buildingLocation)
 
                         // Only show distance for friends and current user
-                        let showDistance =
-                            userId == currentUserId
-                            || friendIds.contains(userId)
+                        let showDistance = userId == currentUserId || friendIds.contains(userId)
                         let displayDistance = showDistance ? distance : 0
 
                         // Update the user's total time
                         if let existingData = userWeeklyData[userId] {
                             // Add to existing record - keep existing username
                             userWeeklyData[userId] = (
-                                userId: userId,
-                                username: existingData.username,
+                                userId: userId, username: existingData.username,
                                 sessionCount: existingData.sessionCount + 1,
-                                distance: displayDistance,
-                                isFriend: friendIds.contains(userId),
+                                distance: displayDistance, isFriend: friendIds.contains(userId),
                                 isCurrentUser: userId == currentUserId
                             )
-                        } else {
+                        }
+                        else {
                             // Create new record with temporary username - we'll update this later
                             userWeeklyData[userId] = (
-                                userId: userId,
-                                username: tempUsername,
-                                sessionCount: 1,
-                                distance: displayDistance,
-                                isFriend: friendIds.contains(userId),
+                                userId: userId, username: tempUsername, sessionCount: 1,
+                                distance: displayDistance, isFriend: friendIds.contains(userId),
                                 isCurrentUser: userId == currentUserId
                             )
                         }
@@ -1173,13 +1010,12 @@ class RegionalLeaderboardViewModel: ObservableObject {
 
                     // Now fetch all usernames in a single batch for better performance
                     self.fetchUsernamesRespectingPrivacy(
-                        Array(userIdsToFetch), privacySettings: privacySettings
+                        Array(userIdsToFetch),
+                        privacySettings: privacySettings
                     ) { usernameMap in
                         // Update the usernames in our data
                         for userId in userWeeklyData.keys {
-                            if let fetchedUsername = usernameMap[userId],
-                                !fetchedUsername.isEmpty
-                            {
+                            if let fetchedUsername = usernameMap[userId], !fetchedUsername.isEmpty {
                                 var userData = userWeeklyData[userId]!
                                 userData.username = fetchedUsername
                                 userWeeklyData[userId] = userData
@@ -1188,7 +1024,8 @@ class RegionalLeaderboardViewModel: ObservableObject {
 
                         // Convert aggregated data to leaderboard entries
                         self.fetchUserScoresAndStreaks(Array(userIdsToFetch)) {
-                            scoresMap, streaksMap in
+                            scoresMap,
+                            streaksMap in
                             // Convert aggregated data to leaderboard entries with scores
                             var entries: [RegionalLeaderboardEntry] = []
 
@@ -1200,15 +1037,13 @@ class RegionalLeaderboardViewModel: ObservableObject {
                                     username: userData.username,
                                     totalWeeklyTime: 0,  // We don't use this field anymore
                                     score: scoresMap[userData.userId],
-                                    streakStatus: streaksMap[userData.userId]
-                                        ?? .none,
+                                    streakStatus: streaksMap[userData.userId] ?? .none,
                                     sessionCount: userData.sessionCount,
                                     distance: userData.distance,
                                     isFriend: userData.isFriend,
                                     isCurrentUser: userData.isCurrentUser,
                                     // Add this property to track if user is anonymous
-                                    isAnonymous: userData.username
-                                        == "Anonymous"
+                                    isAnonymous: userData.username == "Anonymous"
                                 )
                                 entries.append(entry)
                             }
@@ -1220,8 +1055,7 @@ class RegionalLeaderboardViewModel: ObservableObject {
 
                             // Take top 10 for display
                             DispatchQueue.main.async {
-                                self.leaderboardEntries = Array(
-                                    entries.prefix(10))
+                                self.leaderboardEntries = Array(entries.prefix(10))
                                 self.isLoading = false
                             }
                         }
@@ -1243,36 +1077,30 @@ class RegionalLeaderboardViewModel: ObservableObject {
             dispatchGroup.enter()
 
             // Get user score
-            db.collection("users").document(userId).getDocument(
-                source: .default
-            ) { document, error in
-                defer { dispatchGroup.leave() }
+            db.collection("users").document(userId)
+                .getDocument(source: .default) { document, error in
+                    defer { dispatchGroup.leave() }
 
-                if let data = document?.data() {
-                    if let score = data["score"] as? Double {
-                        scores[userId] = score
+                    if let data = document?.data() {
+                        if let score = data["score"] as? Double { scores[userId] = score }
                     }
                 }
-            }
 
             // Get user streak status in a separate call
             dispatchGroup.enter()
-            db.collection("users").document(userId).collection("streak")
-                .document("current").getDocument { document, error in
+            db.collection("users").document(userId).collection("streak").document("current")
+                .getDocument { document, error in
                     defer { dispatchGroup.leave() }
 
                     if let data = document?.data(),
                         let statusString = data["streakStatus"] as? String
                     {
-                        streaks[userId] =
-                            StreakStatus(rawValue: statusString) ?? .none
+                        streaks[userId] = StreakStatus(rawValue: statusString) ?? .none
                     }
                 }
         }
 
-        dispatchGroup.notify(queue: .main) {
-            completion(scores, streaks)
-        }
+        dispatchGroup.notify(queue: .main) { completion(scores, streaks) }
     }
 
     // Add these helper functions to RegionalLeaderboardViewModel
@@ -1296,9 +1124,7 @@ class RegionalLeaderboardViewModel: ObservableObject {
 
         for userId in userIds {
             // Check if user is anonymous based on privacy settings
-            if let privacySetting = privacySettings[userId],
-                privacySetting.isAnonymous
-            {
+            if let privacySetting = privacySettings[userId], privacySetting.isAnonymous {
                 result[userId] = "Anonymous"
                 continue
             }
@@ -1307,8 +1133,9 @@ class RegionalLeaderboardViewModel: ObservableObject {
                 !cachedUser.username.isEmpty && cachedUser.username != "User"
             {
                 result[userId] = cachedUser.username
-            } else if let currentUser = FirebaseManager.shared.currentUser,
-                currentUser.id == userId, !currentUser.username.isEmpty
+            }
+            else if let currentUser = FirebaseManager.shared.currentUser, currentUser.id == userId,
+                !currentUser.username.isEmpty
             {
                 result[userId] = currentUser.username
                 // Update cache
@@ -1317,7 +1144,8 @@ class RegionalLeaderboardViewModel: ObservableObject {
                     username: currentUser.username,
                     profileImageURL: currentUser.profileImageURL
                 )
-            } else {
+            }
+            else {
                 idsToFetch.append(userId)
             }
         }
@@ -1341,11 +1169,10 @@ class RegionalLeaderboardViewModel: ObservableObject {
                 // Add this batch to our results
                 for (id, username) in batchResult {
                     // Apply privacy settings - override with "Anonymous" if needed
-                    if let privacySetting = privacySettings[id],
-                        privacySetting.isAnonymous
-                    {
+                    if let privacySetting = privacySettings[id], privacySetting.isAnonymous {
                         result[id] = "Anonymous"
-                    } else {
+                    }
+                    else {
                         result[id] = username
                     }
                 }
@@ -1354,15 +1181,14 @@ class RegionalLeaderboardViewModel: ObservableObject {
         }
 
         dispatchGroup.notify(queue: .main) {
-            print(
-                "✅ Completed fetching usernames - found \(result.count) valid names"
-            )
+            print("✅ Completed fetching usernames - found \(result.count) valid names")
             completion(result)
         }
     }
 
     private func fetchUserBatch(
-        _ userIds: [String], completion: @escaping ([String: String]) -> Void
+        _ userIds: [String],
+        completion: @escaping ([String: String]) -> Void
     ) {
         let db = Firestore.firestore()
         var batchResult: [String: String] = [:]
@@ -1371,45 +1197,40 @@ class RegionalLeaderboardViewModel: ObservableObject {
         for userId in userIds {
             dispatchGroup.enter()
 
-            db.collection("users").document(userId).getDocument(
-                source: .default
-            ) { [weak self] document, error in
-                defer { dispatchGroup.leave() }
+            db.collection("users").document(userId)
+                .getDocument(source: .default) { [weak self] document, error in
+                    defer { dispatchGroup.leave() }
 
-                // Try to get username from document
-                if let data = document?.data(),
-                    let username = data["username"] as? String,
-                    !username.isEmpty
-                {
-                    print("📝 Found username for \(userId): \(username)")
-                    batchResult[userId] = username
+                    // Try to get username from document
+                    if let data = document?.data(), let username = data["username"] as? String,
+                        !username.isEmpty
+                    {
+                        print("📝 Found username for \(userId): \(username)")
+                        batchResult[userId] = username
 
-                    // Update our cache
-                    let profileImageURL = data["profileImageURL"] as? String
-                    self?.userCache[userId] = UserCacheItem(
-                        userId: userId,
-                        username: username,
-                        profileImageURL: profileImageURL
-                    )
+                        // Update our cache
+                        let profileImageURL = data["profileImageURL"] as? String
+                        self?.userCache[userId] = UserCacheItem(
+                            userId: userId,
+                            username: username,
+                            profileImageURL: profileImageURL
+                        )
 
-                    // Also update any sessions that have a generic username
-                    self?.updateSessionUsernames(
-                        userId: userId, username: username)
-                } else {
-                    print("⚠️ No username found for user \(userId)")
-                    batchResult[userId] = "User"
+                        // Also update any sessions that have a generic username
+                        self?.updateSessionUsernames(userId: userId, username: username)
+                    }
+                    else {
+                        print("⚠️ No username found for user \(userId)")
+                        batchResult[userId] = "User"
+                    }
                 }
-            }
         }
 
-        dispatchGroup.notify(queue: .main) {
-            completion(batchResult)
-        }
+        dispatchGroup.notify(queue: .main) { completion(batchResult) }
     }
     private func fetchUserPrivacySettings(
         userIds: [String],
-        completion: @escaping ([String: (optOut: Bool, isAnonymous: Bool)]) ->
-            Void
+        completion: @escaping ([String: (optOut: Bool, isAnonymous: Bool)]) -> Void
     ) {
         guard !userIds.isEmpty else {
             completion([:])
@@ -1423,30 +1244,28 @@ class RegionalLeaderboardViewModel: ObservableObject {
         for userId in userIds {
             dispatchGroup.enter()
 
-            db.collection("user_settings").document(userId).getDocument {
-                document, error in
-                defer { dispatchGroup.leave() }
+            db.collection("user_settings").document(userId)
+                .getDocument { document, error in
+                    defer { dispatchGroup.leave() }
 
-                if let data = document?.data() {
-                    // Get opt-out setting (default to false)
-                    let optOut = data["regionalOptOut"] as? Bool ?? false
+                    if let data = document?.data() {
+                        // Get opt-out setting (default to false)
+                        let optOut = data["regionalOptOut"] as? Bool ?? false
 
-                    // Get display mode (default to normal)
-                    let displayModeString =
-                        data["regionalDisplayMode"] as? String ?? "normal"
-                    let isAnonymous = displayModeString == "anonymous"
+                        // Get display mode (default to normal)
+                        let displayModeString = data["regionalDisplayMode"] as? String ?? "normal"
+                        let isAnonymous = displayModeString == "anonymous"
 
-                    result[userId] = (optOut: optOut, isAnonymous: isAnonymous)
-                } else {
-                    // Use defaults if no settings document
-                    result[userId] = (optOut: false, isAnonymous: false)
+                        result[userId] = (optOut: optOut, isAnonymous: isAnonymous)
+                    }
+                    else {
+                        // Use defaults if no settings document
+                        result[userId] = (optOut: false, isAnonymous: false)
+                    }
                 }
-            }
         }
 
-        dispatchGroup.notify(queue: .main) {
-            completion(result)
-        }
+        dispatchGroup.notify(queue: .main) { completion(result) }
     }
 
     // Helper method to update usernames in session records
@@ -1457,34 +1276,22 @@ class RegionalLeaderboardViewModel: ObservableObject {
         // Get collections where usernames might be stored
         let collections = ["session_locations", "locations", "sessions"]
         let db = FirebaseManager.shared.db
-        let oneMonthAgo =
-            Calendar.current.date(byAdding: .month, value: -1, to: Date())
-            ?? Date()
+        let oneMonthAgo = Calendar.current.date(byAdding: .month, value: -1, to: Date()) ?? Date()
 
         for collection in collections {
             // Look for sessions by this user in the last month
-            db.collection(collection)
-                .whereField("userId", isEqualTo: userId)
+            db.collection(collection).whereField("userId", isEqualTo: userId)
                 .whereField("username", isEqualTo: "User")  // Only update if username is empty/generic
-                .whereField(
-                    "sessionStartTime",
-                    isGreaterThan: Timestamp(date: oneMonthAgo)
-                )
+                .whereField("sessionStartTime", isGreaterThan: Timestamp(date: oneMonthAgo))
                 .limit(to: 20)  // Limit the updates to avoid excessive writes
                 .getDocuments(source: .default) { snapshot, error in
                     if let error = error {
-                        print(
-                            "❌ Error finding sessions to update: \(error.localizedDescription)"
-                        )
+                        print("❌ Error finding sessions to update: \(error.localizedDescription)")
                         return
                     }
 
-                    guard let documents = snapshot?.documents,
-                        !documents.isEmpty
-                    else {
-                        print(
-                            "✅ No sessions need username update in \(collection)"
-                        )
+                    guard let documents = snapshot?.documents, !documents.isEmpty else {
+                        print("✅ No sessions need username update in \(collection)")
                         return
                     }
 
@@ -1496,10 +1303,8 @@ class RegionalLeaderboardViewModel: ObservableObject {
                     let batch = db.batch()
 
                     for document in documents {
-                        let docRef = db.collection(collection).document(
-                            document.documentID)
-                        batch.updateData(
-                            ["username": username], forDocument: docRef)
+                        let docRef = db.collection(collection).document(document.documentID)
+                        batch.updateData(["username": username], forDocument: docRef)
                     }
 
                     // Commit the batch
@@ -1508,10 +1313,9 @@ class RegionalLeaderboardViewModel: ObservableObject {
                             print(
                                 "❌ Error updating session usernames: \(error.localizedDescription)"
                             )
-                        } else {
-                            print(
-                                "✅ Successfully updated \(documents.count) session usernames"
-                            )
+                        }
+                        else {
+                            print("✅ Successfully updated \(documents.count) session usernames")
                         }
                     }
                 }
@@ -1531,21 +1335,17 @@ class RegionalLeaderboardViewModel: ObservableObject {
         // If there's a selected building in RegionalViewModel, use that
         if let building = RegionalViewModel.shared.selectedBuilding {
             loadBuildingLeaderboard(building: building)
-        } else {
+        }
+        else {
             // Otherwise reset state and show empty
             isBuildingSpecific = false
             leaderboardEntries = []
             isLoading = false
 
             // Try to get location name for display
-            geocoder.reverseGeocodeLocation(location) {
-                [weak self] placemarks, error in
-                if let placemark = placemarks?.first,
-                    let locality = placemark.locality
-                {
-                    DispatchQueue.main.async {
-                        self?.locationName = locality
-                    }
+            geocoder.reverseGeocodeLocation(location) { [weak self] placemarks, error in
+                if let placemark = placemarks?.first, let locality = placemark.locality {
+                    DispatchQueue.main.async { self?.locationName = locality }
                 }
             }
         }
@@ -1569,11 +1369,14 @@ struct RegionalLeaderboardEntry: Identifiable {
     var formattedDistance: String {
         if isCurrentUser {
             return ""
-        } else if distance < 500 {
+        }
+        else if distance < 500 {
             return "nearby"
-        } else if distance < 1609 {  // Less than a mile
+        }
+        else if distance < 1609 {  // Less than a mile
             return "<1 mi"
-        } else {
+        }
+        else {
             let miles = Int(distance / 1609.34)
             return "\(miles) mi"
         }

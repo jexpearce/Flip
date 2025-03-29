@@ -7,15 +7,11 @@ struct BuildingInfo: Codable, Identifiable, Equatable {
     let name: String
     let coordinate: CLLocationCoordinate2D
 
-    enum CodingKeys: String, CodingKey {
-        case id, name, latitude, longitude
-    }
+    enum CodingKeys: String, CodingKey { case id, name, latitude, longitude }
 
     init(id: String, name: String, coordinate: CLLocationCoordinate2D) {
         // Standardize building ID format regardless of what was passed in
-        self.id = String(
-            format: "building-%.6f-%.6f", coordinate.latitude,
-            coordinate.longitude)
+        self.id = String(format: "building-%.6f-%.6f", coordinate.latitude, coordinate.longitude)
         self.name = name
         self.coordinate = coordinate
     }
@@ -26,8 +22,7 @@ struct BuildingInfo: Codable, Identifiable, Equatable {
         name = try container.decode(String.self, forKey: .name)
         let latitude = try container.decode(Double.self, forKey: .latitude)
         let longitude = try container.decode(Double.self, forKey: .longitude)
-        coordinate = CLLocationCoordinate2D(
-            latitude: latitude, longitude: longitude)
+        coordinate = CLLocationCoordinate2D(latitude: latitude, longitude: longitude)
     }
 
     func encode(to encoder: Encoder) throws {
@@ -38,7 +33,5 @@ struct BuildingInfo: Codable, Identifiable, Equatable {
         try container.encode(coordinate.longitude, forKey: .longitude)
     }
 
-    static func == (lhs: BuildingInfo, rhs: BuildingInfo) -> Bool {
-        return lhs.id == rhs.id
-    }
+    static func == (lhs: BuildingInfo, rhs: BuildingInfo) -> Bool { return lhs.id == rhs.id }
 }

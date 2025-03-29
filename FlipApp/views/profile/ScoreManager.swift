@@ -57,9 +57,7 @@ class ScoreManager: ObservableObject {
     @Published private(set) var scoreHistory: [ScoreChange] = []
 
     // Use a computed property for db to ensure it's only created when needed
-    private var db: Firestore {
-        return Firestore.firestore()
-    }
+    private var db: Firestore { return Firestore.firestore() }
 
     // Initialize without immediately accessing Firebase
     private init() {
@@ -74,7 +72,9 @@ class ScoreManager: ObservableObject {
 
     // Calculate points for a completed session
     func processSession(
-        duration: Int, wasSuccessful: Bool, actualDuration: Int,
+        duration: Int,
+        wasSuccessful: Bool,
+        actualDuration: Int,
         pausesEnabled: Bool
     ) {
         guard let userId = Auth.auth().currentUser?.uid else { return }
@@ -87,15 +87,11 @@ class ScoreManager: ObservableObject {
             // Use the actual duration to calculate the value
 
             // Apply duration scaling function - longer sessions earn more per minute
-            let effectiveDuration = max(
-                actualDuration - minEffectiveSessionDuration, 0)
-            let durationFactor =
-                pow(Double(effectiveDuration), durationScalingFactor) / 100.0
-                + 1.0
+            let effectiveDuration = max(actualDuration - minEffectiveSessionDuration, 0)
+            let durationFactor = pow(Double(effectiveDuration), durationScalingFactor) / 100.0 + 1.0
 
             // Calculate base points
-            pointChange =
-                baseSuccessPoints * Double(actualDuration) * durationFactor
+            pointChange = baseSuccessPoints * Double(actualDuration) * durationFactor
 
             // Apply streak bonus if applicable
             let streakMultiplier = getStreakMultiplier()
@@ -108,22 +104,25 @@ class ScoreManager: ObservableObject {
                 if streakMultiplier > 1.0 {
                     reason =
                         "Completed \(actualDuration)min session (no pauses, \(String(format: "%.1fx", streakMultiplier)) streak bonus)"
-                } else {
-                    reason =
-                        "Completed \(actualDuration)min session (no pauses)"
                 }
-            } else {
+                else {
+                    reason = "Completed \(actualDuration)min session (no pauses)"
+                }
+            }
+            else {
                 if streakMultiplier > 1.0 {
                     reason =
                         "Completed \(actualDuration)min session (\(String(format: "%.1fx", streakMultiplier)) streak bonus)"
-                } else {
+                }
+                else {
                     reason = "Completed \(actualDuration)min session"
                 }
             }
 
             // Update streak data
             updateStreak(wasSuccessful: true, duration: actualDuration)
-        } else {
+        }
+        else {
             // For failed sessions, apply a penalty (reduced from before)
             let failurePenalty = baseFailurePoints * Double(duration)
 
@@ -131,7 +130,8 @@ class ScoreManager: ObservableObject {
             if !pausesEnabled {
                 pointChange = -failurePenalty * noPauseFailureReduction
                 reason = "Failed \(duration)min session (no pauses)"
-            } else {
+            }
+            else {
                 pointChange = -failurePenalty * failurePenaltyMultiplier
                 reason = "Failed \(duration)min session"
             }
@@ -179,12 +179,14 @@ class ScoreManager: ObservableObject {
                     // Continue the streak
                     currentStreak += 1
                     streakSessionsTime += duration
-                } else {
+                }
+                else {
                     // Streak window expired, start a new streak
                     currentStreak = 1
                     streakSessionsTime = duration
                 }
-            } else {
+            }
+            else {
                 // First successful session
                 currentStreak = 1
                 streakSessionsTime = duration
@@ -195,7 +197,8 @@ class ScoreManager: ObservableObject {
 
             // Determine streak status based on count and total time
             updateStreakStatus()
-        } else {
+        }
+        else {
             // Failed session - reset streak
             currentStreak = 0
             streakSessionsTime = 0
@@ -206,10 +209,12 @@ class ScoreManager: ObservableObject {
                 // Downgrade to orange if we still meet those criteria
                 if meetOrangeStreakCriteria() {
                     streakStatus = .orangeFlame
-                } else {
+                }
+                else {
                     streakStatus = .none
                 }
-            } else if streakStatus == .orangeFlame {
+            }
+            else if streakStatus == .orangeFlame {
                 // Lose streak entirely
                 streakStatus = .none
             }
@@ -218,11 +223,11 @@ class ScoreManager: ObservableObject {
 
     // NEW: Check and update streak status based on current streak data
     private func updateStreakStatus() {
-        if currentStreak >= redStreakRequiredSessions
-            && streakSessionsTime >= redStreakRequiredTime
+        if currentStreak >= redStreakRequiredSessions && streakSessionsTime >= redStreakRequiredTime
         {
             streakStatus = .redFlame
-        } else if currentStreak >= orangeStreakRequiredSessions
+        }
+        else if currentStreak >= orangeStreakRequiredSessions
             && streakSessionsTime >= orangeStreakRequiredTime
         {
             streakStatus = .orangeFlame
@@ -256,57 +261,45 @@ class ScoreManager: ObservableObject {
     private func loadStreakData() {
         guard let userId = Auth.auth().currentUser?.uid else { return }
 
-        db.collection("users").document(userId).collection("streak").document(
-            "current"
-        ).getDocument { [weak self] document, error in
-            guard let self = self else { return }
+        db.collection("users").document(userId).collection("streak").document("current")
+            .getDocument { [weak self] document, error in
+                guard let self = self else { return }
 
-            if let document = document, document.exists,
-                let data = document.data()
-            {
-                DispatchQueue.main.async {
-                    self.currentStreak = data["currentStreak"] as? Int ?? 0
-                    self.streakSessionsTime =
-                        data["streakSessionsTime"] as? Int ?? 0
+                if let document = document, document.exists, let data = document.data() {
+                    DispatchQueue.main.async {
+                        self.currentStreak = data["currentStreak"] as? Int ?? 0
+                        self.streakSessionsTime = data["streakSessionsTime"] as? Int ?? 0
 
-                    if let statusString = data["streakStatus"] as? String {
-                        self.streakStatus =
-                            StreakStatus(rawValue: statusString) ?? .none
-                    }
+                        if let statusString = data["streakStatus"] as? String {
+                            self.streakStatus = StreakStatus(rawValue: statusString) ?? .none
+                        }
 
-                    if let lastSessionTimestamp = data["lastSuccessfulSession"]
-                        as? Timestamp
-                    {
-                        self.lastSuccessfulSession =
-                            lastSessionTimestamp.dateValue()
+                        if let lastSessionTimestamp = data["lastSuccessfulSession"] as? Timestamp {
+                            self.lastSuccessfulSession = lastSessionTimestamp.dateValue()
 
-                        // Check if streak has expired
-                        self.checkStreakExpiry()
+                            // Check if streak has expired
+                            self.checkStreakExpiry()
+                        }
                     }
                 }
             }
-        }
     }
 
     // NEW: Save streak data to Firebase
     private func saveStreakData(userId: String) {
         let streakData: [String: Any] = [
-            "currentStreak": currentStreak,
-            "streakSessionsTime": streakSessionsTime,
+            "currentStreak": currentStreak, "streakSessionsTime": streakSessionsTime,
             "streakStatus": streakStatus.rawValue,
-            "lastSuccessfulSession": lastSuccessfulSession.map {
-                Timestamp(date: $0)
-            } ?? FieldValue.serverTimestamp(),
-            "updatedAt": FieldValue.serverTimestamp(),
+            "lastSuccessfulSession": lastSuccessfulSession.map { Timestamp(date: $0) }
+                ?? FieldValue.serverTimestamp(), "updatedAt": FieldValue.serverTimestamp(),
         ]
 
-        db.collection("users").document(userId).collection("streak").document(
-            "current"
-        ).setData(streakData) { error in
-            if let error = error {
-                print("Error saving streak data: \(error.localizedDescription)")
+        db.collection("users").document(userId).collection("streak").document("current")
+            .setData(streakData) { error in
+                if let error = error {
+                    print("Error saving streak data: \(error.localizedDescription)")
+                }
             }
-        }
     }
 
     // Load score from Firebase
@@ -317,46 +310,42 @@ class ScoreManager: ObservableObject {
             return
         }
 
-        db.collection("users").document(userId).getDocument {
-            [weak self] document, error in
-            guard let self = self else { return }
+        db.collection("users").document(userId)
+            .getDocument { [weak self] document, error in
+                guard let self = self else { return }
 
-            if let document = document, document.exists,
-                let data = document.data()
-            {
-                if let score = data["score"] as? Double {
-                    DispatchQueue.main.async {
-                        self.currentScore = score
+                if let document = document, document.exists, let data = document.data() {
+                    if let score = data["score"] as? Double {
+                        DispatchQueue.main.async { self.currentScore = score }
                     }
-                } else {
-                    // Initialize score if not present
-                    DispatchQueue.main.async {
-                        self.currentScore = self.initialScore
-                        self.saveScore(
-                            userId: userId, score: self.initialScore,
-                            scoreChange: nil)
+                    else {
+                        // Initialize score if not present
+                        DispatchQueue.main.async {
+                            self.currentScore = self.initialScore
+                            self.saveScore(
+                                userId: userId,
+                                score: self.initialScore,
+                                scoreChange: nil
+                            )
+                        }
                     }
+
+                    // Load score history
+                    self.loadScoreHistory(userId: userId)
                 }
-
-                // Load score history
-                self.loadScoreHistory(userId: userId)
-            } else {
-                // User document doesn't exist yet
-                DispatchQueue.main.async {
-                    self.currentScore = self.initialScore
+                else {
+                    // User document doesn't exist yet
+                    DispatchQueue.main.async { self.currentScore = self.initialScore }
                 }
             }
-        }
     }
 
     // Load score history from Firebase
     private func loadScoreHistory(userId: String) {
         db.collection("users").document(userId).collection("scoreHistory")
-            .order(by: "date", descending: true)
-            .limit(to: 50)  // Limit to recent history
+            .order(by: "date", descending: true).limit(to: 50)  // Limit to recent history
             .getDocuments { [weak self] snapshot, error in
-                guard let self = self, let documents = snapshot?.documents
-                else { return }
+                guard let self = self, let documents = snapshot?.documents else { return }
 
                 let history = documents.compactMap { document -> ScoreChange? in
                     let data = document.data()
@@ -366,9 +355,7 @@ class ScoreManager: ObservableObject {
                         let newScore = data["newScore"] as? Double,
                         let change = data["change"] as? Double,
                         let reason = data["reason"] as? String
-                    else {
-                        return nil
-                    }
+                    else { return nil }
 
                     return ScoreChange(
                         id: document.documentID,
@@ -380,41 +367,32 @@ class ScoreManager: ObservableObject {
                     )
                 }
 
-                DispatchQueue.main.async {
-                    self.scoreHistory = history
-                }
+                DispatchQueue.main.async { self.scoreHistory = history }
             }
     }
 
     // Save score to Firebase
-    private func saveScore(
-        userId: String, score: Double, scoreChange: ScoreChange?
-    ) {
+    private func saveScore(userId: String, score: Double, scoreChange: ScoreChange?) {
         // Update the user's current score
-        db.collection("users").document(userId).updateData([
-            "score": score
-        ]) { error in
-            if let error = error {
-                print("Error updating score: \(error.localizedDescription)")
+        db.collection("users").document(userId)
+            .updateData(["score": score]) { error in
+                if let error = error {
+                    print("Error updating score: \(error.localizedDescription)")
+                }
             }
-        }
 
         // Add to score history if there's a change to record
         if let scoreChange = scoreChange {
             let historyData: [String: Any] = [
-                "date": Timestamp(date: scoreChange.date),
-                "oldScore": scoreChange.oldScore,
-                "newScore": scoreChange.newScore,
-                "change": scoreChange.change,
+                "date": Timestamp(date: scoreChange.date), "oldScore": scoreChange.oldScore,
+                "newScore": scoreChange.newScore, "change": scoreChange.change,
                 "reason": scoreChange.reason,
             ]
 
             db.collection("users").document(userId).collection("scoreHistory")
                 .addDocument(data: historyData) { error in
                     if let error = error {
-                        print(
-                            "Error saving score history: \(error.localizedDescription)"
-                        )
+                        print("Error saving score history: \(error.localizedDescription)")
                     }
                 }
         }
@@ -424,71 +402,34 @@ class ScoreManager: ObservableObject {
     func getCurrentRank() -> (name: String, color: Color) {
         switch currentScore {
         case 0.0..<30.0:
-            return (
-                "Novice",
-                Color(red: 156 / 255, green: 163 / 255, blue: 231 / 255)
-            )  // Periwinkle
+            return ("Novice", Color(red: 156 / 255, green: 163 / 255, blue: 231 / 255))  // Periwinkle
         case 30.0..<60.0:
-            return (
-                "Apprentice",
-                Color(red: 96 / 255, green: 165 / 255, blue: 250 / 255)
-            )  // Light blue
+            return ("Apprentice", Color(red: 96 / 255, green: 165 / 255, blue: 250 / 255))  // Light blue
         case 60.0..<90.0:
-            return (
-                "Beginner",
-                Color(red: 59 / 255, green: 130 / 255, blue: 246 / 255)
-            )  // Blue
+            return ("Beginner", Color(red: 59 / 255, green: 130 / 255, blue: 246 / 255))  // Blue
         case 90.0..<120.0:
-            return (
-                "Steady",
-                Color(red: 16 / 255, green: 185 / 255, blue: 129 / 255)
-            )  // Green
+            return ("Steady", Color(red: 16 / 255, green: 185 / 255, blue: 129 / 255))  // Green
         case 120.0..<150.0:
-            return (
-                "Focused",
-                Color(red: 249 / 255, green: 180 / 255, blue: 45 / 255)
-            )  // Bright amber
+            return ("Focused", Color(red: 249 / 255, green: 180 / 255, blue: 45 / 255))  // Bright amber
         case 150.0..<180.0:
-            return (
-                "Disciplined",
-                Color(red: 249 / 255, green: 115 / 255, blue: 22 / 255)
-            )  // Orange
-        case 180.0..<210.0:
-            return (
-                "Resolute",
-                Theme.mutedRed
-            )  // Red
+            return ("Disciplined", Color(red: 249 / 255, green: 115 / 255, blue: 22 / 255))  // Orange
+        case 180.0..<210.0: return ("Resolute", Theme.mutedRed)  // Red
         case 210.0..<240.0:
-            return (
-                "Master",
-                Color(red: 236 / 255, green: 72 / 255, blue: 153 / 255)
-            )  // Pink
+            return ("Master", Color(red: 236 / 255, green: 72 / 255, blue: 153 / 255))  // Pink
         case 240.0..<270.0:
-            return (
-                "Guru", Color(red: 147 / 255, green: 51 / 255, blue: 234 / 255)
-            )  // Vivid purple
+            return ("Guru", Color(red: 147 / 255, green: 51 / 255, blue: 234 / 255))  // Vivid purple
         case 270.0...300.0:
-            return (
-                "Enlightened",
-                Color(red: 236 / 255, green: 64 / 255, blue: 255 / 255)
-            )  // Bright fuchsia
-        default:
-            return ("Unranked", Color.gray)
+            return ("Enlightened", Color(red: 236 / 255, green: 64 / 255, blue: 255 / 255))  // Bright fuchsia
+        default: return ("Unranked", Color.gray)
         }
     }
 
     // Helper to calculate how many points needed for next rank
     func pointsToNextRank() -> Double? {
-        let ranks = [
-            30.0, 60.0, 90.0, 120.0, 150.0, 180.0, 210.0, 240.0, 270.0, 300.0,
-        ]
+        let ranks = [30.0, 60.0, 90.0, 120.0, 150.0, 180.0, 210.0, 240.0, 270.0, 300.0]
         let current = currentScore
 
-        for rank in ranks {
-            if current < rank {
-                return rank - current
-            }
-        }
+        for rank in ranks { if current < rank { return rank - current } }
 
         return nil  // Already at max rank
     }
@@ -521,11 +462,10 @@ class ScoreManager: ObservableObject {
                 "🔥🔥 BLAZING! You're on an intense streak of \(currentStreak) successful sessions totaling \(streakSessionsTime) minutes!"
         case .none:
             if currentStreak > 0 {
-                return
-                    "You're building a streak with \(currentStreak) successful sessions so far."
-            } else {
-                return
-                    "Complete successful sessions in a row to build a streak!"
+                return "You're building a streak with \(currentStreak) successful sessions so far."
+            }
+            else {
+                return "Complete successful sessions in a row to build a streak!"
             }
         }
     }
@@ -547,9 +487,7 @@ struct ScoreChange: Identifiable {
         return formatter.string(from: date)
     }
 
-    var isPositive: Bool {
-        return change > 0
-    }
+    var isPositive: Bool { return change > 0 }
 }
 
 // NEW: Streak status enum
@@ -573,8 +511,7 @@ extension Color {
         var b: CGFloat = 0
         var o: CGFloat = 0
 
-        guard NativeColor(self).getRed(&r, green: &g, blue: &b, alpha: &o)
-        else {
+        guard NativeColor(self).getRed(&r, green: &g, blue: &b, alpha: &o) else {
             return (0, 0, 0, 0)
         }
 

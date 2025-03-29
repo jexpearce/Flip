@@ -6,44 +6,30 @@ struct FlipLogo: View {
     var body: some View {
         HStack(spacing: 15) {
             HStack(spacing: 2) {
-                Text("F")
-                    .font(.system(size: 80, weight: .black))
-                    .tracking(2)
+                Text("F").font(.system(size: 80, weight: .black)).tracking(2)
                     .foregroundColor(.white)
 
-                Text("l")
-                    .font(.system(size: 80, weight: .black))
-                    .tracking(2)
+                Text("l").font(.system(size: 80, weight: .black)).tracking(2)
                     .foregroundColor(.white)
 
                 // Upside-down "i"
-                Text("i")
-                    .font(.system(size: 80, weight: .black))
-                    .tracking(2)
-                    .foregroundColor(.white)
-                    .rotationEffect(.degrees(180))
+                Text("i").font(.system(size: 80, weight: .black)).tracking(2)
+                    .foregroundColor(.white).rotationEffect(.degrees(180))
 
-                Text("P")
-                    .font(.system(size: 80, weight: .black))
-                    .tracking(2)
+                Text("P").font(.system(size: 80, weight: .black)).tracking(2)
                     .foregroundColor(.white)
             }
             .shadow(color: Theme.yellow.opacity(0.5), radius: 10)
 
-            Image(systemName: "arrow.2.squarepath")
-                .font(.system(size: 55, weight: .bold))
-                .foregroundColor(Color.white.opacity(1.0))
-                .shadow(color: .white, radius: 5)
+            Image(systemName: "arrow.2.squarepath").font(.system(size: 55, weight: .bold))
+                .foregroundColor(Color.white.opacity(1.0)).shadow(color: .white, radius: 5)
                 .overlay(
-                    Image(systemName: "arrow.2.squarepath")
-                        .font(.system(size: 55))
-                        .foregroundColor(.white.opacity(0.25))
-                        .offset(x: 1, y: 1)
+                    Image(systemName: "arrow.2.squarepath").font(.system(size: 55))
+                        .foregroundColor(.white.opacity(0.25)).offset(x: 1, y: 1)
                 )
                 .rotationEffect(.degrees(isButtonPressed ? 360 : 0))
                 .animation(
-                    .spring(response: 2.0, dampingFraction: 0.6)
-                        .repeatForever(autoreverses: false),
+                    .spring(response: 2.0, dampingFraction: 0.6).repeatForever(autoreverses: false),
                     value: isButtonPressed
                 )
         }
@@ -60,14 +46,10 @@ struct CurrentBuildingIndicator: View {
     var body: some View {
         HStack(spacing: 10) {
             VStack(alignment: .leading, spacing: 2) {
-                Text("CURRENT LOCATION")
-                    .font(.system(size: 10, weight: .bold))
-                    .tracking(1)
+                Text("CURRENT LOCATION").font(.system(size: 10, weight: .bold)).tracking(1)
                     .foregroundColor(Theme.yellow.opacity(0.9))
 
-                Text(buildingName)
-                    .font(.system(size: 14, weight: .bold))
-                    .foregroundColor(.white)
+                Text(buildingName).font(.system(size: 14, weight: .bold)).foregroundColor(.white)
                     .lineLimit(1)
             }
 
@@ -75,19 +57,14 @@ struct CurrentBuildingIndicator: View {
 
             Button(action: action) {
                 HStack(spacing: 4) {
-                    Text("CHANGE")
-                        .font(.system(size: 10, weight: .bold))
-                        .tracking(1)
+                    Text("CHANGE").font(.system(size: 10, weight: .bold)).tracking(1)
 
-                    Image(systemName: "chevron.right")
-                        .font(.system(size: 8, weight: .bold))
+                    Image(systemName: "chevron.right").font(.system(size: 8, weight: .bold))
                 }
-                .foregroundColor(Theme.yellow.opacity(0.9))
-                .padding(.horizontal, 10)
+                .foregroundColor(Theme.yellow.opacity(0.9)).padding(.horizontal, 10)
                 .padding(.vertical, 6)
                 .background(
-                    RoundedRectangle(cornerRadius: 12)
-                        .fill(Color.white.opacity(0.1))
+                    RoundedRectangle(cornerRadius: 12).fill(Color.white.opacity(0.1))
                         .overlay(
                             RoundedRectangle(cornerRadius: 12)
                                 .stroke(Color.white.opacity(0.2), lineWidth: 1)
@@ -95,38 +72,27 @@ struct CurrentBuildingIndicator: View {
                 )
             }
         }
-        .padding(.horizontal, 16)
-        .padding(.vertical, 12)
+        .padding(.horizontal, 16).padding(.vertical, 12)
         .background(
             ZStack {
                 RoundedRectangle(cornerRadius: 16)
                     .fill(
                         LinearGradient(
                             colors: [
-                                Color(
-                                    red: 60 / 255, green: 30 / 255,
-                                    blue: 110 / 255
-                                ).opacity(0.3),
-                                Color(
-                                    red: 40 / 255, green: 20 / 255,
-                                    blue: 80 / 255
-                                ).opacity(0.2),
+                                Color(red: 60 / 255, green: 30 / 255, blue: 110 / 255).opacity(0.3),
+                                Color(red: 40 / 255, green: 20 / 255, blue: 80 / 255).opacity(0.2),
                             ],
                             startPoint: .topLeading,
                             endPoint: .bottomTrailing
                         )
                     )
 
-                RoundedRectangle(cornerRadius: 16)
-                    .fill(Color.white.opacity(0.05))
+                RoundedRectangle(cornerRadius: 16).fill(Color.white.opacity(0.05))
 
                 RoundedRectangle(cornerRadius: 16)
                     .stroke(
                         LinearGradient(
-                            colors: [
-                                Color.white.opacity(0.4),
-                                Color.white.opacity(0.1),
-                            ],
+                            colors: [Color.white.opacity(0.4), Color.white.opacity(0.1)],
                             startPoint: .topLeading,
                             endPoint: .bottomTrailing
                         ),
@@ -147,9 +113,7 @@ struct BeginButton: View {
     var body: some View {
         Button(action: {
             isPressed = true
-            withAnimation(.spring()) {
-                isPulsing = true
-            }
+            withAnimation(.spring()) { isPulsing = true }
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
                 isPressed = false
                 isPulsing = false
@@ -158,58 +122,43 @@ struct BeginButton: View {
             // Only block the action if motion permission isn't granted
             if permissionManager.motionPermissionGranted {
                 action()
-            } else {
+            }
+            else {
                 permissionManager.showPermissionRequiredAlert = true
             }
         }) {
-            Text("BEGIN")
-                .font(.system(size: 26, weight: .black))
-                .tracking(6)
-                .foregroundColor(.white)
-                .frame(maxWidth: .infinity)
-                .frame(height: 70)
+            Text("BEGIN").font(.system(size: 26, weight: .black)).tracking(6)
+                .foregroundColor(.white).frame(maxWidth: .infinity).frame(height: 70)
                 .background(
                     ZStack {
                         // Change gradient based on permission level
                         RoundedRectangle(cornerRadius: 35)
                             .fill(
                                 LinearGradient(
-                                    colors: !permissionManager
-                                        .motionPermissionGranted
+                                    colors: !permissionManager.motionPermissionGranted
                                         ?  // No motion permission - grayed out (highest priority)
-                                        [
-                                            Color.gray.opacity(0.5),
-                                            Color.gray.opacity(0.3),
-                                        ]
-                                        : permissionManager.locationAuthStatus
-                                            == .denied
+                                        [Color.gray.opacity(0.5), Color.gray.opacity(0.3)]
+                                        : permissionManager.locationAuthStatus == .denied
                                             ?  // Location denied - orange/yellow gradient
                                             [
                                                 Theme.yellow,  // Vibrant yellow
                                                 Theme.orange,  // Warm orange
                                             ]
                                             :  // Location allowed - blue gradient
-                                            [
-                                                Theme.lightTealBlue,
-                                                Theme.darkTealBlue,
-                                            ],
+                                            [Theme.lightTealBlue, Theme.darkTealBlue],
                                     startPoint: .leading,
                                     endPoint: .trailing
                                 )
                             )
 
                         // Glass effect
-                        RoundedRectangle(cornerRadius: 35)
-                            .fill(Color.white.opacity(0.1))
+                        RoundedRectangle(cornerRadius: 35).fill(Color.white.opacity(0.1))
 
                         // Border
                         RoundedRectangle(cornerRadius: 35)
                             .stroke(
                                 LinearGradient(
-                                    colors: [
-                                        Color.white.opacity(0.6),
-                                        Color.white.opacity(0.2),
-                                    ],
+                                    colors: [Color.white.opacity(0.6), Color.white.opacity(0.2)],
                                     startPoint: .topLeading,
                                     endPoint: .bottomTrailing
                                 ),
@@ -221,14 +170,12 @@ struct BeginButton: View {
                     color: !permissionManager.motionPermissionGranted
                         ? Color.gray.opacity(0.5)
                         : permissionManager.locationAuthStatus == .denied
-                            ? Theme.yellowShadow
-                            : Theme.lightTealBlue.opacity(0.5),
+                            ? Theme.yellowShadow : Theme.lightTealBlue.opacity(0.5),
                     radius: isPulsing ? 15 : 8
                 )
                 .scaleEffect(isPressed ? 0.97 : 1.0)
                 .opacity(permissionManager.motionPermissionGranted ? 1.0 : 0.6)
         }
-        .padding(.horizontal, 30)
-        .disabled(joinMode || !permissionManager.motionPermissionGranted)
+        .padding(.horizontal, 30).disabled(joinMode || !permissionManager.motionPermissionGranted)
     }
 }

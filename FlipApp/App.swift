@@ -4,8 +4,7 @@ import FirebaseMessaging
 import SwiftUI
 import UserNotifications
 
-@main
-struct FlipApp: App {
+@main struct FlipApp: App {
     @UIApplicationDelegateAdaptor(FlipAppDelegate.self) var delegate
     @StateObject private var appManager = AppManager.shared
     @StateObject private var sessionManager = SessionManager.shared
@@ -24,26 +23,22 @@ struct FlipApp: App {
         BGTaskScheduler.shared.register(
             forTaskWithIdentifier: AppManager.backgroundRefreshIdentifier,
             using: nil
-        ) { task in
-            AppManager.shared.handleBackgroundRefresh(
-                task: task as! BGAppRefreshTask)
-        }
+        ) { task in AppManager.shared.handleBackgroundRefresh(task: task as! BGAppRefreshTask) }
 
         // Schedule background refresh
         AppManager.shared.scheduleBackgroundRefresh()
 
         if !UserDefaults.standard.bool(forKey: "hasLaunchedBefore") {
             UserDefaults.standard.set(true, forKey: "isPotentialFirstTimeUser")
-            UserDefaults.standard.set(
-                false, forKey: "hasCompletedPermissionFlow")
+            UserDefaults.standard.set(false, forKey: "hasCompletedPermissionFlow")
             print("New installation - forcing permission flow")
         }
 
         // Determine if we should show permissions flow
         let hasCompletedPermissions = UserDefaults.standard.bool(
-            forKey: "hasCompletedPermissionFlow")
-        let isFirstTimeUser = UserDefaults.standard.bool(
-            forKey: "isPotentialFirstTimeUser")
+            forKey: "hasCompletedPermissionFlow"
+        )
+        let isFirstTimeUser = UserDefaults.standard.bool(forKey: "isPotentialFirstTimeUser")
 
         // Show permissions flow for new users or if permissions haven't been completed
         showPermissionsFlow = isFirstTimeUser || !hasCompletedPermissions
@@ -53,33 +48,25 @@ struct FlipApp: App {
         WindowGroup {
             ZStack {
                 if showPermissionsFlow {
-                    InitialView()
-                        .environmentObject(appManager)
-                        .environmentObject(sessionManager)
+                    InitialView().environmentObject(appManager).environmentObject(sessionManager)
                         .onReceive(
                             NotificationCenter.default.publisher(
-                                for: NSNotification.Name("ProceedToMainApp"))
+                                for: NSNotification.Name("ProceedToMainApp")
+                            )
                         ) { _ in
                             // When the InitialView sends notification to proceed, show MainView
-                            withAnimation {
-                                showPermissionsFlow = false
-                            }
+                            withAnimation { showPermissionsFlow = false }
                         }
-                } else {
-                    MainView()
-                        .environmentObject(appManager)
-                        .environmentObject(sessionManager)
                 }
-            }
-            // Add observer for resetting permissions from Settings
+                else {
+                    MainView().environmentObject(appManager).environmentObject(sessionManager)
+                }
+            }  // Add observer for resetting permissions from Settings
             .onReceive(
                 NotificationCenter.default.publisher(
-                    for: NSNotification.Name("ShowPermissionsFlow"))
-            ) { _ in
-                withAnimation {
-                    showPermissionsFlow = true
-                }
-            }
+                    for: NSNotification.Name("ShowPermissionsFlow")
+                )
+            ) { _ in withAnimation { showPermissionsFlow = true } }
         }
     }
 }

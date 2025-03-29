@@ -23,25 +23,17 @@ struct FriendsSearchView: View {
         endPoint: .bottom
     )
 
-    private let orangeAccent = Color(
-        red: 249 / 255, green: 115 / 255, blue: 22 / 255)  // Warm Orange
-    private let orangeGlow = Color(
-        red: 249 / 255, green: 115 / 255, blue: 22 / 255
-    ).opacity(0.5)
-    private let purpleAccent = Color(
-        red: 147 / 255, green: 51 / 255, blue: 234 / 255)  // Vibrant Purple
+    private let orangeAccent = Color(red: 249 / 255, green: 115 / 255, blue: 22 / 255)  // Warm Orange
+    private let orangeGlow = Color(red: 249 / 255, green: 115 / 255, blue: 22 / 255).opacity(0.5)
+    private let purpleAccent = Color(red: 147 / 255, green: 51 / 255, blue: 234 / 255)  // Vibrant Purple
 
     var body: some View {
         ZStack {
             // Main background with decorative elements
-            orangePurpleGradient
-                .edgesIgnoringSafeArea(.all)
+            orangePurpleGradient.edgesIgnoringSafeArea(.all)
 
             // Decorative elements
-            BackgroundDecorationView(
-                orangeAccent: orangeAccent,
-                purpleAccent: purpleAccent
-            )
+            BackgroundDecorationView(orangeAccent: orangeAccent, purpleAccent: purpleAccent)
 
             // Main content view
             FriendsSearchContentView(
@@ -59,10 +51,7 @@ struct FriendsSearchView: View {
             if let user = selectedUser {
                 NavigationView {
                     UserProfileLoader(userId: user.id)
-                        .navigationBarItems(
-                            leading: Button("Back") {
-                                showUserProfile = false
-                            })
+                        .navigationBarItems(leading: Button("Back") { showUserProfile = false })
                 }
             }
         }
@@ -81,17 +70,14 @@ struct BackgroundDecorationView: View {
                 .fill(
                     RadialGradient(
                         gradient: Gradient(colors: [
-                            orangeAccent.opacity(0.2),
-                            orangeAccent.opacity(0.05),
+                            orangeAccent.opacity(0.2), orangeAccent.opacity(0.05),
                         ]),
                         center: .center,
                         startRadius: 10,
                         endRadius: 300
                     )
                 )
-                .frame(width: 300, height: 300)
-                .offset(x: 150, y: -150)
-                .blur(radius: 50)
+                .frame(width: 300, height: 300).offset(x: 150, y: -150).blur(radius: 50)
                 .edgesIgnoringSafeArea(.all)
 
             // Bottom decorative element
@@ -99,17 +85,14 @@ struct BackgroundDecorationView: View {
                 .fill(
                     RadialGradient(
                         gradient: Gradient(colors: [
-                            purpleAccent.opacity(0.2),
-                            purpleAccent.opacity(0.05),
+                            purpleAccent.opacity(0.2), purpleAccent.opacity(0.05),
                         ]),
                         center: .center,
                         startRadius: 5,
                         endRadius: 200
                     )
                 )
-                .frame(width: 250, height: 250)
-                .offset(x: -120, y: 350)
-                .blur(radius: 40)
+                .frame(width: 250, height: 250).offset(x: -120, y: 350).blur(radius: 40)
                 .edgesIgnoringSafeArea(.all)
         }
     }
@@ -134,14 +117,10 @@ struct FriendsSearchContentView: View {
                     searchText: $searchText,
                     orangeAccent: orangeAccent,
                     orangeGlow: orangeGlow,
-                    onSearchTextChanged: { newText in
-                        viewModel.searchUsers(query: newText)
-                    }
+                    onSearchTextChanged: { newText in viewModel.searchUsers(query: newText) }
                 )
 
-                Divider()
-                    .background(Color.white.opacity(0.1))
-                    .padding(.horizontal)
+                Divider().background(Color.white.opacity(0.1)).padding(.horizontal)
 
                 // Main scrollable content
                 ScrollableContentView(
@@ -156,29 +135,21 @@ struct FriendsSearchContentView: View {
                 )
             }
             .background(orangePurpleGradient.edgesIgnoringSafeArea(.all))
-            .navigationTitle("FIND FRIENDS")
-            .navigationBarTitleDisplayMode(.inline)
+            .navigationTitle("FIND FRIENDS").navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
-                    Button("Cancel") {
-                        dismiss()
-                    }
-                    .foregroundColor(.white)
-                    .shadow(color: orangeGlow, radius: 4)
-                    .font(.system(size: 16, weight: .semibold))
+                    Button("Cancel") { dismiss() }.foregroundColor(.white)
+                        .shadow(color: orangeGlow, radius: 4)
+                        .font(.system(size: 16, weight: .semibold))
                 }
             }
             .overlay(
                 Group {
-                    if viewModel.showCancelRequestAlert,
-                        let user = viewModel.userToCancelRequest
-                    {
+                    if viewModel.showCancelRequestAlert, let user = viewModel.userToCancelRequest {
                         CancelFriendRequestAlert(
                             isPresented: $viewModel.showCancelRequestAlert,
                             username: user.username
-                        ) {
-                            viewModel.cancelFriendRequest(to: user.id)
-                        }
+                        ) { viewModel.cancelFriendRequest(to: user.id) }
                     }
                 }
             )
@@ -196,35 +167,22 @@ struct SearchBarView: View {
 
     var body: some View {
         HStack {
-            Image(systemName: "magnifyingglass")
-                .foregroundColor(orangeAccent)
-                .font(.system(size: 20))
-                .shadow(color: orangeGlow, radius: 4)
-                .padding(.leading, 6)
+            Image(systemName: "magnifyingglass").foregroundColor(orangeAccent)
+                .font(.system(size: 20)).shadow(color: orangeGlow, radius: 4).padding(.leading, 6)
 
-            TextField("Search by username", text: $searchText)
-                .font(.system(size: 16))
-                .foregroundColor(.white)
-                .accentColor(orangeAccent)
-                .padding(.vertical, 12)
-                .onChange(of: searchText) {
-                    onSearchTextChanged(searchText)
-                }
-                .autocapitalization(.none)
-                .disableAutocorrection(true)
+            TextField("Search by username", text: $searchText).font(.system(size: 16))
+                .foregroundColor(.white).accentColor(orangeAccent).padding(.vertical, 12)
+                .onChange(of: searchText) { onSearchTextChanged(searchText) }
+                .autocapitalization(.none).disableAutocorrection(true)
         }
         .padding(.horizontal, 16)
         .background(
-            RoundedRectangle(cornerRadius: 12)
-                .fill(Color.white.opacity(0.1))
+            RoundedRectangle(cornerRadius: 12).fill(Color.white.opacity(0.1))
                 .overlay(
                     RoundedRectangle(cornerRadius: 12)
                         .stroke(
                             LinearGradient(
-                                colors: [
-                                    Color.white.opacity(0.4),
-                                    Color.white.opacity(0.1),
-                                ],
+                                colors: [Color.white.opacity(0.4), Color.white.opacity(0.1)],
                                 startPoint: .topLeading,
                                 endPoint: .bottomTrailing
                             ),
@@ -232,9 +190,7 @@ struct SearchBarView: View {
                         )
                 )
         )
-        .padding(.horizontal)
-        .padding(.top, 16)
-        .padding(.bottom, 12)
+        .padding(.horizontal).padding(.top, 16).padding(.bottom, 12)
     }
 }
 
@@ -256,7 +212,8 @@ struct ScrollableContentView: View {
                         orangeGlow: orangeGlow,
                         onViewProfile: onViewProfile
                     )
-                } else {
+                }
+                else {
                     // Search results
                     SearchResultsSection(
                         viewModel: viewModel,
@@ -282,27 +239,24 @@ struct SearchResultsSection: View {
         if viewModel.isSearching {
             // Enhanced loading state
             VStack(spacing: 16) {
-                ProgressView()
-                    .tint(orangeAccent)
-                    .scaleEffect(1.5)
-                    .frame(maxWidth: .infinity)
+                ProgressView().tint(orangeAccent).scaleEffect(1.5).frame(maxWidth: .infinity)
                     .padding(.top, 30)
 
-                Text("Searching for users...")
-                    .font(.system(size: 16))
+                Text("Searching for users...").font(.system(size: 16))
                     .foregroundColor(.white.opacity(0.7))
             }
             .padding(.top, 40)
-        } else if viewModel.filteredSearchResults.isEmpty && !searchText.isEmpty {
+        }
+        else if viewModel.filteredSearchResults.isEmpty && !searchText.isEmpty {
             // No search results state
             NoUsersFoundView(
                 message: "No users found matching '\(searchText)'",
                 icon: "magnifyingglass"
             )
-        } else {
+        }
+        else {
             // Sort search results by mutual friends count
-            let sortedResults = viewModel.filteredSearchResults.sorted {
-                userA, userB in
+            let sortedResults = viewModel.filteredSearchResults.sorted { userA, userB in
                 let mutualCountA = viewModel.mutualFriendCount(for: userA.id)
                 let mutualCountB = viewModel.mutualFriendCount(for: userB.id)
                 return mutualCountA > mutualCountB
@@ -314,15 +268,9 @@ struct SearchResultsSection: View {
                     user: user,
                     requestStatus: viewModel.requestStatus(for: user.id),
                     mutualCount: viewModel.mutualFriendCount(for: user.id),
-                    onSendRequest: {
-                        viewModel.sendFriendRequest(to: user.id)
-                    },
-                    onCancelRequest: {
-                        viewModel.promptCancelRequest(for: user)
-                    },
-                    onViewProfile: {
-                        onViewProfile(user)
-                    }
+                    onSendRequest: { viewModel.sendFriendRequest(to: user.id) },
+                    onCancelRequest: { viewModel.promptCancelRequest(for: user) },
+                    onViewProfile: { onViewProfile(user) }
                 )
             }
         }
@@ -337,8 +285,7 @@ struct RecommendationsSection: View {
 
     // Gold color for mutual friends
     private let goldAccent = Theme.yellow
-    private let orangeAccent = Color(
-        red: 249 / 255, green: 115 / 255, blue: 22 / 255)
+    private let orangeAccent = Color(red: 249 / 255, green: 115 / 255, blue: 22 / 255)
 
     var body: some View {
         VStack(alignment: .leading, spacing: 20) {
@@ -347,31 +294,24 @@ struct RecommendationsSection: View {
                 // Section header
                 HStack {
                     HStack(spacing: 8) {
-                        Image(systemName: "person.2.fill")
-                            .foregroundColor(goldAccent)
+                        Image(systemName: "person.2.fill").foregroundColor(goldAccent)
                             .font(.system(size: 16))
                             .shadow(color: goldAccent.opacity(0.7), radius: 4)
 
-                        Text("MUTUAL FRIENDS")
-                            .font(.system(size: 16, weight: .black))
-                            .tracking(2)
+                        Text("MUTUAL FRIENDS").font(.system(size: 16, weight: .black)).tracking(2)
                             .foregroundColor(.white)
                             .shadow(color: goldAccent.opacity(0.5), radius: 6)
                     }
 
                     Spacer()
 
-                    Text("\(viewModel.usersWithMutuals.count) users")
-                        .font(.system(size: 14))
+                    Text("\(viewModel.usersWithMutuals.count) users").font(.system(size: 14))
                         .foregroundColor(.white.opacity(0.7))
                 }
                 .padding(.horizontal)
-                let sortedMutuals = viewModel.usersWithMutuals.sorted {
-                    userA, userB in
-                    let mutualCountA = viewModel.mutualFriendCount(
-                        for: userA.id)
-                    let mutualCountB = viewModel.mutualFriendCount(
-                        for: userB.id)
+                let sortedMutuals = viewModel.usersWithMutuals.sorted { userA, userB in
+                    let mutualCountA = viewModel.mutualFriendCount(for: userA.id)
+                    let mutualCountB = viewModel.mutualFriendCount(for: userB.id)
                     return mutualCountA > mutualCountB
                 }
 
@@ -381,15 +321,9 @@ struct RecommendationsSection: View {
                         user: user,
                         requestStatus: viewModel.requestStatus(for: user.id),
                         mutualCount: viewModel.mutualFriendCount(for: user.id),
-                        onSendRequest: {
-                            viewModel.sendFriendRequest(to: user.id)
-                        },
-                        onCancelRequest: {
-                            viewModel.promptCancelRequest(for: user)
-                        },
-                        onViewProfile: {
-                            onViewProfile(user)
-                        }
+                        onSendRequest: { viewModel.sendFriendRequest(to: user.id) },
+                        onCancelRequest: { viewModel.promptCancelRequest(for: user) },
+                        onViewProfile: { onViewProfile(user) }
                     )
                 }
             }
@@ -398,20 +332,15 @@ struct RecommendationsSection: View {
             if !viewModel.otherUsers.isEmpty {
                 // Section header
                 HStack {
-                    Text("OTHER USERS")
-                        .font(.system(size: 16, weight: .black))
-                        .tracking(2)
-                        .foregroundColor(.white)
-                        .shadow(color: orangeGlow, radius: 6)
+                    Text("OTHER USERS").font(.system(size: 16, weight: .black)).tracking(2)
+                        .foregroundColor(.white).shadow(color: orangeGlow, radius: 6)
 
                     Spacer()
 
-                    Text("\(viewModel.otherUsers.count) users")
-                        .font(.system(size: 14))
+                    Text("\(viewModel.otherUsers.count) users").font(.system(size: 14))
                         .foregroundColor(.white.opacity(0.7))
                 }
-                .padding(.horizontal)
-                .padding(.top, 10)
+                .padding(.horizontal).padding(.top, 10)
 
                 // Users without mutual friends (limited unless "Show More" is tapped)
                 ForEach(viewModel.otherUsersToShow) { user in
@@ -419,51 +348,35 @@ struct RecommendationsSection: View {
                         user: user,
                         requestStatus: viewModel.requestStatus(for: user.id),
                         mutualCount: 0,
-                        onSendRequest: {
-                            viewModel.sendFriendRequest(to: user.id)
-                        },
-                        onCancelRequest: {
-                            viewModel.promptCancelRequest(for: user)
-                        },
-                        onViewProfile: {
-                            onViewProfile(user)
-                        }
+                        onSendRequest: { viewModel.sendFriendRequest(to: user.id) },
+                        onCancelRequest: { viewModel.promptCancelRequest(for: user) },
+                        onViewProfile: { onViewProfile(user) }
                     )
                 }
 
                 // Show More button
                 if viewModel.hasMoreOtherUsers {
-                    Button(action: {
-                        withAnimation {
-                            viewModel.toggleShowMoreRecommendations()
-                        }
-                    }) {
+                    Button(action: { withAnimation { viewModel.toggleShowMoreRecommendations() } })
+                    {
                         HStack {
-                            Text(
-                                viewModel.showMoreRecommendations
-                                    ? "SHOW LESS" : "SHOW MORE"
-                            )
-                            .font(.system(size: 14, weight: .bold))
-                            .tracking(1)
-                            .foregroundColor(.white)
+                            Text(viewModel.showMoreRecommendations ? "SHOW LESS" : "SHOW MORE")
+                                .font(.system(size: 14, weight: .bold)).tracking(1)
+                                .foregroundColor(.white)
 
                             Image(
                                 systemName: viewModel.showMoreRecommendations
                                     ? "chevron.up" : "chevron.down"
                             )
-                            .font(.system(size: 12, weight: .bold))
-                            .foregroundColor(.white)
+                            .font(.system(size: 12, weight: .bold)).foregroundColor(.white)
                         }
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 12)
+                        .frame(maxWidth: .infinity).padding(.vertical, 12)
                         .background(
                             ZStack {
                                 RoundedRectangle(cornerRadius: 12)
                                     .fill(
                                         LinearGradient(
                                             colors: [
-                                                Color.white.opacity(0.2),
-                                                Color.white.opacity(0.05),
+                                                Color.white.opacity(0.2), Color.white.opacity(0.05),
                                             ],
                                             startPoint: .top,
                                             endPoint: .bottom
@@ -474,8 +387,7 @@ struct RecommendationsSection: View {
                                     .stroke(
                                         LinearGradient(
                                             colors: [
-                                                Color.white.opacity(0.4),
-                                                Color.white.opacity(0.1),
+                                                Color.white.opacity(0.4), Color.white.opacity(0.1),
                                             ],
                                             startPoint: .topLeading,
                                             endPoint: .bottomTrailing
@@ -486,19 +398,13 @@ struct RecommendationsSection: View {
                         )
                         .shadow(color: orangeAccent.opacity(0.2), radius: 4)
                     }
-                    .padding(.horizontal)
-                    .padding(.top, 5)
+                    .padding(.horizontal).padding(.top, 5)
                 }
             }
 
             // If no recommendations at all
-            if viewModel.usersWithMutuals.isEmpty
-                && viewModel.otherUsers.isEmpty
-            {
-                NoUsersFoundView(
-                    message: "No users found to recommend",
-                    icon: "person.2.slash"
-                )
+            if viewModel.usersWithMutuals.isEmpty && viewModel.otherUsers.isEmpty {
+                NoUsersFoundView(message: "No users found to recommend", icon: "person.2.slash")
             }
         }
     }
@@ -509,24 +415,18 @@ struct NoUsersFoundView: View {
     let message: String
     let icon: String
 
-    private let orangeAccent = Color(
-        red: 249 / 255, green: 115 / 255, blue: 22 / 255)
+    private let orangeAccent = Color(red: 249 / 255, green: 115 / 255, blue: 22 / 255)
 
     var body: some View {
         VStack(spacing: 16) {
-            Image(systemName: icon)
-                .font(.system(size: 50))
-                .foregroundColor(orangeAccent.opacity(0.6))
-                .padding(.top, 30)
+            Image(systemName: icon).font(.system(size: 50))
+                .foregroundColor(orangeAccent.opacity(0.6)).padding(.top, 30)
 
-            Text(message)
-                .font(.system(size: 18, weight: .medium))
-                .foregroundColor(.white.opacity(0.8))
-                .multilineTextAlignment(.center)
+            Text(message).font(.system(size: 18, weight: .medium))
+                .foregroundColor(.white.opacity(0.8)).multilineTextAlignment(.center)
                 .padding(.horizontal, 20)
         }
-        .frame(maxWidth: .infinity)
-        .padding(.vertical, 40)
+        .frame(maxWidth: .infinity).padding(.vertical, 40)
     }
 }
 
@@ -538,45 +438,30 @@ struct CancelFriendRequestAlert: View {
 
     var body: some View {
         ZStack {
-            Color.black.opacity(0.4)
-                .edgesIgnoringSafeArea(.all)
+            Color.black.opacity(0.4).edgesIgnoringSafeArea(.all)
 
             VStack(spacing: 20) {
-                Text("Cancel Request")
-                    .font(.system(size: 20, weight: .bold))
+                Text("Cancel Request").font(.system(size: 20, weight: .bold))
                     .foregroundColor(.white)
 
-                Text("Cancel friend request to \(username)?")
-                    .font(.system(size: 16))
-                    .foregroundColor(.white.opacity(0.9))
-                    .multilineTextAlignment(.center)
+                Text("Cancel friend request to \(username)?").font(.system(size: 16))
+                    .foregroundColor(.white.opacity(0.9)).multilineTextAlignment(.center)
 
                 HStack(spacing: 15) {
-                    Button("No") {
-                        isPresented = false
-                    }
-                    .foregroundColor(.white)
-                    .padding(.vertical, 10)
-                    .padding(.horizontal, 25)
-                    .background(Color.gray.opacity(0.3))
-                    .cornerRadius(10)
+                    Button("No") { isPresented = false }.foregroundColor(.white)
+                        .padding(.vertical, 10).padding(.horizontal, 25)
+                        .background(Color.gray.opacity(0.3)).cornerRadius(10)
 
                     Button("Yes") {
                         onConfirm()
                         isPresented = false
                     }
-                    .foregroundColor(.white)
-                    .padding(.vertical, 10)
-                    .padding(.horizontal, 25)
-                    .background(Color.red.opacity(0.7))
-                    .cornerRadius(10)
+                    .foregroundColor(.white).padding(.vertical, 10).padding(.horizontal, 25)
+                    .background(Color.red.opacity(0.7)).cornerRadius(10)
                 }
             }
-            .padding(25)
-            .background(Color(red: 30 / 255, green: 30 / 255, blue: 46 / 255))
-            .cornerRadius(15)
-            .shadow(radius: 10)
-            .padding(30)
+            .padding(25).background(Color(red: 30 / 255, green: 30 / 255, blue: 46 / 255))
+            .cornerRadius(15).shadow(radius: 10).padding(30)
         }
     }
 }
@@ -601,21 +486,15 @@ struct EnhancedUserSearchCard: View {
     @State private var isCancelPressed = false
     @State private var isCardPressed = false
 
-    private let orangeAccent = Color(
-        red: 249 / 255, green: 115 / 255, blue: 22 / 255)
-    private let orangeGlow = Color(
-        red: 249 / 255, green: 115 / 255, blue: 22 / 255
-    ).opacity(0.5)
-    private let purpleAccent = Color(
-        red: 147 / 255, green: 51 / 255, blue: 234 / 255)
+    private let orangeAccent = Color(red: 249 / 255, green: 115 / 255, blue: 22 / 255)
+    private let orangeGlow = Color(red: 249 / 255, green: 115 / 255, blue: 22 / 255).opacity(0.5)
+    private let purpleAccent = Color(red: 147 / 255, green: 51 / 255, blue: 234 / 255)
     private let goldAccent = Theme.yellow  // Gold color for mutual friends
 
     var body: some View {
         Button(action: {
             // Only navigate to profile on card tap, not button taps
-            withAnimation(.spring()) {
-                isCardPressed = true
-            }
+            withAnimation(.spring()) { isCardPressed = true }
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
                 isCardPressed = false
                 onViewProfile()
@@ -623,64 +502,44 @@ struct EnhancedUserSearchCard: View {
         }) {
             HStack {
                 // User profile picture with enhanced styling
-                ProfileAvatarView(
-                    imageURL: user.profileImageURL,
-                    size: 56,
-                    username: user.username
-                )
-                .shadow(color: orangeGlow, radius: 6)
+                ProfileAvatarView(imageURL: user.profileImageURL, size: 56, username: user.username)
+                    .shadow(color: orangeGlow, radius: 6)
 
                 // User info with enhanced styling
                 VStack(alignment: .leading, spacing: 5) {
                     // Username with mutual badge
                     HStack(spacing: 8) {
-                        Text(user.username)
-                            .font(.system(size: 18, weight: .bold))
-                            .foregroundColor(.white)
-                            .lineLimit(1)
+                        Text(user.username).font(.system(size: 18, weight: .bold))
+                            .foregroundColor(.white).lineLimit(1)
                             .frame(maxWidth: 150, alignment: .leading)
                             .shadow(color: orangeGlow, radius: 6)
 
                         // Show mutual friends badge if any - Simple version
                         if mutualCount > 0 {
                             HStack(spacing: 3) {
-                                Image(systemName: "person.2.fill")
-                                    .font(.system(size: 10))
+                                Image(systemName: "person.2.fill").font(.system(size: 10))
                                     .foregroundColor(goldAccent)
 
-                                Text("\(mutualCount)")
-                                    .font(.system(size: 11, weight: .bold))
+                                Text("\(mutualCount)").font(.system(size: 11, weight: .bold))
                                     .foregroundColor(goldAccent)
                             }
-                            .padding(.horizontal, 6)
-                            .padding(.vertical, 2)
+                            .padding(.horizontal, 6).padding(.vertical, 2)
                             .background(
-                                RoundedRectangle(cornerRadius: 8)
-                                    .fill(goldAccent.opacity(0.15))
+                                RoundedRectangle(cornerRadius: 8).fill(goldAccent.opacity(0.15))
                                     .overlay(
                                         RoundedRectangle(cornerRadius: 8)
-                                            .stroke(
-                                                goldAccent.opacity(0.3),
-                                                lineWidth: 1)
+                                            .stroke(goldAccent.opacity(0.3), lineWidth: 1)
                                     )
                             )
                         }
                     }
 
                     HStack(spacing: 12) {
-                        Label(
-                            "\(user.totalSessions) sessions",
-                            systemImage: "timer"
-                        )
-                        .font(.system(size: 14))
-                        .foregroundColor(.white.opacity(0.7))
+                        Label("\(user.totalSessions) sessions", systemImage: "timer")
+                            .font(.system(size: 14)).foregroundColor(.white.opacity(0.7))
 
-                        Label(
-                            "\(user.totalFocusTime) min",
-                            systemImage: "clock"
-                        )
-                        .font(.system(size: 14))
-                        .foregroundColor(.white.opacity(0.7))
+                        Label("\(user.totalFocusTime) min", systemImage: "clock")
+                            .font(.system(size: 14)).foregroundColor(.white.opacity(0.7))
 
                     }
                 }
@@ -693,25 +552,17 @@ struct EnhancedUserSearchCard: View {
                     switch requestStatus {
                     case .none:
                         Button(action: {
-                            withAnimation(.spring()) {
-                                isAddPressed = true
-                            }
-                            DispatchQueue.main.asyncAfter(
-                                deadline: .now() + 0.1
-                            ) {
+                            withAnimation(.spring()) { isAddPressed = true }
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
                                 onSendRequest()
                                 isAddPressed = false
                             }
                         }) {
                             HStack(spacing: 8) {
-                                Image(systemName: "person.badge.plus")
-                                    .font(.system(size: 14))
-                                Text("Add Friend")
-                                    .font(.system(size: 14, weight: .bold))
+                                Image(systemName: "person.badge.plus").font(.system(size: 14))
+                                Text("Add Friend").font(.system(size: 14, weight: .bold))
                             }
-                            .foregroundColor(.white)
-                            .padding(.horizontal, 15)
-                            .padding(.vertical, 10)
+                            .foregroundColor(.white).padding(.horizontal, 15).padding(.vertical, 10)
                             .background(
                                 ZStack {
                                     RoundedRectangle(cornerRadius: 20)
@@ -750,35 +601,25 @@ struct EnhancedUserSearchCard: View {
 
                     case .sent:
                         Button(action: {
-                            withAnimation(.spring()) {
-                                isCancelPressed = true
-                            }
-                            DispatchQueue.main.asyncAfter(
-                                deadline: .now() + 0.1
-                            ) {
+                            withAnimation(.spring()) { isCancelPressed = true }
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
                                 onCancelRequest()
                                 isCancelPressed = false
                             }
                         }) {
                             HStack(spacing: 6) {
-                                Image(systemName: "clock.fill")
-                                    .font(.system(size: 12))
+                                Image(systemName: "clock.fill").font(.system(size: 12))
 
-                                Text("Request Sent")
-                                    .font(.system(size: 14, weight: .medium))
+                                Text("Request Sent").font(.system(size: 14, weight: .medium))
                             }
-                            .foregroundColor(.white.opacity(0.8))
-                            .padding(.horizontal, 15)
+                            .foregroundColor(.white.opacity(0.8)).padding(.horizontal, 15)
                             .padding(.vertical, 10)
                             .background(
                                 ZStack {
-                                    RoundedRectangle(cornerRadius: 20)
-                                        .fill(Color.gray.opacity(0.3))
+                                    RoundedRectangle(cornerRadius: 20).fill(Color.gray.opacity(0.3))
 
                                     RoundedRectangle(cornerRadius: 20)
-                                        .stroke(
-                                            Color.white.opacity(0.2),
-                                            lineWidth: 1)
+                                        .stroke(Color.white.opacity(0.2), lineWidth: 1)
                                 }
                             )
                             .scaleEffect(isCancelPressed ? 0.95 : 1.0)
@@ -787,16 +628,13 @@ struct EnhancedUserSearchCard: View {
 
                     case .friends:
                         HStack(spacing: 6) {
-                            Image(systemName: "checkmark.circle.fill")
-                                .foregroundColor(Color.green)
+                            Image(systemName: "checkmark.circle.fill").foregroundColor(Color.green)
                                 .font(.system(size: 16))
 
-                            Text("Friends")
-                                .font(.system(size: 14, weight: .medium))
+                            Text("Friends").font(.system(size: 14, weight: .medium))
                                 .foregroundColor(.white)
                         }
-                        .padding(.horizontal, 15)
-                        .padding(.vertical, 10)
+                        .padding(.horizontal, 15).padding(.vertical, 10)
                         .background(
                             ZStack {
                                 RoundedRectangle(cornerRadius: 20)
@@ -811,12 +649,10 @@ struct EnhancedUserSearchCard: View {
                                         )
                                     )
 
-                                RoundedRectangle(cornerRadius: 20)
-                                    .fill(Color.white.opacity(0.1))
+                                RoundedRectangle(cornerRadius: 20).fill(Color.white.opacity(0.1))
 
                                 RoundedRectangle(cornerRadius: 20)
-                                    .stroke(
-                                        Color.white.opacity(0.3), lineWidth: 1)
+                                    .stroke(Color.white.opacity(0.3), lineWidth: 1)
                             }
                         )
                         .shadow(color: Color.green.opacity(0.3), radius: 4)
@@ -832,8 +668,7 @@ struct EnhancedUserSearchCard: View {
                             LinearGradient(
                                 colors: [
                                     mutualCount > 0
-                                        ? goldAccent.opacity(0.05)
-                                        : Color.white.opacity(0.1),
+                                        ? goldAccent.opacity(0.05) : Color.white.opacity(0.1),
                                     Color.white.opacity(0.05),
                                 ],
                                 startPoint: .top,
@@ -846,8 +681,7 @@ struct EnhancedUserSearchCard: View {
                             LinearGradient(
                                 colors: [
                                     mutualCount > 0
-                                        ? goldAccent.opacity(0.3)
-                                        : Color.white.opacity(0.5),
+                                        ? goldAccent.opacity(0.3) : Color.white.opacity(0.5),
                                     Color.white.opacity(0.1),
                                 ],
                                 startPoint: .topLeading,
@@ -858,15 +692,13 @@ struct EnhancedUserSearchCard: View {
                 }
             )
             .shadow(
-                color: mutualCount > 0
-                    ? goldAccent.opacity(0.1) : Color.black.opacity(0.2),
-                radius: 4, x: 0, y: 2
+                color: mutualCount > 0 ? goldAccent.opacity(0.1) : Color.black.opacity(0.2),
+                radius: 4,
+                x: 0,
+                y: 2
             )
             .scaleEffect(isCardPressed ? 0.98 : 1.0)
-            .animation(
-                .spring(response: 0.3, dampingFraction: 0.6),
-                value: isCardPressed
-            )
+            .animation(.spring(response: 0.3, dampingFraction: 0.6), value: isCardPressed)
             .padding(.horizontal)
         }
         .buttonStyle(PlainButtonStyle())

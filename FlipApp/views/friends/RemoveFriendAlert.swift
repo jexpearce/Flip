@@ -18,13 +18,8 @@ struct RemoveFriendAlert: View {
     var body: some View {
         ZStack {
             // Dimmed background
-            Color.black.opacity(0.7)
-                .edgesIgnoringSafeArea(.all)
-                .onTapGesture {
-                    withAnimation(.spring()) {
-                        isPresented = false
-                    }
-                }
+            Color.black.opacity(0.7).edgesIgnoringSafeArea(.all)
+                .onTapGesture { withAnimation(.spring()) { isPresented = false } }
 
             // Alert card
             VStack(spacing: 20) {
@@ -35,26 +30,20 @@ struct RemoveFriendAlert: View {
                             LinearGradient(
                                 colors: [
                                     Theme.mutedRed,
-                                    Color(
-                                        red: 185 / 255, green: 28 / 255,
-                                        blue: 28 / 255),
+                                    Color(red: 185 / 255, green: 28 / 255, blue: 28 / 255),
                                 ],
                                 startPoint: .top,
                                 endPoint: .bottom
                             )
                         )
-                        .frame(width: 70, height: 70)
-                        .opacity(0.2)
+                        .frame(width: 70, height: 70).opacity(0.2)
 
-                    Image(systemName: "person.fill.badge.minus")
-                        .font(.system(size: 36))
+                    Image(systemName: "person.fill.badge.minus").font(.system(size: 36))
                         .foregroundStyle(
                             LinearGradient(
                                 colors: [
                                     Theme.mutedRed,
-                                    Color(
-                                        red: 185 / 255, green: 28 / 255,
-                                        blue: 28 / 255),
+                                    Color(red: 185 / 255, green: 28 / 255, blue: 28 / 255),
                                 ],
                                 startPoint: .top,
                                 endPoint: .bottom
@@ -66,15 +55,10 @@ struct RemoveFriendAlert: View {
 
                 // Title
                 VStack(spacing: 4) {
-                    Text("REMOVE FRIEND?")
-                        .font(.system(size: 22, weight: .black))
-                        .tracking(2)
-                        .foregroundColor(.white)
-                        .shadow(color: Color.red.opacity(0.5), radius: 6)
+                    Text("REMOVE FRIEND?").font(.system(size: 22, weight: .black)).tracking(2)
+                        .foregroundColor(.white).shadow(color: Color.red.opacity(0.5), radius: 6)
 
-                    Text("友達を削除")
-                        .font(.system(size: 12))
-                        .tracking(2)
+                    Text("友達を削除").font(.system(size: 12)).tracking(2)
                         .foregroundColor(.white.opacity(0.7))
                 }
 
@@ -82,38 +66,28 @@ struct RemoveFriendAlert: View {
                 Text(
                     "Are you sure you want to remove \(username) from your friends list? You will no longer see their activity in your feed."
                 )
-                .font(.system(size: 16, weight: .medium))
-                .multilineTextAlignment(.center)
-                .foregroundColor(.white)
-                .padding(.horizontal, 20)
-                .padding(.top, 10)
+                .font(.system(size: 16, weight: .medium)).multilineTextAlignment(.center)
+                .foregroundColor(.white).padding(.horizontal, 20).padding(.top, 10)
 
                 // Buttons
                 HStack(spacing: 15) {
                     // Cancel button
                     Button(action: {
-                        withAnimation(.spring()) {
-                            isCancelPressed = true
-                        }
+                        withAnimation(.spring()) { isCancelPressed = true }
                         DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
                             isCancelPressed = false
                             isPresented = false
                         }
                     }) {
-                        Text("CANCEL")
-                            .font(.system(size: 16, weight: .bold))
-                            .foregroundColor(.white)
-                            .frame(height: 44)
-                            .frame(maxWidth: .infinity)
+                        Text("CANCEL").font(.system(size: 16, weight: .bold))
+                            .foregroundColor(.white).frame(height: 44).frame(maxWidth: .infinity)
                             .background(
                                 ZStack {
                                     RoundedRectangle(cornerRadius: 22)
                                         .fill(Color.white.opacity(0.1))
 
                                     RoundedRectangle(cornerRadius: 22)
-                                        .stroke(
-                                            Color.white.opacity(0.3),
-                                            lineWidth: 1)
+                                        .stroke(Color.white.opacity(0.3), lineWidth: 1)
                                 }
                             )
                             .scaleEffect(isCancelPressed ? 0.95 : 1.0)
@@ -121,20 +95,15 @@ struct RemoveFriendAlert: View {
 
                     // Remove friend button
                     Button(action: {
-                        withAnimation(.spring()) {
-                            isConfirmPressed = true
-                        }
+                        withAnimation(.spring()) { isConfirmPressed = true }
                         DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
                             isConfirmPressed = false
                             isPresented = false
                             onConfirm()
                         }
                     }) {
-                        Text("REMOVE")
-                            .font(.system(size: 16, weight: .bold))
-                            .foregroundColor(.white)
-                            .frame(height: 44)
-                            .frame(maxWidth: .infinity)
+                        Text("REMOVE").font(.system(size: 16, weight: .bold))
+                            .foregroundColor(.white).frame(height: 44).frame(maxWidth: .infinity)
                             .background(
                                 ZStack {
                                     RoundedRectangle(cornerRadius: 22)
@@ -145,7 +114,8 @@ struct RemoveFriendAlert: View {
                                                     Color(
                                                         red: 185 / 255,
                                                         green: 28 / 255,
-                                                        blue: 28 / 255),
+                                                        blue: 28 / 255
+                                                    ),
                                                 ],
                                                 startPoint: .top,
                                                 endPoint: .bottom
@@ -173,26 +143,19 @@ struct RemoveFriendAlert: View {
                             .scaleEffect(isConfirmPressed ? 0.95 : 1.0)
                     }
                 }
-                .padding(.top, 10)
-                .padding(.horizontal, 20)
-                .padding(.bottom, 25)
+                .padding(.top, 10).padding(.horizontal, 20).padding(.bottom, 25)
             }
             .frame(width: 320)
             .background(
                 ZStack {
-                    RoundedRectangle(cornerRadius: 20)
-                        .fill(Theme.darkGray)
+                    RoundedRectangle(cornerRadius: 20).fill(Theme.darkGray)
 
-                    RoundedRectangle(cornerRadius: 20)
-                        .fill(Color.black.opacity(0.3))
+                    RoundedRectangle(cornerRadius: 20).fill(Color.black.opacity(0.3))
 
                     RoundedRectangle(cornerRadius: 20)
                         .stroke(
                             LinearGradient(
-                                colors: [
-                                    Color.white.opacity(0.5),
-                                    Color.white.opacity(0.1),
-                                ],
+                                colors: [Color.white.opacity(0.5), Color.white.opacity(0.1)],
                                 startPoint: .topLeading,
                                 endPoint: .bottomTrailing
                             ),

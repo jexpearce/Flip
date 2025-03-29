@@ -6,12 +6,12 @@ import SwiftUI
 
 class LiveSessionManager: ObservableObject {
     private let updateQueue = DispatchQueue(
-        label: "com.flipapp.sessionUpdateQueue", attributes: .concurrent)
+        label: "com.flipapp.sessionUpdateQueue",
+        attributes: .concurrent
+    )
     private let updateSemaphore = DispatchSemaphore(value: 1)
     private static let _shared = LiveSessionManager()
-    static var shared: LiveSessionManager {
-        return _shared
-    }
+    static var shared: LiveSessionManager { return _shared }
 
     let db: Firestore
     private var sessionListeners: [String: ListenerRegistration] = [:]
@@ -30,9 +30,7 @@ class LiveSessionManager: ObservableObject {
     private init() {
         // Safety check - verify Firebase is initialized
         if FirebaseApp.app() == nil {
-            print(
-                "WARNING: Firebase not initialized when LiveSessionManager is created"
-            )
+            print("WARNING: Firebase not initialized when LiveSessionManager is created")
             FirebaseApp.configure()
         }
 
@@ -79,20 +77,14 @@ class LiveSessionManager: ObservableObject {
             return String(format: "%d:%02d", minutes, seconds)
         }
 
-        var isFull: Bool {
-            return participants.count >= 4
-        }
+        var isFull: Bool { return participants.count >= 4 }
 
-        var canJoin: Bool {
-            return !isFull && remainingSeconds > minRemainingTimeToJoin
-        }
+        var canJoin: Bool { return !isFull && remainingSeconds > minRemainingTimeToJoin }
         static func == (lhs: LiveSessionData, rhs: LiveSessionData) -> Bool {
             return lhs.id == rhs.id && lhs.starterId == rhs.starterId
                 && lhs.starterUsername == rhs.starterUsername
-                && lhs.participants == rhs.participants
-                && lhs.targetDuration == rhs.targetDuration
-                && lhs.remainingSeconds == rhs.remainingSeconds
-                && lhs.isPaused == rhs.isPaused
+                && lhs.participants == rhs.participants && lhs.targetDuration == rhs.targetDuration
+                && lhs.remainingSeconds == rhs.remainingSeconds && lhs.isPaused == rhs.isPaused
                 && lhs.lastUpdateTime == rhs.lastUpdateTime
         }
     }
@@ -121,28 +113,33 @@ class LiveSessionManager: ObservableObject {
         let targetDuration = appManager.selectedMinutes
 
         // Check if this is a new session or update
-        db.collection("live_sessions").document(sessionId).getDocument {
-            [weak self] snapshot, error in
-            if let document = snapshot, document.exists {
-                // Update existing session
-                self?.updateExistingSession(
-                    sessionId: sessionId,
-                    remainingSeconds: remainingSeconds,
-                    isPaused: isPaused,
-                    userId: userId)
-            } else {
-                // Create new session
-                self?.createNewSession(
-                    sessionId: sessionId,
-                    starterId: userId,
-                    starterUsername: username,
-                    targetDuration: targetDuration,
-                    remainingSeconds: remainingSeconds,
-                    isPaused: isPaused,
-                    allowPauses: allowPauses,
-                    maxPauses: maxPauses)
+        db.collection("live_sessions").document(sessionId)
+            .getDocument { [weak self] snapshot, error in
+                if let document = snapshot, document.exists {
+                    // Update existing session
+                    self?
+                        .updateExistingSession(
+                            sessionId: sessionId,
+                            remainingSeconds: remainingSeconds,
+                            isPaused: isPaused,
+                            userId: userId
+                        )
+                }
+                else {
+                    // Create new session
+                    self?
+                        .createNewSession(
+                            sessionId: sessionId,
+                            starterId: userId,
+                            starterUsername: username,
+                            targetDuration: targetDuration,
+                            remainingSeconds: remainingSeconds,
+                            isPaused: isPaused,
+                            allowPauses: allowPauses,
+                            maxPauses: maxPauses
+                        )
+                }
             }
-        }
     }
 
     private func createNewSession(
@@ -158,29 +155,23 @@ class LiveSessionManager: ObservableObject {
         let now = Date()
 
         let sessionData: [String: Any] = [
-            "starterId": starterId,
-            "starterUsername": starterUsername,
-            "participants": [starterId],
-            "startTime": Timestamp(date: now),
-            "targetDuration": targetDuration,
-            "remainingSeconds": remainingSeconds,
-            "isPaused": isPaused,
-            "allowPauses": allowPauses,
-            "maxPauses": maxPauses,
-            "joinTimes": [starterId: Timestamp(date: now)],
+            "starterId": starterId, "starterUsername": starterUsername, "participants": [starterId],
+            "startTime": Timestamp(date: now), "targetDuration": targetDuration,
+            "remainingSeconds": remainingSeconds, "isPaused": isPaused, "allowPauses": allowPauses,
+            "maxPauses": maxPauses, "joinTimes": [starterId: Timestamp(date: now)],
             "participantStatus": [starterId: ParticipantStatus.active.rawValue],
             "lastUpdateTime": Timestamp(date: now),
         ]
 
-        db.collection("live_sessions").document(sessionId).setData(sessionData) { error in
-            if let error = error {
-                print(
-                    "Error creating live session: \(error.localizedDescription)"
-                )
-            } else {
-                print("Live session created successfully")
+        db.collection("live_sessions").document(sessionId)
+            .setData(sessionData) { error in
+                if let error = error {
+                    print("Error creating live session: \(error.localizedDescription)")
+                }
+                else {
+                    print("Live session created successfully")
+                }
             }
-        }
     }
 
     func updateExistingSession(
@@ -194,25 +185,20 @@ class LiveSessionManager: ObservableObject {
             self.updateSemaphore.wait()
 
             let updateData: [String: Any] = [
-                "remainingSeconds": remainingSeconds,
-                "isPaused": isPaused,
+                "remainingSeconds": remainingSeconds, "isPaused": isPaused,
                 "participantStatus.\(userId)": isPaused
-                    ? ParticipantStatus.paused.rawValue
-                    : ParticipantStatus.active.rawValue,
+                    ? ParticipantStatus.paused.rawValue : ParticipantStatus.active.rawValue,
                 "lastUpdateTime": FieldValue.serverTimestamp(),
             ]
 
-            self.db.collection("live_sessions").document(sessionId).updateData(
-                updateData
-            ) { error in
-                self.updateSemaphore.signal()
+            self.db.collection("live_sessions").document(sessionId)
+                .updateData(updateData) { error in
+                    self.updateSemaphore.signal()
 
-                if let error = error {
-                    print(
-                        "Error updating live session: \(error.localizedDescription)"
-                    )
+                    if let error = error {
+                        print("Error updating live session: \(error.localizedDescription)")
+                    }
                 }
-            }
         }
     }
 
@@ -222,9 +208,7 @@ class LiveSessionManager: ObservableObject {
         // First get user's friends
         FirebaseManager.shared.db.collection("users").document(userId)
             .getDocument { [weak self] document, error in
-                guard
-                    let userData = try? document?.data(
-                        as: FirebaseManager.FlipUser.self),
+                guard let userData = try? document?.data(as: FirebaseManager.FlipUser.self),
                     let self = self
                 else { return }
 
@@ -232,9 +216,7 @@ class LiveSessionManager: ObservableObject {
                 let friendIds = userData.friends
 
                 // Skip if no friends
-                if friendIds.isEmpty {
-                    return
-                }
+                if friendIds.isEmpty { return }
 
                 // Keep track of sessions we've seen to detect removed ones
                 var foundSessionIds = Set<String>()
@@ -250,29 +232,22 @@ class LiveSessionManager: ObservableObject {
                             return
                         }
 
-                        print(
-                            "Received \(documents.count) live sessions from query"
-                        )
+                        print("Received \(documents.count) live sessions from query")
 
                         // Process session documents on main thread
                         DispatchQueue.main.async {
                             let validSessions = documents.compactMap {
                                 doc -> (String, LiveSessionData)? in
-                                guard
-                                    let sessionData =
-                                        self.parseLiveSessionDocument(doc)
-                                else {
+                                guard let sessionData = self.parseLiveSessionDocument(doc) else {
                                     return nil
                                 }
 
                                 // Filter sessions based on validity criteria
                                 let isSessionTooOld =
-                                    Date().timeIntervalSince(
-                                        sessionData.lastUpdateTime) > 120  // 2 minutes
-                                let sessionEndTime = sessionData.startTime
-                                    .addingTimeInterval(
-                                        TimeInterval(
-                                            sessionData.targetDuration * 60))
+                                    Date().timeIntervalSince(sessionData.lastUpdateTime) > 120  // 2 minutes
+                                let sessionEndTime = sessionData.startTime.addingTimeInterval(
+                                    TimeInterval(sessionData.targetDuration * 60)
+                                )
                                 let isSessionEnded = Date() > sessionEndTime
 
                                 if !isSessionTooOld && !isSessionEnded
@@ -286,15 +261,11 @@ class LiveSessionManager: ObservableObject {
                             }
 
                             // First, handle sessions that need to be removed
-                            let sessionsToRemove = Set(
-                                self.activeFriendSessions.keys
-                            ).subtracting(foundSessionIds)
+                            let sessionsToRemove = Set(self.activeFriendSessions.keys)
+                                .subtracting(foundSessionIds)
                             for sessionId in sessionsToRemove {
-                                print(
-                                    "Removing session \(sessionId) - not in query results"
-                                )
-                                self.activeFriendSessions.removeValue(
-                                    forKey: sessionId)
+                                print("Removing session \(sessionId) - not in query results")
+                                self.activeFriendSessions.removeValue(forKey: sessionId)
                             }
 
                             // Now add/update valid sessions
@@ -308,24 +279,18 @@ class LiveSessionManager: ObservableObject {
                     }
             }
     }
-    private func parseLiveSessionDocument(_ document: DocumentSnapshot)
-        -> LiveSessionData?
-    {
+    private func parseLiveSessionDocument(_ document: DocumentSnapshot) -> LiveSessionData? {
         guard document.exists else { return nil }
 
         let data = document.data() ?? [:]
 
         // Required fields with strong validation
         guard let starterId = data["starterId"] as? String, !starterId.isEmpty,
-            let participants = data["participants"] as? [String],
-            !participants.isEmpty,
+            let participants = data["participants"] as? [String], !participants.isEmpty,
             let startTimestamp = data["startTime"] as? Timestamp,
-            let targetDuration = data["targetDuration"] as? Int,
-            targetDuration > 0
+            let targetDuration = data["targetDuration"] as? Int, targetDuration > 0
         else {
-            print(
-                "Missing or invalid required fields in session document \(document.documentID)"
-            )
+            print("Missing or invalid required fields in session document \(document.documentID)")
             return nil
         }
 
@@ -333,36 +298,31 @@ class LiveSessionManager: ObservableObject {
         let starterUsername = (data["starterUsername"] as? String) ?? "User"
 
         // For remaining fields, use safe defaults with nil coalescing
-        let remainingSeconds =
-            (data["remainingSeconds"] as? Int) ?? (targetDuration * 60)
+        let remainingSeconds = (data["remainingSeconds"] as? Int) ?? (targetDuration * 60)
         let isPaused = (data["isPaused"] as? Bool) ?? false
         let allowPauses = (data["allowPauses"] as? Bool) ?? false
         let maxPauses = (data["maxPauses"] as? Int) ?? 0
 
         // Safely handle join times with defaults
         let joinTimesData =
-            (data["joinTimes"] as? [String: Timestamp]) ?? [
-                starterId: startTimestamp
-            ]
+            (data["joinTimes"] as? [String: Timestamp]) ?? [starterId: startTimestamp]
         let participantStatusData =
             (data["participantStatus"] as? [String: String]) ?? [
                 starterId: ParticipantStatus.active.rawValue
             ]
-        let lastUpdateTimestamp =
-            (data["lastUpdateTime"] as? Timestamp) ?? startTimestamp
+        let lastUpdateTimestamp = (data["lastUpdateTime"] as? Timestamp) ?? startTimestamp
 
         // Convert join times
         var joinTimes: [String: Date] = [:]
-        for (userId, timestamp) in joinTimesData {
-            joinTimes[userId] = timestamp.dateValue()
-        }
+        for (userId, timestamp) in joinTimesData { joinTimes[userId] = timestamp.dateValue() }
 
         // Convert participant status
         var participantStatus: [String: ParticipantStatus] = [:]
         for (userId, status) in participantStatusData {
             if let statusEnum = ParticipantStatus(rawValue: status) {
                 participantStatus[userId] = statusEnum
-            } else {
+            }
+            else {
                 // Default to active if invalid status
                 participantStatus[userId] = .active
             }
@@ -384,9 +344,7 @@ class LiveSessionManager: ObservableObject {
             lastUpdateTime: lastUpdateTimestamp.dateValue()
         )
     }
-    func joinSession(
-        sessionId: String, completion: @escaping (Bool, Int, Int) -> Void
-    ) {
+    func joinSession(sessionId: String, completion: @escaping (Bool, Int, Int) -> Void) {
         // Ensure Firebase is initialized
         if FirebaseApp.app() == nil {
             print("Firebase not initialized. Attempting to configure.")
@@ -404,98 +362,93 @@ class LiveSessionManager: ObservableObject {
         isJoiningSession = true
 
         // Get the session first with better error handling
-        db.collection("live_sessions").document(sessionId).getDocument {
-            [weak self] document, error in
-            guard let self = self else {
-                print("Self reference lost")
-                completion(false, 0, 0)
-                return
-            }
+        db.collection("live_sessions").document(sessionId)
+            .getDocument { [weak self] document, error in
+                guard let self = self else {
+                    print("Self reference lost")
+                    completion(false, 0, 0)
+                    return
+                }
 
-            if let error = error {
-                print("Error fetching session: \(error.localizedDescription)")
-                self.isJoiningSession = false
-                completion(false, 0, 0)
-                return
-            }
-
-            guard let document = document, document.exists else {
-                print("Session document doesn't exist")
-                self.isJoiningSession = false
-                completion(false, 0, 0)
-                return
-            }
-
-            guard let sessionData = self.parseLiveSessionDocument(document)
-            else {
-                print("Failed to parse session document")
-                self.isJoiningSession = false
-                completion(false, 0, 0)
-                return
-            }
-
-            // Check if session can be joined
-            if !sessionData.canJoin {
-                print(
-                    "Session cannot be joined: full=\(sessionData.isFull), time_remaining=\(sessionData.remainingSeconds)"
-                )
-                self.isJoiningSession = false
-                completion(false, 0, 0)
-                return
-            }
-
-            // Proceed with joining (rest of the existing code...)
-            // Update session with new participant
-            var updatedParticipants = sessionData.participants
-            if !updatedParticipants.contains(userId) {
-                updatedParticipants.append(userId)
-            }
-
-            let now = Date()
-
-            let updateData: [String: Any] = [
-                "participants": updatedParticipants,
-                "joinTimes.\(userId)": Timestamp(date: now),
-                "participantStatus.\(userId)": ParticipantStatus.active
-                    .rawValue,
-                "lastUpdateTime": FieldValue.serverTimestamp(),
-            ]
-
-            self.db.collection("live_sessions").document(sessionId).updateData(
-                updateData
-            ) { error in
                 if let error = error {
-                    print(
-                        "Error joining session: \(error.localizedDescription)")
+                    print("Error fetching session: \(error.localizedDescription)")
                     self.isJoiningSession = false
                     completion(false, 0, 0)
-                } else {
-                    print("Successfully joined session")
+                    return
+                }
 
-                    // Listen for updates to this session
-                    self.listenToJoinedSession(sessionId: sessionId)
+                guard let document = document, document.exists else {
+                    print("Session document doesn't exist")
+                    self.isJoiningSession = false
+                    completion(false, 0, 0)
+                    return
+                }
 
-                    // Get a fresh copy of the session data
-                    self.getSessionDetails(sessionId: sessionId) {
-                        updatedData in
-                        if let data = updatedData {
-                            // Pass current data to completion handler
-                            DispatchQueue.main.async {
-                                self.isJoiningSession = false
-                                completion(
-                                    true, data.remainingSeconds,
-                                    data.targetDuration)
-                            }
-                        } else {
+                guard let sessionData = self.parseLiveSessionDocument(document) else {
+                    print("Failed to parse session document")
+                    self.isJoiningSession = false
+                    completion(false, 0, 0)
+                    return
+                }
+
+                // Check if session can be joined
+                if !sessionData.canJoin {
+                    print(
+                        "Session cannot be joined: full=\(sessionData.isFull), time_remaining=\(sessionData.remainingSeconds)"
+                    )
+                    self.isJoiningSession = false
+                    completion(false, 0, 0)
+                    return
+                }
+
+                // Proceed with joining (rest of the existing code...)
+                // Update session with new participant
+                var updatedParticipants = sessionData.participants
+                if !updatedParticipants.contains(userId) { updatedParticipants.append(userId) }
+
+                let now = Date()
+
+                let updateData: [String: Any] = [
+                    "participants": updatedParticipants,
+                    "joinTimes.\(userId)": Timestamp(date: now),
+                    "participantStatus.\(userId)": ParticipantStatus.active.rawValue,
+                    "lastUpdateTime": FieldValue.serverTimestamp(),
+                ]
+
+                self.db.collection("live_sessions").document(sessionId)
+                    .updateData(updateData) { error in
+                        if let error = error {
+                            print("Error joining session: \(error.localizedDescription)")
                             self.isJoiningSession = false
-                            completion(
-                                true, sessionData.remainingSeconds,
-                                sessionData.targetDuration)
+                            completion(false, 0, 0)
+                        }
+                        else {
+                            print("Successfully joined session")
+
+                            // Listen for updates to this session
+                            self.listenToJoinedSession(sessionId: sessionId)
+
+                            // Get a fresh copy of the session data
+                            self.getSessionDetails(sessionId: sessionId) { updatedData in
+                                if let data = updatedData {
+                                    // Pass current data to completion handler
+                                    DispatchQueue.main.async {
+                                        self.isJoiningSession = false
+                                        completion(true, data.remainingSeconds, data.targetDuration)
+                                    }
+                                }
+                                else {
+                                    self.isJoiningSession = false
+                                    completion(
+                                        true,
+                                        sessionData.remainingSeconds,
+                                        sessionData.targetDuration
+                                    )
+                                }
+                            }
                         }
                     }
-                }
             }
-        }
     }
     private var cleanupTimer: Timer?
 
@@ -518,8 +471,7 @@ class LiveSessionManager: ObservableObject {
             let timeThreshold = Date().addingTimeInterval(-60)  // 1 minute ago
 
             // Check if all participants have completed or failed
-            let allParticipantsFinished = session.participants.allSatisfy {
-                participantId in
+            let allParticipantsFinished = session.participants.allSatisfy { participantId in
                 if let status = session.participantStatus[participantId] {
                     return status == .completed || status == .failed
                 }
@@ -528,20 +480,18 @@ class LiveSessionManager: ObservableObject {
 
             // Calculate if session has naturally ended based on duration
             let sessionEndTime = session.startTime.addingTimeInterval(
-                TimeInterval(session.targetDuration * 60))
+                TimeInterval(session.targetDuration * 60)
+            )
             let isSessionEnded = Date() > sessionEndTime
 
-            return session.remainingSeconds <= 0
-                || session.lastUpdateTime < timeThreshold
+            return session.remainingSeconds <= 0 || session.lastUpdateTime < timeThreshold
                 || allParticipantsFinished || isSessionEnded
         }
 
         // Remove stale sessions from the local map
         for (sessionId, _) in staleSessions {
             print("Removing stale session: \(sessionId)")
-            DispatchQueue.main.async {
-                self.activeFriendSessions.removeValue(forKey: sessionId)
-            }
+            DispatchQueue.main.async { self.activeFriendSessions.removeValue(forKey: sessionId) }
 
             // Also remove any session listeners for this session
             if let listener = sessionListeners[sessionId] {
@@ -550,23 +500,19 @@ class LiveSessionManager: ObservableObject {
             }
 
             // Also remove from Firestore if it appears to be completed
-            db.collection("live_sessions").document(sessionId).delete { error in
-                if let error = error {
-                    print(
-                        "Error deleting stale session: \(error.localizedDescription)"
-                    )
-                } else {
-                    print("Successfully deleted stale session: \(sessionId)")
+            db.collection("live_sessions").document(sessionId)
+                .delete { error in
+                    if let error = error {
+                        print("Error deleting stale session: \(error.localizedDescription)")
+                    }
+                    else {
+                        print("Successfully deleted stale session: \(sessionId)")
+                    }
                 }
-            }
         }
 
         // Force UI update after cleaning up
-        if !staleSessions.isEmpty {
-            DispatchQueue.main.async {
-                self.objectWillChange.send()
-            }
-        }
+        if !staleSessions.isEmpty { DispatchQueue.main.async { self.objectWillChange.send() } }
     }
 
     func listenToJoinedSession(sessionId: String) {
@@ -582,9 +528,7 @@ class LiveSessionManager: ObservableObject {
                 guard let document = document, document.exists,
                     let sessionData = self?.parseLiveSessionDocument(document)
                 else {
-                    DispatchQueue.main.async {
-                        self?.currentJoinedSession = nil
-                    }
+                    DispatchQueue.main.async { self?.currentJoinedSession = nil }
                     return
                 }
 
@@ -598,76 +542,65 @@ class LiveSessionManager: ObservableObject {
         sessionListeners[sessionId] = listener
     }
 
-    func updateParticipantStatus(
-        sessionId: String, userId: String, status: ParticipantStatus
-    ) {
+    func updateParticipantStatus(sessionId: String, userId: String, status: ParticipantStatus) {
         let updateData: [String: Any] = [
             "participantStatus.\(userId)": status.rawValue,
             "lastUpdateTime": FieldValue.serverTimestamp(),
         ]
 
-        db.collection("live_sessions").document(sessionId).updateData(
-            updateData)
+        db.collection("live_sessions").document(sessionId).updateData(updateData)
     }
 
     func endSession(sessionId: String, userId: String, wasSuccessful: Bool) {
         // Update participant status first
         let status: ParticipantStatus = wasSuccessful ? .completed : .failed
-        updateParticipantStatus(
-            sessionId: sessionId, userId: userId, status: status)
+        updateParticipantStatus(sessionId: sessionId, userId: userId, status: status)
 
         // Check if all participants have completed/failed
-        db.collection("live_sessions").document(sessionId).getDocument {
-            [weak self] document, error in
-            guard let document = document, document.exists,
-                let sessionData = self?.parseLiveSessionDocument(document)
-            else { return }
+        db.collection("live_sessions").document(sessionId)
+            .getDocument { [weak self] document, error in
+                guard let document = document, document.exists,
+                    let sessionData = self?.parseLiveSessionDocument(document)
+                else { return }
 
-            // Check if all participants have a terminal status
-            let allCompleted = sessionData.participants.allSatisfy {
-                participantId in
-                if let status = sessionData.participantStatus[participantId] {
-                    return status == .completed || status == .failed
-                }
-                return false
-            }
-
-            // If everyone is done, clean up the session
-            if allCompleted {
-                // Session is complete, can be removed after a delay to allow UI views to finish
-                DispatchQueue.main.asyncAfter(deadline: .now() + 10) {
-                    self?.db.collection("live_sessions").document(sessionId)
-                        .delete()
-                }
-            }
-        }
-    }
-    func getSessionDetails(
-        sessionId: String, completion: @escaping (LiveSessionData?) -> Void
-    ) {
-        db.collection("live_sessions").document(sessionId).getDocument {
-            document, error in
-            if let document = document, document.exists {
-                if let sessionData = self.parseLiveSessionDocument(document) {
-                    DispatchQueue.main.async {
-                        completion(sessionData)
+                // Check if all participants have a terminal status
+                let allCompleted = sessionData.participants.allSatisfy { participantId in
+                    if let status = sessionData.participantStatus[participantId] {
+                        return status == .completed || status == .failed
                     }
-                } else {
+                    return false
+                }
+
+                // If everyone is done, clean up the session
+                if allCompleted {
+                    // Session is complete, can be removed after a delay to allow UI views to finish
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 10) {
+                        self?.db.collection("live_sessions").document(sessionId).delete()
+                    }
+                }
+            }
+    }
+    func getSessionDetails(sessionId: String, completion: @escaping (LiveSessionData?) -> Void) {
+        db.collection("live_sessions").document(sessionId)
+            .getDocument { document, error in
+                if let document = document, document.exists {
+                    if let sessionData = self.parseLiveSessionDocument(document) {
+                        DispatchQueue.main.async { completion(sessionData) }
+                    }
+                    else {
+                        completion(nil)
+                    }
+                }
+                else {
                     completion(nil)
                 }
-            } else {
-                completion(nil)
             }
-        }
     }
 
-    func handlePausedSessionParticipant(
-        sessionId: String, userId: String, isPaused: Bool
-    ) {
+    func handlePausedSessionParticipant(sessionId: String, userId: String, isPaused: Bool) {
         // Update participant status
         let status: ParticipantStatus = isPaused ? .paused : .active
-        updateParticipantStatus(
-            sessionId: sessionId, userId: userId, status: status)
+        updateParticipantStatus(sessionId: sessionId, userId: userId, status: status)
 
         // If this is the current user's joined session, update the UI
         if currentJoinedSession?.id == sessionId {
@@ -677,27 +610,23 @@ class LiveSessionManager: ObservableObject {
     }
 
     // Method to get active participants count (excluding paused)
-    func getActiveParticipantsCount(
-        sessionId: String, completion: @escaping (Int) -> Void
-    ) {
-        db.collection("live_sessions").document(sessionId).getDocument {
-            document, error in
-            if let document = document, document.exists,
-                let data = document.data(),
-                let participantStatus = data["participantStatus"]
-                    as? [String: String]
-            {
+    func getActiveParticipantsCount(sessionId: String, completion: @escaping (Int) -> Void) {
+        db.collection("live_sessions").document(sessionId)
+            .getDocument { document, error in
+                if let document = document, document.exists, let data = document.data(),
+                    let participantStatus = data["participantStatus"] as? [String: String]
+                {
 
-                // Count active participants (not paused, failed, or completed)
-                let activeCount = participantStatus.values.filter {
-                    $0 == ParticipantStatus.active.rawValue
-                }.count
+                    // Count active participants (not paused, failed, or completed)
+                    let activeCount = participantStatus.values
+                        .filter { $0 == ParticipantStatus.active.rawValue }.count
 
-                completion(activeCount)
-            } else {
-                completion(0)
+                    completion(activeCount)
+                }
+                else {
+                    completion(0)
+                }
             }
-        }
     }
     func refreshLiveSessions() {
         print("Refreshing live sessions...")
@@ -714,9 +643,7 @@ class LiveSessionManager: ObservableObject {
         // Get user's friends
         FirebaseManager.shared.db.collection("users").document(userId)
             .getDocument { [weak self] document, error in
-                guard
-                    let userData = try? document?.data(
-                        as: FirebaseManager.FlipUser.self),
+                guard let userData = try? document?.data(as: FirebaseManager.FlipUser.self),
                     let self = self
                 else {
                     print("Could not load user data for refreshing sessions")
@@ -750,33 +677,27 @@ class LiveSessionManager: ObservableObject {
 
                         // Process session documents
                         DispatchQueue.main.async {
-                            var newActiveSessions: [String: LiveSessionData] =
-                                [:]
+                            var newActiveSessions: [String: LiveSessionData] = [:]
 
                             for document in documents {
-                                if let sessionData =
-                                    self.parseLiveSessionDocument(document)
-                                {
+                                if let sessionData = self.parseLiveSessionDocument(document) {
                                     // Filter out sessions that have ended or are too old
-                                    let sessionEndTime = sessionData.startTime
-                                        .addingTimeInterval(
-                                            TimeInterval(
-                                                sessionData.targetDuration * 60)
-                                        )
+                                    let sessionEndTime = sessionData.startTime.addingTimeInterval(
+                                        TimeInterval(sessionData.targetDuration * 60)
+                                    )
                                     let isSessionOver = Date() > sessionEndTime
                                     let isSessionTooOld =
-                                        Date().timeIntervalSince(
-                                            sessionData.lastUpdateTime) > 300  // 5 minutes
+                                        Date().timeIntervalSince(sessionData.lastUpdateTime) > 300  // 5 minutes
 
                                     if !isSessionOver && !isSessionTooOld
                                         && sessionData.remainingSeconds > 0
                                     {
-                                        newActiveSessions[document.documentID] =
-                                            sessionData
+                                        newActiveSessions[document.documentID] = sessionData
                                         print(
                                             "Added active session: \(document.documentID), remaining: \(sessionData.remainingSeconds)s"
                                         )
-                                    } else {
+                                    }
+                                    else {
                                         print(
                                             "Filtered out session \(document.documentID): over=\(isSessionOver), tooOld=\(isSessionTooOld)"
                                         )
@@ -787,17 +708,13 @@ class LiveSessionManager: ObservableObject {
                             // Update sessions and notify observers
                             self.activeFriendSessions = newActiveSessions
                             self.objectWillChange.send()
-                            print(
-                                "Updated to \(newActiveSessions.count) active friend sessions"
-                            )
+                            print("Updated to \(newActiveSessions.count) active friend sessions")
                         }
                     }
             }
 
         // If we're in a session, ensure it's still updated
-        if let sessionId = currentJoinedSession?.id {
-            listenToJoinedSession(sessionId: sessionId)
-        }
+        if let sessionId = currentJoinedSession?.id { listenToJoinedSession(sessionId: sessionId) }
     }
     func forceSessionStatusRefresh() {
         guard let userId = Auth.auth().currentUser?.uid else { return }
@@ -805,9 +722,7 @@ class LiveSessionManager: ObservableObject {
         // First get user's friends
         FirebaseManager.shared.db.collection("users").document(userId)
             .getDocument { [weak self] document, error in
-                guard
-                    let userData = try? document?.data(
-                        as: FirebaseManager.FlipUser.self),
+                guard let userData = try? document?.data(as: FirebaseManager.FlipUser.self),
                     let self = self
                 else { return }
 
@@ -834,17 +749,13 @@ class LiveSessionManager: ObservableObject {
 
                         // Process session documents
                         DispatchQueue.main.async {
-                            var newActiveSessions: [String: LiveSessionData] =
-                                [:]
+                            var newActiveSessions: [String: LiveSessionData] = [:]
 
                             for document in documents {
-                                if let sessionData =
-                                    self.parseLiveSessionDocument(document)
-                                {
+                                if let sessionData = self.parseLiveSessionDocument(document) {
                                     // Enhanced validity check
                                     if self.isSessionValid(sessionData) {
-                                        newActiveSessions[document.documentID] =
-                                            sessionData
+                                        newActiveSessions[document.documentID] = sessionData
                                     }
                                 }
                             }
@@ -858,10 +769,8 @@ class LiveSessionManager: ObservableObject {
     }
     func startJoinedSessionVerifier() {
         // Check every 30 seconds if the joinedSession is still valid
-        Timer.scheduledTimer(withTimeInterval: 30, repeats: true) {
-            [weak self] _ in
-            guard let self = self, let joinedSession = self.currentJoinedSession
-            else { return }
+        Timer.scheduledTimer(withTimeInterval: 30, repeats: true) { [weak self] _ in
+            guard let self = self, let joinedSession = self.currentJoinedSession else { return }
 
             // If the session is invalid for any reason, notify AppManager
             if !self.isSessionValid(joinedSession) {
@@ -871,13 +780,9 @@ class LiveSessionManager: ObservableObject {
 
                 // Check current app state - don't interrupt active sessions
                 let appManager = AppManager.shared
-                if appManager.currentState != .tracking
-                    && appManager.currentState != .countdown
-                {
+                if appManager.currentState != .tracking && appManager.currentState != .countdown {
                     // Reset join state if not actively tracking
-                    DispatchQueue.main.async {
-                        appManager.resetJoinState()
-                    }
+                    DispatchQueue.main.async { appManager.resetJoinState() }
                 }
             }
         }
@@ -888,14 +793,13 @@ class LiveSessionManager: ObservableObject {
         // 2. The last update was recent (within 3 minutes)
         // 3. It hasn't gone past its expected end time
 
-        let isSessionTooOld =
-            Date().timeIntervalSince(session.lastUpdateTime) > 180  // 3 minutes
+        let isSessionTooOld = Date().timeIntervalSince(session.lastUpdateTime) > 180  // 3 minutes
         let sessionEndTime = session.startTime.addingTimeInterval(
-            TimeInterval(session.targetDuration * 60))
+            TimeInterval(session.targetDuration * 60)
+        )
         let isSessionEnded = Date() > sessionEndTime
 
-        return session.remainingSeconds > 0 && !isSessionTooOld
-            && !isSessionEnded
+        return session.remainingSeconds > 0 && !isSessionTooOld && !isSessionEnded
     }
 
     func stopTrackingSession(sessionId: String) {
@@ -914,9 +818,7 @@ class LiveSessionManager: ObservableObject {
     }
 
     // 5. Set up notification handler for refresh
-    @objc private func handleRefreshNotification() {
-        refreshLiveSessions()
-    }
+    @objc private func handleRefreshNotification() { refreshLiveSessions() }
 
     // Make sure to update deinit
     deinit {
@@ -927,9 +829,7 @@ class LiveSessionManager: ObservableObject {
     }
 
     func cleanupListeners() {
-        for (_, listener) in sessionListeners {
-            listener.remove()
-        }
+        for (_, listener) in sessionListeners { listener.remove() }
         sessionListeners.removeAll()
     }
 }

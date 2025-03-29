@@ -14,23 +14,17 @@ struct StreakAchievementAlert: View {
     // Dynamic title and description based on streak status
     private var title: String {
         switch streakStatus {
-        case .orangeFlame:
-            return "STREAK IGNITED!"
-        case .redFlame:
-            return "BLAZING STREAK!"
-        default:
-            return "STREAK ACHIEVED!"
+        case .orangeFlame: return "STREAK IGNITED!"
+        case .redFlame: return "BLAZING STREAK!"
+        default: return "STREAK ACHIEVED!"
         }
     }
 
     private var subtitle: String {
         switch streakStatus {
-        case .orangeFlame:
-            return "火がついた"
-        case .redFlame:
-            return "燃え上がる"
-        default:
-            return "達成した"
+        case .orangeFlame: return "火がついた"
+        case .redFlame: return "燃え上がる"
+        default: return "達成した"
         }
     }
 
@@ -42,8 +36,7 @@ struct StreakAchievementAlert: View {
         case .redFlame:
             return
                 "You're blazing! You've maintained an exceptional discipline streak of \(streakCount) sessions!"
-        default:
-            return "You've achieved a streak of \(streakCount) sessions!"
+        default: return "You've achieved a streak of \(streakCount) sessions!"
         }
     }
 
@@ -57,13 +50,8 @@ struct StreakAchievementAlert: View {
     var body: some View {
         ZStack {
             // Dimmed background
-            Color.black.opacity(0.6)
-                .edgesIgnoringSafeArea(.all)
-                .onTapGesture {
-                    withAnimation(.easeOut(duration: 0.2)) {
-                        isPresented = false
-                    }
-                }
+            Color.black.opacity(0.6).edgesIgnoringSafeArea(.all)
+                .onTapGesture { withAnimation(.easeOut(duration: 0.2)) { isPresented = false } }
 
             // Alert container
             VStack(spacing: 25) {
@@ -76,8 +64,7 @@ struct StreakAchievementAlert: View {
                             .fill(
                                 RadialGradient(
                                     gradient: Gradient(colors: [
-                                        mainColor.opacity(0.7),
-                                        mainColor.opacity(0.3),
+                                        mainColor.opacity(0.7), mainColor.opacity(0.3),
                                         mainColor.opacity(0.1),
                                     ]),
                                     center: .center,
@@ -88,54 +75,40 @@ struct StreakAchievementAlert: View {
                             .frame(width: 120, height: 120)
 
                         // Animated pulse
-                        Circle()
-                            .fill(mainColor.opacity(0.3))
-                            .frame(width: 120, height: 120)
+                        Circle().fill(mainColor.opacity(0.3)).frame(width: 120, height: 120)
                             .scaleEffect(animateGlow ? 1.1 : 0.9)
                             .animation(
                                 Animation.easeInOut(duration: 1.5)
                                     .repeatForever(autoreverses: true),
-                                value: animateGlow)
+                                value: animateGlow
+                            )
                     }
 
                     // Flames icon
-                    Image(
-                        systemName: streakStatus == .redFlame
-                            ? "flame.fill" : "flame"
-                    )
-                    .font(.system(size: 60))
-                    .foregroundColor(.white)
-                    .shadow(
-                        color: mainColor.opacity(0.8),
-                        radius: animateGlow ? 15 : 5
-                    )
-                    .scaleEffect(animateGlow ? 1.05 : 0.95)
-                    .animation(
-                        Animation.easeInOut(duration: 1.2).repeatForever(
-                            autoreverses: true), value: animateGlow)
+                    Image(systemName: streakStatus == .redFlame ? "flame.fill" : "flame")
+                        .font(.system(size: 60)).foregroundColor(.white)
+                        .shadow(color: mainColor.opacity(0.8), radius: animateGlow ? 15 : 5)
+                        .scaleEffect(animateGlow ? 1.05 : 0.95)
+                        .animation(
+                            Animation.easeInOut(duration: 1.2).repeatForever(autoreverses: true),
+                            value: animateGlow
+                        )
 
                     // Number badge showing streak count
                     ZStack {
                         Circle()
                             .fill(
                                 LinearGradient(
-                                    colors: [
-                                        Color.white,
-                                        Color.white.opacity(0.8),
-                                    ],
+                                    colors: [Color.white, Color.white.opacity(0.8)],
                                     startPoint: .top,
                                     endPoint: .bottom
                                 )
                             )
                             .frame(width: 40, height: 40)
-                            .overlay(
-                                Circle()
-                                    .stroke(mainColor, lineWidth: 2)
-                            )
+                            .overlay(Circle().stroke(mainColor, lineWidth: 2))
                             .shadow(color: mainColor.opacity(0.5), radius: 5)
 
-                        Text("\(streakCount)")
-                            .font(.system(size: 22, weight: .black))
+                        Text("\(streakCount)").font(.system(size: 22, weight: .black))
                             .foregroundColor(mainColor)
                     }
                     .position(x: 90, y: 30)
@@ -144,68 +117,43 @@ struct StreakAchievementAlert: View {
 
                 // Achievement text
                 VStack(spacing: 8) {
-                    Text(title)
-                        .font(.system(size: 28, weight: .black))
-                        .tracking(2)
-                        .foregroundColor(.white)
-                        .shadow(color: mainColor.opacity(0.8), radius: 10)
+                    Text(title).font(.system(size: 28, weight: .black)).tracking(2)
+                        .foregroundColor(.white).shadow(color: mainColor.opacity(0.8), radius: 10)
 
-                    Text(subtitle)
-                        .font(.system(size: 16))
-                        .tracking(4)
-                        .foregroundColor(.white.opacity(0.7))
-                        .padding(.bottom, 5)
+                    Text(subtitle).font(.system(size: 16)).tracking(4)
+                        .foregroundColor(.white.opacity(0.7)).padding(.bottom, 5)
 
-                    Text(description)
-                        .font(.system(size: 16))
-                        .foregroundColor(.white.opacity(0.9))
-                        .multilineTextAlignment(.center)
-                        .padding(.horizontal, 10)
+                    Text(description).font(.system(size: 16)).foregroundColor(.white.opacity(0.9))
+                        .multilineTextAlignment(.center).padding(.horizontal, 10)
                         .padding(.bottom, 10)
 
                     // Streak indicator with bonus info
                     HStack(spacing: 8) {
-                        Image(systemName: "bolt.fill")
-                            .font(.system(size: 16))
+                        Image(systemName: "bolt.fill").font(.system(size: 16))
                             .foregroundColor(mainColor)
 
                         let bonusText =
-                            streakStatus == .redFlame
-                            ? "1.8x score bonus" : "1.3x score bonus"
-                        Text(bonusText)
-                            .font(.system(size: 16, weight: .bold))
+                            streakStatus == .redFlame ? "1.8x score bonus" : "1.3x score bonus"
+                        Text(bonusText).font(.system(size: 16, weight: .bold))
                             .foregroundColor(mainColor)
                     }
-                    .padding(.vertical, 8)
-                    .padding(.horizontal, 16)
+                    .padding(.vertical, 8).padding(.horizontal, 16)
                     .background(
-                        RoundedRectangle(cornerRadius: 12)
-                            .fill(mainColor.opacity(0.15))
+                        RoundedRectangle(cornerRadius: 12).fill(mainColor.opacity(0.15))
                             .overlay(
                                 RoundedRectangle(cornerRadius: 12)
-                                    .stroke(
-                                        mainColor.opacity(0.3), lineWidth: 1)
+                                    .stroke(mainColor.opacity(0.3), lineWidth: 1)
                             )
                     )
 
-                    Text("Keep your streak going to earn more points!")
-                        .font(.system(size: 14))
-                        .italic()
-                        .foregroundColor(.white.opacity(0.7))
-                        .padding(.top, 10)
+                    Text("Keep your streak going to earn more points!").font(.system(size: 14))
+                        .italic().foregroundColor(.white.opacity(0.7)).padding(.top, 10)
                 }
 
                 // Continue button
-                Button(action: {
-                    withAnimation(.easeOut(duration: 0.2)) {
-                        isPresented = false
-                    }
-                }) {
-                    Text("CONTINUE")
-                        .font(.system(size: 18, weight: .bold))
-                        .foregroundColor(.white)
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 15)
+                Button(action: { withAnimation(.easeOut(duration: 0.2)) { isPresented = false } }) {
+                    Text("CONTINUE").font(.system(size: 18, weight: .bold)).foregroundColor(.white)
+                        .frame(maxWidth: .infinity).padding(.vertical, 15)
                         .background(
                             ZStack {
                                 // Vibrant gradient
@@ -213,23 +161,20 @@ struct StreakAchievementAlert: View {
                                     .fill(
                                         LinearGradient(
                                             colors: [
-                                                mainColor.opacity(0.9),
-                                                mainColor.opacity(0.6),
+                                                mainColor.opacity(0.9), mainColor.opacity(0.6),
                                             ],
                                             startPoint: .top,
                                             endPoint: .bottom
                                         )
                                     )
 
-                                RoundedRectangle(cornerRadius: 15)
-                                    .fill(Color.white.opacity(0.1))
+                                RoundedRectangle(cornerRadius: 15).fill(Color.white.opacity(0.1))
 
                                 RoundedRectangle(cornerRadius: 15)
                                     .stroke(
                                         LinearGradient(
                                             colors: [
-                                                Color.white.opacity(0.6),
-                                                Color.white.opacity(0.2),
+                                                Color.white.opacity(0.6), Color.white.opacity(0.2),
                                             ],
                                             startPoint: .topLeading,
                                             endPoint: .bottomTrailing
@@ -248,27 +193,20 @@ struct StreakAchievementAlert: View {
                     RoundedRectangle(cornerRadius: 25)
                         .fill(
                             LinearGradient(
-                                colors: [
-                                    Theme.mutedPurple,
-                                    Theme.blueishPurple,
-                                ],
+                                colors: [Theme.mutedPurple, Theme.blueishPurple],
                                 startPoint: .top,
                                 endPoint: .bottom
                             )
                         )
 
                     // Glass effect
-                    RoundedRectangle(cornerRadius: 25)
-                        .fill(Color.white.opacity(0.05))
+                    RoundedRectangle(cornerRadius: 25).fill(Color.white.opacity(0.05))
 
                     // Border glow
                     RoundedRectangle(cornerRadius: 25)
                         .stroke(
                             LinearGradient(
-                                colors: [
-                                    mainColor.opacity(0.8),
-                                    mainColor.opacity(0.2),
-                                ],
+                                colors: [mainColor.opacity(0.8), mainColor.opacity(0.2)],
                                 startPoint: .topLeading,
                                 endPoint: .bottomTrailing
                             ),
@@ -276,27 +214,18 @@ struct StreakAchievementAlert: View {
                         )
                 }
             )
-            .frame(maxWidth: 350)
-            .shadow(color: Color.black.opacity(0.3), radius: 20)
-            .scaleEffect(isPresented ? 1 : 0.5)
-            .opacity(isPresented ? 1 : 0)
-            .animation(
-                .spring(response: 0.4, dampingFraction: 0.8), value: isPresented
-            )
+            .frame(maxWidth: 350).shadow(color: Color.black.opacity(0.3), radius: 20)
+            .scaleEffect(isPresented ? 1 : 0.5).opacity(isPresented ? 1 : 0)
+            .animation(.spring(response: 0.4, dampingFraction: 0.8), value: isPresented)
 
             // Confetti effect
             if showConfetti {
-                ConfettiView(colors: [
-                    mainColor, .white, .yellow, mainColor.opacity(0.5),
-                ])
+                ConfettiView(colors: [mainColor, .white, .yellow, mainColor.opacity(0.5)])
             }
         }
         .onAppear {
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-                withAnimation(
-                    Animation.linear(duration: 3).repeatForever(
-                        autoreverses: false)
-                ) {
+                withAnimation(Animation.linear(duration: 3).repeatForever(autoreverses: false)) {
                     animateShine = true
                 }
                 withAnimation {
@@ -328,39 +257,32 @@ extension ScoreManager {
 
     // Updated processSession method to track streak achievement
     func processSessionWithAchievementCheck(
-        duration: Int, wasSuccessful: Bool, actualDuration: Int,
+        duration: Int,
+        wasSuccessful: Bool,
+        actualDuration: Int,
         pausesEnabled: Bool
-    ) -> (
-        rankPromotion: (Bool, (String, Color))?,
-        streakAchievement: (Bool, StreakStatus, Int)?
-    ) {
-        guard let _userId = Auth.auth().currentUser?.uid else {
-            return (nil, nil)
-        }
+    ) -> (rankPromotion: (Bool, (String, Color))?, streakAchievement: (Bool, StreakStatus, Int)?) {
+        guard let _userId = Auth.auth().currentUser?.uid else { return (nil, nil) }
 
         let oldScore = currentScore
         let oldStreakStatus = streakStatus
 
         // Call the regular process session method
         processSession(
-            duration: duration, wasSuccessful: wasSuccessful,
-            actualDuration: actualDuration, pausesEnabled: pausesEnabled)
+            duration: duration,
+            wasSuccessful: wasSuccessful,
+            actualDuration: actualDuration,
+            pausesEnabled: pausesEnabled
+        )
 
         // Check both rank promotion and streak achievement
-        let rankPromotion = checkForRankPromotion(
-            oldScore: oldScore, newScore: currentScore)
+        let rankPromotion = checkForRankPromotion(oldScore: oldScore, newScore: currentScore)
 
         let streakAchievement: (Bool, StreakStatus, Int)? =
-            if let achievement = checkForStreakAchievement(
-                oldStatus: oldStreakStatus)
-            {
-                (
-                    achievement.shouldShow, achievement.newStatus,
-                    achievement.count
-                )
-            } else {
-                nil
+            if let achievement = checkForStreakAchievement(oldStatus: oldStreakStatus) {
+                (achievement.shouldShow, achievement.newStatus, achievement.count)
             }
+            else { nil }
 
         return (rankPromotion, streakAchievement)
     }

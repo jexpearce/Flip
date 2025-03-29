@@ -15,25 +15,18 @@ class NotificationListener {
         print("Resetting all notifications for user: \(currentUserId)")
 
         // First reset the badge count immediately
-        DispatchQueue.main.async {
-            UIApplication.shared.applicationIconBadgeNumber = 0
-        }
+        DispatchQueue.main.async { UIApplication.shared.applicationIconBadgeNumber = 0 }
 
         // Then mark all existing notifications as read
-        db.collection("users")
-            .document(currentUserId)
-            .collection("notifications")
+        db.collection("users").document(currentUserId).collection("notifications")
             .whereField("read", isEqualTo: false)
             .getDocuments { [weak self] snapshot, error in
                 if let error = error {
-                    print(
-                        "Error getting notifications: \(error.localizedDescription)"
-                    )
+                    print("Error getting notifications: \(error.localizedDescription)")
                     return
                 }
 
-                guard let documents = snapshot?.documents, !documents.isEmpty
-                else {
+                guard let documents = snapshot?.documents, !documents.isEmpty else {
                     print("No unread notifications to reset")
                     return
                 }
@@ -44,10 +37,8 @@ class NotificationListener {
                 let batch = self?.db.batch()
 
                 for document in documents {
-                    let docRef = self?.db.collection("users")
-                        .document(currentUserId)
-                        .collection("notifications")
-                        .document(document.documentID)
+                    let docRef = self?.db.collection("users").document(currentUserId)
+                        .collection("notifications").document(document.documentID)
 
                     if let docRef = docRef {
                         batch?.updateData(["read": true], forDocument: docRef)
@@ -55,15 +46,17 @@ class NotificationListener {
                 }
 
                 // Commit the batch
-                batch?.commit { error in
-                    if let error = error {
-                        print(
-                            "Error marking notifications as read: \(error.localizedDescription)"
-                        )
-                    } else {
-                        print("Successfully marked all notifications as read")
+                batch?
+                    .commit { error in
+                        if let error = error {
+                            print(
+                                "Error marking notifications as read: \(error.localizedDescription)"
+                            )
+                        }
+                        else {
+                            print("Successfully marked all notifications as read")
+                        }
                     }
-                }
             }
     }
 
@@ -74,17 +67,15 @@ class NotificationListener {
         }
 
         // Request notification permission if needed
-        UNUserNotificationCenter.current().requestAuthorization(options: [
-            .alert, .sound, .badge,
-        ]) { granted, error in
-            if granted {
-                print("Notification permission granted")
-            } else if let error = error {
-                print(
-                    "Error requesting notification permission: \(error.localizedDescription)"
-                )
+        UNUserNotificationCenter.current()
+            .requestAuthorization(options: [.alert, .sound, .badge]) { granted, error in
+                if granted {
+                    print("Notification permission granted")
+                }
+                else if let error = error {
+                    print("Error requesting notification permission: \(error.localizedDescription)")
+                }
             }
-        }
 
         // Stop any existing listener
         stopListening()
@@ -94,21 +85,17 @@ class NotificationListener {
         lastNotificationTimestamp = Timestamp(date: Date())
         UserDefaults.standard.set(
             lastNotificationTimestamp!.seconds,
-            forKey: "lastNotificationTimestamp")
-
-        print("Starting notification listener for user: \(currentUserId)")
-        print(
-            "Will only listen for notifications after: \(lastNotificationTimestamp!.dateValue())"
+            forKey: "lastNotificationTimestamp"
         )
 
+        print("Starting notification listener for user: \(currentUserId)")
+        print("Will only listen for notifications after: \(lastNotificationTimestamp!.dateValue())")
+
         // Reset badge count on start
-        DispatchQueue.main.async {
-            UIApplication.shared.applicationIconBadgeNumber = 0
-        }
+        DispatchQueue.main.async { UIApplication.shared.applicationIconBadgeNumber = 0 }
 
         // Listen for new notifications
-        notificationListener = db.collection("users")
-            .document(currentUserId)
+        notificationListener = db.collection("users").document(currentUserId)
             .collection("notifications")
             .whereField("timestamp", isGreaterThan: lastNotificationTimestamp!)
             .addSnapshotListener { [weak self] snapshot, error in
@@ -145,10 +132,10 @@ class NotificationListener {
                 if let timestamp = newestTimestamp {
                     self?.lastNotificationTimestamp = timestamp
                     UserDefaults.standard.set(
-                        timestamp.seconds, forKey: "lastNotificationTimestamp")
-                    print(
-                        "Updated last notification timestamp to: \(timestamp.dateValue())"
+                        timestamp.seconds,
+                        forKey: "lastNotificationTimestamp"
                     )
+                    print("Updated last notification timestamp to: \(timestamp.dateValue())")
 
                     // Update badge count
                     self?.updateBadgeCount()
@@ -164,8 +151,8 @@ class NotificationListener {
         case "session_failure":
             // Check if friend failure notifications are enabled in settings
             if UserSettingsManager.shared.areFriendFailureNotificationsEnabled {
-                if let message = data["message"] as? String,
-                    let silent = data["silent"] as? Bool, !silent
+                if let message = data["message"] as? String, let silent = data["silent"] as? Bool,
+                    !silent
                 {
                     // Show local notification only if not silent and enabled in settings
                     NotificationManager.shared.display(
@@ -176,10 +163,9 @@ class NotificationListener {
                     )
                     print("Displayed session failure notification: \(message)")
                 }
-            } else {
-                print(
-                    "Friend failure notification suppressed - disabled in settings"
-                )
+            }
+            else {
+                print("Friend failure notification suppressed - disabled in settings")
             }
         case "comment":
             // Check if comment notifications are enabled in settings
@@ -193,10 +179,10 @@ class NotificationListener {
                         categoryIdentifier: "COMMENT",
                         silent: true
                     )
-                    print(
-                        "Displayed comment notification from: \(fromUsername)")
+                    print("Displayed comment notification from: \(fromUsername)")
                 }
-            } else {
+            }
+            else {
                 print("Comment notification suppressed - disabled in settings")
             }
 
@@ -209,9 +195,7 @@ class NotificationListener {
                     categoryIdentifier: "FRIEND_REQUEST",
                     silent: true
                 )
-                print(
-                    "Displayed friend request notification from: \(fromUsername)"
-                )
+                print("Displayed friend request notification from: \(fromUsername)")
             }
 
         default:
@@ -230,22 +214,16 @@ class NotificationListener {
     func updateBadgeCount() {
         guard let currentUserId = Auth.auth().currentUser?.uid else { return }
 
-        db.collection("users")
-            .document(currentUserId)
-            .collection("notifications")
+        db.collection("users").document(currentUserId).collection("notifications")
             .whereField("read", isEqualTo: false)
             .getDocuments { snapshot, error in
                 if let error = error {
-                    print(
-                        "Error getting unread notifications: \(error.localizedDescription)"
-                    )
+                    print("Error getting unread notifications: \(error.localizedDescription)")
                     return
                 }
 
                 let count = snapshot?.documents.count ?? 0
-                DispatchQueue.main.async {
-                    UIApplication.shared.applicationIconBadgeNumber = count
-                }
+                DispatchQueue.main.async { UIApplication.shared.applicationIconBadgeNumber = count }
             }
     }
 }

@@ -17,9 +17,7 @@ class AuthManager: ObservableObject {
         updateAuthState()
 
         // Listen for auth state changes
-        _ = Auth.auth().addStateDidChangeListener { [weak self] _, user in
-            self?.updateAuthState()
-        }
+        _ = Auth.auth().addStateDidChangeListener { [weak self] _, user in self?.updateAuthState() }
     }
 
     private func updateAuthState() {
@@ -29,10 +27,8 @@ class AuthManager: ObservableObject {
         }
     }
 
-    func signUp(
-        email: String, password: String, username: String,
-        completion: @escaping () -> Void
-    ) {
+    func signUp(email: String, password: String, username: String, completion: @escaping () -> Void)
+    {
         guard !username.isEmpty else {
             DispatchQueue.main.async {
                 self.alertMessage = "Please enter a username"
@@ -45,8 +41,7 @@ class AuthManager: ObservableObject {
         // Check username length
         if username.count < 3 || username.count > 20 {
             DispatchQueue.main.async {
-                self.alertMessage =
-                    "Username must be between 3 and 20 characters"
+                self.alertMessage = "Username must be between 3 and 20 characters"
                 self.showAlert = true
                 completion()
             }
@@ -80,12 +75,9 @@ class AuthManager: ObservableObject {
                 guard let self = self else { return }
 
                 if let error = error {
-                    print(
-                        "Error checking username: \(error.localizedDescription)"
-                    )
+                    print("Error checking username: \(error.localizedDescription)")
                     DispatchQueue.main.async {
-                        self.alertMessage =
-                            "An error occurred. Please try again."
+                        self.alertMessage = "An error occurred. Please try again."
                         self.showAlert = true
                         completion()
                     }
@@ -103,134 +95,121 @@ class AuthManager: ObservableObject {
                 }
 
                 // Create user account
-                Auth.auth().createUser(withEmail: email, password: password) {
-                    [weak self] result, error in
-                    guard let self = self else { return }
+                Auth.auth()
+                    .createUser(withEmail: email, password: password) { [weak self] result, error in
+                        guard let self = self else { return }
 
-                    if let error = error {
-                        DispatchQueue.main.async {
-                            self.alertMessage = self.handleAuthError(error)
-                            self.showAlert = true
-                            completion()
-                        }
-                        return
-                    }
-
-                    guard let user = result?.user else {
-                        DispatchQueue.main.async {
-                            self.alertMessage = "Unknown error occurred"
-                            self.showAlert = true
-                            completion()
-                        }
-                        return
-                    }
-
-                    // Set display name
-                    let changeRequest = user.createProfileChangeRequest()
-                    changeRequest.displayName = username
-                    changeRequest.commitChanges { error in
                         if let error = error {
-                            print(
-                                "Error updating display name: \(error.localizedDescription)"
-                            )
-                        }
-                    }
-
-                    // Create user document in Firestore
-                    let userData: [String: Any] = [
-                        "id": user.uid,
-                        "username": username,
-                        "email": email,
-                        "totalFocusTime": 0,
-                        "totalSessions": 0,
-                        "longestSession": 0,
-                        "friends": [],
-                        "friendRequests": [],
-                        "sentRequests": [],
-                        "createdAt": FieldValue.serverTimestamp(),
-                    ]
-
-                    db.collection("users").document(user.uid).setData(userData) { error in
-                        DispatchQueue.main.async {
-                            if let error = error {
-                                print(
-                                    "Error saving user data: \(error.localizedDescription)"
-                                )
-                                self.alertMessage =
-                                    "Account created but failed to save user data"
+                            DispatchQueue.main.async {
+                                self.alertMessage = self.handleAuthError(error)
                                 self.showAlert = true
-                            } else {
-                                // Set the success flag for custom notification
-                                self.signUpSuccess = true
-                                // After success (where you set self.signUpSuccess = true)
-                                FirebaseManager.shared
-                                    .ensureFirstTimeExperience()
-                                print(
-                                    "User created successfully with ID: \(user.uid)"
-                                )
-
-                                // Store the current user in FirebaseManager
-                                let flipUser = FirebaseManager.FlipUser(
-                                    id: user.uid,
-                                    username: username,
-                                    totalFocusTime: 0,
-                                    totalSessions: 0,
-                                    longestSession: 0,
-                                    friends: [],
-                                    friendRequests: [],
-                                    sentRequests: [],
-                                    profileImageURL: nil
-                                )
-                                FirebaseManager.shared.currentUser = flipUser
+                                completion()
                             }
-                            completion()
+                            return
                         }
+
+                        guard let user = result?.user else {
+                            DispatchQueue.main.async {
+                                self.alertMessage = "Unknown error occurred"
+                                self.showAlert = true
+                                completion()
+                            }
+                            return
+                        }
+
+                        // Set display name
+                        let changeRequest = user.createProfileChangeRequest()
+                        changeRequest.displayName = username
+                        changeRequest.commitChanges { error in
+                            if let error = error {
+                                print("Error updating display name: \(error.localizedDescription)")
+                            }
+                        }
+
+                        // Create user document in Firestore
+                        let userData: [String: Any] = [
+                            "id": user.uid, "username": username, "email": email,
+                            "totalFocusTime": 0, "totalSessions": 0, "longestSession": 0,
+                            "friends": [], "friendRequests": [], "sentRequests": [],
+                            "createdAt": FieldValue.serverTimestamp(),
+                        ]
+
+                        db.collection("users").document(user.uid)
+                            .setData(userData) { error in
+                                DispatchQueue.main.async {
+                                    if let error = error {
+                                        print(
+                                            "Error saving user data: \(error.localizedDescription)"
+                                        )
+                                        self.alertMessage =
+                                            "Account created but failed to save user data"
+                                        self.showAlert = true
+                                    }
+                                    else {
+                                        // Set the success flag for custom notification
+                                        self.signUpSuccess = true
+                                        // After success (where you set self.signUpSuccess = true)
+                                        FirebaseManager.shared.ensureFirstTimeExperience()
+                                        print("User created successfully with ID: \(user.uid)")
+
+                                        // Store the current user in FirebaseManager
+                                        let flipUser = FirebaseManager.FlipUser(
+                                            id: user.uid,
+                                            username: username,
+                                            totalFocusTime: 0,
+                                            totalSessions: 0,
+                                            longestSession: 0,
+                                            friends: [],
+                                            friendRequests: [],
+                                            sentRequests: [],
+                                            profileImageURL: nil
+                                        )
+                                        FirebaseManager.shared.currentUser = flipUser
+                                    }
+                                    completion()
+                                }
+                            }
                     }
-                }
             }
     }
 
-    func signIn(
-        email: String, password: String, completion: @escaping (Bool) -> Void
-    ) {
-        Auth.auth().signIn(withEmail: email, password: password) {
-            [weak self] result, error in
-            guard let self = self else { return }
+    func signIn(email: String, password: String, completion: @escaping (Bool) -> Void) {
+        Auth.auth()
+            .signIn(withEmail: email, password: password) { [weak self] result, error in
+                guard let self = self else { return }
 
-            if let error = error {
-                DispatchQueue.main.async {
-                    self.alertMessage = self.handleAuthError(error)
-                    self.showAlert = true
-                    completion(false)
+                if let error = error {
+                    DispatchQueue.main.async {
+                        self.alertMessage = self.handleAuthError(error)
+                        self.showAlert = true
+                        completion(false)
+                    }
+                    return
                 }
-                return
-            }
 
-            guard let user = result?.user else {
-                DispatchQueue.main.async {
-                    self.alertMessage = "Unknown error occurred"
-                    self.showAlert = true
-                    completion(false)
+                guard let user = result?.user else {
+                    DispatchQueue.main.async {
+                        self.alertMessage = "Unknown error occurred"
+                        self.showAlert = true
+                        completion(false)
+                    }
+                    return
                 }
-                return
-            }
-            UserSettingsManager.shared.onUserSignIn()
+                UserSettingsManager.shared.onUserSignIn()
 
-            // Load user data from Firestore
-            self.loadUserData(userId: user.uid) {
-                // Check if this is a first-time user AFTER loading data
-                if UserDefaults.standard.bool(
-                    forKey: "isPotentialFirstTimeUser")
-                {
-                    // DON'T trigger permissions directly - let the InitialView do it
-                    // DON'T reset the flag here
-                    print(
-                        "First-time user detected after login - InitialView will handle permissions"
-                    )
+                // Load user data from Firestore
+                self.loadUserData(userId: user.uid) {
+                    // Check if this is a first-time user AFTER loading data
+                    if UserDefaults.standard.bool(forKey: "isPotentialFirstTimeUser") {
+                        // DON'T trigger permissions directly - let the InitialView do it
+                        // DON'T reset the flag here
+                        print(
+                            "First-time user detected after login - InitialView will handle permissions"
+                        )
+                    }
+                    completion(true)
                 }
-                completion(true)
             }
-        }
     }
 
     func signOut() {
@@ -240,63 +219,62 @@ class AuthManager: ObservableObject {
 
         do {
             try Auth.auth().signOut()
-            DispatchQueue.main.async {
-                self.updateAuthState()
-            }
-        } catch {
-            print("Error signing out: \(error.localizedDescription)")
+            DispatchQueue.main.async { self.updateAuthState() }
         }
+        catch { print("Error signing out: \(error.localizedDescription)") }
     }
 
     private func loadUserData(userId: String, completion: @escaping () -> Void) {
         let db = Firestore.firestore()
-        db.collection("users").document(userId).getDocument { document, error in
-            if let error = error {
-                print("Error fetching user data: \(error.localizedDescription)")
-                completion()
-                return
-            }
+        db.collection("users").document(userId)
+            .getDocument { document, error in
+                if let error = error {
+                    print("Error fetching user data: \(error.localizedDescription)")
+                    completion()
+                    return
+                }
 
-            guard let userData = document?.data() else {
-                print("No user data found")
-                completion()
-                return
-            }
+                guard let userData = document?.data() else {
+                    print("No user data found")
+                    completion()
+                    return
+                }
 
-            // Parse user data
-            if let username = userData["username"] as? String,
-                let totalFocusTime = userData["totalFocusTime"] as? Int,
-                let totalSessions = userData["totalSessions"] as? Int,
-                let longestSession = userData["longestSession"] as? Int,
-                let friends = userData["friends"] as? [String],
-                let friendRequests = userData["friendRequests"] as? [String],
-                let sentRequests = userData["sentRequests"] as? [String]
-            {
+                // Parse user data
+                if let username = userData["username"] as? String,
+                    let totalFocusTime = userData["totalFocusTime"] as? Int,
+                    let totalSessions = userData["totalSessions"] as? Int,
+                    let longestSession = userData["longestSession"] as? Int,
+                    let friends = userData["friends"] as? [String],
+                    let friendRequests = userData["friendRequests"] as? [String],
+                    let sentRequests = userData["sentRequests"] as? [String]
+                {
 
-                let profileImageURL = userData["profileImageURL"] as? String
+                    let profileImageURL = userData["profileImageURL"] as? String
 
-                let flipUser = FirebaseManager.FlipUser(
-                    id: userId,
-                    username: username,
-                    totalFocusTime: totalFocusTime,
-                    totalSessions: totalSessions,
-                    longestSession: longestSession,
-                    friends: friends,
-                    friendRequests: friendRequests,
-                    sentRequests: sentRequests,
-                    profileImageURL: profileImageURL
-                )
+                    let flipUser = FirebaseManager.FlipUser(
+                        id: userId,
+                        username: username,
+                        totalFocusTime: totalFocusTime,
+                        totalSessions: totalSessions,
+                        longestSession: longestSession,
+                        friends: friends,
+                        friendRequests: friendRequests,
+                        sentRequests: sentRequests,
+                        profileImageURL: profileImageURL
+                    )
 
-                // Store user in Firebase Manager
-                DispatchQueue.main.async {
-                    FirebaseManager.shared.currentUser = flipUser
+                    // Store user in Firebase Manager
+                    DispatchQueue.main.async {
+                        FirebaseManager.shared.currentUser = flipUser
+                        completion()
+                    }
+                }
+                else {
+                    print("Failed to parse user data")
                     completion()
                 }
-            } else {
-                print("Failed to parse user data")
-                completion()
             }
-        }
     }
 
     // Helper method to validate email format
@@ -308,37 +286,27 @@ class AuthManager: ObservableObject {
 
     // Helper to convert Firebase Auth errors to user-friendly messages
     private func handleAuthError(_ error: Error) -> String {
-        guard let errorCode = error as NSError? else {
-            return "An unknown error occurred"
-        }
+        guard let errorCode = error as NSError? else { return "An unknown error occurred" }
 
         switch errorCode.code {
-        case AuthErrorCode.invalidEmail.rawValue:
-            return "Invalid email address"
-        case AuthErrorCode.wrongPassword.rawValue:
-            return "Incorrect password"
-        case AuthErrorCode.userNotFound.rawValue:
-            return "Account not found"
-        case AuthErrorCode.userDisabled.rawValue:
-            return "This account has been disabled"
-        case AuthErrorCode.emailAlreadyInUse.rawValue:
-            return "This email is already registered"
-        case AuthErrorCode.weakPassword.rawValue:
-            return "Password is too weak"
+        case AuthErrorCode.invalidEmail.rawValue: return "Invalid email address"
+        case AuthErrorCode.wrongPassword.rawValue: return "Incorrect password"
+        case AuthErrorCode.userNotFound.rawValue: return "Account not found"
+        case AuthErrorCode.userDisabled.rawValue: return "This account has been disabled"
+        case AuthErrorCode.emailAlreadyInUse.rawValue: return "This email is already registered"
+        case AuthErrorCode.weakPassword.rawValue: return "Password is too weak"
         case AuthErrorCode.networkError.rawValue:
             return "Network error. Please check your connection"
         case AuthErrorCode.tooManyRequests.rawValue:
             return "Too many attempts. Please try again later"
-        default:
-            return "An error occurred: \(error.localizedDescription)"
+        default: return "An error occurred: \(error.localizedDescription)"
         }
     }
 }
 
 extension AuthManager {
     func signInWithGoogle(completion: @escaping (Bool) -> Void) {
-        guard let rootViewController = UIApplication.shared.topViewController()
-        else {
+        guard let rootViewController = UIApplication.shared.topViewController() else {
             alertMessage = "Could not get root view controller"
             showAlert = true
             completion(false)
@@ -350,16 +318,13 @@ extension AuthManager {
             guard let self = self else { return }
 
             if let error = error {
-                self.alertMessage =
-                    "Google Sign-In failed: \(error.localizedDescription)"
+                self.alertMessage = "Google Sign-In failed: \(error.localizedDescription)"
                 self.showAlert = true
                 completion(false)
                 return
             }
 
-            guard let user = result?.user,
-                let idToken = user.idToken?.tokenString
-            else {
+            guard let user = result?.user, let idToken = user.idToken?.tokenString else {
                 self.alertMessage = "Missing authentication data"
                 self.showAlert = true
                 completion(false)
@@ -371,83 +336,65 @@ extension AuthManager {
                 accessToken: user.accessToken.tokenString
             )
 
-            Auth.auth().signIn(with: credential) {
-                [weak self] authResult, error in
-                guard let self = self else { return }
+            Auth.auth()
+                .signIn(with: credential) { [weak self] authResult, error in
+                    guard let self = self else { return }
 
-                if let error = error {
-                    self.alertMessage = self.handleAuthError(error)
-                    self.showAlert = true
-                    completion(false)
-                    return
-                }
+                    if let error = error {
+                        self.alertMessage = self.handleAuthError(error)
+                        self.showAlert = true
+                        completion(false)
+                        return
+                    }
 
-                guard let user = authResult?.user else {
-                    self.alertMessage = "Authentication failed"
-                    self.showAlert = true
-                    completion(false)
-                    return
-                }
+                    guard let user = authResult?.user else {
+                        self.alertMessage = "Authentication failed"
+                        self.showAlert = true
+                        completion(false)
+                        return
+                    }
 
-                // Handle new users
-                if authResult?.additionalUserInfo?.isNewUser == true {
-                    self.createGoogleUserDocument(user: user) {
-                        self.loadUserData(userId: user.uid) {
-                            completion(true)
+                    // Handle new users
+                    if authResult?.additionalUserInfo?.isNewUser == true {
+                        self.createGoogleUserDocument(user: user) {
+                            self.loadUserData(userId: user.uid) { completion(true) }
                         }
                     }
-                } else {
-                    self.loadUserData(userId: user.uid) {
-                        completion(true)
+                    else {
+                        self.loadUserData(userId: user.uid) { completion(true) }
                     }
                 }
-            }
         }
     }
 
-    private func createGoogleUserDocument(
-        user: User, completion: @escaping () -> Void
-    ) {
+    private func createGoogleUserDocument(user: User, completion: @escaping () -> Void) {
         let db = Firestore.firestore()
         let userData: [String: Any] = [
-            "id": user.uid,
-            "username": user.displayName
-                ?? "User\(Int.random(in: 1000...9999))",
-            "email": user.email ?? "",
-            "totalFocusTime": 0,
-            "totalSessions": 0,
-            "longestSession": 0,
-            "friends": [],
-            "friendRequests": [],
-            "sentRequests": [],
+            "id": user.uid, "username": user.displayName ?? "User\(Int.random(in: 1000...9999))",
+            "email": user.email ?? "", "totalFocusTime": 0, "totalSessions": 0, "longestSession": 0,
+            "friends": [], "friendRequests": [], "sentRequests": [],
             "createdAt": FieldValue.serverTimestamp(),
         ]
 
-        db.collection("users").document(user.uid).setData(userData) { error in
-            if let error = error {
-                print(
-                    "Error creating user document: \(error.localizedDescription)"
-                )
+        db.collection("users").document(user.uid)
+            .setData(userData) { error in
+                if let error = error {
+                    print("Error creating user document: \(error.localizedDescription)")
+                }
+                completion()
             }
-            completion()
-        }
     }
 }
 
 extension UIApplication {
     func topViewController() -> UIViewController? {
         guard let windowScene = connectedScenes.first as? UIWindowScene,
-            let rootViewController = windowScene.windows.first(where: {
-                $0.isKeyWindow
-            })?.rootViewController
-        else {
-            return nil
-        }
+            let rootViewController = windowScene.windows.first(where: { $0.isKeyWindow })?
+                .rootViewController
+        else { return nil }
 
         var topController = rootViewController
-        while let presentedViewController = topController
-            .presentedViewController
-        {
+        while let presentedViewController = topController.presentedViewController {
             topController = presentedViewController
         }
         return topController

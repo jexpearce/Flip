@@ -26,7 +26,8 @@ struct FriendLocation: Identifiable, Equatable {
             // For historical sessions, return the actual duration that was completed
             let seconds = lastFlipTime.timeIntervalSince(sessionStartTime)
             return Int(seconds / 60)
-        } else {
+        }
+        else {
             // For current sessions, calculate from current time
             let seconds = Date().timeIntervalSince(sessionStartTime)
             return Int(seconds / 60)
@@ -36,8 +37,7 @@ struct FriendLocation: Identifiable, Equatable {
     var sessionTimeAgo: String {
         let formatter = RelativeDateTimeFormatter()
         formatter.unitsStyle = .short
-        return formatter.localizedString(
-            for: sessionStartTime, relativeTo: Date())
+        return formatter.localizedString(for: sessionStartTime, relativeTo: Date())
     }
 
     var formattedStartTime: String {
@@ -54,7 +54,8 @@ struct FriendLocation: Identifiable, Equatable {
 
         if hours > 0 {
             return "\(hours)h \(remainingMinutes)m"
-        } else {
+        }
+        else {
             return "\(minutes)m"
         }
     }
@@ -68,8 +69,7 @@ struct FriendLocation: Identifiable, Equatable {
             && lhs.lastFlipTime == rhs.lastFlipTime
             && lhs.lastFlipWasSuccessful == rhs.lastFlipWasSuccessful
             && lhs.sessionDuration == rhs.sessionDuration
-            && lhs.sessionStartTime == rhs.sessionStartTime
-            && lhs.isHistorical == rhs.isHistorical
+            && lhs.sessionStartTime == rhs.sessionStartTime && lhs.isHistorical == rhs.isHistorical
             && lhs.sessionIndex == rhs.sessionIndex
     }
 }
@@ -86,42 +86,31 @@ class MapPrivacyViewModel: ObservableObject {
     @Published var showSessionHistory: Bool = true
     private let db = Firestore.firestore()
 
-    init() {
-        loadSettings()
-    }
+    init() { loadSettings() }
 
     func loadSettings() {
         guard let userId = Auth.auth().currentUser?.uid else { return }
 
-        db.collection("users").document(userId).collection("settings").document(
-            "mapPrivacy"
-        )
-        .getDocument { [weak self] document, error in
-            guard let self = self else { return }
+        db.collection("users").document(userId).collection("settings").document("mapPrivacy")
+            .getDocument { [weak self] document, error in
+                guard let self = self else { return }
 
-            if let document = document, document.exists {
-                if let visibilityString = document.data()?["visibilityLevel"]
-                    as? String,
-                    let level = LocationVisibilityLevel(
-                        rawValue: visibilityString)
-                {
-                    DispatchQueue.main.async {
-                        self.visibilityLevel = level
+                if let document = document, document.exists {
+                    if let visibilityString = document.data()?["visibilityLevel"] as? String,
+                        let level = LocationVisibilityLevel(rawValue: visibilityString)
+                    {
+                        DispatchQueue.main.async { self.visibilityLevel = level }
+                    }
+
+                    if let showHistory = document.data()?["showSessionHistory"] as? Bool {
+                        DispatchQueue.main.async { self.showSessionHistory = showHistory }
                     }
                 }
-
-                if let showHistory = document.data()?["showSessionHistory"]
-                    as? Bool
-                {
-                    DispatchQueue.main.async {
-                        self.showSessionHistory = showHistory
-                    }
+                else {
+                    // Create default settings if they don't exist
+                    self.saveSettings()
                 }
-            } else {
-                // Create default settings if they don't exist
-                self.saveSettings()
             }
-        }
     }
 
     func updateVisibilityLevel(_ level: LocationVisibilityLevel) {
@@ -138,21 +127,16 @@ class MapPrivacyViewModel: ObservableObject {
         guard let userId = Auth.auth().currentUser?.uid else { return }
 
         let settings: [String: Any] = [
-            "visibilityLevel": visibilityLevel.rawValue,
-            "showSessionHistory": showSessionHistory,
+            "visibilityLevel": visibilityLevel.rawValue, "showSessionHistory": showSessionHistory,
             "lastUpdated": FieldValue.serverTimestamp(),
         ]
 
-        db.collection("users").document(userId).collection("settings").document(
-            "mapPrivacy"
-        )
-        .setData(settings, merge: true) { error in
-            if let error = error {
-                print(
-                    "Error saving map privacy settings: \(error.localizedDescription)"
-                )
+        db.collection("users").document(userId).collection("settings").document("mapPrivacy")
+            .setData(settings, merge: true) { error in
+                if let error = error {
+                    print("Error saving map privacy settings: \(error.localizedDescription)")
+                }
             }
-        }
     }
 }
 
@@ -193,15 +177,14 @@ class MapViewModel: NSObject, ObservableObject, CLLocationManagerDelegate {
             locationManager.startUpdatingLocation()
 
             // Setup refresh timer
-            locationUpdateTimer = Timer.scheduledTimer(
-                withTimeInterval: 60, repeats: true
-            ) { [weak self] _ in
-                self?.refreshLocations()
+            locationUpdateTimer = Timer.scheduledTimer(withTimeInterval: 60, repeats: true) {
+                [weak self] _ in self?.refreshLocations()
             }
 
             // Start listening for friend locations
             startListeningForLocationUpdates()
-        } else {
+        }
+        else {
             // Don't request permission here - log it instead
             print("Map location tracking deferred until permission is granted")
 
@@ -220,9 +203,7 @@ class MapViewModel: NSObject, ObservableObject, CLLocationManagerDelegate {
         // Invalidate refresh timer
         locationUpdateTimer?.invalidate()
         locationUpdateTimer = nil
-        Task { @MainActor in
-            LocationHandler.shared.completelyStopLocationUpdates()
-        }
+        Task { @MainActor in LocationHandler.shared.completelyStopLocationUpdates() }
 
         print("Map location tracking stopped")
     }
@@ -243,18 +224,14 @@ class MapViewModel: NSObject, ObservableObject, CLLocationManagerDelegate {
         ProfileImageCache.shared.clearCache()
 
         // Start with a clean slate for friend locations
-        DispatchQueue.main.async {
-            self.friendLocations = []
-        }
+        DispatchQueue.main.async { self.friendLocations = [] }
 
         // Fresh reload of friend locations with delay to ensure clean state
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
             self.startListeningForLocationUpdates()
 
             // Set a timeout to mark refresh as completed
-            DispatchQueue.main.asyncAfter(deadline: .now() + 5.0) {
-                self.refreshInProgress = false
-            }
+            DispatchQueue.main.asyncAfter(deadline: .now() + 5.0) { self.refreshInProgress = false }
         }
     }
 
@@ -264,8 +241,7 @@ class MapViewModel: NSObject, ObservableObject, CLLocationManagerDelegate {
         withAnimation {
             region = MKCoordinateRegion(
                 center: userLocation,
-                span: MKCoordinateSpan(
-                    latitudeDelta: 0.01, longitudeDelta: 0.01)
+                span: MKCoordinateSpan(latitudeDelta: 0.01, longitudeDelta: 0.01)
             )
         }
     }
@@ -276,84 +252,80 @@ class MapViewModel: NSObject, ObservableObject, CLLocationManagerDelegate {
         guard let currentUserId = Auth.auth().currentUser?.uid else { return }
 
         // Get user's privacy settings first
-        db.collection("users").document(currentUserId).collection("settings")
-            .document("mapPrivacy")
+        db.collection("users").document(currentUserId).collection("settings").document("mapPrivacy")
             .getDocument { [weak self] document, error in
                 guard let self = self else { return }
 
                 let showHistory: Bool
-                if let document = document, document.exists,
-                    let data = document.data(),
+                if let document = document, document.exists, let data = document.data(),
                     let showHistorySetting = data["showSessionHistory"] as? Bool
                 {
                     showHistory = showHistorySetting
-                } else {
+                }
+                else {
                     showHistory = true  // Default to showing history if setting not found
                 }
 
                 // Get the user's friends list
-                self.db.collection("users").document(currentUserId).getDocument {
-                    [weak self] document, error in
-                    guard let self = self,
-                        let userData = try? document?.data(
-                            as: FirebaseManager.FlipUser.self)
-                    else { return }
+                self.db.collection("users").document(currentUserId)
+                    .getDocument { [weak self] document, error in
+                        guard let self = self,
+                            let userData = try? document?.data(as: FirebaseManager.FlipUser.self)
+                        else { return }
 
-                    // Include the current user and their friends
-                    var userIds = userData.friends
-                    userIds.append(currentUserId)
+                        // Include the current user and their friends
+                        var userIds = userData.friends
+                        userIds.append(currentUserId)
 
-                    // FIRST: Clear existing listeners
-                    self.locationListener?.remove()
+                        // FIRST: Clear existing listeners
+                        self.locationListener?.remove()
 
-                    // SECOND: Listen for ACTIVE SESSIONS first
-                    self.listenForActiveSessions(userIds: userIds)
+                        // SECOND: Listen for ACTIVE SESSIONS first
+                        self.listenForActiveSessions(userIds: userIds)
 
-                    // THIRD: Only if user has opted to see history, fetch past sessions
-                    if showHistory {
-                        // Wait a bit to ensure active sessions are processed first
-                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-                            // Fetch historical sessions for EACH user, limited to 3 per user
-                            let dispatchGroup = DispatchGroup()
-                            var historicalLocations: [FriendLocation] = []
+                        // THIRD: Only if user has opted to see history, fetch past sessions
+                        if showHistory {
+                            // Wait a bit to ensure active sessions are processed first
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                                // Fetch historical sessions for EACH user, limited to 3 per user
+                                let dispatchGroup = DispatchGroup()
+                                var historicalLocations: [FriendLocation] = []
 
-                            for userId in userIds {
-                                dispatchGroup.enter()
-                                self.fetchHistoricalSessions(
-                                    userId: userId, limit: 3
-                                ) { locations in
-                                    historicalLocations.append(
-                                        contentsOf: locations)
-                                    dispatchGroup.leave()
-                                }
-                            }
-
-                            dispatchGroup.notify(queue: .main) {
-                                // Add historical locations to the existing active locations
-                                DispatchQueue.main.async {
-                                    // Get current active locations
-                                    let currentLocations = self.friendLocations
-
-                                    // Merge with historical, avoiding duplicates
-                                    var newLocations = currentLocations
-                                    for location in historicalLocations {
-                                        // Only add if not already present (by ID)
-                                        if !newLocations.contains(where: {
-                                            $0.id == location.id
-                                        }) {
-                                            newLocations.append(location)
-                                        }
+                                for userId in userIds {
+                                    dispatchGroup.enter()
+                                    self.fetchHistoricalSessions(userId: userId, limit: 3) {
+                                        locations in
+                                        historicalLocations.append(contentsOf: locations)
+                                        dispatchGroup.leave()
                                     }
+                                }
 
-                                    self.friendLocations = newLocations
-                                    print(
-                                        "📍 Total locations on map: \(self.friendLocations.count) (active: \(currentLocations.count), historical: \(historicalLocations.count))"
-                                    )
+                                dispatchGroup.notify(queue: .main) {
+                                    // Add historical locations to the existing active locations
+                                    DispatchQueue.main.async {
+                                        // Get current active locations
+                                        let currentLocations = self.friendLocations
+
+                                        // Merge with historical, avoiding duplicates
+                                        var newLocations = currentLocations
+                                        for location in historicalLocations {
+                                            // Only add if not already present (by ID)
+                                            if !newLocations.contains(where: {
+                                                $0.id == location.id
+                                            }) {
+                                                newLocations.append(location)
+                                            }
+                                        }
+
+                                        self.friendLocations = newLocations
+                                        print(
+                                            "📍 Total locations on map: \(self.friendLocations.count) (active: \(currentLocations.count), historical: \(historicalLocations.count))"
+                                        )
+                                    }
                                 }
                             }
                         }
                     }
-                }
             }
     }
 
@@ -364,60 +336,44 @@ class MapViewModel: NSObject, ObservableObject, CLLocationManagerDelegate {
         locationListener?.remove()
 
         // Listen ONLY for locations with active sessions
-        locationListener = db.collection("locations")
-            .whereField("userId", in: userIds)
+        locationListener = db.collection("locations").whereField("userId", in: userIds)
             .addSnapshotListener { [weak self] snapshot, error in
                 guard let self = self else { return }
 
                 if let error = error {
-                    print(
-                        "❌ Error in location listener: \(error.localizedDescription)"
-                    )
+                    print("❌ Error in location listener: \(error.localizedDescription)")
                     return
                 }
 
                 var currentLocations: [FriendLocation] = []
                 if let documents = snapshot?.documents {
-                    print(
-                        "📑 Processing \(documents.count) active location documents"
-                    )
+                    print("📑 Processing \(documents.count) active location documents")
 
                     // Process each location document
                     for document in documents {
                         let data = document.data()
 
                         // Only include if there's a valid session time and it's recent
-                        if let sessionStartTime =
-                            (data["sessionStartTime"] as? Timestamp)?
-                            .dateValue(),
-                            Date().timeIntervalSince(sessionStartTime) < 7200,  // Less than 2 hours old
-                            let lastFlipTime =
-                                (data["lastFlipTime"] as? Timestamp)?
-                                .dateValue(),
+                        if let sessionStartTime = (data["sessionStartTime"] as? Timestamp)?
+                            .dateValue(), Date().timeIntervalSince(sessionStartTime) < 7200,  // Less than 2 hours old
+                            let lastFlipTime = (data["lastFlipTime"] as? Timestamp)?.dateValue(),
                             Date().timeIntervalSince(lastFlipTime) < 3600
                         {  // Less than 1 hour since last flip
 
                             // Extract all required fields
                             guard let userId = data["userId"] as? String,
                                 let username = data["username"] as? String,
-                                let geoPoint = data["currentLocation"]
-                                    as? GeoPoint,
-                                let isFlipped = data["isCurrentlyFlipped"]
-                                    as? Bool
-                            else {
-                                continue
-                            }
+                                let geoPoint = data["currentLocation"] as? GeoPoint,
+                                let isFlipped = data["isCurrentlyFlipped"] as? Bool
+                            else { continue }
 
                             // CRITICAL: Explicitly check success field
                             let wasSuccessful: Bool
-                            if let successField = data["lastFlipWasSuccessful"]
-                                as? Bool
-                            {
+                            if let successField = data["lastFlipWasSuccessful"] as? Bool {
                                 wasSuccessful = successField
-                                print(
-                                    "📱 Active session success status: \(wasSuccessful)"
-                                )
-                            } else {
+                                print("📱 Active session success status: \(wasSuccessful)")
+                            }
+                            else {
                                 // Default to true only if field is missing
                                 wasSuccessful = true
                                 print(
@@ -425,8 +381,7 @@ class MapViewModel: NSObject, ObservableObject, CLLocationManagerDelegate {
                                 )
                             }
 
-                            let sessionDuration =
-                                data["sessionDuration"] as? Int ?? 25  // Default to 25 min
+                            let sessionDuration = data["sessionDuration"] as? Int ?? 25  // Default to 25 min
 
                             // Create FriendLocation for active session
                             let location = FriendLocation(
@@ -451,9 +406,7 @@ class MapViewModel: NSObject, ObservableObject, CLLocationManagerDelegate {
                         }
                     }
 
-                    print(
-                        "👁️ Found \(currentLocations.count) active session locations"
-                    )
+                    print("👁️ Found \(currentLocations.count) active session locations")
                 }
 
                 // Update UI with active locations
@@ -467,8 +420,7 @@ class MapViewModel: NSObject, ObservableObject, CLLocationManagerDelegate {
                         self.isFirstLoad = false
                         self.region = MKCoordinateRegion(
                             center: userLocation,
-                            span: MKCoordinateSpan(
-                                latitudeDelta: 0.01, longitudeDelta: 0.01)
+                            span: MKCoordinateSpan(latitudeDelta: 0.01, longitudeDelta: 0.01)
                         )
                     }
                 }
@@ -476,21 +428,16 @@ class MapViewModel: NSObject, ObservableObject, CLLocationManagerDelegate {
     }
 
     private func fetchHistoricalSessions(
-        userId: String, limit: Int,
+        userId: String,
+        limit: Int,
         completion: @escaping ([FriendLocation]) -> Void
     ) {
         // Fetch historical sessions from session_locations collection with a time cutoff
-        let oneMonthAgo =
-            Calendar.current.date(byAdding: .month, value: -1, to: Date())
-            ?? Date()
+        let oneMonthAgo = Calendar.current.date(byAdding: .month, value: -1, to: Date()) ?? Date()
 
-        db.collection("session_locations")
-            .whereField("userId", isEqualTo: userId)
-            .whereField(
-                "sessionEndTime", isGreaterThan: Timestamp(date: oneMonthAgo)
-            )  // Only sessions from last month
-            .order(by: "sessionEndTime", descending: true)
-            .limit(to: limit)
+        db.collection("session_locations").whereField("userId", isEqualTo: userId)
+            .whereField("sessionEndTime", isGreaterThan: Timestamp(date: oneMonthAgo))  // Only sessions from last month
+            .order(by: "sessionEndTime", descending: true).limit(to: limit)
             .getDocuments { [weak self] snapshot, error in
                 guard let self = self else {
                     completion([])
@@ -498,9 +445,7 @@ class MapViewModel: NSObject, ObservableObject, CLLocationManagerDelegate {
                 }
 
                 if let error = error {
-                    print(
-                        "Error fetching session_locations: \(error.localizedDescription)"
-                    )
+                    print("Error fetching session_locations: \(error.localizedDescription)")
                     completion([])
                     return
                 }
@@ -511,8 +456,10 @@ class MapViewModel: NSObject, ObservableObject, CLLocationManagerDelegate {
                 if let documents = snapshot?.documents {
                     for (index, document) in documents.enumerated() {
                         if let location = self.processHistoricalDocument(
-                            document, userId: userId, index: index + 1)
-                        {
+                            document,
+                            userId: userId,
+                            index: index + 1
+                        ) {
                             historicalLocations.append(location)
                         }
                     }
@@ -528,24 +475,23 @@ class MapViewModel: NSObject, ObservableObject, CLLocationManagerDelegate {
                     let limitedLocations = allLocations.prefix(limit)
 
                     // Now update indices in a separate step after the array is created
-                    let result = limitedLocations.enumerated().map {
-                        index, location -> FriendLocation in
-                        return FriendLocation(
-                            id: location.id,
-                            username: location.username,
-                            coordinate: location.coordinate,
-                            isCurrentlyFlipped: location.isCurrentlyFlipped,
-                            lastFlipTime: location.lastFlipTime,
-                            lastFlipWasSuccessful: location
-                                .lastFlipWasSuccessful,
-                            sessionDuration: location.sessionDuration,
-                            sessionStartTime: location.sessionStartTime,
-                            isHistorical: true,
-                            sessionIndex: index + 1,  // +1 because current session is 0
-                            participants: location.participants,
-                            participantNames: location.participantNames
-                        )
-                    }
+                    let result = limitedLocations.enumerated()
+                        .map { index, location -> FriendLocation in
+                            return FriendLocation(
+                                id: location.id,
+                                username: location.username,
+                                coordinate: location.coordinate,
+                                isCurrentlyFlipped: location.isCurrentlyFlipped,
+                                lastFlipTime: location.lastFlipTime,
+                                lastFlipWasSuccessful: location.lastFlipWasSuccessful,
+                                sessionDuration: location.sessionDuration,
+                                sessionStartTime: location.sessionStartTime,
+                                isHistorical: true,
+                                sessionIndex: index + 1,  // +1 because current session is 0
+                                participants: location.participants,
+                                participantNames: location.participantNames
+                            )
+                        }
 
                     completion(Array(result))
                 }
@@ -553,7 +499,8 @@ class MapViewModel: NSObject, ObservableObject, CLLocationManagerDelegate {
     }
 
     private func processLocationDocuments(
-        _ documents: [QueryDocumentSnapshot], isHistorical: Bool,
+        _ documents: [QueryDocumentSnapshot],
+        isHistorical: Bool,
         sessionIndex: Int
     ) -> [FriendLocation] {
         return documents.compactMap { document -> FriendLocation? in
@@ -563,8 +510,7 @@ class MapViewModel: NSObject, ObservableObject, CLLocationManagerDelegate {
                 let username = data["username"] as? String,
                 let geoPoint = data["currentLocation"] as? GeoPoint,
                 let isFlipped = data["isCurrentlyFlipped"] as? Bool,
-                let timestamp = (data["lastFlipTime"] as? Timestamp)?
-                    .dateValue(),
+                let timestamp = (data["lastFlipTime"] as? Timestamp)?.dateValue(),
                 Date().timeIntervalSince(timestamp) < 7200  // Ignore sessions older than 2 hours
             else {
                 print("Skipping document - missing required fields or too old")
@@ -575,15 +521,15 @@ class MapViewModel: NSObject, ObservableObject, CLLocationManagerDelegate {
             let wasSuccessful: Bool
             if let successField = data["lastFlipWasSuccessful"] as? Bool {
                 wasSuccessful = successField
-            } else {
+            }
+            else {
                 // Default to true if field is missing
                 wasSuccessful = true
             }
 
             let sessionDuration = data["sessionDuration"] as? Int ?? 25  // Default to 25 min
             let sessionStartTime =
-                (data["sessionStartTime"] as? Timestamp)?.dateValue()
-                ?? timestamp
+                (data["sessionStartTime"] as? Timestamp)?.dateValue() ?? timestamp
 
             return FriendLocation(
                 id: userId,
@@ -612,40 +558,30 @@ class MapViewModel: NSObject, ObservableObject, CLLocationManagerDelegate {
         completion: @escaping (FirebaseManager.FlipUser?) -> Void
     ) {
         // Extract clean userId from potential composite IDs (like userId_hist_1)
-        let cleanUserId =
-            userId.split(separator: "_").first.map(String.init) ?? userId
+        let cleanUserId = userId.split(separator: "_").first.map(String.init) ?? userId
 
         // Fetch the user data from Firestore
         db.collection("users").document(cleanUserId)
             .getDocument { document, error in
                 if let error = error {
-                    print(
-                        "Error loading user for profile: \(error.localizedDescription)"
-                    )
+                    print("Error loading user for profile: \(error.localizedDescription)")
                     completion(nil)
                     return
                 }
 
-                guard
-                    let userData = try? document?.data(
-                        as: FirebaseManager.FlipUser.self)
-                else {
+                guard let userData = try? document?.data(as: FirebaseManager.FlipUser.self) else {
                     print("Could not decode user data for profile")
                     completion(nil)
                     return
                 }
 
-                DispatchQueue.main.async {
-                    completion(userData)
-                }
+                DispatchQueue.main.async { completion(userData) }
             }
     }
 
     // MARK: - CLLocationManagerDelegate methods
 
-    func locationManager(
-        _ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]
-    ) {
+    func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
         guard let location = locations.last else { return }
 
         // Update local userLocation property
@@ -666,43 +602,36 @@ class MapViewModel: NSObject, ObservableObject, CLLocationManagerDelegate {
         didChangeAuthorization status: CLAuthorizationStatus
     ) {
         switch status {
-        case .authorizedWhenInUse, .authorizedAlways:
-            manager.startUpdatingLocation()
-        default:
-            print("Location authorization status changed: \(status.rawValue)")
+        case .authorizedWhenInUse, .authorizedAlways: manager.startUpdatingLocation()
+        default: print("Location authorization status changed: \(status.rawValue)")
         }
     }
 
-    func locationManager(
-        _ manager: CLLocationManager, didFailWithError error: Error
-    ) {
-        print(
-            "Location manager failed with error: \(error.localizedDescription)")
+    func locationManager(_ manager: CLLocationManager, didFailWithError error: Error) {
+        print("Location manager failed with error: \(error.localizedDescription)")
     }
 
     // In MapViewModel.swift - modify the processHistoricalDocument function:
     // Replace the processHistoricalDocument function in MapViewModel with this fixed version
 
     private func processHistoricalDocument(
-        _ document: QueryDocumentSnapshot, userId: String, index: Int
+        _ document: QueryDocumentSnapshot,
+        userId: String,
+        index: Int
     ) -> FriendLocation? {
         let data = document.data()
 
         guard let username = data["username"] as? String,
             let geoPoint = data["location"] as? GeoPoint,
-            let sessionStartTime = (data["sessionStartTime"] as? Timestamp)?
-                .dateValue(),
-            let sessionEndTime = (data["sessionEndTime"] as? Timestamp)?
-                .dateValue(),
+            let sessionStartTime = (data["sessionStartTime"] as? Timestamp)?.dateValue(),
+            let sessionEndTime = (data["sessionEndTime"] as? Timestamp)?.dateValue(),
             // Don't show sessions from more than a month ago
             Date().timeIntervalSince(sessionEndTime) < 2_592_000
         else { return nil }
 
         // CRITICAL FIX: Explicitly check all possible field names for success status
         // Log the keys present in the document for debugging
-        print(
-            "🧹 Historical session document fields: \(Array(data.keys).joined(separator: ", "))"
-        )
+        print("🧹 Historical session document fields: \(Array(data.keys).joined(separator: ", "))")
 
         // First determine the success status with clear checks
         let wasSuccessful: Bool
@@ -711,11 +640,12 @@ class MapViewModel: NSObject, ObservableObject, CLLocationManagerDelegate {
         if let successValue = data["lastFlipWasSuccessful"] as? Bool {
             print("✅ Found direct success field: \(successValue)")
             wasSuccessful = successValue
-        } else if let successValue = data["wasSuccessful"] as? Bool {
+        }
+        else if let successValue = data["wasSuccessful"] as? Bool {
             print("✅ Found alternative wasSuccessful field: \(successValue)")
             wasSuccessful = successValue
-        } else if let actualDuration = getIntegerValue(
-            from: data["actualDuration"]),
+        }
+        else if let actualDuration = getIntegerValue(from: data["actualDuration"]),
             let targetDuration = getIntegerValue(from: data["sessionDuration"])
         {
             // If we can't find an explicit flag, infer from duration
@@ -724,7 +654,8 @@ class MapViewModel: NSObject, ObservableObject, CLLocationManagerDelegate {
                 "📊 Inferred success from duration: \(success) (actual: \(actualDuration), target: \(targetDuration))"
             )
             wasSuccessful = success
-        } else {
+        }
+        else {
             // Last resort - check if any failure indicators exist
             let hasFailed = data["didFail"] as? Bool ?? false
             let wasAborted = data["wasAborted"] as? Bool ?? false
@@ -732,11 +663,10 @@ class MapViewModel: NSObject, ObservableObject, CLLocationManagerDelegate {
             if hasFailed || wasAborted {
                 print("❌ Found failure indicator")
                 wasSuccessful = false
-            } else {
+            }
+            else {
                 // Default to success if we can't determine
-                print(
-                    "⚠️ Could not determine success state, defaulting to success"
-                )
+                print("⚠️ Could not determine success state, defaulting to success")
                 wasSuccessful = true
             }
         }
@@ -744,8 +674,7 @@ class MapViewModel: NSObject, ObservableObject, CLLocationManagerDelegate {
         // IMPORTANT: Log the final determination for debugging
         print("🏁 Session for \(username): success=\(wasSuccessful)")
 
-        let sessionDuration =
-            getIntegerValue(from: data["sessionDuration"]) ?? 25
+        let sessionDuration = getIntegerValue(from: data["sessionDuration"]) ?? 25
         let participants = data["participants"] as? [String]
         let participantNames = data["participantNames"] as? [String]
 
@@ -772,13 +701,14 @@ class MapViewModel: NSObject, ObservableObject, CLLocationManagerDelegate {
     private func getIntegerValue(from value: Any?) -> Int? {
         if let intValue = value as? Int {
             return intValue
-        } else if let doubleValue = value as? Double {
+        }
+        else if let doubleValue = value as? Double {
             return Int(doubleValue)
-        } else if let stringValue = value as? String,
-            let parsed = Int(stringValue)
-        {
+        }
+        else if let stringValue = value as? String, let parsed = Int(stringValue) {
             return parsed
-        } else if let numberValue = value as? NSNumber {
+        }
+        else if let numberValue = value as? NSNumber {
             return numberValue.intValue
         }
         return nil
@@ -786,21 +716,16 @@ class MapViewModel: NSObject, ObservableObject, CLLocationManagerDelegate {
 
     // New method to fetch group sessions
     private func fetchGroupSessions(
-        userId: String, completion: @escaping ([FriendLocation]) -> Void
+        userId: String,
+        completion: @escaping ([FriendLocation]) -> Void
     ) {
         // One month time limit
-        let oneMonthAgo =
-            Calendar.current.date(byAdding: .month, value: -1, to: Date())
-            ?? Date()
+        let oneMonthAgo = Calendar.current.date(byAdding: .month, value: -1, to: Date()) ?? Date()
 
         // Query for sessions where this user was a participant
-        db.collection("session_locations")
-            .whereField("participants", arrayContains: userId)
-            .whereField(
-                "sessionEndTime", isGreaterThan: Timestamp(date: oneMonthAgo)
-            )
-            .order(by: "sessionEndTime", descending: true)
-            .limit(to: 5)
+        db.collection("session_locations").whereField("participants", arrayContains: userId)
+            .whereField("sessionEndTime", isGreaterThan: Timestamp(date: oneMonthAgo))
+            .order(by: "sessionEndTime", descending: true).limit(to: 5)
             .getDocuments { [weak self] snapshot, error in
                 guard let self = self else {
                     completion([])
@@ -808,9 +733,7 @@ class MapViewModel: NSObject, ObservableObject, CLLocationManagerDelegate {
                 }
 
                 if let error = error {
-                    print(
-                        "Error fetching group sessions: \(error.localizedDescription)"
-                    )
+                    print("Error fetching group sessions: \(error.localizedDescription)")
                     completion([])
                     return
                 }
@@ -820,9 +743,10 @@ class MapViewModel: NSObject, ObservableObject, CLLocationManagerDelegate {
                 if let documents = snapshot?.documents {
                     for (index, document) in documents.enumerated() {
                         if let location = self.processHistoricalDocument(
-                            document, userId: "\(userId)_group_\(index)",
-                            index: index)
-                        {
+                            document,
+                            userId: "\(userId)_group_\(index)",
+                            index: index
+                        ) {
                             groupLocations.append(location)
                         }
                     }
@@ -841,33 +765,27 @@ class MapViewModel: NSObject, ObservableObject, CLLocationManagerDelegate {
         // Get current app state from AppManager
         let appManager = AppManager.shared
         let isInRelevantState =
-            appManager.currentState == .tracking
-            || appManager.currentState == .completed
+            appManager.currentState == .tracking || appManager.currentState == .completed
             || appManager.currentState == .failed
 
         // ONLY update location in Firebase if in an active session
         if isInRelevantState {
             // Get username from FirebaseManager
-            let username =
-                FirebaseManager.shared.currentUser?.username ?? "User"
+            let username = FirebaseManager.shared.currentUser?.username ?? "User"
 
             // Create base location data
             var locationData: [String: Any] = [
-                "userId": userId,
-                "username": username,
+                "userId": userId, "username": username,
                 "currentLocation": GeoPoint(
                     latitude: location.coordinate.latitude,
                     longitude: location.coordinate.longitude
-                ),
-                "locationUpdatedAt": Timestamp(date: Date()),
+                ), "locationUpdatedAt": Timestamp(date: Date()),
             ]
 
             // Add session-specific data
-            let isCurrentlyFlipped =
-                appManager.currentState == .tracking && appManager.isFaceDown
+            let isCurrentlyFlipped = appManager.currentState == .tracking && appManager.isFaceDown
             let sessionDuration = appManager.selectedMinutes
-            let sessionStartTime = Date().addingTimeInterval(
-                -Double(appManager.remainingSeconds))
+            let sessionStartTime = Date().addingTimeInterval(-Double(appManager.remainingSeconds))
             let isSuccessful = appManager.currentState != .failed
 
             // Add session-specific fields
@@ -878,15 +796,12 @@ class MapViewModel: NSObject, ObservableObject, CLLocationManagerDelegate {
             locationData["sessionStartTime"] = Timestamp(date: sessionStartTime)
 
             // Update location in Firestore
-            db.collection("locations").document(userId).setData(
-                locationData, merge: true
-            ) { error in
-                if let error = error {
-                    print(
-                        "Error updating location: \(error.localizedDescription)"
-                    )
+            db.collection("locations").document(userId)
+                .setData(locationData, merge: true) { error in
+                    if let error = error {
+                        print("Error updating location: \(error.localizedDescription)")
+                    }
                 }
-            }
         }
     }
 }

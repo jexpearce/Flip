@@ -77,64 +77,48 @@ struct GlobalWeeklyLeaderboard: View {
                             currentLeaderboard = .regionalAllTime
                         }
                     }) {
-                        Image(systemName: "chevron.left")
-                            .font(.system(size: 18))
-                            .foregroundColor(.white.opacity(0.7))
-                            .padding(8)
-                            .background(
-                                Circle()
-                                    .fill(Color.white.opacity(0.1))
-                            )
+                        Image(systemName: "chevron.left").font(.system(size: 18))
+                            .foregroundColor(.white.opacity(0.7)).padding(8)
+                            .background(Circle().fill(Color.white.opacity(0.1)))
                     }
 
                     Spacer()
 
                     // Main title with icon
                     HStack {
-                        Image(systemName: "globe")
-                            .font(.system(size: 20))
+                        Image(systemName: "globe").font(.system(size: 20))
                             .foregroundStyle(
                                 LinearGradient(
                                     colors: [
-                                        Color(
-                                            red: 59 / 255, green: 130 / 255,
-                                            blue: 246 / 255),
-                                        Color(
-                                            red: 37 / 255, green: 99 / 255,
-                                            blue: 235 / 255),
+                                        Color(red: 59 / 255, green: 130 / 255, blue: 246 / 255),
+                                        Color(red: 37 / 255, green: 99 / 255, blue: 235 / 255),
                                     ],
                                     startPoint: .top,
                                     endPoint: .bottom
                                 )
                             )
                             .shadow(
-                                color: Color(
-                                    red: 59 / 255, green: 130 / 255,
-                                    blue: 246 / 255
-                                ).opacity(0.5), radius: 4)
+                                color: Color(red: 59 / 255, green: 130 / 255, blue: 246 / 255)
+                                    .opacity(0.5),
+                                radius: 4
+                            )
 
-                        Text("GLOBAL WEEKLY")
-                            .font(.system(size: 13, weight: .black))
-                            .tracking(2)
+                        Text("GLOBAL WEEKLY").font(.system(size: 13, weight: .black)).tracking(2)
                             .foregroundStyle(
                                 LinearGradient(
                                     colors: [
-                                        Color(
-                                            red: 59 / 255, green: 130 / 255,
-                                            blue: 246 / 255),
-                                        Color(
-                                            red: 37 / 255, green: 99 / 255,
-                                            blue: 235 / 255),
+                                        Color(red: 59 / 255, green: 130 / 255, blue: 246 / 255),
+                                        Color(red: 37 / 255, green: 99 / 255, blue: 235 / 255),
                                     ],
                                     startPoint: .top,
                                     endPoint: .bottom
                                 )
                             )
                             .shadow(
-                                color: Color(
-                                    red: 59 / 255, green: 130 / 255,
-                                    blue: 246 / 255
-                                ).opacity(0.5), radius: 4)
+                                color: Color(red: 59 / 255, green: 130 / 255, blue: 246 / 255)
+                                    .opacity(0.5),
+                                radius: 4
+                            )
                     }
 
                     Spacer()
@@ -145,39 +129,26 @@ struct GlobalWeeklyLeaderboard: View {
                             currentLeaderboard = .globalAllTime
                         }
                     }) {
-                        Image(systemName: "chevron.right")
-                            .font(.system(size: 18))
-                            .foregroundColor(.white.opacity(0.7))
-                            .padding(8)
-                            .background(
-                                Circle()
-                                    .fill(Color.white.opacity(0.1))
-                            )
+                        Image(systemName: "chevron.right").font(.system(size: 18))
+                            .foregroundColor(.white.opacity(0.7)).padding(8)
+                            .background(Circle().fill(Color.white.opacity(0.1)))
                     }
                 }
 
                 // Subtitle explaining the leaderboard
-                Text("Top players this week worldwide")
-                    .font(.system(size: 14, weight: .medium))
-                    .foregroundColor(.white.opacity(0.8))
-                    .lineLimit(1)
+                Text("Top players this week worldwide").font(.system(size: 14, weight: .medium))
+                    .foregroundColor(.white.opacity(0.8)).lineLimit(1)
                     .frame(maxWidth: .infinity, alignment: .center)
             }
-            .padding(.vertical, 12)
-            .padding(.horizontal, 16)
+            .padding(.vertical, 12).padding(.horizontal, 16)
             .background(
                 RoundedRectangle(cornerRadius: 12)
                     .fill(
                         LinearGradient(
                             colors: [
-                                Color(
-                                    red: 59 / 255, green: 130 / 255,
-                                    blue: 246 / 255
-                                ).opacity(0.3),
-                                Color(
-                                    red: 37 / 255, green: 99 / 255,
-                                    blue: 235 / 255
-                                ).opacity(0.2),
+                                Color(red: 59 / 255, green: 130 / 255, blue: 246 / 255)
+                                    .opacity(0.3),
+                                Color(red: 37 / 255, green: 99 / 255, blue: 235 / 255).opacity(0.2),
                             ],
                             startPoint: .leading,
                             endPoint: .trailing
@@ -187,10 +158,7 @@ struct GlobalWeeklyLeaderboard: View {
                         RoundedRectangle(cornerRadius: 12)
                             .stroke(
                                 LinearGradient(
-                                    colors: [
-                                        Color.white.opacity(0.5),
-                                        Color.white.opacity(0.2),
-                                    ],
+                                    colors: [Color.white.opacity(0.5), Color.white.opacity(0.2)],
                                     startPoint: .topLeading,
                                     endPoint: .bottomTrailing
                                 ),
@@ -202,76 +170,54 @@ struct GlobalWeeklyLeaderboard: View {
             if viewModel.isLoading {
                 HStack {
                     Spacer()
-                    ProgressView()
-                        .tint(.white)
-                        .scaleEffect(1.2)
-                        .padding(.vertical, 25)
+                    ProgressView().tint(.white).scaleEffect(1.2).padding(.vertical, 25)
                     Spacer()
                 }
-            } else if viewModel.leaderboardEntries.isEmpty {
+            }
+            else if viewModel.leaderboardEntries.isEmpty {
                 VStack(spacing: 12) {
-                    Image(systemName: "globe")
-                        .font(.system(size: 40))
-                        .foregroundColor(.white.opacity(0.5))
-                        .padding(.bottom, 5)
+                    Image(systemName: "globe").font(.system(size: 40))
+                        .foregroundColor(.white.opacity(0.5)).padding(.bottom, 5)
 
-                    Text("No global data available")
-                        .font(.system(size: 16, weight: .medium))
-                        .foregroundColor(.white.opacity(0.7))
-                        .multilineTextAlignment(.center)
+                    Text("No global data available").font(.system(size: 16, weight: .medium))
+                        .foregroundColor(.white.opacity(0.7)).multilineTextAlignment(.center)
 
-                    Text("Complete sessions to rank globally!")
-                        .font(.system(size: 14))
+                    Text("Complete sessions to rank globally!").font(.system(size: 14))
                         .foregroundColor(.white.opacity(0.5))
                 }
-                .frame(maxWidth: .infinity)
-                .padding(.vertical, 30)
-            } else {
+                .frame(maxWidth: .infinity).padding(.vertical, 30)
+            }
+            else {
                 // Column headers for clarity
                 HStack {
-                    Text("RANK")
-                        .font(.system(size: 12, weight: .bold))
-                        .tracking(1)
+                    Text("RANK").font(.system(size: 12, weight: .bold)).tracking(1)
                         .foregroundColor(
-                            Color(
-                                red: 59 / 255, green: 130 / 255, blue: 246 / 255
-                            ).opacity(0.9)
+                            Color(red: 59 / 255, green: 130 / 255, blue: 246 / 255).opacity(0.9)
                         )
                         .frame(width: 50, alignment: .center)
 
-                    Text("USER")
-                        .font(.system(size: 12, weight: .bold))
-                        .tracking(1)
+                    Text("USER").font(.system(size: 12, weight: .bold)).tracking(1)
                         .foregroundColor(
-                            Color(
-                                red: 59 / 255, green: 130 / 255, blue: 246 / 255
-                            ).opacity(0.9)
+                            Color(red: 59 / 255, green: 130 / 255, blue: 246 / 255).opacity(0.9)
                         )
                         .frame(alignment: .leading)
 
                     Spacer()
 
-                    Text("MINUTES")
-                        .font(.system(size: 12, weight: .bold))
-                        .tracking(1)
+                    Text("MINUTES").font(.system(size: 12, weight: .bold)).tracking(1)
                         .foregroundColor(
-                            Color(
-                                red: 59 / 255, green: 130 / 255, blue: 246 / 255
-                            ).opacity(0.9)
+                            Color(red: 59 / 255, green: 130 / 255, blue: 246 / 255).opacity(0.9)
                         )
                         .frame(width: 80, alignment: .trailing)
                 }
-                .padding(.horizontal, 16)
-                .padding(.top, 4)
-                .padding(.bottom, 8)
+                .padding(.horizontal, 16).padding(.top, 4).padding(.bottom, 8)
 
                 // Leaderboard entries - LIMIT TO 10 ENTRIES
                 VStack(spacing: 8) {
                     // Only show first 10 entries
                     ForEach(
-                        Array(
-                            viewModel.leaderboardEntries.prefix(10).enumerated()
-                        ), id: \.element.id
+                        Array(viewModel.leaderboardEntries.prefix(10).enumerated()),
+                        id: \.element.id
                     ) { index, entry in
                         Button(action: {
                             // Only show profile for non-anonymous users
@@ -288,23 +234,18 @@ struct GlobalWeeklyLeaderboard: View {
                                             .fill(
                                                 index == 0
                                                     ? goldColor
-                                                    : (index == 1
-                                                        ? silverColor
-                                                        : bronzeColor)
+                                                    : (index == 1 ? silverColor : bronzeColor)
                                             )
                                             .frame(width: 26, height: 26)
 
-                                        Image(systemName: "medal.fill")
-                                            .font(.system(size: 14))
+                                        Image(systemName: "medal.fill").font(.system(size: 14))
                                             .foregroundColor(.white)
-                                            .shadow(
-                                                color: Color.black.opacity(0.2),
-                                                radius: 1)
+                                            .shadow(color: Color.black.opacity(0.2), radius: 1)
                                     }
                                     .frame(width: 32, alignment: .center)
-                                } else {
-                                    Text("\(index + 1)")
-                                        .font(.system(size: 16, weight: .bold))
+                                }
+                                else {
+                                    Text("\(index + 1)").font(.system(size: 16, weight: .bold))
                                         .foregroundColor(.white)
                                         .frame(width: 32, alignment: .center)
                                 }
@@ -313,41 +254,33 @@ struct GlobalWeeklyLeaderboard: View {
                                 if entry.isAnonymous {
                                     // Show question mark for anonymous users
                                     ZStack {
-                                        Circle()
-                                            .fill(Color.gray.opacity(0.3))
+                                        Circle().fill(Color.gray.opacity(0.3))
                                             .frame(width: 26, height: 26)
 
-                                        Text("?")
-                                            .font(
-                                                .system(size: 16, weight: .bold)
-                                            )
+                                        Text("?").font(.system(size: 16, weight: .bold))
                                             .foregroundColor(.white)
                                     }
-                                } else if let score = entry.score {
+                                }
+                                else if let score = entry.score {
                                     // Show rank for non-anonymous users
-                                    RankCircle(
-                                        score: score, size: 26,
-                                        showStreakIndicator: false)
+                                    RankCircle(score: score, size: 26, showStreakIndicator: false)
                                 }
 
                                 // Profile picture with streak indicator
                                 ZStack {
                                     if entry.isAnonymous {
-                                        DefaultProfileImage(
-                                            username: "A", size: 32)
-                                    } else {
-                                        ProfileImage(
-                                            userId: entry.userId, size: 32)
+                                        DefaultProfileImage(username: "A", size: 32)
+                                    }
+                                    else {
+                                        ProfileImage(userId: entry.userId, size: 32)
 
                                         // Optional streak indicator
                                         if entry.streakStatus != .none {
                                             Circle()
                                                 .stroke(
-                                                    entry.streakStatus
-                                                        == .redFlame
+                                                    entry.streakStatus == .redFlame
                                                         ? Color.red.opacity(0.8)
-                                                        : Color.orange.opacity(
-                                                            0.8),
+                                                        : Color.orange.opacity(0.8),
                                                     lineWidth: 2
                                                 )
                                                 .frame(width: 32, height: 32)
@@ -356,17 +289,13 @@ struct GlobalWeeklyLeaderboard: View {
                                             ZStack {
                                                 Circle()
                                                     .fill(
-                                                        entry.streakStatus
-                                                            == .redFlame
-                                                            ? Color.red
-                                                            : Color.orange
+                                                        entry.streakStatus == .redFlame
+                                                            ? Color.red : Color.orange
                                                     )
-                                                    .frame(
-                                                        width: 12, height: 12)
+                                                    .frame(width: 12, height: 12)
 
                                                 Image(systemName: "flame.fill")
-                                                    .font(.system(size: 8))
-                                                    .foregroundColor(.white)
+                                                    .font(.system(size: 8)).foregroundColor(.white)
                                             }
                                             .position(x: 24, y: 8)
                                         }
@@ -374,42 +303,35 @@ struct GlobalWeeklyLeaderboard: View {
                                 }
 
                                 // Username
-                                Text(entry.username)
-                                    .font(.system(size: 16, weight: .bold))
-                                    .foregroundColor(.white)
-                                    .lineLimit(1)
-                                    .frame(
-                                        maxWidth: .infinity, alignment: .leading
-                                    )
+                                Text(entry.username).font(.system(size: 16, weight: .bold))
+                                    .foregroundColor(.white).lineLimit(1)
+                                    .frame(maxWidth: .infinity, alignment: .leading)
                                     .underline(
-                                        color: entry.isAnonymous
-                                            ? .clear : .white.opacity(0.3))
+                                        color: entry.isAnonymous ? .clear : .white.opacity(0.3)
+                                    )
 
                                 // Weekly minutes
                                 VStack(alignment: .trailing, spacing: 2) {
-                                    Text("\(entry.minutes)")
-                                        .font(.system(size: 18, weight: .black))
+                                    Text("\(entry.minutes)").font(.system(size: 18, weight: .black))
                                         .foregroundColor(
-                                            Color(
-                                                red: 59 / 255, green: 130 / 255,
-                                                blue: 246 / 255)
+                                            Color(red: 59 / 255, green: 130 / 255, blue: 246 / 255)
                                         )
                                         .shadow(
                                             color: Color(
-                                                red: 59 / 255, green: 130 / 255,
+                                                red: 59 / 255,
+                                                green: 130 / 255,
                                                 blue: 246 / 255
-                                            ).opacity(0.3), radius: 4)
-
-                                    Text("minutes")
-                                        .font(
-                                            .system(size: 10, weight: .medium)
+                                            )
+                                            .opacity(0.3),
+                                            radius: 4
                                         )
+
+                                    Text("minutes").font(.system(size: 10, weight: .medium))
                                         .foregroundColor(.white.opacity(0.7))
                                 }
                                 .frame(width: 70, alignment: .trailing)
                             }
-                            .padding(.vertical, 10)
-                            .padding(.horizontal, 16)
+                            .padding(.vertical, 10).padding(.horizontal, 16)
                             .background(
                                 RoundedRectangle(cornerRadius: 12)
                                     .fill(
@@ -420,12 +342,14 @@ struct GlobalWeeklyLeaderboard: View {
                                                         red: 59 / 255,
                                                         green: 130 / 255,
                                                         blue: 246 / 255
-                                                    ).opacity(0.2),
+                                                    )
+                                                    .opacity(0.2),
                                                     Color(
                                                         red: 59 / 255,
                                                         green: 130 / 255,
                                                         blue: 246 / 255
-                                                    ).opacity(0.1),
+                                                    )
+                                                    .opacity(0.1),
                                                 ]
                                                 : [
                                                     Color.white.opacity(0.08),
@@ -439,66 +363,50 @@ struct GlobalWeeklyLeaderboard: View {
                                         RoundedRectangle(cornerRadius: 12)
                                             .stroke(
                                                 // Highlight current user
-                                                Auth.auth().currentUser?.uid
-                                                    == entry.userId
+                                                Auth.auth().currentUser?.uid == entry.userId
                                                     ? Color(
                                                         red: 59 / 255,
                                                         green: 130 / 255,
                                                         blue: 246 / 255
-                                                    ).opacity(0.5)
-                                                    : Color.white.opacity(0.2),
-                                                lineWidth: Auth.auth()
-                                                    .currentUser?.uid
+                                                    )
+                                                    .opacity(0.5) : Color.white.opacity(0.2),
+                                                lineWidth: Auth.auth().currentUser?.uid
                                                     == entry.userId ? 1.5 : 1
                                             )
                                     )
                             )
                         }
-                        .buttonStyle(PlainButtonStyle())
-                        .padding(.vertical, 2)
+                        .buttonStyle(PlainButtonStyle()).padding(.vertical, 2)
                         // Disable the button for anonymous users
                         .disabled(entry.isAnonymous)
                     }
                 }
             }
         }
-        .padding(.vertical, 16)
-        .padding(.horizontal, 18)
+        .padding(.vertical, 16).padding(.horizontal, 18)
         .background(
             ZStack {
                 RoundedRectangle(cornerRadius: 18)
                     .fill(
                         LinearGradient(
                             colors: [
-                                Color(
-                                    red: 30 / 255, green: 58 / 255,
-                                    blue: 138 / 255
-                                ).opacity(0.3),
-                                Color(
-                                    red: 30 / 255, green: 64 / 255,
-                                    blue: 175 / 255
-                                ).opacity(0.2),
+                                Color(red: 30 / 255, green: 58 / 255, blue: 138 / 255).opacity(0.3),
+                                Color(red: 30 / 255, green: 64 / 255, blue: 175 / 255).opacity(0.2),
                             ],
                             startPoint: .topLeading,
                             endPoint: .bottomTrailing
                         )
                     )
 
-                RoundedRectangle(cornerRadius: 18)
-                    .fill(Color.white.opacity(0.05))
+                RoundedRectangle(cornerRadius: 18).fill(Color.white.opacity(0.05))
 
                 RoundedRectangle(cornerRadius: 18)
                     .stroke(
                         LinearGradient(
                             colors: [
-                                Color(
-                                    red: 59 / 255, green: 130 / 255,
-                                    blue: 246 / 255
-                                ).opacity(0.5),
-                                Color(
-                                    red: 37 / 255, green: 99 / 255,
-                                    blue: 235 / 255
-                                ).opacity(0.2),
+                                Color(red: 59 / 255, green: 130 / 255, blue: 246 / 255)
+                                    .opacity(0.5),
+                                Color(red: 37 / 255, green: 99 / 255, blue: 235 / 255).opacity(0.2),
                             ],
                             startPoint: .topLeading,
                             endPoint: .bottomTrailing
@@ -510,15 +418,9 @@ struct GlobalWeeklyLeaderboard: View {
         .shadow(color: Color.black.opacity(0.25), radius: 8, x: 0, y: 3)
         .sheet(
             isPresented: $showUserProfile,
-            content: {
-                if let userId = selectedUserId {
-                    UserProfileSheet(userId: userId)
-                }
-            }
+            content: { if let userId = selectedUserId { UserProfileSheet(userId: userId) } }
         )
-        .onAppear {
-            viewModel.loadGlobalWeeklyLeaderboard()
-        }
+        .onAppear { viewModel.loadGlobalWeeklyLeaderboard() }
     }
 }
 
@@ -587,96 +489,71 @@ struct GlobalAllTimeLeaderboard: View {
                             currentLeaderboard = .globalWeekly
                         }
                     }) {
-                        Image(systemName: "chevron.left")
-                            .font(.system(size: 18))
-                            .foregroundColor(.white.opacity(0.7))
-                            .padding(8)
-                            .background(
-                                Circle()
-                                    .fill(Color.white.opacity(0.1))
-                            )
+                        Image(systemName: "chevron.left").font(.system(size: 18))
+                            .foregroundColor(.white.opacity(0.7)).padding(8)
+                            .background(Circle().fill(Color.white.opacity(0.1)))
                     }
 
                     Spacer()
 
                     // Main title with icon
                     HStack {
-                        Image(systemName: "infinity")
-                            .font(.system(size: 20))
+                        Image(systemName: "infinity").font(.system(size: 20))
                             .foregroundStyle(
                                 LinearGradient(
                                     colors: [
-                                        Color(
-                                            red: 139 / 255, green: 92 / 255,
-                                            blue: 246 / 255),
-                                        Color(
-                                            red: 124 / 255, green: 58 / 255,
-                                            blue: 237 / 255),
+                                        Color(red: 139 / 255, green: 92 / 255, blue: 246 / 255),
+                                        Color(red: 124 / 255, green: 58 / 255, blue: 237 / 255),
                                     ],
                                     startPoint: .top,
                                     endPoint: .bottom
                                 )
                             )
                             .shadow(
-                                color: Color(
-                                    red: 139 / 255, green: 92 / 255,
-                                    blue: 246 / 255
-                                ).opacity(0.5), radius: 4)
+                                color: Color(red: 139 / 255, green: 92 / 255, blue: 246 / 255)
+                                    .opacity(0.5),
+                                radius: 4
+                            )
 
-                        Text("GLOBAL ALL TIME")
-                            .font(.system(size: 13, weight: .black))
-                            .tracking(2)
+                        Text("GLOBAL ALL TIME").font(.system(size: 13, weight: .black)).tracking(2)
                             .foregroundStyle(
                                 LinearGradient(
                                     colors: [
-                                        Color(
-                                            red: 139 / 255, green: 92 / 255,
-                                            blue: 246 / 255),
-                                        Color(
-                                            red: 124 / 255, green: 58 / 255,
-                                            blue: 237 / 255),
+                                        Color(red: 139 / 255, green: 92 / 255, blue: 246 / 255),
+                                        Color(red: 124 / 255, green: 58 / 255, blue: 237 / 255),
                                     ],
                                     startPoint: .top,
                                     endPoint: .bottom
                                 )
                             )
                             .shadow(
-                                color: Color(
-                                    red: 139 / 255, green: 92 / 255,
-                                    blue: 246 / 255
-                                ).opacity(0.5), radius: 4)
+                                color: Color(red: 139 / 255, green: 92 / 255, blue: 246 / 255)
+                                    .opacity(0.5),
+                                radius: 4
+                            )
                     }
 
                     Spacer()
 
                     // Empty view to balance the layout
-                    Rectangle()
-                        .fill(Color.clear)
-                        .frame(width: 34, height: 34)
+                    Rectangle().fill(Color.clear).frame(width: 34, height: 34)
                 }
 
                 // Subtitle explaining the leaderboard
-                Text("Most minutes flipped ever")
-                    .font(.system(size: 14, weight: .medium))
-                    .foregroundColor(.white.opacity(0.8))
-                    .lineLimit(1)
+                Text("Most minutes flipped ever").font(.system(size: 14, weight: .medium))
+                    .foregroundColor(.white.opacity(0.8)).lineLimit(1)
                     .frame(maxWidth: .infinity, alignment: .center)
             }
-            .padding(.vertical, 12)
-            .padding(.horizontal, 16)
+            .padding(.vertical, 12).padding(.horizontal, 16)
             .background(
                 RoundedRectangle(cornerRadius: 12)
                     .fill(
                         LinearGradient(
                             colors: [
-                                Color(
-                                    red: 139 / 255, green: 92 / 255,
-                                    blue: 246 / 255
-                                ).opacity(0.3),
-                                Color(
-                                    red: 124 / 255, green: 58 / 255,
-                                    blue: 237 / 255
-                                ).opacity(0.2),
+                                Color(red: 139 / 255, green: 92 / 255, blue: 246 / 255)
+                                    .opacity(0.3),
+                                Color(red: 124 / 255, green: 58 / 255, blue: 237 / 255)
+                                    .opacity(0.2),
                             ],
                             startPoint: .leading,
                             endPoint: .trailing
@@ -686,10 +563,7 @@ struct GlobalAllTimeLeaderboard: View {
                         RoundedRectangle(cornerRadius: 12)
                             .stroke(
                                 LinearGradient(
-                                    colors: [
-                                        Color.white.opacity(0.5),
-                                        Color.white.opacity(0.2),
-                                    ],
+                                    colors: [Color.white.opacity(0.5), Color.white.opacity(0.2)],
                                     startPoint: .topLeading,
                                     endPoint: .bottomTrailing
                                 ),
@@ -701,76 +575,55 @@ struct GlobalAllTimeLeaderboard: View {
             if viewModel.isLoading {
                 HStack {
                     Spacer()
-                    ProgressView()
-                        .tint(.white)
-                        .scaleEffect(1.2)
-                        .padding(.vertical, 25)
+                    ProgressView().tint(.white).scaleEffect(1.2).padding(.vertical, 25)
                     Spacer()
                 }
-            } else if viewModel.leaderboardEntries.isEmpty {
+            }
+            else if viewModel.leaderboardEntries.isEmpty {
                 VStack(spacing: 12) {
-                    Image(systemName: "infinity")
-                        .font(.system(size: 40))
-                        .foregroundColor(.white.opacity(0.5))
-                        .padding(.bottom, 5)
+                    Image(systemName: "infinity").font(.system(size: 40))
+                        .foregroundColor(.white.opacity(0.5)).padding(.bottom, 5)
 
                     Text("No global all time data available")
                         .font(.system(size: 16, weight: .medium))
-                        .foregroundColor(.white.opacity(0.7))
-                        .multilineTextAlignment(.center)
+                        .foregroundColor(.white.opacity(0.7)).multilineTextAlignment(.center)
 
-                    Text("Complete sessions to rank globally!")
-                        .font(.system(size: 14))
+                    Text("Complete sessions to rank globally!").font(.system(size: 14))
                         .foregroundColor(.white.opacity(0.5))
                 }
-                .frame(maxWidth: .infinity)
-                .padding(.vertical, 30)
-            } else {
+                .frame(maxWidth: .infinity).padding(.vertical, 30)
+            }
+            else {
                 // Column headers for clarity
                 HStack {
-                    Text("RANK")
-                        .font(.system(size: 12, weight: .bold))
-                        .tracking(1)
+                    Text("RANK").font(.system(size: 12, weight: .bold)).tracking(1)
                         .foregroundColor(
-                            Color(
-                                red: 139 / 255, green: 92 / 255, blue: 246 / 255
-                            ).opacity(0.9)
+                            Color(red: 139 / 255, green: 92 / 255, blue: 246 / 255).opacity(0.9)
                         )
                         .frame(width: 50, alignment: .center)
 
-                    Text("USER")
-                        .font(.system(size: 12, weight: .bold))
-                        .tracking(1)
+                    Text("USER").font(.system(size: 12, weight: .bold)).tracking(1)
                         .foregroundColor(
-                            Color(
-                                red: 139 / 255, green: 92 / 255, blue: 246 / 255
-                            ).opacity(0.9)
+                            Color(red: 139 / 255, green: 92 / 255, blue: 246 / 255).opacity(0.9)
                         )
                         .frame(alignment: .leading)
 
                     Spacer()
 
-                    Text("MINUTES")
-                        .font(.system(size: 12, weight: .bold))
-                        .tracking(1)
+                    Text("MINUTES").font(.system(size: 12, weight: .bold)).tracking(1)
                         .foregroundColor(
-                            Color(
-                                red: 139 / 255, green: 92 / 255, blue: 246 / 255
-                            ).opacity(0.9)
+                            Color(red: 139 / 255, green: 92 / 255, blue: 246 / 255).opacity(0.9)
                         )
                         .frame(width: 80, alignment: .trailing)
                 }
-                .padding(.horizontal, 16)
-                .padding(.top, 4)
-                .padding(.bottom, 8)
+                .padding(.horizontal, 16).padding(.top, 4).padding(.bottom, 8)
 
                 // Leaderboard entries - LIMIT TO 10 ENTRIES
                 VStack(spacing: 8) {
                     // Only show first 10 entries
                     ForEach(
-                        Array(
-                            viewModel.leaderboardEntries.prefix(10).enumerated()
-                        ), id: \.element.id
+                        Array(viewModel.leaderboardEntries.prefix(10).enumerated()),
+                        id: \.element.id
                     ) { index, entry in
                         Button(action: {
                             // Only show profile for non-anonymous users
@@ -787,23 +640,18 @@ struct GlobalAllTimeLeaderboard: View {
                                             .fill(
                                                 index == 0
                                                     ? goldColor
-                                                    : (index == 1
-                                                        ? silverColor
-                                                        : bronzeColor)
+                                                    : (index == 1 ? silverColor : bronzeColor)
                                             )
                                             .frame(width: 26, height: 26)
 
-                                        Image(systemName: "medal.fill")
-                                            .font(.system(size: 14))
+                                        Image(systemName: "medal.fill").font(.system(size: 14))
                                             .foregroundColor(.white)
-                                            .shadow(
-                                                color: Color.black.opacity(0.2),
-                                                radius: 1)
+                                            .shadow(color: Color.black.opacity(0.2), radius: 1)
                                     }
                                     .frame(width: 32, alignment: .center)
-                                } else {
-                                    Text("\(index + 1)")
-                                        .font(.system(size: 16, weight: .bold))
+                                }
+                                else {
+                                    Text("\(index + 1)").font(.system(size: 16, weight: .bold))
                                         .foregroundColor(.white)
                                         .frame(width: 32, alignment: .center)
                                 }
@@ -812,41 +660,33 @@ struct GlobalAllTimeLeaderboard: View {
                                 if entry.isAnonymous {
                                     // Show question mark for anonymous users
                                     ZStack {
-                                        Circle()
-                                            .fill(Color.gray.opacity(0.3))
+                                        Circle().fill(Color.gray.opacity(0.3))
                                             .frame(width: 26, height: 26)
 
-                                        Text("?")
-                                            .font(
-                                                .system(size: 16, weight: .bold)
-                                            )
+                                        Text("?").font(.system(size: 16, weight: .bold))
                                             .foregroundColor(.white)
                                     }
-                                } else if let score = entry.score {
+                                }
+                                else if let score = entry.score {
                                     // Show rank for non-anonymous users
-                                    RankCircle(
-                                        score: score, size: 26,
-                                        showStreakIndicator: false)
+                                    RankCircle(score: score, size: 26, showStreakIndicator: false)
                                 }
 
                                 // Profile picture with streak indicator
                                 ZStack {
                                     if entry.isAnonymous {
-                                        DefaultProfileImage(
-                                            username: "A", size: 32)
-                                    } else {
-                                        ProfileImage(
-                                            userId: entry.userId, size: 32)
+                                        DefaultProfileImage(username: "A", size: 32)
+                                    }
+                                    else {
+                                        ProfileImage(userId: entry.userId, size: 32)
 
                                         // Optional streak indicator
                                         if entry.streakStatus != .none {
                                             Circle()
                                                 .stroke(
-                                                    entry.streakStatus
-                                                        == .redFlame
+                                                    entry.streakStatus == .redFlame
                                                         ? Color.red.opacity(0.8)
-                                                        : Color.orange.opacity(
-                                                            0.8),
+                                                        : Color.orange.opacity(0.8),
                                                     lineWidth: 2
                                                 )
                                                 .frame(width: 32, height: 32)
@@ -855,17 +695,13 @@ struct GlobalAllTimeLeaderboard: View {
                                             ZStack {
                                                 Circle()
                                                     .fill(
-                                                        entry.streakStatus
-                                                            == .redFlame
-                                                            ? Color.red
-                                                            : Color.orange
+                                                        entry.streakStatus == .redFlame
+                                                            ? Color.red : Color.orange
                                                     )
-                                                    .frame(
-                                                        width: 12, height: 12)
+                                                    .frame(width: 12, height: 12)
 
                                                 Image(systemName: "flame.fill")
-                                                    .font(.system(size: 8))
-                                                    .foregroundColor(.white)
+                                                    .font(.system(size: 8)).foregroundColor(.white)
                                             }
                                             .position(x: 24, y: 8)
                                         }
@@ -873,42 +709,35 @@ struct GlobalAllTimeLeaderboard: View {
                                 }
 
                                 // Username
-                                Text(entry.username)
-                                    .font(.system(size: 16, weight: .bold))
-                                    .foregroundColor(.white)
-                                    .lineLimit(1)
-                                    .frame(
-                                        maxWidth: .infinity, alignment: .leading
-                                    )
+                                Text(entry.username).font(.system(size: 16, weight: .bold))
+                                    .foregroundColor(.white).lineLimit(1)
+                                    .frame(maxWidth: .infinity, alignment: .leading)
                                     .underline(
-                                        color: entry.isAnonymous
-                                            ? .clear : .white.opacity(0.3))
+                                        color: entry.isAnonymous ? .clear : .white.opacity(0.3)
+                                    )
 
                                 // All time minutes
                                 VStack(alignment: .trailing, spacing: 2) {
-                                    Text("\(entry.minutes)")
-                                        .font(.system(size: 18, weight: .black))
+                                    Text("\(entry.minutes)").font(.system(size: 18, weight: .black))
                                         .foregroundColor(
-                                            Color(
-                                                red: 139 / 255, green: 92 / 255,
-                                                blue: 246 / 255)
+                                            Color(red: 139 / 255, green: 92 / 255, blue: 246 / 255)
                                         )
                                         .shadow(
                                             color: Color(
-                                                red: 139 / 255, green: 92 / 255,
+                                                red: 139 / 255,
+                                                green: 92 / 255,
                                                 blue: 246 / 255
-                                            ).opacity(0.3), radius: 4)
-
-                                    Text("minutes")
-                                        .font(
-                                            .system(size: 10, weight: .medium)
+                                            )
+                                            .opacity(0.3),
+                                            radius: 4
                                         )
+
+                                    Text("minutes").font(.system(size: 10, weight: .medium))
                                         .foregroundColor(.white.opacity(0.7))
                                 }
                                 .frame(width: 70, alignment: .trailing)
                             }
-                            .padding(.vertical, 10)
-                            .padding(.horizontal, 16)
+                            .padding(.vertical, 10).padding(.horizontal, 16)
                             .background(
                                 RoundedRectangle(cornerRadius: 12)
                                     .fill(
@@ -919,12 +748,14 @@ struct GlobalAllTimeLeaderboard: View {
                                                         red: 139 / 255,
                                                         green: 92 / 255,
                                                         blue: 246 / 255
-                                                    ).opacity(0.2),
+                                                    )
+                                                    .opacity(0.2),
                                                     Color(
                                                         red: 139 / 255,
                                                         green: 92 / 255,
                                                         blue: 246 / 255
-                                                    ).opacity(0.1),
+                                                    )
+                                                    .opacity(0.1),
                                                 ]
                                                 : [
                                                     Color.white.opacity(0.08),
@@ -938,66 +769,51 @@ struct GlobalAllTimeLeaderboard: View {
                                         RoundedRectangle(cornerRadius: 12)
                                             .stroke(
                                                 // Highlight current user
-                                                Auth.auth().currentUser?.uid
-                                                    == entry.userId
+                                                Auth.auth().currentUser?.uid == entry.userId
                                                     ? Color(
                                                         red: 139 / 255,
                                                         green: 92 / 255,
                                                         blue: 246 / 255
-                                                    ).opacity(0.5)
-                                                    : Color.white.opacity(0.2),
-                                                lineWidth: Auth.auth()
-                                                    .currentUser?.uid
+                                                    )
+                                                    .opacity(0.5) : Color.white.opacity(0.2),
+                                                lineWidth: Auth.auth().currentUser?.uid
                                                     == entry.userId ? 1.5 : 1
                                             )
                                     )
                             )
                         }
-                        .buttonStyle(PlainButtonStyle())
-                        .padding(.vertical, 2)
+                        .buttonStyle(PlainButtonStyle()).padding(.vertical, 2)
                         // Disable the button for anonymous users
                         .disabled(entry.isAnonymous)
                     }
                 }
             }
         }
-        .padding(.vertical, 16)
-        .padding(.horizontal, 18)
+        .padding(.vertical, 16).padding(.horizontal, 18)
         .background(
             ZStack {
                 RoundedRectangle(cornerRadius: 18)
                     .fill(
                         LinearGradient(
                             colors: [
-                                Color(
-                                    red: 88 / 255, green: 28 / 255,
-                                    blue: 135 / 255
-                                ).opacity(0.3),
-                                Color(
-                                    red: 91 / 255, green: 33 / 255,
-                                    blue: 182 / 255
-                                ).opacity(0.2),
+                                Color(red: 88 / 255, green: 28 / 255, blue: 135 / 255).opacity(0.3),
+                                Color(red: 91 / 255, green: 33 / 255, blue: 182 / 255).opacity(0.2),
                             ],
                             startPoint: .topLeading,
                             endPoint: .bottomTrailing
                         )
                     )
 
-                RoundedRectangle(cornerRadius: 18)
-                    .fill(Color.white.opacity(0.05))
+                RoundedRectangle(cornerRadius: 18).fill(Color.white.opacity(0.05))
 
                 RoundedRectangle(cornerRadius: 18)
                     .stroke(
                         LinearGradient(
                             colors: [
-                                Color(
-                                    red: 139 / 255, green: 92 / 255,
-                                    blue: 246 / 255
-                                ).opacity(0.5),
-                                Color(
-                                    red: 124 / 255, green: 58 / 255,
-                                    blue: 237 / 255
-                                ).opacity(0.2),
+                                Color(red: 139 / 255, green: 92 / 255, blue: 246 / 255)
+                                    .opacity(0.5),
+                                Color(red: 124 / 255, green: 58 / 255, blue: 237 / 255)
+                                    .opacity(0.2),
                             ],
                             startPoint: .topLeading,
                             endPoint: .bottomTrailing
@@ -1009,15 +825,9 @@ struct GlobalAllTimeLeaderboard: View {
         .shadow(color: Color.black.opacity(0.25), radius: 8, x: 0, y: 3)
         .sheet(
             isPresented: $showUserProfile,
-            content: {
-                if let userId = selectedUserId {
-                    UserProfileSheet(userId: userId)
-                }
-            }
+            content: { if let userId = selectedUserId { UserProfileSheet(userId: userId) } }
         )
-        .onAppear {
-            viewModel.loadGlobalAllTimeLeaderboard()
-        }
+        .onAppear { viewModel.loadGlobalAllTimeLeaderboard() }
     }
 }
 
@@ -1047,7 +857,9 @@ class GlobalWeeklyLeaderboardViewModel: ObservableObject {
         let calendar = Calendar.current
         let currentDate = Date()
         var components = calendar.dateComponents(
-            [.yearForWeekOfYear, .weekOfYear], from: currentDate)
+            [.yearForWeekOfYear, .weekOfYear],
+            from: currentDate
+        )
         components.weekday = 2  // Monday
         components.hour = 0
         components.minute = 0
@@ -1061,36 +873,26 @@ class GlobalWeeklyLeaderboardViewModel: ObservableObject {
         print("🗓️ Global Weekly leaderboard from: \(weekStart)")
 
         // First, fetch all sessions from this week
-        db.collection("sessions")
-            .whereField("wasSuccessful", isEqualTo: true)
+        db.collection("sessions").whereField("wasSuccessful", isEqualTo: true)
             .whereField("startTime", isGreaterThan: Timestamp(date: weekStart))
             .getDocuments(source: .default) { [weak self] snapshot, error in
                 guard let self = self else { return }
 
                 if let error = error {
-                    print(
-                        "Error fetching global sessions: \(error.localizedDescription)"
-                    )
-                    DispatchQueue.main.async {
-                        self.isLoading = false
-                    }
+                    print("Error fetching global sessions: \(error.localizedDescription)")
+                    DispatchQueue.main.async { self.isLoading = false }
                     return
                 }
 
                 guard let documents = snapshot?.documents else {
-                    DispatchQueue.main.async {
-                        self.isLoading = false
-                    }
+                    DispatchQueue.main.async { self.isLoading = false }
                     return
                 }
 
-                print(
-                    "📊 Found \(documents.count) total global sessions this week"
-                )
+                print("📊 Found \(documents.count) total global sessions this week")
 
                 // Dictionary to track each user's total time
-                var userWeeklyData: [String: (userId: String, username: String, minutes: Int)] =
-                    [:]
+                var userWeeklyData: [String: (userId: String, username: String, minutes: Int)] = [:]
 
                 // Collection of user IDs we need to fetch privacy settings for
                 var userIdsToCheck = Set<String>()
@@ -1102,9 +904,7 @@ class GlobalWeeklyLeaderboardViewModel: ObservableObject {
                     // Extract basic session info
                     guard let userId = data["userId"] as? String,
                         let actualDuration = data["actualDuration"] as? Int
-                    else {
-                        continue
-                    }
+                    else { continue }
 
                     // Add this user ID to the list we need to check privacy for
                     userIdsToCheck.insert(userId)
@@ -1115,15 +915,13 @@ class GlobalWeeklyLeaderboardViewModel: ObservableObject {
                     // Update the user's total time
                     if let existingData = userWeeklyData[userId] {
                         userWeeklyData[userId] = (
-                            userId: userId,
-                            username: existingData.username,
+                            userId: userId, username: existingData.username,
                             minutes: existingData.minutes + actualDuration
                         )
-                    } else {
+                    }
+                    else {
                         userWeeklyData[userId] = (
-                            userId: userId,
-                            username: tempUsername,
-                            minutes: actualDuration
+                            userId: userId, username: tempUsername, minutes: actualDuration
                         )
                     }
                 }
@@ -1138,34 +936,30 @@ class GlobalWeeklyLeaderboardViewModel: ObservableObject {
                 }
 
                 // Now check privacy settings for all users
-                self.fetchUserPrivacySettings(userIds: Array(userIdsToCheck)) {
-                    privacySettings in
+                self.fetchUserPrivacySettings(userIds: Array(userIdsToCheck)) { privacySettings in
                     // Get all usernames respecting privacy
                     self.fetchUsernamesRespectingPrivacy(
-                        Array(userIdsToCheck), privacySettings: privacySettings
+                        Array(userIdsToCheck),
+                        privacySettings: privacySettings
                     ) { usernameMap in
                         // Get scores and streaks
                         self.fetchUserScoresAndStreaks(Array(userIdsToCheck)) {
-                            scoresMap, streaksMap in
+                            scoresMap,
+                            streaksMap in
                             // Now build final entries respecting privacy
                             var entries: [GlobalLeaderboardEntry] = []
 
                             for (userId, userData) in userWeeklyData {
                                 // Skip users who have opted out of leaderboards
-                                if let userPrivacy = privacySettings[userId],
-                                    userPrivacy.optOut
-                                {
+                                if let userPrivacy = privacySettings[userId], userPrivacy.optOut {
                                     continue
                                 }
 
                                 // Determine if user should be anonymous
-                                let isAnonymous =
-                                    privacySettings[userId]?.isAnonymous
-                                    ?? false
+                                let isAnonymous = privacySettings[userId]?.isAnonymous ?? false
                                 let displayUsername =
                                     isAnonymous
-                                    ? "Anonymous"
-                                    : (usernameMap[userId] ?? userData.username)
+                                    ? "Anonymous" : (usernameMap[userId] ?? userData.username)
 
                                 let entry = GlobalLeaderboardEntry(
                                     id: UUID().uuidString,  // Unique ID for SwiftUI
@@ -1196,8 +990,7 @@ class GlobalWeeklyLeaderboardViewModel: ObservableObject {
     // Helper methods for fetching user data (same as RegionalLeaderboardViewModel)
     private func fetchUserPrivacySettings(
         userIds: [String],
-        completion: @escaping ([String: (optOut: Bool, isAnonymous: Bool)]) ->
-            Void
+        completion: @escaping ([String: (optOut: Bool, isAnonymous: Bool)]) -> Void
     ) {
         guard !userIds.isEmpty else {
             completion([:])
@@ -1211,30 +1004,28 @@ class GlobalWeeklyLeaderboardViewModel: ObservableObject {
         for userId in userIds {
             dispatchGroup.enter()
 
-            db.collection("user_settings").document(userId).getDocument {
-                document, error in
-                defer { dispatchGroup.leave() }
+            db.collection("user_settings").document(userId)
+                .getDocument { document, error in
+                    defer { dispatchGroup.leave() }
 
-                if let data = document?.data() {
-                    // Get opt-out setting (default to false)
-                    let optOut = data["regionalOptOut"] as? Bool ?? false
+                    if let data = document?.data() {
+                        // Get opt-out setting (default to false)
+                        let optOut = data["regionalOptOut"] as? Bool ?? false
 
-                    // Get display mode (default to normal)
-                    let displayModeString =
-                        data["regionalDisplayMode"] as? String ?? "normal"
-                    let isAnonymous = displayModeString == "anonymous"
+                        // Get display mode (default to normal)
+                        let displayModeString = data["regionalDisplayMode"] as? String ?? "normal"
+                        let isAnonymous = displayModeString == "anonymous"
 
-                    result[userId] = (optOut: optOut, isAnonymous: isAnonymous)
-                } else {
-                    // Use defaults if no settings document
-                    result[userId] = (optOut: false, isAnonymous: false)
+                        result[userId] = (optOut: optOut, isAnonymous: isAnonymous)
+                    }
+                    else {
+                        // Use defaults if no settings document
+                        result[userId] = (optOut: false, isAnonymous: false)
+                    }
                 }
-            }
         }
 
-        dispatchGroup.notify(queue: .main) {
-            completion(result)
-        }
+        dispatchGroup.notify(queue: .main) { completion(result) }
     }
 
     private func fetchUsernamesRespectingPrivacy(
@@ -1253,9 +1044,7 @@ class GlobalWeeklyLeaderboardViewModel: ObservableObject {
 
         for userId in userIds {
             // Check if user is anonymous based on privacy settings
-            if let privacySetting = privacySettings[userId],
-                privacySetting.isAnonymous
-            {
+            if let privacySetting = privacySettings[userId], privacySetting.isAnonymous {
                 result[userId] = "Anonymous"
                 continue
             }
@@ -1264,8 +1053,9 @@ class GlobalWeeklyLeaderboardViewModel: ObservableObject {
                 !cachedUser.username.isEmpty && cachedUser.username != "User"
             {
                 result[userId] = cachedUser.username
-            } else if let currentUser = FirebaseManager.shared.currentUser,
-                currentUser.id == userId, !currentUser.username.isEmpty
+            }
+            else if let currentUser = FirebaseManager.shared.currentUser, currentUser.id == userId,
+                !currentUser.username.isEmpty
             {
                 result[userId] = currentUser.username
                 // Update cache
@@ -1274,7 +1064,8 @@ class GlobalWeeklyLeaderboardViewModel: ObservableObject {
                     username: currentUser.username,
                     profileImageURL: currentUser.profileImageURL
                 )
-            } else {
+            }
+            else {
                 idsToFetch.append(userId)
             }
         }
@@ -1298,11 +1089,10 @@ class GlobalWeeklyLeaderboardViewModel: ObservableObject {
                 // Add this batch to our results
                 for (id, username) in batchResult {
                     // Apply privacy settings - override with "Anonymous" if needed
-                    if let privacySetting = privacySettings[id],
-                        privacySetting.isAnonymous
-                    {
+                    if let privacySetting = privacySettings[id], privacySetting.isAnonymous {
                         result[id] = "Anonymous"
-                    } else {
+                    }
+                    else {
                         result[id] = username
                     }
                 }
@@ -1310,13 +1100,12 @@ class GlobalWeeklyLeaderboardViewModel: ObservableObject {
             }
         }
 
-        dispatchGroup.notify(queue: .main) {
-            completion(result)
-        }
+        dispatchGroup.notify(queue: .main) { completion(result) }
     }
 
     private func fetchUserBatch(
-        _ userIds: [String], completion: @escaping ([String: String]) -> Void
+        _ userIds: [String],
+        completion: @escaping ([String: String]) -> Void
     ) {
         let db = Firestore.firestore()
         var batchResult: [String: String] = [:]
@@ -1325,33 +1114,30 @@ class GlobalWeeklyLeaderboardViewModel: ObservableObject {
         for userId in userIds {
             dispatchGroup.enter()
 
-            db.collection("users").document(userId).getDocument(
-                source: .default
-            ) { document, error in
-                defer { dispatchGroup.leave() }
+            db.collection("users").document(userId)
+                .getDocument(source: .default) { document, error in
+                    defer { dispatchGroup.leave() }
 
-                // Try to get username from document
-                if let data = document?.data(),
-                    let username = data["username"] as? String,
-                    !username.isEmpty
-                {
-                    batchResult[userId] = username
+                    // Try to get username from document
+                    if let data = document?.data(), let username = data["username"] as? String,
+                        !username.isEmpty
+                    {
+                        batchResult[userId] = username
 
-                    // Update our cache
-                    self.userCache[userId] = UserCacheItem(
-                        userId: userId,
-                        username: username,
-                        profileImageURL: data["profileImageURL"] as? String
-                    )
-                } else {
-                    batchResult[userId] = "User"
+                        // Update our cache
+                        self.userCache[userId] = UserCacheItem(
+                            userId: userId,
+                            username: username,
+                            profileImageURL: data["profileImageURL"] as? String
+                        )
+                    }
+                    else {
+                        batchResult[userId] = "User"
+                    }
                 }
-            }
         }
 
-        dispatchGroup.notify(queue: .main) {
-            completion(batchResult)
-        }
+        dispatchGroup.notify(queue: .main) { completion(batchResult) }
     }
 
     private func fetchUserScoresAndStreaks(
@@ -1367,36 +1153,30 @@ class GlobalWeeklyLeaderboardViewModel: ObservableObject {
             dispatchGroup.enter()
 
             // Get user score
-            db.collection("users").document(userId).getDocument(
-                source: .default
-            ) { document, error in
-                defer { dispatchGroup.leave() }
+            db.collection("users").document(userId)
+                .getDocument(source: .default) { document, error in
+                    defer { dispatchGroup.leave() }
 
-                if let data = document?.data() {
-                    if let score = data["score"] as? Double {
-                        scores[userId] = score
+                    if let data = document?.data() {
+                        if let score = data["score"] as? Double { scores[userId] = score }
                     }
                 }
-            }
 
             // Get user streak status in a separate call
             dispatchGroup.enter()
-            db.collection("users").document(userId).collection("streak")
-                .document("current").getDocument { document, error in
+            db.collection("users").document(userId).collection("streak").document("current")
+                .getDocument { document, error in
                     defer { dispatchGroup.leave() }
 
                     if let data = document?.data(),
                         let statusString = data["streakStatus"] as? String
                     {
-                        streaks[userId] =
-                            StreakStatus(rawValue: statusString) ?? .none
+                        streaks[userId] = StreakStatus(rawValue: statusString) ?? .none
                     }
                 }
         }
 
-        dispatchGroup.notify(queue: .main) {
-            completion(scores, streaks)
-        }
+        dispatchGroup.notify(queue: .main) { completion(scores, streaks) }
     }
 }
 
@@ -1412,32 +1192,22 @@ class GlobalAllTimeLeaderboardViewModel: ObservableObject {
         isLoading = true
 
         // Directly query the users collection to get all users sorted by total focus time
-        db.collection("users")
-            .order(by: "totalFocusTime", descending: true)
-            .limit(to: 100)  // Fetch more than we need in case some users opt out
+        db.collection("users").order(by: "totalFocusTime", descending: true).limit(to: 100)  // Fetch more than we need in case some users opt out
             .getDocuments { [weak self] snapshot, error in
                 guard let self = self else { return }
 
                 if let error = error {
-                    print(
-                        "Error fetching global users: \(error.localizedDescription)"
-                    )
-                    DispatchQueue.main.async {
-                        self.isLoading = false
-                    }
+                    print("Error fetching global users: \(error.localizedDescription)")
+                    DispatchQueue.main.async { self.isLoading = false }
                     return
                 }
 
                 guard let documents = snapshot?.documents else {
-                    DispatchQueue.main.async {
-                        self.isLoading = false
-                    }
+                    DispatchQueue.main.async { self.isLoading = false }
                     return
                 }
 
-                print(
-                    "📊 Found \(documents.count) total users for all time leaderboard"
-                )
+                print("📊 Found \(documents.count) total users for all time leaderboard")
 
                 // Dictionary to store user data with total focus time
                 var userData: [(userId: String, username: String, minutes: Int)] = []
@@ -1450,21 +1220,14 @@ class GlobalAllTimeLeaderboardViewModel: ObservableObject {
                     let data = document.data()
 
                     // Skip users with zero totalFocusTime
-                    guard let totalFocusTime = data["totalFocusTime"] as? Int,
-                        totalFocusTime > 0
-                    else {
-                        continue
-                    }
+                    guard let totalFocusTime = data["totalFocusTime"] as? Int, totalFocusTime > 0
+                    else { continue }
 
                     let userId = document.documentID
                     let username = data["username"] as? String ?? "User"
 
                     userIdsToCheck.append(userId)
-                    userData.append(
-                        (
-                            userId: userId, username: username,
-                            minutes: totalFocusTime
-                        ))
+                    userData.append((userId: userId, username: username, minutes: totalFocusTime))
                 }
 
                 // No data found - update UI now
@@ -1477,28 +1240,23 @@ class GlobalAllTimeLeaderboardViewModel: ObservableObject {
                 }
 
                 // Now check privacy settings for all users
-                self.fetchUserPrivacySettings(userIds: userIdsToCheck) {
-                    privacySettings in
+                self.fetchUserPrivacySettings(userIds: userIdsToCheck) { privacySettings in
                     // Get scores and streaks
-                    self.fetchUserScoresAndStreaks(userIdsToCheck) {
-                        scoresMap, streaksMap in
+                    self.fetchUserScoresAndStreaks(userIdsToCheck) { scoresMap, streaksMap in
                         // Now build final entries respecting privacy
                         var entries: [GlobalLeaderboardEntry] = []
 
                         for userInfo in userData {
                             // Skip users who have opted out of leaderboards
-                            if let userPrivacy = privacySettings[
-                                userInfo.userId], userPrivacy.optOut
+                            if let userPrivacy = privacySettings[userInfo.userId],
+                                userPrivacy.optOut
                             {
                                 continue
                             }
 
                             // Determine if user should be anonymous
-                            let isAnonymous =
-                                privacySettings[userInfo.userId]?.isAnonymous
-                                ?? false
-                            let displayUsername =
-                                isAnonymous ? "Anonymous" : userInfo.username
+                            let isAnonymous = privacySettings[userInfo.userId]?.isAnonymous ?? false
+                            let displayUsername = isAnonymous ? "Anonymous" : userInfo.username
 
                             let entry = GlobalLeaderboardEntry(
                                 id: UUID().uuidString,  // Unique ID for SwiftUI
@@ -1506,8 +1264,7 @@ class GlobalAllTimeLeaderboardViewModel: ObservableObject {
                                 username: displayUsername,
                                 minutes: userInfo.minutes,
                                 score: scoresMap[userInfo.userId],
-                                streakStatus: streaksMap[userInfo.userId]
-                                    ?? .none,
+                                streakStatus: streaksMap[userInfo.userId] ?? .none,
                                 isAnonymous: isAnonymous
                             )
 
@@ -1529,8 +1286,7 @@ class GlobalAllTimeLeaderboardViewModel: ObservableObject {
     // Helper methods for fetching user data (same implementations as GlobalWeeklyLeaderboardViewModel)
     private func fetchUserPrivacySettings(
         userIds: [String],
-        completion: @escaping ([String: (optOut: Bool, isAnonymous: Bool)]) ->
-            Void
+        completion: @escaping ([String: (optOut: Bool, isAnonymous: Bool)]) -> Void
     ) {
         guard !userIds.isEmpty else {
             completion([:])
@@ -1544,30 +1300,28 @@ class GlobalAllTimeLeaderboardViewModel: ObservableObject {
         for userId in userIds {
             dispatchGroup.enter()
 
-            db.collection("user_settings").document(userId).getDocument {
-                document, error in
-                defer { dispatchGroup.leave() }
+            db.collection("user_settings").document(userId)
+                .getDocument { document, error in
+                    defer { dispatchGroup.leave() }
 
-                if let data = document?.data() {
-                    // Get opt-out setting (default to false)
-                    let optOut = data["regionalOptOut"] as? Bool ?? false
+                    if let data = document?.data() {
+                        // Get opt-out setting (default to false)
+                        let optOut = data["regionalOptOut"] as? Bool ?? false
 
-                    // Get display mode (default to normal)
-                    let displayModeString =
-                        data["regionalDisplayMode"] as? String ?? "normal"
-                    let isAnonymous = displayModeString == "anonymous"
+                        // Get display mode (default to normal)
+                        let displayModeString = data["regionalDisplayMode"] as? String ?? "normal"
+                        let isAnonymous = displayModeString == "anonymous"
 
-                    result[userId] = (optOut: optOut, isAnonymous: isAnonymous)
-                } else {
-                    // Use defaults if no settings document
-                    result[userId] = (optOut: false, isAnonymous: false)
+                        result[userId] = (optOut: optOut, isAnonymous: isAnonymous)
+                    }
+                    else {
+                        // Use defaults if no settings document
+                        result[userId] = (optOut: false, isAnonymous: false)
+                    }
                 }
-            }
         }
 
-        dispatchGroup.notify(queue: .main) {
-            completion(result)
-        }
+        dispatchGroup.notify(queue: .main) { completion(result) }
     }
 
     private func fetchUserScoresAndStreaks(
@@ -1583,36 +1337,30 @@ class GlobalAllTimeLeaderboardViewModel: ObservableObject {
             dispatchGroup.enter()
 
             // Get user score
-            db.collection("users").document(userId).getDocument(
-                source: .default
-            ) { document, error in
-                defer { dispatchGroup.leave() }
+            db.collection("users").document(userId)
+                .getDocument(source: .default) { document, error in
+                    defer { dispatchGroup.leave() }
 
-                if let data = document?.data() {
-                    if let score = data["score"] as? Double {
-                        scores[userId] = score
+                    if let data = document?.data() {
+                        if let score = data["score"] as? Double { scores[userId] = score }
                     }
                 }
-            }
 
             // Get user streak status in a separate call
             dispatchGroup.enter()
-            db.collection("users").document(userId).collection("streak")
-                .document("current").getDocument { document, error in
+            db.collection("users").document(userId).collection("streak").document("current")
+                .getDocument { document, error in
                     defer { dispatchGroup.leave() }
 
                     if let data = document?.data(),
                         let statusString = data["streakStatus"] as? String
                     {
-                        streaks[userId] =
-                            StreakStatus(rawValue: statusString) ?? .none
+                        streaks[userId] = StreakStatus(rawValue: statusString) ?? .none
                     }
                 }
         }
 
-        dispatchGroup.notify(queue: .main) {
-            completion(scores, streaks)
-        }
+        dispatchGroup.notify(queue: .main) { completion(scores, streaks) }
     }
 }
 
@@ -1677,58 +1425,42 @@ struct RegionalWeeklyLeaderboard: View {
                 HStack {
                     // Left arrow to go back to building
                     Button(action: {
-                        withAnimation(.easeInOut(duration: 0.3)) {
-                            currentLeaderboard = .building
-                        }
+                        withAnimation(.easeInOut(duration: 0.3)) { currentLeaderboard = .building }
                     }) {
-                        Image(systemName: "chevron.left")
-                            .font(.system(size: 18))
-                            .foregroundColor(.white.opacity(0.7))
-                            .padding(8)
-                            .background(
-                                Circle()
-                                    .fill(Color.white.opacity(0.1))
-                            )
+                        Image(systemName: "chevron.left").font(.system(size: 18))
+                            .foregroundColor(.white.opacity(0.7)).padding(8)
+                            .background(Circle().fill(Color.white.opacity(0.1)))
                     }
 
                     Spacer()
 
                     // Main title with icon
                     HStack {
-                        Image(systemName: "mappin.circle.fill")
-                            .font(.system(size: 20))
+                        Image(systemName: "mappin.circle.fill").font(.system(size: 20))
                             .foregroundStyle(
                                 LinearGradient(
                                     colors: [
                                         Theme.mutedRed,
-                                        Color(
-                                            red: 220 / 255, green: 38 / 255,
-                                            blue: 38 / 255),
+                                        Color(red: 220 / 255, green: 38 / 255, blue: 38 / 255),
                                     ],
                                     startPoint: .top,
                                     endPoint: .bottom
                                 )
                             )
-                            .shadow(
-                                color: Theme.mutedRed.opacity(0.5), radius: 4)
+                            .shadow(color: Theme.mutedRed.opacity(0.5), radius: 4)
 
-                        Text("REGIONAL WEEKLY")
-                            .font(.system(size: 13, weight: .black))
-                            .tracking(2)
+                        Text("REGIONAL WEEKLY").font(.system(size: 13, weight: .black)).tracking(2)
                             .foregroundStyle(
                                 LinearGradient(
                                     colors: [
                                         Theme.mutedRed,
-                                        Color(
-                                            red: 220 / 255, green: 38 / 255,
-                                            blue: 38 / 255),
+                                        Color(red: 220 / 255, green: 38 / 255, blue: 38 / 255),
                                     ],
                                     startPoint: .top,
                                     endPoint: .bottom
                                 )
                             )
-                            .shadow(
-                                color: Theme.mutedRed.opacity(0.5), radius: 4)
+                            .shadow(color: Theme.mutedRed.opacity(0.5), radius: 4)
                     }
 
                     Spacer()
@@ -1739,36 +1471,25 @@ struct RegionalWeeklyLeaderboard: View {
                             currentLeaderboard = .regionalAllTime
                         }
                     }) {
-                        Image(systemName: "chevron.right")
-                            .font(.system(size: 18))
-                            .foregroundColor(.white.opacity(0.7))
-                            .padding(8)
-                            .background(
-                                Circle()
-                                    .fill(Color.white.opacity(0.1))
-                            )
+                        Image(systemName: "chevron.right").font(.system(size: 18))
+                            .foregroundColor(.white.opacity(0.7)).padding(8)
+                            .background(Circle().fill(Color.white.opacity(0.1)))
                     }
                 }
 
                 // Subtitle explaining the leaderboard
                 Text("Top players this week in \(viewModel.countyName)")
-                    .font(.system(size: 14, weight: .medium))
-                    .foregroundColor(.white.opacity(0.8))
-                    .lineLimit(1)
-                    .frame(maxWidth: .infinity, alignment: .center)
+                    .font(.system(size: 14, weight: .medium)).foregroundColor(.white.opacity(0.8))
+                    .lineLimit(1).frame(maxWidth: .infinity, alignment: .center)
             }
-            .padding(.vertical, 12)
-            .padding(.horizontal, 16)
+            .padding(.vertical, 12).padding(.horizontal, 16)
             .background(
                 RoundedRectangle(cornerRadius: 12)
                     .fill(
                         LinearGradient(
                             colors: [
                                 Theme.mutedRed.opacity(0.3),
-                                Color(
-                                    red: 220 / 255, green: 38 / 255,
-                                    blue: 38 / 255
-                                ).opacity(0.2),
+                                Color(red: 220 / 255, green: 38 / 255, blue: 38 / 255).opacity(0.2),
                             ],
                             startPoint: .leading,
                             endPoint: .trailing
@@ -1778,10 +1499,7 @@ struct RegionalWeeklyLeaderboard: View {
                         RoundedRectangle(cornerRadius: 12)
                             .stroke(
                                 LinearGradient(
-                                    colors: [
-                                        Color.white.opacity(0.5),
-                                        Color.white.opacity(0.2),
-                                    ],
+                                    colors: [Color.white.opacity(0.5), Color.white.opacity(0.2)],
                                     startPoint: .topLeading,
                                     endPoint: .bottomTrailing
                                 ),
@@ -1793,70 +1511,47 @@ struct RegionalWeeklyLeaderboard: View {
             if viewModel.isLoading {
                 HStack {
                     Spacer()
-                    ProgressView()
-                        .tint(.white)
-                        .scaleEffect(1.2)
-                        .padding(.vertical, 25)
+                    ProgressView().tint(.white).scaleEffect(1.2).padding(.vertical, 25)
                     Spacer()
                 }
-            } else if viewModel.leaderboardEntries.isEmpty {
+            }
+            else if viewModel.leaderboardEntries.isEmpty {
                 VStack(spacing: 12) {
-                    Image(systemName: "mappin.circle")
-                        .font(.system(size: 40))
-                        .foregroundColor(.white.opacity(0.5))
-                        .padding(.bottom, 5)
+                    Image(systemName: "mappin.circle").font(.system(size: 40))
+                        .foregroundColor(.white.opacity(0.5)).padding(.bottom, 5)
 
-                    Text("No regional data available")
-                        .font(.system(size: 16, weight: .medium))
-                        .foregroundColor(.white.opacity(0.7))
-                        .multilineTextAlignment(.center)
+                    Text("No regional data available").font(.system(size: 16, weight: .medium))
+                        .foregroundColor(.white.opacity(0.7)).multilineTextAlignment(.center)
 
-                    Text("Complete sessions to rank regionally!")
-                        .font(.system(size: 14))
+                    Text("Complete sessions to rank regionally!").font(.system(size: 14))
                         .foregroundColor(.white.opacity(0.5))
                 }
-                .frame(maxWidth: .infinity)
-                .padding(.vertical, 30)
-            } else {
+                .frame(maxWidth: .infinity).padding(.vertical, 30)
+            }
+            else {
                 // Column headers for clarity
                 HStack {
-                    Text("RANK")
-                        .font(.system(size: 12, weight: .bold))
-                        .tracking(1)
-                        .foregroundColor(
-                            Theme.mutedRed.opacity(0.9)
-                        )
+                    Text("RANK").font(.system(size: 12, weight: .bold)).tracking(1)
+                        .foregroundColor(Theme.mutedRed.opacity(0.9))
                         .frame(width: 50, alignment: .center)
 
-                    Text("USER")
-                        .font(.system(size: 12, weight: .bold))
-                        .tracking(1)
-                        .foregroundColor(
-                            Theme.mutedRed.opacity(0.9)
-                        )
-                        .frame(alignment: .leading)
+                    Text("USER").font(.system(size: 12, weight: .bold)).tracking(1)
+                        .foregroundColor(Theme.mutedRed.opacity(0.9)).frame(alignment: .leading)
 
                     Spacer()
 
-                    Text("MINUTES")
-                        .font(.system(size: 12, weight: .bold))
-                        .tracking(1)
-                        .foregroundColor(
-                            Theme.mutedRed.opacity(0.9)
-                        )
+                    Text("MINUTES").font(.system(size: 12, weight: .bold)).tracking(1)
+                        .foregroundColor(Theme.mutedRed.opacity(0.9))
                         .frame(width: 80, alignment: .trailing)
                 }
-                .padding(.horizontal, 16)
-                .padding(.top, 4)
-                .padding(.bottom, 8)
+                .padding(.horizontal, 16).padding(.top, 4).padding(.bottom, 8)
 
                 // Leaderboard entries - LIMIT TO 10 ENTRIES
                 VStack(spacing: 8) {
                     // Only show first 10 entries
                     ForEach(
-                        Array(
-                            viewModel.leaderboardEntries.prefix(10).enumerated()
-                        ), id: \.element.id
+                        Array(viewModel.leaderboardEntries.prefix(10).enumerated()),
+                        id: \.element.id
                     ) { index, entry in
                         Button(action: {
                             // Only show profile for non-anonymous users
@@ -1873,23 +1568,18 @@ struct RegionalWeeklyLeaderboard: View {
                                             .fill(
                                                 index == 0
                                                     ? goldColor
-                                                    : (index == 1
-                                                        ? silverColor
-                                                        : bronzeColor)
+                                                    : (index == 1 ? silverColor : bronzeColor)
                                             )
                                             .frame(width: 26, height: 26)
 
-                                        Image(systemName: "medal.fill")
-                                            .font(.system(size: 14))
+                                        Image(systemName: "medal.fill").font(.system(size: 14))
                                             .foregroundColor(.white)
-                                            .shadow(
-                                                color: Color.black.opacity(0.2),
-                                                radius: 1)
+                                            .shadow(color: Color.black.opacity(0.2), radius: 1)
                                     }
                                     .frame(width: 32, alignment: .center)
-                                } else {
-                                    Text("\(index + 1)")
-                                        .font(.system(size: 16, weight: .bold))
+                                }
+                                else {
+                                    Text("\(index + 1)").font(.system(size: 16, weight: .bold))
                                         .foregroundColor(.white)
                                         .frame(width: 32, alignment: .center)
                                 }
@@ -1898,41 +1588,33 @@ struct RegionalWeeklyLeaderboard: View {
                                 if entry.isAnonymous {
                                     // Show question mark for anonymous users
                                     ZStack {
-                                        Circle()
-                                            .fill(Color.gray.opacity(0.3))
+                                        Circle().fill(Color.gray.opacity(0.3))
                                             .frame(width: 26, height: 26)
 
-                                        Text("?")
-                                            .font(
-                                                .system(size: 16, weight: .bold)
-                                            )
+                                        Text("?").font(.system(size: 16, weight: .bold))
                                             .foregroundColor(.white)
                                     }
-                                } else if let score = entry.score {
+                                }
+                                else if let score = entry.score {
                                     // Show rank for non-anonymous users
-                                    RankCircle(
-                                        score: score, size: 26,
-                                        showStreakIndicator: false)
+                                    RankCircle(score: score, size: 26, showStreakIndicator: false)
                                 }
 
                                 // Profile picture with streak indicator
                                 ZStack {
                                     if entry.isAnonymous {
-                                        DefaultProfileImage(
-                                            username: "A", size: 32)
-                                    } else {
-                                        ProfileImage(
-                                            userId: entry.userId, size: 32)
+                                        DefaultProfileImage(username: "A", size: 32)
+                                    }
+                                    else {
+                                        ProfileImage(userId: entry.userId, size: 32)
 
                                         // Optional streak indicator
                                         if entry.streakStatus != .none {
                                             Circle()
                                                 .stroke(
-                                                    entry.streakStatus
-                                                        == .redFlame
+                                                    entry.streakStatus == .redFlame
                                                         ? Color.red.opacity(0.8)
-                                                        : Color.orange.opacity(
-                                                            0.8),
+                                                        : Color.orange.opacity(0.8),
                                                     lineWidth: 2
                                                 )
                                                 .frame(width: 32, height: 32)
@@ -1941,17 +1623,13 @@ struct RegionalWeeklyLeaderboard: View {
                                             ZStack {
                                                 Circle()
                                                     .fill(
-                                                        entry.streakStatus
-                                                            == .redFlame
-                                                            ? Color.red
-                                                            : Color.orange
+                                                        entry.streakStatus == .redFlame
+                                                            ? Color.red : Color.orange
                                                     )
-                                                    .frame(
-                                                        width: 12, height: 12)
+                                                    .frame(width: 12, height: 12)
 
                                                 Image(systemName: "flame.fill")
-                                                    .font(.system(size: 8))
-                                                    .foregroundColor(.white)
+                                                    .font(.system(size: 8)).foregroundColor(.white)
                                             }
                                             .position(x: 24, y: 8)
                                         }
@@ -1959,37 +1637,25 @@ struct RegionalWeeklyLeaderboard: View {
                                 }
 
                                 // Username
-                                Text(entry.username)
-                                    .font(.system(size: 16, weight: .bold))
-                                    .foregroundColor(.white)
-                                    .lineLimit(1)
-                                    .frame(
-                                        maxWidth: .infinity, alignment: .leading
-                                    )
+                                Text(entry.username).font(.system(size: 16, weight: .bold))
+                                    .foregroundColor(.white).lineLimit(1)
+                                    .frame(maxWidth: .infinity, alignment: .leading)
                                     .underline(
-                                        color: entry.isAnonymous
-                                            ? .clear : .white.opacity(0.3))
+                                        color: entry.isAnonymous ? .clear : .white.opacity(0.3)
+                                    )
 
                                 // Weekly minutes
                                 VStack(alignment: .trailing, spacing: 2) {
-                                    Text("\(entry.minutes)")
-                                        .font(.system(size: 18, weight: .black))
-                                        .foregroundColor(
-                                            Theme.mutedRed
-                                        )
-                                        .shadow(
-                                            color: Theme.mutedRed.opacity(0.3), radius: 4)
+                                    Text("\(entry.minutes)").font(.system(size: 18, weight: .black))
+                                        .foregroundColor(Theme.mutedRed)
+                                        .shadow(color: Theme.mutedRed.opacity(0.3), radius: 4)
 
-                                    Text("minutes")
-                                        .font(
-                                            .system(size: 10, weight: .medium)
-                                        )
+                                    Text("minutes").font(.system(size: 10, weight: .medium))
                                         .foregroundColor(.white.opacity(0.7))
                                 }
                                 .frame(width: 70, alignment: .trailing)
                             }
-                            .padding(.vertical, 10)
-                            .padding(.horizontal, 16)
+                            .padding(.vertical, 10).padding(.horizontal, 16)
                             .background(
                                 RoundedRectangle(cornerRadius: 12)
                                     .fill(
@@ -2011,59 +1677,45 @@ struct RegionalWeeklyLeaderboard: View {
                                         RoundedRectangle(cornerRadius: 12)
                                             .stroke(
                                                 // Highlight current user
-                                                Auth.auth().currentUser?.uid
-                                                    == entry.userId
+                                                Auth.auth().currentUser?.uid == entry.userId
                                                     ? Theme.mutedRed.opacity(0.5)
                                                     : Color.white.opacity(0.2),
-                                                lineWidth: Auth.auth()
-                                                    .currentUser?.uid
+                                                lineWidth: Auth.auth().currentUser?.uid
                                                     == entry.userId ? 1.5 : 1
                                             )
                                     )
                             )
                         }
-                        .buttonStyle(PlainButtonStyle())
-                        .padding(.vertical, 2)
+                        .buttonStyle(PlainButtonStyle()).padding(.vertical, 2)
                         // Disable the button for anonymous users
                         .disabled(entry.isAnonymous)
                     }
                 }
             }
         }
-        .padding(.vertical, 16)
-        .padding(.horizontal, 18)
+        .padding(.vertical, 16).padding(.horizontal, 18)
         .background(
             ZStack {
                 RoundedRectangle(cornerRadius: 18)
                     .fill(
                         LinearGradient(
                             colors: [
-                                Color(
-                                    red: 153 / 255, green: 27 / 255,
-                                    blue: 27 / 255
-                                ).opacity(0.3),
-                                Color(
-                                    red: 127 / 255, green: 29 / 255,
-                                    blue: 29 / 255
-                                ).opacity(0.2),
+                                Color(red: 153 / 255, green: 27 / 255, blue: 27 / 255).opacity(0.3),
+                                Color(red: 127 / 255, green: 29 / 255, blue: 29 / 255).opacity(0.2),
                             ],
                             startPoint: .topLeading,
                             endPoint: .bottomTrailing
                         )
                     )
 
-                RoundedRectangle(cornerRadius: 18)
-                    .fill(Color.white.opacity(0.05))
+                RoundedRectangle(cornerRadius: 18).fill(Color.white.opacity(0.05))
 
                 RoundedRectangle(cornerRadius: 18)
                     .stroke(
                         LinearGradient(
                             colors: [
                                 Theme.mutedRed.opacity(0.5),
-                                Color(
-                                    red: 220 / 255, green: 38 / 255,
-                                    blue: 38 / 255
-                                ).opacity(0.2),
+                                Color(red: 220 / 255, green: 38 / 255, blue: 38 / 255).opacity(0.2),
                             ],
                             startPoint: .topLeading,
                             endPoint: .bottomTrailing
@@ -2075,15 +1727,9 @@ struct RegionalWeeklyLeaderboard: View {
         .shadow(color: Color.black.opacity(0.25), radius: 8, x: 0, y: 3)
         .sheet(
             isPresented: $showUserProfile,
-            content: {
-                if let userId = selectedUserId {
-                    UserProfileSheet(userId: userId)
-                }
-            }
+            content: { if let userId = selectedUserId { UserProfileSheet(userId: userId) } }
         )
-        .onAppear {
-            viewModel.loadRegionalWeeklyLeaderboard()
-        }
+        .onAppear { viewModel.loadRegionalWeeklyLeaderboard() }
     }
 }
 
@@ -2152,64 +1798,49 @@ struct RegionalAllTimeLeaderboard: View {
                             currentLeaderboard = .regionalWeekly
                         }
                     }) {
-                        Image(systemName: "chevron.left")
-                            .font(.system(size: 18))
-                            .foregroundColor(.white.opacity(0.7))
-                            .padding(8)
-                            .background(
-                                Circle()
-                                    .fill(Color.white.opacity(0.1))
-                            )
+                        Image(systemName: "chevron.left").font(.system(size: 18))
+                            .foregroundColor(.white.opacity(0.7)).padding(8)
+                            .background(Circle().fill(Color.white.opacity(0.1)))
                     }
 
                     Spacer()
 
                     // Main title with icon
                     HStack {
-                        Image(systemName: "clock.arrow.circlepath")
-                            .font(.system(size: 20))
+                        Image(systemName: "clock.arrow.circlepath").font(.system(size: 20))
                             .foregroundStyle(
                                 LinearGradient(
                                     colors: [
-                                        Color(
-                                            red: 245 / 255, green: 158 / 255,
-                                            blue: 11 / 255),
-                                        Color(
-                                            red: 217 / 255, green: 119 / 255,
-                                            blue: 6 / 255),
+                                        Color(red: 245 / 255, green: 158 / 255, blue: 11 / 255),
+                                        Color(red: 217 / 255, green: 119 / 255, blue: 6 / 255),
                                     ],
                                     startPoint: .top,
                                     endPoint: .bottom
                                 )
                             )
                             .shadow(
-                                color: Color(
-                                    red: 245 / 255, green: 158 / 255,
-                                    blue: 11 / 255
-                                ).opacity(0.5), radius: 4)
+                                color: Color(red: 245 / 255, green: 158 / 255, blue: 11 / 255)
+                                    .opacity(0.5),
+                                radius: 4
+                            )
 
-                        Text("REGIONAL ALL TIME")
-                            .font(.system(size: 13, weight: .black))
+                        Text("REGIONAL ALL TIME").font(.system(size: 13, weight: .black))
                             .tracking(2)
                             .foregroundStyle(
                                 LinearGradient(
                                     colors: [
-                                        Color(
-                                            red: 245 / 255, green: 158 / 255,
-                                            blue: 11 / 255),
-                                        Color(
-                                            red: 217 / 255, green: 119 / 255,
-                                            blue: 6 / 255),
+                                        Color(red: 245 / 255, green: 158 / 255, blue: 11 / 255),
+                                        Color(red: 217 / 255, green: 119 / 255, blue: 6 / 255),
                                     ],
                                     startPoint: .top,
                                     endPoint: .bottom
                                 )
                             )
                             .shadow(
-                                color: Color(
-                                    red: 245 / 255, green: 158 / 255,
-                                    blue: 11 / 255
-                                ).opacity(0.5), radius: 4)
+                                color: Color(red: 245 / 255, green: 158 / 255, blue: 11 / 255)
+                                    .opacity(0.5),
+                                radius: 4
+                            )
                     }
 
                     Spacer()
@@ -2220,39 +1851,26 @@ struct RegionalAllTimeLeaderboard: View {
                             currentLeaderboard = .globalWeekly
                         }
                     }) {
-                        Image(systemName: "chevron.right")
-                            .font(.system(size: 18))
-                            .foregroundColor(.white.opacity(0.7))
-                            .padding(8)
-                            .background(
-                                Circle()
-                                    .fill(Color.white.opacity(0.1))
-                            )
+                        Image(systemName: "chevron.right").font(.system(size: 18))
+                            .foregroundColor(.white.opacity(0.7)).padding(8)
+                            .background(Circle().fill(Color.white.opacity(0.1)))
                     }
                 }
 
                 // Subtitle explaining the leaderboard
                 Text("Most minutes flipped ever in \(viewModel.countyName)")
-                    .font(.system(size: 14, weight: .medium))
-                    .foregroundColor(.white.opacity(0.8))
-                    .lineLimit(1)
-                    .frame(maxWidth: .infinity, alignment: .center)
+                    .font(.system(size: 14, weight: .medium)).foregroundColor(.white.opacity(0.8))
+                    .lineLimit(1).frame(maxWidth: .infinity, alignment: .center)
             }
-            .padding(.vertical, 12)
-            .padding(.horizontal, 16)
+            .padding(.vertical, 12).padding(.horizontal, 16)
             .background(
                 RoundedRectangle(cornerRadius: 12)
                     .fill(
                         LinearGradient(
                             colors: [
-                                Color(
-                                    red: 245 / 255, green: 158 / 255,
-                                    blue: 11 / 255
-                                ).opacity(0.3),
-                                Color(
-                                    red: 217 / 255, green: 119 / 255,
-                                    blue: 6 / 255
-                                ).opacity(0.2),
+                                Color(red: 245 / 255, green: 158 / 255, blue: 11 / 255)
+                                    .opacity(0.3),
+                                Color(red: 217 / 255, green: 119 / 255, blue: 6 / 255).opacity(0.2),
                             ],
                             startPoint: .leading,
                             endPoint: .trailing
@@ -2262,10 +1880,7 @@ struct RegionalAllTimeLeaderboard: View {
                         RoundedRectangle(cornerRadius: 12)
                             .stroke(
                                 LinearGradient(
-                                    colors: [
-                                        Color.white.opacity(0.5),
-                                        Color.white.opacity(0.2),
-                                    ],
+                                    colors: [Color.white.opacity(0.5), Color.white.opacity(0.2)],
                                     startPoint: .topLeading,
                                     endPoint: .bottomTrailing
                                 ),
@@ -2277,76 +1892,55 @@ struct RegionalAllTimeLeaderboard: View {
             if viewModel.isLoading {
                 HStack {
                     Spacer()
-                    ProgressView()
-                        .tint(.white)
-                        .scaleEffect(1.2)
-                        .padding(.vertical, 25)
+                    ProgressView().tint(.white).scaleEffect(1.2).padding(.vertical, 25)
                     Spacer()
                 }
-            } else if viewModel.leaderboardEntries.isEmpty {
+            }
+            else if viewModel.leaderboardEntries.isEmpty {
                 VStack(spacing: 12) {
-                    Image(systemName: "clock.arrow.circlepath")
-                        .font(.system(size: 40))
-                        .foregroundColor(.white.opacity(0.5))
-                        .padding(.bottom, 5)
+                    Image(systemName: "clock.arrow.circlepath").font(.system(size: 40))
+                        .foregroundColor(.white.opacity(0.5)).padding(.bottom, 5)
 
                     Text("No regional all time data available")
                         .font(.system(size: 16, weight: .medium))
-                        .foregroundColor(.white.opacity(0.7))
-                        .multilineTextAlignment(.center)
+                        .foregroundColor(.white.opacity(0.7)).multilineTextAlignment(.center)
 
-                    Text("Complete sessions to rank regionally!")
-                        .font(.system(size: 14))
+                    Text("Complete sessions to rank regionally!").font(.system(size: 14))
                         .foregroundColor(.white.opacity(0.5))
                 }
-                .frame(maxWidth: .infinity)
-                .padding(.vertical, 30)
-            } else {
+                .frame(maxWidth: .infinity).padding(.vertical, 30)
+            }
+            else {
                 // Column headers for clarity
                 HStack {
-                    Text("RANK")
-                        .font(.system(size: 12, weight: .bold))
-                        .tracking(1)
+                    Text("RANK").font(.system(size: 12, weight: .bold)).tracking(1)
                         .foregroundColor(
-                            Color(
-                                red: 245 / 255, green: 158 / 255, blue: 11 / 255
-                            ).opacity(0.9)
+                            Color(red: 245 / 255, green: 158 / 255, blue: 11 / 255).opacity(0.9)
                         )
                         .frame(width: 50, alignment: .center)
 
-                    Text("USER")
-                        .font(.system(size: 12, weight: .bold))
-                        .tracking(1)
+                    Text("USER").font(.system(size: 12, weight: .bold)).tracking(1)
                         .foregroundColor(
-                            Color(
-                                red: 245 / 255, green: 158 / 255, blue: 11 / 255
-                            ).opacity(0.9)
+                            Color(red: 245 / 255, green: 158 / 255, blue: 11 / 255).opacity(0.9)
                         )
                         .frame(alignment: .leading)
 
                     Spacer()
 
-                    Text("MINUTES")
-                        .font(.system(size: 12, weight: .bold))
-                        .tracking(1)
+                    Text("MINUTES").font(.system(size: 12, weight: .bold)).tracking(1)
                         .foregroundColor(
-                            Color(
-                                red: 245 / 255, green: 158 / 255, blue: 11 / 255
-                            ).opacity(0.9)
+                            Color(red: 245 / 255, green: 158 / 255, blue: 11 / 255).opacity(0.9)
                         )
                         .frame(width: 80, alignment: .trailing)
                 }
-                .padding(.horizontal, 16)
-                .padding(.top, 4)
-                .padding(.bottom, 8)
+                .padding(.horizontal, 16).padding(.top, 4).padding(.bottom, 8)
 
                 // Leaderboard entries - LIMIT TO 10 ENTRIES
                 VStack(spacing: 8) {
                     // Only show first 10 entries
                     ForEach(
-                        Array(
-                            viewModel.leaderboardEntries.prefix(10).enumerated()
-                        ), id: \.element.id
+                        Array(viewModel.leaderboardEntries.prefix(10).enumerated()),
+                        id: \.element.id
                     ) { index, entry in
                         Button(action: {
                             // Only show profile for non-anonymous users
@@ -2363,23 +1957,18 @@ struct RegionalAllTimeLeaderboard: View {
                                             .fill(
                                                 index == 0
                                                     ? goldColor
-                                                    : (index == 1
-                                                        ? silverColor
-                                                        : bronzeColor)
+                                                    : (index == 1 ? silverColor : bronzeColor)
                                             )
                                             .frame(width: 26, height: 26)
 
-                                        Image(systemName: "medal.fill")
-                                            .font(.system(size: 14))
+                                        Image(systemName: "medal.fill").font(.system(size: 14))
                                             .foregroundColor(.white)
-                                            .shadow(
-                                                color: Color.black.opacity(0.2),
-                                                radius: 1)
+                                            .shadow(color: Color.black.opacity(0.2), radius: 1)
                                     }
                                     .frame(width: 32, alignment: .center)
-                                } else {
-                                    Text("\(index + 1)")
-                                        .font(.system(size: 16, weight: .bold))
+                                }
+                                else {
+                                    Text("\(index + 1)").font(.system(size: 16, weight: .bold))
                                         .foregroundColor(.white)
                                         .frame(width: 32, alignment: .center)
                                 }
@@ -2388,41 +1977,33 @@ struct RegionalAllTimeLeaderboard: View {
                                 if entry.isAnonymous {
                                     // Show question mark for anonymous users
                                     ZStack {
-                                        Circle()
-                                            .fill(Color.gray.opacity(0.3))
+                                        Circle().fill(Color.gray.opacity(0.3))
                                             .frame(width: 26, height: 26)
 
-                                        Text("?")
-                                            .font(
-                                                .system(size: 16, weight: .bold)
-                                            )
+                                        Text("?").font(.system(size: 16, weight: .bold))
                                             .foregroundColor(.white)
                                     }
-                                } else if let score = entry.score {
+                                }
+                                else if let score = entry.score {
                                     // Show rank for non-anonymous users
-                                    RankCircle(
-                                        score: score, size: 26,
-                                        showStreakIndicator: false)
+                                    RankCircle(score: score, size: 26, showStreakIndicator: false)
                                 }
 
                                 // Profile picture with streak indicator
                                 ZStack {
                                     if entry.isAnonymous {
-                                        DefaultProfileImage(
-                                            username: "A", size: 32)
-                                    } else {
-                                        ProfileImage(
-                                            userId: entry.userId, size: 32)
+                                        DefaultProfileImage(username: "A", size: 32)
+                                    }
+                                    else {
+                                        ProfileImage(userId: entry.userId, size: 32)
 
                                         // Optional streak indicator
                                         if entry.streakStatus != .none {
                                             Circle()
                                                 .stroke(
-                                                    entry.streakStatus
-                                                        == .redFlame
+                                                    entry.streakStatus == .redFlame
                                                         ? Color.red.opacity(0.8)
-                                                        : Color.orange.opacity(
-                                                            0.8),
+                                                        : Color.orange.opacity(0.8),
                                                     lineWidth: 2
                                                 )
                                                 .frame(width: 32, height: 32)
@@ -2431,17 +2012,13 @@ struct RegionalAllTimeLeaderboard: View {
                                             ZStack {
                                                 Circle()
                                                     .fill(
-                                                        entry.streakStatus
-                                                            == .redFlame
-                                                            ? Color.red
-                                                            : Color.orange
+                                                        entry.streakStatus == .redFlame
+                                                            ? Color.red : Color.orange
                                                     )
-                                                    .frame(
-                                                        width: 12, height: 12)
+                                                    .frame(width: 12, height: 12)
 
                                                 Image(systemName: "flame.fill")
-                                                    .font(.system(size: 8))
-                                                    .foregroundColor(.white)
+                                                    .font(.system(size: 8)).foregroundColor(.white)
                                             }
                                             .position(x: 24, y: 8)
                                         }
@@ -2449,43 +2026,35 @@ struct RegionalAllTimeLeaderboard: View {
                                 }
 
                                 // Username
-                                Text(entry.username)
-                                    .font(.system(size: 16, weight: .bold))
-                                    .foregroundColor(.white)
-                                    .lineLimit(1)
-                                    .frame(
-                                        maxWidth: .infinity, alignment: .leading
-                                    )
+                                Text(entry.username).font(.system(size: 16, weight: .bold))
+                                    .foregroundColor(.white).lineLimit(1)
+                                    .frame(maxWidth: .infinity, alignment: .leading)
                                     .underline(
-                                        color: entry.isAnonymous
-                                            ? .clear : .white.opacity(0.3))
+                                        color: entry.isAnonymous ? .clear : .white.opacity(0.3)
+                                    )
 
                                 // All time minutes
                                 VStack(alignment: .trailing, spacing: 2) {
-                                    Text("\(entry.minutes)")
-                                        .font(.system(size: 18, weight: .black))
+                                    Text("\(entry.minutes)").font(.system(size: 18, weight: .black))
                                         .foregroundColor(
-                                            Color(
-                                                red: 245 / 255,
-                                                green: 158 / 255, blue: 11 / 255
-                                            )
+                                            Color(red: 245 / 255, green: 158 / 255, blue: 11 / 255)
                                         )
                                         .shadow(
                                             color: Color(
                                                 red: 245 / 255,
-                                                green: 158 / 255, blue: 11 / 255
-                                            ).opacity(0.3), radius: 4)
-
-                                    Text("minutes")
-                                        .font(
-                                            .system(size: 10, weight: .medium)
+                                                green: 158 / 255,
+                                                blue: 11 / 255
+                                            )
+                                            .opacity(0.3),
+                                            radius: 4
                                         )
+
+                                    Text("minutes").font(.system(size: 10, weight: .medium))
                                         .foregroundColor(.white.opacity(0.7))
                                 }
                                 .frame(width: 70, alignment: .trailing)
                             }
-                            .padding(.vertical, 10)
-                            .padding(.horizontal, 16)
+                            .padding(.vertical, 10).padding(.horizontal, 16)
                             .background(
                                 RoundedRectangle(cornerRadius: 12)
                                     .fill(
@@ -2496,12 +2065,14 @@ struct RegionalAllTimeLeaderboard: View {
                                                         red: 245 / 255,
                                                         green: 158 / 255,
                                                         blue: 11 / 255
-                                                    ).opacity(0.2),
+                                                    )
+                                                    .opacity(0.2),
                                                     Color(
                                                         red: 245 / 255,
                                                         green: 158 / 255,
                                                         blue: 11 / 255
-                                                    ).opacity(0.1),
+                                                    )
+                                                    .opacity(0.1),
                                                 ]
                                                 : [
                                                     Color.white.opacity(0.08),
@@ -2515,66 +2086,50 @@ struct RegionalAllTimeLeaderboard: View {
                                         RoundedRectangle(cornerRadius: 12)
                                             .stroke(
                                                 // Highlight current user
-                                                Auth.auth().currentUser?.uid
-                                                    == entry.userId
+                                                Auth.auth().currentUser?.uid == entry.userId
                                                     ? Color(
                                                         red: 245 / 255,
                                                         green: 158 / 255,
                                                         blue: 11 / 255
-                                                    ).opacity(0.5)
-                                                    : Color.white.opacity(0.2),
-                                                lineWidth: Auth.auth()
-                                                    .currentUser?.uid
+                                                    )
+                                                    .opacity(0.5) : Color.white.opacity(0.2),
+                                                lineWidth: Auth.auth().currentUser?.uid
                                                     == entry.userId ? 1.5 : 1
                                             )
                                     )
                             )
                         }
-                        .buttonStyle(PlainButtonStyle())
-                        .padding(.vertical, 2)
+                        .buttonStyle(PlainButtonStyle()).padding(.vertical, 2)
                         // Disable the button for anonymous users
                         .disabled(entry.isAnonymous)
                     }
                 }
             }
         }
-        .padding(.vertical, 16)
-        .padding(.horizontal, 18)
+        .padding(.vertical, 16).padding(.horizontal, 18)
         .background(
             ZStack {
                 RoundedRectangle(cornerRadius: 18)
                     .fill(
                         LinearGradient(
                             colors: [
-                                Color(
-                                    red: 120 / 255, green: 53 / 255,
-                                    blue: 15 / 255
-                                ).opacity(0.3),
-                                Color(
-                                    red: 146 / 255, green: 64 / 255,
-                                    blue: 14 / 255
-                                ).opacity(0.2),
+                                Color(red: 120 / 255, green: 53 / 255, blue: 15 / 255).opacity(0.3),
+                                Color(red: 146 / 255, green: 64 / 255, blue: 14 / 255).opacity(0.2),
                             ],
                             startPoint: .topLeading,
                             endPoint: .bottomTrailing
                         )
                     )
 
-                RoundedRectangle(cornerRadius: 18)
-                    .fill(Color.white.opacity(0.05))
+                RoundedRectangle(cornerRadius: 18).fill(Color.white.opacity(0.05))
 
                 RoundedRectangle(cornerRadius: 18)
                     .stroke(
                         LinearGradient(
                             colors: [
-                                Color(
-                                    red: 245 / 255, green: 158 / 255,
-                                    blue: 11 / 255
-                                ).opacity(0.5),
-                                Color(
-                                    red: 217 / 255, green: 119 / 255,
-                                    blue: 6 / 255
-                                ).opacity(0.2),
+                                Color(red: 245 / 255, green: 158 / 255, blue: 11 / 255)
+                                    .opacity(0.5),
+                                Color(red: 217 / 255, green: 119 / 255, blue: 6 / 255).opacity(0.2),
                             ],
                             startPoint: .topLeading,
                             endPoint: .bottomTrailing
@@ -2586,15 +2141,9 @@ struct RegionalAllTimeLeaderboard: View {
         .shadow(color: Color.black.opacity(0.25), radius: 8, x: 0, y: 3)
         .sheet(
             isPresented: $showUserProfile,
-            content: {
-                if let userId = selectedUserId {
-                    UserProfileSheet(userId: userId)
-                }
-            }
+            content: { if let userId = selectedUserId { UserProfileSheet(userId: userId) } }
         )
-        .onAppear {
-            viewModel.loadRegionalAllTimeLeaderboard()
-        }
+        .onAppear { viewModel.loadRegionalAllTimeLeaderboard() }
     }
 }
 
@@ -2619,15 +2168,15 @@ class RegionalWeeklyLeaderboardViewModel: ObservableObject {
                 guard let self = self else { return }
 
                 // Update the county name for display
-                DispatchQueue.main.async {
-                    self.countyName = countyName
-                }
+                DispatchQueue.main.async { self.countyName = countyName }
 
                 // Calculate the current week's start date
                 let calendar = Calendar.current
                 let currentDate = Date()
                 var components = calendar.dateComponents(
-                    [.yearForWeekOfYear, .weekOfYear], from: currentDate)
+                    [.yearForWeekOfYear, .weekOfYear],
+                    from: currentDate
+                )
                 components.weekday = 2  // Monday
                 components.hour = 0
                 components.minute = 0
@@ -2644,35 +2193,23 @@ class RegionalWeeklyLeaderboardViewModel: ObservableObject {
                 let regionRadiusInMeters = self.regionRadiusInMiles * 1609.34
 
                 // First, fetch all sessions from this week in the region
-                self.db.collection("sessions")
-                    .whereField("wasSuccessful", isEqualTo: true)
-                    .whereField(
-                        "startTime", isGreaterThan: Timestamp(date: weekStart)
-                    )
-                    .getDocuments(source: .default) {
-                        [weak self] snapshot, error in
+                self.db.collection("sessions").whereField("wasSuccessful", isEqualTo: true)
+                    .whereField("startTime", isGreaterThan: Timestamp(date: weekStart))
+                    .getDocuments(source: .default) { [weak self] snapshot, error in
                         guard let self = self else { return }
 
                         if let error = error {
-                            print(
-                                "Error fetching regional sessions: \(error.localizedDescription)"
-                            )
-                            DispatchQueue.main.async {
-                                self.isLoading = false
-                            }
+                            print("Error fetching regional sessions: \(error.localizedDescription)")
+                            DispatchQueue.main.async { self.isLoading = false }
                             return
                         }
 
                         guard let documents = snapshot?.documents else {
-                            DispatchQueue.main.async {
-                                self.isLoading = false
-                            }
+                            DispatchQueue.main.async { self.isLoading = false }
                             return
                         }
 
-                        print(
-                            "📊 Found \(documents.count) total sessions this week"
-                        )
+                        print("📊 Found \(documents.count) total sessions this week")
 
                         // Filter sessions by distance if location is available
                         var filteredDocuments = documents
@@ -2684,9 +2221,7 @@ class RegionalWeeklyLeaderboardViewModel: ObservableObject {
                             var sessionsInRegion: Set<String> = []
 
                             for document in documents {
-                                if let userId = document.data()["userId"]
-                                    as? String
-                                {
+                                if let userId = document.data()["userId"] as? String {
                                     dispatchGroup.enter()
 
                                     // Use session_locations collection to get location data
@@ -2695,39 +2230,24 @@ class RegionalWeeklyLeaderboardViewModel: ObservableObject {
                                         .getDocuments { snapshot, error in
                                             defer { dispatchGroup.leave() }
 
-                                            if let locationDocs = snapshot?
-                                                .documents
-                                            {
+                                            if let locationDocs = snapshot?.documents {
                                                 for locationDoc in locationDocs {
-                                                    if let geoPoint =
-                                                        locationDoc.data()[
-                                                            "location"]
+                                                    if let geoPoint = locationDoc.data()["location"]
                                                         as? GeoPoint
                                                     {
-                                                        let sessionLocation =
-                                                            CLLocation(
-                                                                latitude:
-                                                                    geoPoint
-                                                                    .latitude,
-                                                                longitude:
-                                                                    geoPoint
-                                                                    .longitude
-                                                            )
+                                                        let sessionLocation = CLLocation(
+                                                            latitude: geoPoint.latitude,
+                                                            longitude: geoPoint.longitude
+                                                        )
 
                                                         // Check if within region radius
-                                                        let distance =
-                                                            location.distance(
-                                                                from:
-                                                                    sessionLocation
+                                                        let distance = location.distance(
+                                                            from: sessionLocation
+                                                        )
+                                                        if distance <= regionRadiusInMeters {
+                                                            sessionsInRegion.insert(
+                                                                document.documentID
                                                             )
-                                                        if distance
-                                                            <= regionRadiusInMeters
-                                                        {
-                                                            sessionsInRegion
-                                                                .insert(
-                                                                    document
-                                                                        .documentID
-                                                                )
                                                         }
                                                     }
                                                 }
@@ -2746,10 +2266,10 @@ class RegionalWeeklyLeaderboardViewModel: ObservableObject {
                                 )
 
                                 // Process the filtered sessions
-                                self.processSessions(
-                                    documents: filteredDocuments)
+                                self.processSessions(documents: filteredDocuments)
                             }
-                        } else {
+                        }
+                        else {
                             // If location is not available, just use all sessions
                             self.processSessions(documents: filteredDocuments)
                         }
@@ -2772,9 +2292,7 @@ class RegionalWeeklyLeaderboardViewModel: ObservableObject {
             // Extract basic session info
             guard let userId = data["userId"] as? String,
                 let actualDuration = data["actualDuration"] as? Int
-            else {
-                continue
-            }
+            else { continue }
 
             // Add this user ID to the list we need to check privacy for
             userIdsToCheck.insert(userId)
@@ -2785,15 +2303,13 @@ class RegionalWeeklyLeaderboardViewModel: ObservableObject {
             // Update the user's total time
             if let existingData = userWeeklyData[userId] {
                 userWeeklyData[userId] = (
-                    userId: userId,
-                    username: existingData.username,
+                    userId: userId, username: existingData.username,
                     minutes: existingData.minutes + actualDuration
                 )
-            } else {
+            }
+            else {
                 userWeeklyData[userId] = (
-                    userId: userId,
-                    username: tempUsername,
-                    minutes: actualDuration
+                    userId: userId, username: tempUsername, minutes: actualDuration
                 )
             }
         }
@@ -2808,33 +2324,27 @@ class RegionalWeeklyLeaderboardViewModel: ObservableObject {
         }
 
         // Now check privacy settings for all users
-        fetchUserPrivacySettings(userIds: Array(userIdsToCheck)) {
-            privacySettings in
+        fetchUserPrivacySettings(userIds: Array(userIdsToCheck)) { privacySettings in
             // Get all usernames respecting privacy
             self.fetchUsernamesRespectingPrivacy(
-                Array(userIdsToCheck), privacySettings: privacySettings
+                Array(userIdsToCheck),
+                privacySettings: privacySettings
             ) { usernameMap in
                 // Get scores and streaks
-                self.fetchUserScoresAndStreaks(Array(userIdsToCheck)) {
-                    scoresMap, streaksMap in
+                self.fetchUserScoresAndStreaks(Array(userIdsToCheck)) { scoresMap, streaksMap in
                     // Now build final entries respecting privacy
                     var entries: [GlobalLeaderboardEntry] = []
 
                     for (userId, userData) in userWeeklyData {
                         // Skip users who have opted out of leaderboards
-                        if let userPrivacy = privacySettings[userId],
-                            userPrivacy.optOut
-                        {
+                        if let userPrivacy = privacySettings[userId], userPrivacy.optOut {
                             continue
                         }
 
                         // Determine if user should be anonymous
-                        let isAnonymous =
-                            privacySettings[userId]?.isAnonymous ?? false
+                        let isAnonymous = privacySettings[userId]?.isAnonymous ?? false
                         let displayUsername =
-                            isAnonymous
-                            ? "Anonymous"
-                            : (usernameMap[userId] ?? userData.username)
+                            isAnonymous ? "Anonymous" : (usernameMap[userId] ?? userData.username)
 
                         let entry = GlobalLeaderboardEntry(
                             id: UUID().uuidString,  // Unique ID for SwiftUI
@@ -2863,7 +2373,8 @@ class RegionalWeeklyLeaderboardViewModel: ObservableObject {
 
     // Helper method to determine county/region name
     private func determineCountyName(
-        from location: CLLocation, completion: @escaping (String) -> Void
+        from location: CLLocation,
+        completion: @escaping (String) -> Void
     ) {
         let geocoder = CLGeocoder()
 
@@ -2875,12 +2386,12 @@ class RegionalWeeklyLeaderboardViewModel: ObservableObject {
                 if let locality = placemark.locality {
                     // City/town name
                     regionName = locality
-                } else if let subAdministrativeArea = placemark
-                    .subAdministrativeArea
-                {
+                }
+                else if let subAdministrativeArea = placemark.subAdministrativeArea {
                     // County/district name
                     regionName = subAdministrativeArea
-                } else if let administrativeArea = placemark.administrativeArea {
+                }
+                else if let administrativeArea = placemark.administrativeArea {
                     // State/province name
                     regionName = administrativeArea
                 }
@@ -2893,8 +2404,7 @@ class RegionalWeeklyLeaderboardViewModel: ObservableObject {
     // Helper methods (same as GlobalLeaderboardViewModel)
     private func fetchUserPrivacySettings(
         userIds: [String],
-        completion: @escaping ([String: (optOut: Bool, isAnonymous: Bool)]) ->
-            Void
+        completion: @escaping ([String: (optOut: Bool, isAnonymous: Bool)]) -> Void
     ) {
         guard !userIds.isEmpty else {
             completion([:])
@@ -2908,30 +2418,28 @@ class RegionalWeeklyLeaderboardViewModel: ObservableObject {
         for userId in userIds {
             dispatchGroup.enter()
 
-            db.collection("user_settings").document(userId).getDocument {
-                document, error in
-                defer { dispatchGroup.leave() }
+            db.collection("user_settings").document(userId)
+                .getDocument { document, error in
+                    defer { dispatchGroup.leave() }
 
-                if let data = document?.data() {
-                    // Get opt-out setting (default to false)
-                    let optOut = data["regionalOptOut"] as? Bool ?? false
+                    if let data = document?.data() {
+                        // Get opt-out setting (default to false)
+                        let optOut = data["regionalOptOut"] as? Bool ?? false
 
-                    // Get display mode (default to normal)
-                    let displayModeString =
-                        data["regionalDisplayMode"] as? String ?? "normal"
-                    let isAnonymous = displayModeString == "anonymous"
+                        // Get display mode (default to normal)
+                        let displayModeString = data["regionalDisplayMode"] as? String ?? "normal"
+                        let isAnonymous = displayModeString == "anonymous"
 
-                    result[userId] = (optOut: optOut, isAnonymous: isAnonymous)
-                } else {
-                    // Use defaults if no settings document
-                    result[userId] = (optOut: false, isAnonymous: false)
+                        result[userId] = (optOut: optOut, isAnonymous: isAnonymous)
+                    }
+                    else {
+                        // Use defaults if no settings document
+                        result[userId] = (optOut: false, isAnonymous: false)
+                    }
                 }
-            }
         }
 
-        dispatchGroup.notify(queue: .main) {
-            completion(result)
-        }
+        dispatchGroup.notify(queue: .main) { completion(result) }
     }
 
     private func fetchUsernamesRespectingPrivacy(
@@ -2950,9 +2458,7 @@ class RegionalWeeklyLeaderboardViewModel: ObservableObject {
 
         for userId in userIds {
             // Check if user is anonymous based on privacy settings
-            if let privacySetting = privacySettings[userId],
-                privacySetting.isAnonymous
-            {
+            if let privacySetting = privacySettings[userId], privacySetting.isAnonymous {
                 result[userId] = "Anonymous"
                 continue
             }
@@ -2961,8 +2467,9 @@ class RegionalWeeklyLeaderboardViewModel: ObservableObject {
                 !cachedUser.username.isEmpty && cachedUser.username != "User"
             {
                 result[userId] = cachedUser.username
-            } else if let currentUser = FirebaseManager.shared.currentUser,
-                currentUser.id == userId, !currentUser.username.isEmpty
+            }
+            else if let currentUser = FirebaseManager.shared.currentUser, currentUser.id == userId,
+                !currentUser.username.isEmpty
             {
                 result[userId] = currentUser.username
                 // Update cache
@@ -2971,7 +2478,8 @@ class RegionalWeeklyLeaderboardViewModel: ObservableObject {
                     username: currentUser.username,
                     profileImageURL: currentUser.profileImageURL
                 )
-            } else {
+            }
+            else {
                 idsToFetch.append(userId)
             }
         }
@@ -2995,11 +2503,10 @@ class RegionalWeeklyLeaderboardViewModel: ObservableObject {
                 // Add this batch to our results
                 for (id, username) in batchResult {
                     // Apply privacy settings - override with "Anonymous" if needed
-                    if let privacySetting = privacySettings[id],
-                        privacySetting.isAnonymous
-                    {
+                    if let privacySetting = privacySettings[id], privacySetting.isAnonymous {
                         result[id] = "Anonymous"
-                    } else {
+                    }
+                    else {
                         result[id] = username
                     }
                 }
@@ -3007,13 +2514,12 @@ class RegionalWeeklyLeaderboardViewModel: ObservableObject {
             }
         }
 
-        dispatchGroup.notify(queue: .main) {
-            completion(result)
-        }
+        dispatchGroup.notify(queue: .main) { completion(result) }
     }
 
     private func fetchUserBatch(
-        _ userIds: [String], completion: @escaping ([String: String]) -> Void
+        _ userIds: [String],
+        completion: @escaping ([String: String]) -> Void
     ) {
         let db = Firestore.firestore()
         var batchResult: [String: String] = [:]
@@ -3022,33 +2528,30 @@ class RegionalWeeklyLeaderboardViewModel: ObservableObject {
         for userId in userIds {
             dispatchGroup.enter()
 
-            db.collection("users").document(userId).getDocument(
-                source: .default
-            ) { document, error in
-                defer { dispatchGroup.leave() }
+            db.collection("users").document(userId)
+                .getDocument(source: .default) { document, error in
+                    defer { dispatchGroup.leave() }
 
-                // Try to get username from document
-                if let data = document?.data(),
-                    let username = data["username"] as? String,
-                    !username.isEmpty
-                {
-                    batchResult[userId] = username
+                    // Try to get username from document
+                    if let data = document?.data(), let username = data["username"] as? String,
+                        !username.isEmpty
+                    {
+                        batchResult[userId] = username
 
-                    // Update our cache
-                    self.userCache[userId] = UserCacheItem(
-                        userId: userId,
-                        username: username,
-                        profileImageURL: data["profileImageURL"] as? String
-                    )
-                } else {
-                    batchResult[userId] = "User"
+                        // Update our cache
+                        self.userCache[userId] = UserCacheItem(
+                            userId: userId,
+                            username: username,
+                            profileImageURL: data["profileImageURL"] as? String
+                        )
+                    }
+                    else {
+                        batchResult[userId] = "User"
+                    }
                 }
-            }
         }
 
-        dispatchGroup.notify(queue: .main) {
-            completion(batchResult)
-        }
+        dispatchGroup.notify(queue: .main) { completion(batchResult) }
     }
 
     private func fetchUserScoresAndStreaks(
@@ -3064,36 +2567,30 @@ class RegionalWeeklyLeaderboardViewModel: ObservableObject {
             dispatchGroup.enter()
 
             // Get user score
-            db.collection("users").document(userId).getDocument(
-                source: .default
-            ) { document, error in
-                defer { dispatchGroup.leave() }
+            db.collection("users").document(userId)
+                .getDocument(source: .default) { document, error in
+                    defer { dispatchGroup.leave() }
 
-                if let data = document?.data() {
-                    if let score = data["score"] as? Double {
-                        scores[userId] = score
+                    if let data = document?.data() {
+                        if let score = data["score"] as? Double { scores[userId] = score }
                     }
                 }
-            }
 
             // Get user streak status in a separate call
             dispatchGroup.enter()
-            db.collection("users").document(userId).collection("streak")
-                .document("current").getDocument { document, error in
+            db.collection("users").document(userId).collection("streak").document("current")
+                .getDocument { document, error in
                     defer { dispatchGroup.leave() }
 
                     if let data = document?.data(),
                         let statusString = data["streakStatus"] as? String
                     {
-                        streaks[userId] =
-                            StreakStatus(rawValue: statusString) ?? .none
+                        streaks[userId] = StreakStatus(rawValue: statusString) ?? .none
                     }
                 }
         }
 
-        dispatchGroup.notify(queue: .main) {
-            completion(scores, streaks)
-        }
+        dispatchGroup.notify(queue: .main) { completion(scores, streaks) }
     }
 }
 
@@ -3118,9 +2615,7 @@ class RegionalAllTimeLeaderboardViewModel: ObservableObject {
             guard let self = self else { return }
 
             // Update the county name for display
-            DispatchQueue.main.async {
-                self.countyName = countyName
-            }
+            DispatchQueue.main.async { self.countyName = countyName }
 
             // Convert miles to meters for geoqueries
             let regionRadiusInMeters = self.regionRadiusInMiles * 1609.34
@@ -3131,19 +2626,13 @@ class RegionalAllTimeLeaderboardViewModel: ObservableObject {
                     guard let self = self else { return }
 
                     if let error = error {
-                        print(
-                            "Error fetching users: \(error.localizedDescription)"
-                        )
-                        DispatchQueue.main.async {
-                            self.isLoading = false
-                        }
+                        print("Error fetching users: \(error.localizedDescription)")
+                        DispatchQueue.main.async { self.isLoading = false }
                         return
                     }
 
                     guard let documents = snapshot?.documents else {
-                        DispatchQueue.main.async {
-                            self.isLoading = false
-                        }
+                        DispatchQueue.main.async { self.isLoading = false }
                         return
                     }
 
@@ -3151,10 +2640,7 @@ class RegionalAllTimeLeaderboardViewModel: ObservableObject {
 
                     // Extract user IDs and initial data
                     var userIds: [String] = []
-                    var userData:
-                        [String: (
-                            userId: String, username: String, minutes: Int
-                        )] = [:]
+                    var userData: [String: (userId: String, username: String, minutes: Int)] = [:]
 
                     for document in documents {
                         let data = document.data()
@@ -3166,8 +2652,7 @@ class RegionalAllTimeLeaderboardViewModel: ObservableObject {
                         if totalFocusTime > 0 {
                             userIds.append(userId)
                             userData[userId] = (
-                                userId: userId, username: username,
-                                minutes: totalFocusTime
+                                userId: userId, username: username, minutes: totalFocusTime
                             )
                         }
                     }
@@ -3175,7 +2660,8 @@ class RegionalAllTimeLeaderboardViewModel: ObservableObject {
                     // Now filter by location - check if each user has sessions in the region
                     if location.horizontalAccuracy > 0 {
                         self.filterUsersByRegion(
-                            userIds: userIds, location: location,
+                            userIds: userIds,
+                            location: location,
                             regionRadius: regionRadiusInMeters
                         ) { usersInRegion in
                             // Filter the user data to only those in region
@@ -3189,7 +2675,8 @@ class RegionalAllTimeLeaderboardViewModel: ObservableObject {
                             // Process the filtered users
                             self.processUsers(userData: filteredUserData)
                         }
-                    } else {
+                    }
+                    else {
                         // If location is not available, use all users
                         self.processUsers(userData: userData)
                     }
@@ -3198,7 +2685,9 @@ class RegionalAllTimeLeaderboardViewModel: ObservableObject {
     }
 
     private func filterUsersByRegion(
-        userIds: [String], location: CLLocation, regionRadius: Double,
+        userIds: [String],
+        location: CLLocation,
+        regionRadius: Double,
         completion: @escaping (Set<String>) -> Void
     ) {
         var usersInRegion = Set<String>()
@@ -3208,8 +2697,7 @@ class RegionalAllTimeLeaderboardViewModel: ObservableObject {
             dispatchGroup.enter()
 
             // Check session_locations for this user to see if any are in our region
-            db.collection("session_locations")
-                .whereField("userId", isEqualTo: userId)
+            db.collection("session_locations").whereField("userId", isEqualTo: userId)
                 .getDocuments { snapshot, error in
                     defer { dispatchGroup.leave() }
 
@@ -3217,17 +2705,14 @@ class RegionalAllTimeLeaderboardViewModel: ObservableObject {
 
                     if let documents = snapshot?.documents {
                         for document in documents {
-                            if let geoPoint = document.data()["location"]
-                                as? GeoPoint
-                            {
+                            if let geoPoint = document.data()["location"] as? GeoPoint {
                                 let sessionLocation = CLLocation(
                                     latitude: geoPoint.latitude,
                                     longitude: geoPoint.longitude
                                 )
 
                                 // Check if within region radius
-                                let distance = location.distance(
-                                    from: sessionLocation)
+                                let distance = location.distance(from: sessionLocation)
                                 if distance <= regionRadius {
                                     userHasSessionInRegion = true
                                     break
@@ -3236,20 +2721,15 @@ class RegionalAllTimeLeaderboardViewModel: ObservableObject {
                         }
                     }
 
-                    if userHasSessionInRegion {
-                        usersInRegion.insert(userId)
-                    }
+                    if userHasSessionInRegion { usersInRegion.insert(userId) }
                 }
         }
 
-        dispatchGroup.notify(queue: .main) {
-            completion(usersInRegion)
-        }
+        dispatchGroup.notify(queue: .main) { completion(usersInRegion) }
     }
 
-    private func processUsers(
-        userData: [String: (userId: String, username: String, minutes: Int)]
-    ) {
+    private func processUsers(userData: [String: (userId: String, username: String, minutes: Int)])
+    {
         // No data found - update UI now
         if userData.isEmpty {
             DispatchQueue.main.async {
@@ -3271,17 +2751,11 @@ class RegionalAllTimeLeaderboardViewModel: ObservableObject {
 
                 for (userId, userInfo) in userData {
                     // Skip users who have opted out of leaderboards
-                    if let userPrivacy = privacySettings[userId],
-                        userPrivacy.optOut
-                    {
-                        continue
-                    }
+                    if let userPrivacy = privacySettings[userId], userPrivacy.optOut { continue }
 
                     // Determine if user should be anonymous
-                    let isAnonymous =
-                        privacySettings[userId]?.isAnonymous ?? false
-                    let displayUsername =
-                        isAnonymous ? "Anonymous" : userInfo.username
+                    let isAnonymous = privacySettings[userId]?.isAnonymous ?? false
+                    let displayUsername = isAnonymous ? "Anonymous" : userInfo.username
 
                     let entry = GlobalLeaderboardEntry(
                         id: UUID().uuidString,  // Unique ID for SwiftUI
@@ -3309,7 +2783,8 @@ class RegionalAllTimeLeaderboardViewModel: ObservableObject {
 
     // Helper method to determine county/region name
     private func determineCountyName(
-        from location: CLLocation, completion: @escaping (String) -> Void
+        from location: CLLocation,
+        completion: @escaping (String) -> Void
     ) {
         let geocoder = CLGeocoder()
 
@@ -3321,12 +2796,12 @@ class RegionalAllTimeLeaderboardViewModel: ObservableObject {
                 if let locality = placemark.locality {
                     // City/town name
                     regionName = locality
-                } else if let subAdministrativeArea = placemark
-                    .subAdministrativeArea
-                {
+                }
+                else if let subAdministrativeArea = placemark.subAdministrativeArea {
                     // County/district name
                     regionName = subAdministrativeArea
-                } else if let administrativeArea = placemark.administrativeArea {
+                }
+                else if let administrativeArea = placemark.administrativeArea {
                     // State/province name
                     regionName = administrativeArea
                 }
@@ -3339,8 +2814,7 @@ class RegionalAllTimeLeaderboardViewModel: ObservableObject {
     // Helper methods (same as GlobalLeaderboardViewModel)
     private func fetchUserPrivacySettings(
         userIds: [String],
-        completion: @escaping ([String: (optOut: Bool, isAnonymous: Bool)]) ->
-            Void
+        completion: @escaping ([String: (optOut: Bool, isAnonymous: Bool)]) -> Void
     ) {
         guard !userIds.isEmpty else {
             completion([:])
@@ -3354,30 +2828,28 @@ class RegionalAllTimeLeaderboardViewModel: ObservableObject {
         for userId in userIds {
             dispatchGroup.enter()
 
-            db.collection("user_settings").document(userId).getDocument {
-                document, error in
-                defer { dispatchGroup.leave() }
+            db.collection("user_settings").document(userId)
+                .getDocument { document, error in
+                    defer { dispatchGroup.leave() }
 
-                if let data = document?.data() {
-                    // Get opt-out setting (default to false)
-                    let optOut = data["regionalOptOut"] as? Bool ?? false
+                    if let data = document?.data() {
+                        // Get opt-out setting (default to false)
+                        let optOut = data["regionalOptOut"] as? Bool ?? false
 
-                    // Get display mode (default to normal)
-                    let displayModeString =
-                        data["regionalDisplayMode"] as? String ?? "normal"
-                    let isAnonymous = displayModeString == "anonymous"
+                        // Get display mode (default to normal)
+                        let displayModeString = data["regionalDisplayMode"] as? String ?? "normal"
+                        let isAnonymous = displayModeString == "anonymous"
 
-                    result[userId] = (optOut: optOut, isAnonymous: isAnonymous)
-                } else {
-                    // Use defaults if no settings document
-                    result[userId] = (optOut: false, isAnonymous: false)
+                        result[userId] = (optOut: optOut, isAnonymous: isAnonymous)
+                    }
+                    else {
+                        // Use defaults if no settings document
+                        result[userId] = (optOut: false, isAnonymous: false)
+                    }
                 }
-            }
         }
 
-        dispatchGroup.notify(queue: .main) {
-            completion(result)
-        }
+        dispatchGroup.notify(queue: .main) { completion(result) }
     }
 
     private func fetchUserScoresAndStreaks(
@@ -3393,36 +2865,30 @@ class RegionalAllTimeLeaderboardViewModel: ObservableObject {
             dispatchGroup.enter()
 
             // Get user score
-            db.collection("users").document(userId).getDocument(
-                source: .default
-            ) { document, error in
-                defer { dispatchGroup.leave() }
+            db.collection("users").document(userId)
+                .getDocument(source: .default) { document, error in
+                    defer { dispatchGroup.leave() }
 
-                if let data = document?.data() {
-                    if let score = data["score"] as? Double {
-                        scores[userId] = score
+                    if let data = document?.data() {
+                        if let score = data["score"] as? Double { scores[userId] = score }
                     }
                 }
-            }
 
             // Get user streak status in a separate call
             dispatchGroup.enter()
-            db.collection("users").document(userId).collection("streak")
-                .document("current").getDocument { document, error in
+            db.collection("users").document(userId).collection("streak").document("current")
+                .getDocument { document, error in
                     defer { dispatchGroup.leave() }
 
                     if let data = document?.data(),
                         let statusString = data["streakStatus"] as? String
                     {
-                        streaks[userId] =
-                            StreakStatus(rawValue: statusString) ?? .none
+                        streaks[userId] = StreakStatus(rawValue: statusString) ?? .none
                     }
                 }
         }
 
-        dispatchGroup.notify(queue: .main) {
-            completion(scores, streaks)
-        }
+        dispatchGroup.notify(queue: .main) { completion(scores, streaks) }
     }
 }
 
@@ -3433,17 +2899,9 @@ struct NavigationArrowButton: View {
 
     var body: some View {
         Button(action: action) {
-            Image(
-                systemName: direction == .leading
-                    ? "chevron.left" : "chevron.right"
-            )
-            .font(.system(size: 18))
-            .foregroundColor(.white.opacity(0.7))
-            .padding(8)
-            .background(
-                Circle()
-                    .fill(Color.white.opacity(0.1))
-            )
+            Image(systemName: direction == .leading ? "chevron.left" : "chevron.right")
+                .font(.system(size: 18)).foregroundColor(.white.opacity(0.7)).padding(8)
+                .background(Circle().fill(Color.white.opacity(0.1)))
         }
     }
 }

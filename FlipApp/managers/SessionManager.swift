@@ -17,14 +17,15 @@ class SessionManager: ObservableObject {
     private let sessionsKey = "flipSessions"
     private let scoreManager = ScoreManager.shared
 
-    init() {
-        loadSessions()
-    }
+    init() { loadSessions() }
 
     // Standard session method with streak achievement check
     func addSession(
-        duration: Int, wasSuccessful: Bool, actualDuration: Int,
-        sessionTitle: String? = nil, sessionNotes: String? = nil
+        duration: Int,
+        wasSuccessful: Bool,
+        actualDuration: Int,
+        sessionTitle: String? = nil,
+        sessionNotes: String? = nil
     ) {
         guard let userId = Auth.auth().currentUser?.uid else { return }
 
@@ -56,8 +57,10 @@ class SessionManager: ObservableObject {
 
         // Process session with achievement checks
         processCompletedSession(
-            duration: duration, wasSuccessful: wasSuccessful,
-            actualDuration: actualDuration)
+            duration: duration,
+            wasSuccessful: wasSuccessful,
+            actualDuration: actualDuration
+        )
     }
 
     // New method for multi-user sessions with streak achievement check
@@ -102,14 +105,14 @@ class SessionManager: ObservableObject {
 
         // Process session with achievement checks
         processCompletedSession(
-            duration: duration, wasSuccessful: wasSuccessful,
-            actualDuration: actualDuration)
+            duration: duration,
+            wasSuccessful: wasSuccessful,
+            actualDuration: actualDuration
+        )
     }
 
     // New central method to process achievements for completed sessions
-    private func processCompletedSession(
-        duration: Int, wasSuccessful: Bool, actualDuration: Int
-    ) {
+    private func processCompletedSession(duration: Int, wasSuccessful: Bool, actualDuration: Int) {
         let pausesEnabled = AppManager.shared.allowPauses
 
         // Use the new combined achievement check method
@@ -141,7 +144,8 @@ class SessionManager: ObservableObject {
                     DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
                         self.showStreakAchievement = true
                     }
-                } else {
+                }
+                else {
                     self.showStreakAchievement = true
                 }
 
@@ -150,8 +154,7 @@ class SessionManager: ObservableObject {
                     name: Notification.Name("StreakAchievementEarned"),
                     object: nil,
                     userInfo: [
-                        "status": streakAchievement.1.rawValue,
-                        "count": streakAchievement.2,
+                        "status": streakAchievement.1.rawValue, "count": streakAchievement.2,
                     ]
                 )
             }
@@ -181,15 +184,13 @@ class SessionManager: ObservableObject {
     }
 
     private func uploadSession(_ session: Session) {
-        try? FirebaseManager.shared.db.collection("sessions")
-            .document(session.id.uuidString)
+        try? FirebaseManager.shared.db.collection("sessions").document(session.id.uuidString)
             .setData(from: session)
     }
 
     private func loadSessions() {
         if let data = userDefaults.data(forKey: sessionsKey),
-            let decodedSessions = try? JSONDecoder().decode(
-                [Session].self, from: data)
+            let decodedSessions = try? JSONDecoder().decode([Session].self, from: data)
         {
             sessions = decodedSessions
         }
@@ -202,20 +203,14 @@ class SessionManager: ObservableObject {
     }
 
     // Analytics methods
-    var totalSuccessfulSessions: Int {
-        sessions.filter { $0.wasSuccessful }.count
-    }
+    var totalSuccessfulSessions: Int { sessions.filter { $0.wasSuccessful }.count }
 
-    var totalFocusTime: Int {
-        sessions.reduce(0) { $0 + $1.actualDuration }
-    }
+    var totalFocusTime: Int { sessions.reduce(0) { $0 + $1.actualDuration } }
 
     var averageSessionLength: Int {
         guard !sessions.isEmpty else { return 0 }
         return totalFocusTime / sessions.count
     }
 
-    var longestSession: Int {
-        sessions.reduce(0) { max($0, $1.actualDuration) }
-    }
+    var longestSession: Int { sessions.reduce(0) { max($0, $1.actualDuration) } }
 }

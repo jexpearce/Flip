@@ -26,9 +26,7 @@ struct JoinedCompletionView: View {
     private var isOriginalStarter: Bool {
         guard let originalStarterId = appManager.originalSessionStarter,
             let currentUserId = Auth.auth().currentUser?.uid
-        else {
-            return false
-        }
+        else { return false }
         return originalStarterId == currentUserId
     }
 
@@ -38,18 +36,13 @@ struct JoinedCompletionView: View {
     }
 
     private var otherParticipantNames: String {
-        let names =
-            participantDetails
-            .filter { $0.id != Auth.auth().currentUser?.uid }
+        let names = participantDetails.filter { $0.id != Auth.auth().currentUser?.uid }
             .map { $0.username }
 
         switch names.count {
-        case 0:
-            return ""
-        case 1:
-            return names[0]
-        case 2:
-            return "\(names[0]) and \(names[1])"
+        case 0: return ""
+        case 1: return names[0]
+        case 2: return "\(names[0]) and \(names[1])"
         default:
             let allButLast = names.dropLast().joined(separator: ", ")
             return "\(allButLast), and \(names.last!)"
@@ -86,10 +79,7 @@ struct JoinedCompletionView: View {
                         Circle()
                             .stroke(
                                 LinearGradient(
-                                    colors: [
-                                        Color.white.opacity(0.6),
-                                        Color.white.opacity(0.1),
-                                    ],
+                                    colors: [Color.white.opacity(0.6), Color.white.opacity(0.1)],
                                     startPoint: .topLeading,
                                     endPoint: .bottomTrailing
                                 ),
@@ -97,73 +87,52 @@ struct JoinedCompletionView: View {
                             )
                             .frame(width: 110, height: 110)
 
-                        Image(systemName: "checkmark.circle.fill")
-                            .font(.system(size: 60))
+                        Image(systemName: "checkmark.circle.fill").font(.system(size: 60))
                             .foregroundStyle(
                                 LinearGradient(
-                                    colors: [
-                                        Theme.mutedGreen,
-                                        Theme.darkerGreen,
-                                    ],
+                                    colors: [Theme.mutedGreen, Theme.darkerGreen],
                                     startPoint: .top,
                                     endPoint: .bottom
                                 )
                             )
                             .shadow(
                                 color: Theme.mutedGreen.opacity(isGlowing ? 0.6 : 0.3),
-                                radius: isGlowing ? 15 : 8)
+                                radius: isGlowing ? 15 : 8
+                            )
                     }
-                    .scaleEffect(showIcon ? 1 : 0)
-                    .rotationEffect(.degrees(showIcon ? 0 : -180))
+                    .scaleEffect(showIcon ? 1 : 0).rotationEffect(.degrees(showIcon ? 0 : -180))
 
                     // Title with animation
-                    Text("GROUP SESSION COMPLETE")
-                        .font(.system(size: 28, weight: .black))
-                        .tracking(4)
-                        .foregroundColor(.white)
-                        .shadow(
-                            color: Theme.mutedGreen.opacity(0.5), radius: 8
-                        )
-                        .multilineTextAlignment(.center)
-                        .offset(y: showTitle ? 0 : 50)
+                    Text("GROUP SESSION COMPLETE").font(.system(size: 28, weight: .black))
+                        .tracking(4).foregroundColor(.white)
+                        .shadow(color: Theme.mutedGreen.opacity(0.5), radius: 8)
+                        .multilineTextAlignment(.center).offset(y: showTitle ? 0 : 50)
                         .opacity(showTitle ? 1 : 0)
 
                     // Group stats card
                     VStack(spacing: 15) {
                         if loadingParticipants {
-                            ProgressView()
-                                .tint(.white)
-                                .scaleEffect(1.2)
-                                .padding(.vertical, 15)
-                        } else {
+                            ProgressView().tint(.white).scaleEffect(1.2).padding(.vertical, 15)
+                        }
+                        else {
                             if !otherParticipantNames.isEmpty {
-                                Text(
-                                    "You and \(otherParticipantNames) completed:"
-                                )
-                                .font(.system(size: 16, weight: .medium))
-                                .foregroundColor(
-                                    Theme.yellow
-                                )
-                                .multilineTextAlignment(.center)
-                                .padding(.horizontal)
-                            } else {
-                                Text("You completed:")
+                                Text("You and \(otherParticipantNames) completed:")
                                     .font(.system(size: 16, weight: .medium))
-                                    .foregroundColor(
-                                        Theme.yellow)
+                                    .foregroundColor(Theme.yellow).multilineTextAlignment(.center)
+                                    .padding(.horizontal)
+                            }
+                            else {
+                                Text("You completed:").font(.system(size: 16, weight: .medium))
+                                    .foregroundColor(Theme.yellow)
                             }
 
                             HStack(alignment: .firstTextBaseline, spacing: 10) {
                                 Text("\(appManager.selectedMinutes)")
-                                    .font(.system(size: 50, weight: .black))
-                                    .foregroundColor(.white)
-                                    .shadow(
-                                        color: Theme.lightTealBlue.opacity(0.6), radius: 10)
+                                    .font(.system(size: 50, weight: .black)).foregroundColor(.white)
+                                    .shadow(color: Theme.lightTealBlue.opacity(0.6), radius: 10)
 
-                                Text("minutes")
-                                    .font(.system(size: 18, weight: .medium))
-                                    .foregroundColor(.white.opacity(0.8))
-                                    .padding(.leading, 4)
+                                Text("minutes").font(.system(size: 18, weight: .medium))
+                                    .foregroundColor(.white.opacity(0.8)).padding(.leading, 4)
                             }
 
                             Text("of focused work together!")
@@ -172,44 +141,34 @@ struct JoinedCompletionView: View {
 
                             // Participant list
                             if participantDetails.count > 1 {
-                                ParticipantList(
-                                    participants: participantDetails
-                                )
-                                .padding(.top, 10)
+                                ParticipantList(participants: participantDetails).padding(.top, 10)
                             }
                         }
                     }
-                    .padding(.vertical, 20)
-                    .padding(.horizontal, 25)
+                    .padding(.vertical, 20).padding(.horizontal, 25)
                     .background(
                         ZStack {
                             RoundedRectangle(cornerRadius: 20)
                                 .fill(
                                     LinearGradient(
                                         colors: [
-                                            Color(
-                                                red: 60 / 255, green: 30 / 255,
-                                                blue: 110 / 255
-                                            ).opacity(0.5),
-                                            Color(
-                                                red: 40 / 255, green: 20 / 255,
-                                                blue: 80 / 255
-                                            ).opacity(0.3),
+                                            Color(red: 60 / 255, green: 30 / 255, blue: 110 / 255)
+                                                .opacity(0.5),
+                                            Color(red: 40 / 255, green: 20 / 255, blue: 80 / 255)
+                                                .opacity(0.3),
                                         ],
                                         startPoint: .topLeading,
                                         endPoint: .bottomTrailing
                                     )
                                 )
 
-                            RoundedRectangle(cornerRadius: 20)
-                                .fill(Color.white.opacity(0.05))
+                            RoundedRectangle(cornerRadius: 20).fill(Color.white.opacity(0.05))
 
                             RoundedRectangle(cornerRadius: 20)
                                 .stroke(
                                     LinearGradient(
                                         colors: [
-                                            Color.white.opacity(0.5),
-                                            Color.white.opacity(0.1),
+                                            Color.white.opacity(0.5), Color.white.opacity(0.1),
                                         ],
                                         startPoint: .topLeading,
                                         endPoint: .bottomTrailing
@@ -219,26 +178,20 @@ struct JoinedCompletionView: View {
                         }
                     )
                     .shadow(color: Color.black.opacity(0.2), radius: 10)
-                    .offset(y: showStats ? 0 : 50)
-                    .opacity(showStats ? 1 : 0)
+                    .offset(y: showStats ? 0 : 50).opacity(showStats ? 1 : 0)
                 }
 
                 // Session Notes section - only original starter can edit
                 if showNotes {
                     if canEditNotes {
                         // Editable notes for original starter
-                        SessionNotesView(
-                            sessionTitle: $sessionTitle,
-                            sessionNotes: $sessionNotes
-                        )
-                        .transition(.scale.combined(with: .opacity))
-                    } else if !sessionTitle.isEmpty || !sessionNotes.isEmpty {
+                        SessionNotesView(sessionTitle: $sessionTitle, sessionNotes: $sessionNotes)
+                            .transition(.scale.combined(with: .opacity))
+                    }
+                    else if !sessionTitle.isEmpty || !sessionNotes.isEmpty {
                         // Read-only notes for other participants
-                        ReadOnlyNotesView(
-                            sessionTitle: sessionTitle,
-                            sessionNotes: sessionNotes
-                        )
-                        .transition(.scale.combined(with: .opacity))
+                        ReadOnlyNotesView(sessionTitle: sessionTitle, sessionNotes: sessionNotes)
+                            .transition(.scale.combined(with: .opacity))
                     }
                 }
 
@@ -258,10 +211,8 @@ struct JoinedCompletionView: View {
                             duration: appManager.selectedMinutes,
                             wasSuccessful: true,
                             actualDuration: appManager.selectedMinutes,
-                            sessionTitle: sessionTitle.isEmpty
-                                ? nil : sessionTitle,
-                            sessionNotes: sessionNotes.isEmpty
-                                ? nil : sessionNotes
+                            sessionTitle: sessionTitle.isEmpty ? nil : sessionTitle,
+                            sessionNotes: sessionNotes.isEmpty ? nil : sessionNotes
                         )
                     }
 
@@ -280,46 +231,35 @@ struct JoinedCompletionView: View {
                 }) {
                     HStack {
                         if showSavingIndicator {
-                            ProgressView()
-                                .tint(.white)
-                                .scaleEffect(0.8)
-                                .padding(.trailing, 8)
+                            ProgressView().tint(.white).scaleEffect(0.8).padding(.trailing, 8)
                         }
 
                         Text(showSavingIndicator ? "SAVING..." : "RETURN HOME")
-                            .font(.system(size: 18, weight: .black))
-                            .tracking(2)
+                            .font(.system(size: 18, weight: .black)).tracking(2)
                             .foregroundColor(.white)
                     }
-                    .frame(height: 56)
-                    .frame(maxWidth: .infinity)
+                    .frame(height: 56).frame(maxWidth: .infinity)
                     .background(
                         ZStack {
                             RoundedRectangle(cornerRadius: 16)
                                 .fill(
                                     LinearGradient(
                                         colors: [
-                                            Color(
-                                                red: 168 / 255, green: 85 / 255,
-                                                blue: 247 / 255),
-                                            Color(
-                                                red: 88 / 255, green: 28 / 255,
-                                                blue: 135 / 255),
+                                            Color(red: 168 / 255, green: 85 / 255, blue: 247 / 255),
+                                            Color(red: 88 / 255, green: 28 / 255, blue: 135 / 255),
                                         ],
                                         startPoint: .topLeading,
                                         endPoint: .bottomTrailing
                                     )
                                 )
 
-                            RoundedRectangle(cornerRadius: 16)
-                                .fill(Color.white.opacity(0.1))
+                            RoundedRectangle(cornerRadius: 16).fill(Color.white.opacity(0.1))
 
                             RoundedRectangle(cornerRadius: 16)
                                 .stroke(
                                     LinearGradient(
                                         colors: [
-                                            Color.white.opacity(0.6),
-                                            Color.white.opacity(0.2),
+                                            Color.white.opacity(0.6), Color.white.opacity(0.2),
                                         ],
                                         startPoint: .topLeading,
                                         endPoint: .bottomTrailing
@@ -329,32 +269,28 @@ struct JoinedCompletionView: View {
                         }
                     )
                     .shadow(
-                        color: Color(
-                            red: 168 / 255, green: 85 / 255, blue: 247 / 255
-                        ).opacity(0.5), radius: 8
+                        color: Color(red: 168 / 255, green: 85 / 255, blue: 247 / 255).opacity(0.5),
+                        radius: 8
                     )
                     .scaleEffect(isButtonPressed ? 0.97 : 1.0)
                 }
-                .padding(.horizontal, 30)
-                .offset(y: showButton ? 0 : 50)
-                .opacity(showButton ? 1 : 0)
+                .padding(.horizontal, 30).offset(y: showButton ? 0 : 50).opacity(showButton ? 1 : 0)
             }
-            .padding(.horizontal, 25)
-            .padding(.vertical, 40)
-        }
-        // Make the screen scrollable only when keyboard is shown
+            .padding(.horizontal, 25).padding(.vertical, 40)
+        }  // Make the screen scrollable only when keyboard is shown
         .offset(y: keyboardOffset)
         .onAppear {
             loadParticipantDetails()
 
             // Set up keyboard notifications
             NotificationCenter.default.addObserver(
-                forName: UIResponder.keyboardWillShowNotification, object: nil,
+                forName: UIResponder.keyboardWillShowNotification,
+                object: nil,
                 queue: .main
             ) { notification in
                 if let keyboardFrame = notification.userInfo?[
-                    UIResponder.keyboardFrameEndUserInfoKey] as? CGRect
-                {
+                    UIResponder.keyboardFrameEndUserInfoKey
+                ] as? CGRect {
                     withAnimation(.easeOut(duration: 0.3)) {
                         self.keyboardOffset = -keyboardFrame.height / 3  // Adjust to push content up just enough
                     }
@@ -362,56 +298,36 @@ struct JoinedCompletionView: View {
             }
 
             NotificationCenter.default.addObserver(
-                forName: UIResponder.keyboardWillHideNotification, object: nil,
+                forName: UIResponder.keyboardWillHideNotification,
+                object: nil,
                 queue: .main
-            ) { _ in
-                withAnimation(.easeOut(duration: 0.3)) {
-                    self.keyboardOffset = 0
-                }
-            }
+            ) { _ in withAnimation(.easeOut(duration: 0.3)) { self.keyboardOffset = 0 } }
 
             // Load session notes if we're not the original starter
-            if !canEditNotes {
-                loadSessionNotes()
-            }
+            if !canEditNotes { loadSessionNotes() }
 
             // Stagger the animations for a nice effect
-            withAnimation(.spring(response: 0.6, dampingFraction: 0.7)) {
-                showIcon = true
-            }
+            withAnimation(.spring(response: 0.6, dampingFraction: 0.7)) { showIcon = true }
 
-            withAnimation(
-                .spring(response: 0.6, dampingFraction: 0.8).delay(0.2)
-            ) {
+            withAnimation(.spring(response: 0.6, dampingFraction: 0.8).delay(0.2)) {
                 showTitle = true
             }
 
-            withAnimation(
-                .spring(response: 0.6, dampingFraction: 0.8).delay(0.4)
-            ) {
+            withAnimation(.spring(response: 0.6, dampingFraction: 0.8).delay(0.4)) {
                 showStats = true
             }
 
-            withAnimation(
-                .spring(response: 0.6, dampingFraction: 0.8).delay(0.6)
-            ) {
+            withAnimation(.spring(response: 0.6, dampingFraction: 0.8).delay(0.6)) {
                 showNotes = true
             }
 
-            withAnimation(
-                .spring(response: 0.6, dampingFraction: 0.8).delay(0.8)
-            ) {
+            withAnimation(.spring(response: 0.6, dampingFraction: 0.8).delay(0.8)) {
                 showButton = true
             }
 
-            withAnimation(.easeInOut(duration: 1.5).repeatForever()) {
-                isGlowing = true
-            }
+            withAnimation(.easeInOut(duration: 1.5).repeatForever()) { isGlowing = true }
         }
-        .background(Theme.mainGradient.edgesIgnoringSafeArea(.all))
-        .onTapGesture {
-            hideKeyboard()
-        }
+        .background(Theme.mainGradient.edgesIgnoringSafeArea(.all)).onTapGesture { hideKeyboard() }
     }
 
     func loadParticipantDetails() {
@@ -420,56 +336,50 @@ struct JoinedCompletionView: View {
             return
         }
 
-        FirebaseManager.shared.db.collection("live_sessions").document(
-            sessionId
-        ).getDocument { document, error in
-            guard let data = document?.data(),
-                let participants = data["participants"] as? [String],
-                let participantStatus = data["participantStatus"]
-                    as? [String: String]
-            else {
-                loadingParticipants = false
-                return
-            }
+        FirebaseManager.shared.db.collection("live_sessions").document(sessionId)
+            .getDocument { document, error in
+                guard let data = document?.data(),
+                    let participants = data["participants"] as? [String],
+                    let participantStatus = data["participantStatus"] as? [String: String]
+                else {
+                    loadingParticipants = false
+                    return
+                }
 
-            // Load user details for each participant
-            let group = DispatchGroup()
-            var details: [ParticipantDetail] = []
+                // Load user details for each participant
+                let group = DispatchGroup()
+                var details: [ParticipantDetail] = []
 
-            for participantId in participants {
-                group.enter()
+                for participantId in participants {
+                    group.enter()
 
-                FirebaseManager.shared.db.collection("users").document(
-                    participantId
-                ).getDocument { userDoc, userError in
-                    if let userData = try? userDoc?.data(
-                        as: FirebaseManager.FlipUser.self)
-                    {
-                        let isCompleted =
-                            participantStatus[participantId]
-                            == LiveSessionManager.ParticipantStatus.completed
-                            .rawValue
-                        let duration = appManager.selectedMinutes
+                    FirebaseManager.shared.db.collection("users").document(participantId)
+                        .getDocument { userDoc, userError in
+                            if let userData = try? userDoc?.data(as: FirebaseManager.FlipUser.self)
+                            {
+                                let isCompleted =
+                                    participantStatus[participantId]
+                                    == LiveSessionManager.ParticipantStatus.completed.rawValue
+                                let duration = appManager.selectedMinutes
 
-                        details.append(
-                            ParticipantDetail(
-                                id: participantId,
-                                username: userData.username,
-                                wasSuccessful: isCompleted,
-                                duration: duration
-                            ))
-                    }
-                    group.leave()
+                                details.append(
+                                    ParticipantDetail(
+                                        id: participantId,
+                                        username: userData.username,
+                                        wasSuccessful: isCompleted,
+                                        duration: duration
+                                    )
+                                )
+                            }
+                            group.leave()
+                        }
+                }
+
+                group.notify(queue: .main) {
+                    self.participantDetails = details.sorted { $0.username < $1.username }
+                    self.loadingParticipants = false
                 }
             }
-
-            group.notify(queue: .main) {
-                self.participantDetails = details.sorted {
-                    $0.username < $1.username
-                }
-                self.loadingParticipants = false
-            }
-        }
     }
 
     private func loadSessionNotes() {
@@ -481,8 +391,7 @@ struct JoinedCompletionView: View {
         FirebaseManager.shared.db.collection("sessions")
             .whereField("userId", isEqualTo: originalStarterId)
             .whereField("originalStarterId", isEqualTo: originalStarterId)
-            .order(by: "startTime", descending: true)
-            .limit(to: 1)
+            .order(by: "startTime", descending: true).limit(to: 1)
             .getDocuments { snapshot, error in
                 if let document = snapshot?.documents.first,
                     let session = try? document.data(as: Session.self)
@@ -497,8 +406,11 @@ struct JoinedCompletionView: View {
 
     private func hideKeyboard() {
         UIApplication.shared.sendAction(
-            #selector(UIResponder.resignFirstResponder), to: nil, from: nil,
-            for: nil)
+            #selector(UIResponder.resignFirstResponder),
+            to: nil,
+            from: nil,
+            for: nil
+        )
     }
 }
 
@@ -507,18 +419,12 @@ struct ParticipantList: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
-            Text("PARTICIPANTS")
-                .font(.system(size: 14, weight: .bold))
-                .tracking(2)
-                .foregroundColor(
-                    Theme.yellow
-                )
-                .frame(maxWidth: .infinity, alignment: .center)
+            Text("PARTICIPANTS").font(.system(size: 14, weight: .bold)).tracking(2)
+                .foregroundColor(Theme.yellow).frame(maxWidth: .infinity, alignment: .center)
 
             ForEach(participants) { participant in
                 HStack {
-                    Text(participant.username)
-                        .font(.system(size: 14, weight: .medium))
+                    Text(participant.username).font(.system(size: 14, weight: .medium))
                         .foregroundColor(.white)
 
                     Spacer()
@@ -529,39 +435,26 @@ struct ParticipantList: View {
                                 ? "checkmark.circle.fill" : "xmark.circle.fill"
                         )
                         .foregroundColor(
-                            participant.wasSuccessful
-                                ? Theme.mutedGreen
-                                : Theme.mutedRed
+                            participant.wasSuccessful ? Theme.mutedGreen : Theme.mutedRed
                         )
                         .font(.system(size: 14))
 
-                        Text("\(participant.duration) min")
-                            .font(.system(size: 12, weight: .medium))
+                        Text("\(participant.duration) min").font(.system(size: 12, weight: .medium))
                             .foregroundColor(.white.opacity(0.8))
                     }
-                    .padding(.vertical, 5)
-                    .padding(.horizontal, 10)
-                    .background(
-                        RoundedRectangle(cornerRadius: 12)
-                            .fill(Color.white.opacity(0.1))
-                    )
+                    .padding(.vertical, 5).padding(.horizontal, 10)
+                    .background(RoundedRectangle(cornerRadius: 12).fill(Color.white.opacity(0.1)))
                 }
-                .padding(.vertical, 8)
-                .padding(.horizontal, 12)
-                .background(
-                    RoundedRectangle(cornerRadius: 10)
-                        .fill(Color.white.opacity(0.05))
-                )
+                .padding(.vertical, 8).padding(.horizontal, 12)
+                .background(RoundedRectangle(cornerRadius: 10).fill(Color.white.opacity(0.05)))
             }
         }
         .padding(15)
         .background(
             ZStack {
-                RoundedRectangle(cornerRadius: 16)
-                    .fill(Color.white.opacity(0.05))
+                RoundedRectangle(cornerRadius: 16).fill(Color.white.opacity(0.05))
 
-                RoundedRectangle(cornerRadius: 16)
-                    .stroke(Color.white.opacity(0.2), lineWidth: 1)
+                RoundedRectangle(cornerRadius: 16).stroke(Color.white.opacity(0.2), lineWidth: 1)
             }
         )
     }
@@ -573,33 +466,22 @@ struct ReadOnlyNotesView: View {
 
     var body: some View {
         VStack(spacing: 15) {
-            Text("SESSION NOTES")
-                .font(.system(size: 16, weight: .bold))
-                .tracking(2)
-                .foregroundColor(
-                    Theme.yellow
-                )
-                .frame(maxWidth: .infinity, alignment: .center)
+            Text("SESSION NOTES").font(.system(size: 16, weight: .bold)).tracking(2)
+                .foregroundColor(Theme.yellow).frame(maxWidth: .infinity, alignment: .center)
 
             if !sessionTitle.isEmpty {
                 VStack(alignment: .leading, spacing: 8) {
-                    Text("Title")
-                        .font(.system(size: 14, weight: .medium))
+                    Text("Title").font(.system(size: 14, weight: .medium))
                         .foregroundColor(.white.opacity(0.8))
 
-                    Text(sessionTitle)
-                        .font(.system(size: 14, weight: .medium))
-                        .foregroundColor(.white)
-                        .padding(12)
+                    Text(sessionTitle).font(.system(size: 14, weight: .medium))
+                        .foregroundColor(.white).padding(12)
                         .frame(maxWidth: .infinity, alignment: .leading)
                         .background(
-                            RoundedRectangle(cornerRadius: 12)
-                                .fill(Color.white.opacity(0.1))
+                            RoundedRectangle(cornerRadius: 12).fill(Color.white.opacity(0.1))
                                 .overlay(
                                     RoundedRectangle(cornerRadius: 12)
-                                        .stroke(
-                                            Color.white.opacity(0.3),
-                                            lineWidth: 1)
+                                        .stroke(Color.white.opacity(0.3), lineWidth: 1)
                                 )
                         )
                 }
@@ -607,23 +489,16 @@ struct ReadOnlyNotesView: View {
 
             if !sessionNotes.isEmpty {
                 VStack(alignment: .leading, spacing: 8) {
-                    Text("Notes")
-                        .font(.system(size: 14, weight: .medium))
+                    Text("Notes").font(.system(size: 14, weight: .medium))
                         .foregroundColor(.white.opacity(0.8))
 
-                    Text(sessionNotes)
-                        .font(.system(size: 14))
-                        .foregroundColor(.white)
-                        .padding(12)
+                    Text(sessionNotes).font(.system(size: 14)).foregroundColor(.white).padding(12)
                         .frame(maxWidth: .infinity, alignment: .leading)
                         .background(
-                            RoundedRectangle(cornerRadius: 12)
-                                .fill(Color.white.opacity(0.1))
+                            RoundedRectangle(cornerRadius: 12).fill(Color.white.opacity(0.1))
                                 .overlay(
                                     RoundedRectangle(cornerRadius: 12)
-                                        .stroke(
-                                            Color.white.opacity(0.3),
-                                            lineWidth: 1)
+                                        .stroke(Color.white.opacity(0.3), lineWidth: 1)
                                 )
                         )
                 }
@@ -636,30 +511,20 @@ struct ReadOnlyNotesView: View {
                     .fill(
                         LinearGradient(
                             colors: [
-                                Color(
-                                    red: 60 / 255, green: 30 / 255,
-                                    blue: 110 / 255
-                                ).opacity(0.4),
-                                Color(
-                                    red: 40 / 255, green: 20 / 255,
-                                    blue: 80 / 255
-                                ).opacity(0.2),
+                                Color(red: 60 / 255, green: 30 / 255, blue: 110 / 255).opacity(0.4),
+                                Color(red: 40 / 255, green: 20 / 255, blue: 80 / 255).opacity(0.2),
                             ],
                             startPoint: .topLeading,
                             endPoint: .bottomTrailing
                         )
                     )
 
-                RoundedRectangle(cornerRadius: 16)
-                    .fill(Color.white.opacity(0.05))
+                RoundedRectangle(cornerRadius: 16).fill(Color.white.opacity(0.05))
 
                 RoundedRectangle(cornerRadius: 16)
                     .stroke(
                         LinearGradient(
-                            colors: [
-                                Color.white.opacity(0.4),
-                                Color.white.opacity(0.1),
-                            ],
+                            colors: [Color.white.opacity(0.4), Color.white.opacity(0.1)],
                             startPoint: .topLeading,
                             endPoint: .bottomTrailing
                         ),

@@ -14,13 +14,10 @@ class LiveSessionTimer: ObservableObject {
         startSyncTimer()
     }
 
-    func updateSession(session: LiveSessionManager.LiveSessionData) {
-        self.liveSession = session
-    }
+    func updateSession(session: LiveSessionManager.LiveSessionData) { self.liveSession = session }
 
     private func startTimer() {
-        timer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) {
-            [weak self] _ in
+        timer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { [weak self] _ in
             guard let self = self else { return }
 
             DispatchQueue.main.async {
@@ -37,16 +34,12 @@ class LiveSessionTimer: ObservableObject {
         }
 
         // Make sure timer works during scrolling
-        if let timer = timer {
-            RunLoop.current.add(timer, forMode: .common)
-        }
+        if let timer = timer { RunLoop.current.add(timer, forMode: .common) }
     }
 
     private func startSyncTimer() {
-        syncTimer = Timer.scheduledTimer(
-            withTimeInterval: syncInterval, repeats: true
-        ) { [weak self] _ in
-            self?.synchronizeWithServer()
+        syncTimer = Timer.scheduledTimer(withTimeInterval: syncInterval, repeats: true) {
+            [weak self] _ in self?.synchronizeWithServer()
         }
         RunLoop.current.add(syncTimer!, forMode: .common)
     }
@@ -56,9 +49,7 @@ class LiveSessionTimer: ObservableObject {
             LiveSessionManager.shared.getSessionDetails(sessionId: sessionId) {
                 [weak self] updatedSession in
                 if let updatedSession = updatedSession {
-                    DispatchQueue.main.async {
-                        self?.liveSession = updatedSession
-                    }
+                    DispatchQueue.main.async { self?.liveSession = updatedSession }
                 }
             }
         }
@@ -70,15 +61,14 @@ class LiveSessionTimer: ObservableObject {
 
         let baseElapsed = session.elapsedSeconds
         let timeSinceUpdate = Int(
-            Date().timeIntervalSince1970
-                - session.lastUpdateTime.timeIntervalSince1970)
+            Date().timeIntervalSince1970 - session.lastUpdateTime.timeIntervalSince1970
+        )
 
         // Apply drift correction and limit extreme values
         let correction = min(2, max(-2, timeSinceUpdate / 60))  // ±2 seconds max correction
 
         // Only add elapsed time if session is active
-        let adjustment =
-            session.isPaused ? 0 : min(timeSinceUpdate + correction, 300)  // Cap at 5 minutes
+        let adjustment = session.isPaused ? 0 : min(timeSinceUpdate + correction, 300)  // Cap at 5 minutes
 
         return baseElapsed + adjustment
     }
@@ -118,17 +108,8 @@ struct LiveSessionTimerView: View {
     var showRemaining: Bool = false  // Toggle to show remaining instead of elapsed
 
     var body: some View {
-        Text(
-            showRemaining
-                ? timer.getFormattedRemainingTime()
-                : timer.getFormattedElapsedTime()
-        )
-        .font(.system(size: 16, weight: .bold))
-        .monospacedDigit()
-        .foregroundColor(.white)
-        .onAppear {
-            timer.updateSession(session: liveSession)
-        }
-        .id(timer.currentTick)  // Force refresh on tick change
+        Text(showRemaining ? timer.getFormattedRemainingTime() : timer.getFormattedElapsedTime())
+            .font(.system(size: 16, weight: .bold)).monospacedDigit().foregroundColor(.white)
+            .onAppear { timer.updateSession(session: liveSession) }.id(timer.currentTick)  // Force refresh on tick change
     }
 }
