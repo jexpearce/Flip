@@ -21,10 +21,6 @@ class LiveSessionManager: ObservableObject {
     @Published var currentJoinedSession: LiveSessionData?
     @Published var isJoiningSession = false
 
-    // Constants
-    private let maxParticipants = 4
-    private let minRemainingTimeToJoin = 3 * 60  // 3 minutes in seconds
-
     // MARK: - Initialization
 
     private init() {
@@ -69,12 +65,6 @@ class LiveSessionManager: ObservableObject {
         var elapsedSeconds: Int {
             let totalSeconds = targetDuration * 60
             return totalSeconds - remainingSeconds
-        }
-
-        var elapsedTimeString: String {
-            let minutes = elapsedSeconds / 60
-            let seconds = elapsedSeconds % 60
-            return String(format: "%d:%02d", minutes, seconds)
         }
 
         var isFull: Bool { return participants.count >= 4 }
@@ -597,37 +587,7 @@ class LiveSessionManager: ObservableObject {
             }
     }
 
-    func handlePausedSessionParticipant(sessionId: String, userId: String, isPaused: Bool) {
-        // Update participant status
-        let status: ParticipantStatus = isPaused ? .paused : .active
-        updateParticipantStatus(sessionId: sessionId, userId: userId, status: status)
 
-        // If this is the current user's joined session, update the UI
-        if currentJoinedSession?.id == sessionId {
-            // Refresh the session data to reflect the pause state
-            listenToJoinedSession(sessionId: sessionId)
-        }
-    }
-
-    // Method to get active participants count (excluding paused)
-    func getActiveParticipantsCount(sessionId: String, completion: @escaping (Int) -> Void) {
-        db.collection("live_sessions").document(sessionId)
-            .getDocument { document, error in
-                if let document = document, document.exists, let data = document.data(),
-                    let participantStatus = data["participantStatus"] as? [String: String]
-                {
-
-                    // Count active participants (not paused, failed, or completed)
-                    let activeCount = participantStatus.values
-                        .filter { $0 == ParticipantStatus.active.rawValue }.count
-
-                    completion(activeCount)
-                }
-                else {
-                    completion(0)
-                }
-            }
-    }
     func refreshLiveSessions() {
         print("Refreshing live sessions...")
 
@@ -767,26 +727,7 @@ class LiveSessionManager: ObservableObject {
                     }
             }
     }
-    func startJoinedSessionVerifier() {
-        // Check every 30 seconds if the joinedSession is still valid
-        Timer.scheduledTimer(withTimeInterval: 30, repeats: true) { [weak self] _ in
-            guard let self = self, let joinedSession = self.currentJoinedSession else { return }
 
-            // If the session is invalid for any reason, notify AppManager
-            if !self.isSessionValid(joinedSession) {
-                print(
-                    "Joined session \(joinedSession.id) appears to be invalid, notifying AppManager"
-                )
-
-                // Check current app state - don't interrupt active sessions
-                let appManager = AppManager.shared
-                if appManager.currentState != .tracking && appManager.currentState != .countdown {
-                    // Reset join state if not actively tracking
-                    DispatchQueue.main.async { appManager.resetJoinState() }
-                }
-            }
-        }
-    }
     private func isSessionValid(_ session: LiveSessionData) -> Bool {
         // A session is valid if:
         // 1. It has time remaining (not ended)

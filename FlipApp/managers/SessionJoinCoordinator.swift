@@ -23,36 +23,6 @@ class SessionJoinCoordinator: ObservableObject {
         startCleanupTimer()
     }
 
-    // Set a pending session to join with first-time user check
-    func setJoinSession(id: String, name: String) {
-        // Check if this is the user's first session
-        FirebaseManager.shared.hasCompletedFirstSession { hasCompleted in
-            DispatchQueue.main.async {
-                if hasCompleted {
-                    // Clear any existing pending session first
-                    self.clearPendingSession()
-
-                    self.pendingSessionId = id
-                    self.pendingSessionName = name
-                    self.pendingTimestamp = Date()
-                    self.shouldJoinSession = true
-
-                    print("Set pending join for session: \(id) (user: \(name))")
-
-                    // Switch to home tab to show the join UI
-                    NotificationCenter.default.post(
-                        name: Notification.Name("SwitchToHomeTab"),
-                        object: nil
-                    )
-                }
-                else {
-                    // User needs to complete their first session
-                    self.showFirstSessionRequiredAlert = true
-                }
-            }
-        }
-    }
-
     // Clear the pending session
     func clearPendingSession() {
         print("Clearing pending session join request")

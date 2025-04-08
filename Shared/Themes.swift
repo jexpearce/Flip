@@ -9,6 +9,7 @@ struct Theme {
 
     static let glowWhite = Color.white
     static let offWhite = Color(white: 0.9)
+    static let lightGray = Color(white: 0.3)
     // CONSOLIDATED: yellow family
     static let yellow = Color(red: 250 / 255, green: 204 / 255, blue: 21 / 255)  // Vibrant yellow
     static let darkYellow = Color(red: 202 / 255, green: 138 / 255, blue: 4 / 255)  // Darker yellow

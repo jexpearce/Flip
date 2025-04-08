@@ -34,36 +34,6 @@ class NotificationManager {
                 ])
             )
     }
-    func notifySessionJoined(username: String) {
-        display(
-            title: "Session Joined",
-            body: "\(username) joined your focus session",
-            categoryIdentifier: "LIVE_SESSION"
-        )
-    }
-
-    func notifyParticipantCompleted(username: String) {
-        display(
-            title: "Session Update",
-            body: "\(username) successfully completed the session",
-            categoryIdentifier: "LIVE_SESSION"
-        )
-    }
-
-    func notifyParticipantFailed(username: String) {
-        display(
-            title: "Session Update",
-            body: "\(username) failed to complete the session",
-            categoryIdentifier: "LIVE_SESSION"
-        )
-    }
-    func requestNotificationPermissions() {
-        UNUserNotificationCenter.current()
-            .requestAuthorization(options: [.alert, .sound, .badge]) { [weak self] granted, _ in
-                guard granted else { return }
-                self?.setupNotificationCategories()
-            }
-    }
 
     func display(
         title: String,

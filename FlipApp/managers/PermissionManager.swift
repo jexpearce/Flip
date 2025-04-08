@@ -17,7 +17,6 @@ class PermissionManager: NSObject, ObservableObject {
     @Published var hasLimitedLocationPermission = false
 
     // Motion
-    private let motionManager = CMMotionManager()
     @Published var motionPermissionGranted = false
     @Published var showMotionAlert = false
     private var motionPromptCompleted = false
@@ -155,23 +154,6 @@ class PermissionManager: NSObject, ObservableObject {
         )
     }
 
-    // MARK: - Request Always Allow Upgrade
-
-    // This method can be called to request an upgrade from "When in Use" to "Always Allow"
-    func requestAlwaysAllowUpgrade() {
-        // Only proceed if we currently have "When in Use" permission
-        guard locationAuthStatus == .authorizedWhenInUse else {
-            print("Cannot request upgrade: current status is not 'When in Use'")
-            return
-        }
-
-        print("Requesting upgrade to 'Always Allow' location permission")
-
-        // Request the always authorization
-        locationManager.requestAlwaysAuthorization()
-
-        // The locationManagerDidChangeAuthorization delegate method will handle the response
-    }
 
     // Open Settings app to app-specific location settings
     func openLocationSettings() {
@@ -325,9 +307,6 @@ class PermissionManager: NSObject, ObservableObject {
                 }
             }
         }
-    }
-    func handleMotionPermissionDenied() {
-        DispatchQueue.main.async { self.showMotionSettingsAlert = true }
     }
 
     // MARK: - Notification Flow

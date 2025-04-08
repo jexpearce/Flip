@@ -6,8 +6,6 @@ import SwiftUI
 class FriendManager: ObservableObject {
     @Published var friends: [FirebaseManager.FlipUser] = []
     @Published var friendRequests: [FirebaseManager.FlipUser] = []
-    @Published var showError = false
-    @Published var errorMessage = ""
     private let firebaseManager = FirebaseManager.shared
 
     init() {
@@ -60,23 +58,6 @@ class FriendManager: ObservableObject {
             }
     }
     // Add to your FriendManager class
-
-    func joinFriendSession(friendId: String, friendName: String, sessionId: String) {
-        // Check if the user is already in a session
-        if AppManager.shared.currentState != .initial {
-            showError = true
-            errorMessage =
-                "You're already in a session. Please complete or cancel it before joining another."
-            return
-        }
-
-        // Use the coordinator to pass session information
-        SessionJoinCoordinator.shared.setJoinSession(id: sessionId, name: friendName)
-
-        // Use the view router to switch to home tab
-        // Note: This approach doesn't use UIHostingController directly
-        NotificationCenter.default.post(name: Notification.Name("SwitchToHomeTab"), object: nil)
-    }
 
     private func loadRequestDetails(requestIds: [String]) {
         DispatchQueue.main.async { self.friendRequests = [] }

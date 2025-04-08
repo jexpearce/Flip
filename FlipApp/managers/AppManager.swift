@@ -18,10 +18,8 @@ class AppManager: NSObject, ObservableObject {
     @Published var countdownSeconds = 5
     @Published var isFaceDown = false
     @Published var remainingSeconds = 0
-    @Published var allowPause = false
     @Published var isPaused = false
     @Published var pausedRemainingSeconds = 0
-    @Published var pausedRemainingFlips = 0
     @Published var allowPauses = true
     @Published var maxPauses = 10
     @Published var remainingPauses = 0
@@ -787,13 +785,6 @@ class AppManager: NSObject, ObservableObject {
         lastOrientationCheck = Date()
     }
 
-    // MARK: - Background Task Registration
-    func registerBackgroundTasks() {
-        BGTaskScheduler.shared.register(
-            forTaskWithIdentifier: AppManager.backgroundRefreshIdentifier,
-            using: .main
-        ) { [weak self] task in self?.handleBackgroundRefresh(task: task as! BGAppRefreshTask) }
-    }
 
     func scheduleBackgroundRefresh() {
         let request = BGAppRefreshTaskRequest(identifier: AppManager.backgroundRefreshIdentifier)
@@ -868,37 +859,6 @@ class AppManager: NSObject, ObservableObject {
                 }
             }
         }
-    }
-
-    // MARK: - State Safeguards
-    // Add this to reset the app to a clean state if it gets stuck
-    func resetAppState() {
-        print("Emergency reset of app state")
-
-        // Stop all timers and monitoring
-        invalidateAllTimers()
-        motionManager.stopDeviceMotionUpdates()
-        activityManager.stopActivityUpdates()
-
-        // End background task if active
-        if backgroundTask != .invalid { endBackgroundTask() }
-
-        // Reset all state variables
-        currentState = .initial
-        countdownSeconds = 5
-        isFaceDown = false
-        remainingSeconds = 0
-        isPaused = false
-        pausedRemainingSeconds = 0
-        flipBackTimeRemaining = 10
-
-        // Clear persisted state
-        clearSessionState()
-
-        // Clean up Live Activities
-        if #available(iOS 16.1, *) { Task { cleanupStaleActivities() } }
-
-        print("App state has been reset")
     }
 
     // Add a check to detect and recover from inconsistent states

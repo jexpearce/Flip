@@ -161,28 +161,6 @@ class SessionManager: ObservableObject {
         }
     }
 
-    // This method is now redundant with the updated addSession
-    // But we'll keep it for backward compatibility if needed
-    func addSessionWithNotes(
-        duration: Int,
-        wasSuccessful: Bool,
-        actualDuration: Int,
-        sessionTitle: String?,
-        sessionNotes: String?
-    ) {
-        addSession(
-            duration: duration,
-            wasSuccessful: wasSuccessful,
-            actualDuration: actualDuration,
-            sessionTitle: sessionTitle,
-            sessionNotes: sessionNotes,
-            participants: nil,
-            originalStarterId: nil,
-            wasJoinedSession: nil,
-            liveSessionId: nil
-        )
-    }
-
     private func uploadSession(_ session: Session) {
         try? FirebaseManager.shared.db.collection("sessions").document(session.id.uuidString)
             .setData(from: session)

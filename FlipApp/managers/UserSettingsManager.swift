@@ -143,10 +143,6 @@ class UserSettingsManager: ObservableObject {
         return getSetting(key: "commentNotifications", defaultValue: true)
     }
 
-    // Check if session history is shown
-    var isSessionHistoryShown: Bool {
-        return getSetting(key: "showSessionHistory", defaultValue: true)
-    }
 
     // MARK: - Regional leaderboard privacy settings
 
