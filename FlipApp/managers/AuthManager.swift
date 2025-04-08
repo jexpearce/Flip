@@ -453,7 +453,6 @@ extension AuthManager: ASAuthorizationControllerDelegate,
             return
         }
         // Get Apple Sign In data
-        let userId = appleIDCredential.user
         let email = appleIDCredential.email
         let fullName = appleIDCredential.fullName
         // Get the identity token data and convert to string
@@ -469,10 +468,10 @@ extension AuthManager: ASAuthorizationControllerDelegate,
             return
         }
         // Create Firebase credential with Apple ID token and nonce
-        let credential = OAuthProvider.credential(
-            withProviderID: "apple.com",
-            idToken: identityToken,
-            rawNonce: nonce
+        let credential = OAuthProvider.appleCredential(
+            withIDToken: identityToken,
+            rawNonce: nonce,
+            fullName: fullName,
         )
         // Sign in to Firebase with the Apple credential
         Auth.auth()
