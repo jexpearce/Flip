@@ -8,8 +8,6 @@ struct Theme {
     static let vibrantPurple = Color(red: 168 / 255, green: 85 / 255, blue: 247 / 255)  // Brighter purple
 
     static let glowWhite = Color.white
-    static let mediumGray = Color(white: 0.15)
-    static let lightGray = Color(white: 0.3)
     static let offWhite = Color(white: 0.9)
     // CONSOLIDATED: yellow family
     static let yellow = Color(red: 250 / 255, green: 204 / 255, blue: 21 / 255)  // Vibrant yellow
@@ -21,7 +19,6 @@ struct Theme {
 
     // CONSOLIDATED: orange family
     static let orange = Color(red: 249 / 255, green: 115 / 255, blue: 22 / 255)  // Warm Orange
-    static let darkOrange = Color(red: 194 / 255, green: 65 / 255, blue: 12 / 255)  // Deep Orange
     static let saturatedOrange = Color(red: 245 / 255, green: 158 / 255, blue: 11 / 255)  // Similar to orange but more saturated
 
     // Blues
@@ -65,7 +62,6 @@ struct Theme {
     static let oliveGreen = Color(red: 20 / 255, green: 83 / 255, blue: 45 / 255)
     static let navyBlue = Color(red: 26 / 255, green: 32 / 255, blue: 58 / 255)
     static let tealBlue = Color(red: 17 / 255, green: 54 / 255, blue: 71 / 255)
-    static let burgundy = Color(red: 45 / 255, green: 21 / 255, blue: 38 / 255)
     static let purplishNavy = Color(red: 40 / 255, green: 25 / 255, blue: 65 / 255)
     static let darkCyanBlue = Color(red: 14 / 255, green: 101 / 255, blue: 151 / 255)
     static let deeperCyanBlue = Color(red: 12 / 255, green: 74 / 255, blue: 110 / 255)
@@ -86,12 +82,6 @@ struct Theme {
     static let mutedRed = Color(red: 239 / 255, green: 68 / 255, blue: 68 / 255)
     static let darkerRed = Color(red: 185 / 255, green: 28 / 255, blue: 28 / 255)
     static let darkRed = Color(red: 220 / 255, green: 38 / 255, blue: 38 / 255)  // Between mutedRed and darkerRed
-
-    // Glass Effect Colors
-    // CONSOLIDATED: glass effect colors all use white base with different opacity
-    static let glassEffect = Color.white.opacity(0.1)
-    static let glassHighlight = Color.white.opacity(0.15)
-    static let glassShadow = Color.black.opacity(0.2)  // Using Color.black directly
 
     // Medal colors
     static let goldColor = LinearGradient(
@@ -141,39 +131,11 @@ struct Theme {
         endPoint: .bottom
     )
 
-    // Amber/Gold theme colors - distinctive from the others
-    static let amberGradient = LinearGradient(
-        colors: [
-            Theme.saturatedOrange,  // Amber 500
-            Theme.bronzeLight,  // Amber 600
-        ],
-        startPoint: .top,
-        endPoint: .bottom
-    )
 
     static let amberBackgroundGradient = LinearGradient(
         colors: [
             Color(red: 120 / 255, green: 53 / 255, blue: 15 / 255).opacity(0.4),  // Amber 900
             Color(red: 146 / 255, green: 64 / 255, blue: 14 / 255).opacity(0.3),  // Amber 800
-        ],
-        startPoint: .topLeading,
-        endPoint: .bottomTrailing
-    )
-
-    // Purple theme colors - different from the red of regional and blue of weekly
-    private let purpleGradient = LinearGradient(
-        colors: [
-            Theme.softViolet,  // Purple 500
-            Theme.electricViolet,  // Purple 600
-        ],
-        startPoint: .top,
-        endPoint: .bottom
-    )
-
-    private let purpleBackgroundGradient = LinearGradient(
-        colors: [
-            Theme.deepPurple.opacity(0.4),  // Purple 900
-            Theme.purple800.opacity(0.3),  // Purple 800
         ],
         startPoint: .topLeading,
         endPoint: .bottomTrailing
@@ -297,30 +259,6 @@ struct Theme {
         endPoint: .bottomTrailing
     )
 
-    static let headerGradient = LinearGradient(
-        colors: [vibrantPurple, deepPurple],
-        startPoint: .leading,
-        endPoint: .trailing
-    )
-
-    // Glassy surfaces
-    static let glassyPurpleGradient = LinearGradient(
-        colors: [glowWhite.opacity(0.3), glowWhite.opacity(0.1)],  // Using existing glowWhite
-        startPoint: .topLeading,
-        endPoint: .bottomTrailing
-    )
-
-    static let glassyDarkGradient = LinearGradient(
-        colors: [deepBlue.opacity(0.3), deepMidnightPurple.opacity(0.1)],
-        startPoint: .topLeading,
-        endPoint: .bottomTrailing
-    )
-
-    static let tabBarGradient = LinearGradient(
-        colors: [nearBlack.opacity(0.95)],
-        startPoint: .top,
-        endPoint: .bottom
-    )
 
     static let accentGradient = LinearGradient(
         colors: [yellow, orange],
@@ -408,88 +346,12 @@ struct Theme {
     )
 }
 
-// Text Style Extensions
-extension Text {
-    func title() -> Text {
-        self.font(.system(size: 28, weight: .black)).tracking(8).foregroundColor(Theme.glowWhite)
-    }
-
-    func subtitle() -> Text {
-        self.font(.system(size: 12, weight: .medium)).tracking(4)
-            .foregroundColor(Theme.glowWhite.opacity(0.7))
-    }
-
-    func retro() -> Text {
-        self.font(.system(size: 60, weight: .black)).tracking(8).foregroundColor(Theme.glowWhite)
-    }
-
-    func japanese() -> Text {
-        self.font(.system(size: 14, weight: .medium)).tracking(3)
-            .foregroundColor(Theme.glowWhite.opacity(0.7))
-    }
-}
 
 // View Extensions for Common Styles
 extension View {
-    func glowingButton() -> some View {
-        self.font(.system(size: 24, weight: .black)).tracking(4).foregroundColor(Theme.glowWhite)
-            .frame(maxWidth: .infinity).frame(height: 60)
-            .background(
-                ZStack {
-                    RoundedRectangle(cornerRadius: 30).fill(Theme.headerGradient)
 
-                    RoundedRectangle(cornerRadius: 30).fill(Theme.glowWhite.opacity(0.1))
-
-                    RoundedRectangle(cornerRadius: 30)
-                        .stroke(
-                            LinearGradient(
-                                colors: [
-                                    Theme.glowWhite.opacity(0.6), Theme.glowWhite.opacity(0.1),
-                                ],
-                                startPoint: .topLeading,
-                                endPoint: .bottomTrailing
-                            ),
-                            lineWidth: 1
-                        )
-                }
-            )
-            .shadow(color: Theme.purpleShadow, radius: 10)
-    }
-
-    func controlBackground() -> some View {
-        self.padding(.vertical, 12).padding(.horizontal, 16)
-            .background(
-                ZStack {
-                    RoundedRectangle(cornerRadius: 15).fill(Theme.glowWhite.opacity(0.08))
-
-                    RoundedRectangle(cornerRadius: 15)
-                        .stroke(Theme.glowWhite.opacity(0.2), lineWidth: 1)
-                }
-            )
-            .shadow(
-                color: Color(red: 0 / 255, green: 0 / 255, blue: 0 / 255).opacity(0.2),
-                radius: 4
-            )
-    }
 
     func retroGlow() -> some View { self.shadow(color: Theme.yellow.opacity(0.5), radius: 8) }
 
-    func glassCard() -> some View {
-        self.background(
-            ZStack {
-                RoundedRectangle(cornerRadius: 16).fill(Theme.glowWhite.opacity(0.06))
 
-                RoundedRectangle(cornerRadius: 16)
-                    .stroke(
-                        LinearGradient(
-                            colors: [Theme.glowWhite.opacity(0.5), Theme.glowWhite.opacity(0.1)],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        ),
-                        lineWidth: 1
-                    )
-            }
-        )
-        .shadow(color: Color(red: 0 / 255, green: 0 / 255, blue: 0 / 255).opacity(0.2), radius: 6)
-    }
 }
