@@ -121,7 +121,8 @@ struct StreakIndicatorBar: View {
                     )
                     .frame(width: 32, height: 32)
 
-                Image(systemName: "flame.fill").font(.system(size: 16)).foregroundColor(.white)
+                Image(systemName: "flame.fill").font(.system(size: 16))
+                    .foregroundColor(Color(red: 255 / 255, green: 255 / 255, blue: 255 / 255))
                     .scaleEffect(isAnimating ? 1.1 : 0.9)
                     .animation(
                         Animation.easeInOut(duration: 1.2).repeatForever(autoreverses: true),
@@ -256,7 +257,8 @@ struct StreakIndicator: View {
                 )
 
             Image(systemName: "flame.fill").font(.system(size: 10, weight: .bold))
-                .foregroundColor(.white).scaleEffect(isAnimating ? 1.2 : 1.0)
+                .foregroundColor(Color(red: 255 / 255, green: 255 / 255, blue: 255 / 255))
+                .scaleEffect(isAnimating ? 1.2 : 1.0)
                 .animation(
                     Animation.easeInOut(duration: 0.8).repeatForever(autoreverses: true),
                     value: isAnimating
@@ -325,7 +327,9 @@ struct ScoreHistoryView: View {
                                 .frame(width: 50, height: 50)
 
                             Image(systemName: "flame.fill").font(.system(size: 24))
-                                .foregroundColor(.white)
+                                .foregroundColor(
+                                    Color(red: 255 / 255, green: 255 / 255, blue: 255 / 255)
+                                )
                         }
                         .shadow(
                             color: scoreManager.streakStatus == .redFlame
@@ -612,7 +616,9 @@ struct ScoreInfoView: View {
                         Circle().fill(Color.orange.opacity(0.7)).frame(width: 40, height: 40)
 
                         Image(systemName: "flame.fill").font(.system(size: 20))
-                            .foregroundColor(.white)
+                            .foregroundColor(
+                                Color(red: 255 / 255, green: 255 / 255, blue: 255 / 255)
+                            )
                     }
 
                     VStack(alignment: .leading, spacing: 4) {
@@ -632,7 +638,9 @@ struct ScoreInfoView: View {
                         Circle().fill(Color.red.opacity(0.7)).frame(width: 40, height: 40)
 
                         Image(systemName: "flame.fill").font(.system(size: 20))
-                            .foregroundColor(.white)
+                            .foregroundColor(
+                                Color(red: 255 / 255, green: 255 / 255, blue: 255 / 255)
+                            )
                     }
 
                     VStack(alignment: .leading, spacing: 4) {
@@ -857,7 +865,7 @@ struct ProfilePictureWithStreak: View {
                         .frame(width: size * 0.25, height: size * 0.25)
 
                     Image(systemName: "flame.fill").font(.system(size: size * 0.15))
-                        .foregroundColor(.white)
+                        .foregroundColor(Color(red: 255 / 255, green: 255 / 255, blue: 255 / 255))
                 }
                 .position(x: size * 0.8, y: size * 0.2)
             }
