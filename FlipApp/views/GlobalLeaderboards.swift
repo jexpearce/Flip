@@ -1663,7 +1663,7 @@ struct RegionalAllTimeLeaderboard: View {
     // Amber/Gold theme colors - distinctive from the others
     private let amberGradient = LinearGradient(
         colors: [
-            Color(red: 245 / 255, green: 158 / 255, blue: 11 / 255),  // Amber 500
+            Theme.saturatedOrange,  // Amber 500
             Color(red: 217 / 255, green: 119 / 255, blue: 6 / 255),  // Amber 600
         ],
         startPoint: .top,
@@ -1731,7 +1731,7 @@ struct RegionalAllTimeLeaderboard: View {
                             .foregroundStyle(
                                 LinearGradient(
                                     colors: [
-                                        Color(red: 245 / 255, green: 158 / 255, blue: 11 / 255),
+                                        Theme.saturatedOrange,
                                         Color(red: 217 / 255, green: 119 / 255, blue: 6 / 255),
                                     ],
                                     startPoint: .top,
@@ -1739,7 +1739,7 @@ struct RegionalAllTimeLeaderboard: View {
                                 )
                             )
                             .shadow(
-                                color: Color(red: 245 / 255, green: 158 / 255, blue: 11 / 255)
+                                color: Theme.saturatedOrange
                                     .opacity(0.5),
                                 radius: 4
                             )
@@ -1749,7 +1749,7 @@ struct RegionalAllTimeLeaderboard: View {
                             .foregroundStyle(
                                 LinearGradient(
                                     colors: [
-                                        Color(red: 245 / 255, green: 158 / 255, blue: 11 / 255),
+                                        Theme.saturatedOrange,
                                         Color(red: 217 / 255, green: 119 / 255, blue: 6 / 255),
                                     ],
                                     startPoint: .top,
@@ -1757,7 +1757,7 @@ struct RegionalAllTimeLeaderboard: View {
                                 )
                             )
                             .shadow(
-                                color: Color(red: 245 / 255, green: 158 / 255, blue: 11 / 255)
+                                color: Theme.saturatedOrange
                                     .opacity(0.5),
                                 radius: 4
                             )
@@ -1788,7 +1788,7 @@ struct RegionalAllTimeLeaderboard: View {
                     .fill(
                         LinearGradient(
                             colors: [
-                                Color(red: 245 / 255, green: 158 / 255, blue: 11 / 255)
+                                Theme.saturatedOrange
                                     .opacity(0.3),
                                 Color(red: 217 / 255, green: 119 / 255, blue: 6 / 255).opacity(0.2),
                             ],
@@ -1835,13 +1835,13 @@ struct RegionalAllTimeLeaderboard: View {
                 HStack {
                     Text("RANK").font(.system(size: 12, weight: .bold)).tracking(1)
                         .foregroundColor(
-                            Color(red: 245 / 255, green: 158 / 255, blue: 11 / 255).opacity(0.9)
+                            Theme.saturatedOrange.opacity(0.9)
                         )
                         .frame(width: 50, alignment: .center)
 
                     Text("USER").font(.system(size: 12, weight: .bold)).tracking(1)
                         .foregroundColor(
-                            Color(red: 245 / 255, green: 158 / 255, blue: 11 / 255).opacity(0.9)
+                            Theme.saturatedOrange.opacity(0.9)
                         )
                         .frame(alignment: .leading)
 
@@ -1849,7 +1849,7 @@ struct RegionalAllTimeLeaderboard: View {
 
                     Text("MINUTES").font(.system(size: 12, weight: .bold)).tracking(1)
                         .foregroundColor(
-                            Color(red: 245 / 255, green: 158 / 255, blue: 11 / 255).opacity(0.9)
+                            Theme.saturatedOrange.opacity(0.9)
                         )
                         .frame(width: 80, alignment: .trailing)
                 }
@@ -1957,14 +1957,10 @@ struct RegionalAllTimeLeaderboard: View {
                                 VStack(alignment: .trailing, spacing: 2) {
                                     Text("\(entry.minutes)").font(.system(size: 18, weight: .black))
                                         .foregroundColor(
-                                            Color(red: 245 / 255, green: 158 / 255, blue: 11 / 255)
+                                            Theme.saturatedOrange
                                         )
                                         .shadow(
-                                            color: Color(
-                                                red: 245 / 255,
-                                                green: 158 / 255,
-                                                blue: 11 / 255
-                                            )
+                                            color: Theme.saturatedOrange
                                             .opacity(0.3),
                                             radius: 4
                                         )
@@ -1981,17 +1977,9 @@ struct RegionalAllTimeLeaderboard: View {
                                         LinearGradient(
                                             colors: index < 3
                                                 ? [
-                                                    Color(
-                                                        red: 245 / 255,
-                                                        green: 158 / 255,
-                                                        blue: 11 / 255
-                                                    )
+                                                    Theme.saturatedOrange
                                                     .opacity(0.2),
-                                                    Color(
-                                                        red: 245 / 255,
-                                                        green: 158 / 255,
-                                                        blue: 11 / 255
-                                                    )
+                                                    Theme.saturatedOrange
                                                     .opacity(0.1),
                                                 ]
                                                 : [
@@ -2007,11 +1995,7 @@ struct RegionalAllTimeLeaderboard: View {
                                             .stroke(
                                                 // Highlight current user
                                                 Auth.auth().currentUser?.uid == entry.userId
-                                                    ? Color(
-                                                        red: 245 / 255,
-                                                        green: 158 / 255,
-                                                        blue: 11 / 255
-                                                    )
+                                                    ? Theme.saturatedOrange
                                                     .opacity(0.5) : Color.white.opacity(0.2),
                                                 lineWidth: Auth.auth().currentUser?.uid
                                                     == entry.userId ? 1.5 : 1
@@ -2047,7 +2031,7 @@ struct RegionalAllTimeLeaderboard: View {
                     .stroke(
                         LinearGradient(
                             colors: [
-                                Color(red: 245 / 255, green: 158 / 255, blue: 11 / 255)
+                                Theme.saturatedOrange
                                     .opacity(0.5),
                                 Color(red: 217 / 255, green: 119 / 255, blue: 6 / 255).opacity(0.2),
                             ],

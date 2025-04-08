@@ -52,6 +52,8 @@ struct Theme {
     static let darkerRed = Color(red: 185 / 255, green: 28 / 255, blue: 28 / 255)
     static let darkRed = Color(red: 220 / 255, green: 38 / 255, blue: 38 / 255)
 
+    static let saturatedOrange = Color(red: 245 / 255, green: 158 / 255, blue: 11 / 255)
+    
     // Medal colors
     static let goldColor = LinearGradient(
         colors: [

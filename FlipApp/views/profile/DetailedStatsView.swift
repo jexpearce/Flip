@@ -79,7 +79,7 @@ struct DetailedStatsView: View {
                         value: "\(avgSession)",
                         unit: "minutes",
                         icon: "chart.bar.fill",
-                        color: Color(red: 245 / 255, green: 158 / 255, blue: 11 / 255),
+                        color: Theme.saturatedOrange,
                         delay: 0.2
                     )
                     .scaleEffect(animateStats ? 1 : 0.8).opacity(animateStats ? 1 : 0)
