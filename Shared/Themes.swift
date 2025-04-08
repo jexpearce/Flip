@@ -94,8 +94,8 @@ struct Theme {
 
     static let silverColor = LinearGradient(
         colors: [
-            Color(red: 226 / 255, green: 232 / 255, blue: 240 / 255),
-            Color(red: 148 / 255, green: 163 / 255, blue: 184 / 255),
+            silverLight,  // Using existing silverLight color
+            silverDark,   // Using existing silverDark color
         ],
         startPoint: .top,
         endPoint: .bottom
@@ -131,9 +131,9 @@ struct Theme {
     )
     static let profileGradient = LinearGradient(
         colors: [
-            Theme.deepMidnightPurple, Theme.mediumMidnightPurple,
-            Color(red: 14 / 255, green: 101 / 255, blue: 151 / 255).opacity(0.7),
-            Color(red: 12 / 255, green: 74 / 255, blue: 110 / 255).opacity(0.6),
+            deepMidnightPurple, mediumMidnightPurple,
+            darkCyanBlue.opacity(0.7),  // Using existing darkCyanBlue
+            deeperCyanBlue.opacity(0.6),  // Using existing deeperCyanBlue
         ],
         startPoint: .top,
         endPoint: .bottom
@@ -142,7 +142,7 @@ struct Theme {
     // Regional gradient
     static let regionalGradient = LinearGradient(
         colors: [
-            Theme.deepMidnightPurple,  // Deep midnight purple
+            deepMidnightPurple,  // Deep midnight purple
             Color(red: 28 / 255, green: 14 / 255, blue: 45 / 255),  // Midnight purple
             Color(red: 35 / 255, green: 14 / 255, blue: 40 / 255),  // Purple with slight red
             Color(red: 30 / 255, green: 12 / 255, blue: 36 / 255),  // Back to purple
@@ -164,7 +164,7 @@ struct Theme {
     // Custom gradient for the selection view
     static let selectionGradient = LinearGradient(
         colors: [
-            Theme.mediumMidnightPurple,  // Deep midnight purple
+            mediumMidnightPurple,  // Deep midnight purple
             Color(red: 38 / 255, green: 18 / 255, blue: 58 / 255),  // Lighter purple with slight red
             Color(red: 45 / 255, green: 20 / 255, blue: 60 / 255),  // Medium purple
         ],
@@ -193,13 +193,13 @@ struct Theme {
 
     // Glassy surfaces
     static let glassyPurpleGradient = LinearGradient(
-        colors: [Color.white.opacity(0.3), Color.white.opacity(0.1)],
+        colors: [glowWhite.opacity(0.3), glowWhite.opacity(0.1)],  // Using existing glowWhite
         startPoint: .topLeading,
         endPoint: .bottomTrailing
     )
 
     static let glassyDarkGradient = LinearGradient(
-        colors: [Theme.deepBlue.opacity(0.3), Theme.deepMidnightPurple.opacity(0.1)],
+        colors: [deepBlue.opacity(0.3), deepMidnightPurple.opacity(0.1)],
         startPoint: .topLeading,
         endPoint: .bottomTrailing
     )
@@ -218,9 +218,9 @@ struct Theme {
 
     static let indigoPurpleGradient = LinearGradient(
         colors: [
-            Theme.deepMidnightPurple,  // Deep midnight purple
-            Theme.mediumMidnightPurple,  // Medium midnight purple
-            Color(red: 79 / 255, green: 70 / 255, blue: 229 / 255).opacity(0.4),  // Indigo
+            deepMidnightPurple,  // Deep midnight purple
+            mediumMidnightPurple,  // Medium midnight purple
+            indigoAccent.opacity(0.4),  // Using indigoAccent
             Color(red: 67 / 255, green: 56 / 255, blue: 202 / 255).opacity(0.3),  // Deeper indigo
         ],
         startPoint: .top,
@@ -228,11 +228,11 @@ struct Theme {
     )
 
     static let indigoAccent = Color(red: 79 / 255, green: 70 / 255, blue: 229 / 255)
-    static let indigoGlow = Color(red: 79 / 255, green: 70 / 255, blue: 229 / 255).opacity(0.5)
+    static let indigoGlow = indigoAccent.opacity(0.5)  // Using indigoAccent with opacity
 
     // Shadows
-    static let purpleShadow = Color(red: 147 / 255, green: 51 / 255, blue: 234 / 255).opacity(0.5)
-    static let yellowShadow = Theme.yellow.opacity(0.5)
+    static let purpleShadow = purple.opacity(0.5)  // Using existing purple color
+    static let yellowShadow = yellow.opacity(0.5)  // Using existing yellow color
 }
 
 // Text Style Extensions
