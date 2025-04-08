@@ -1738,11 +1738,7 @@ struct RegionalAllTimeLeaderboard: View {
                                     endPoint: .bottom
                                 )
                             )
-                            .shadow(
-                                color: Theme.saturatedOrange
-                                    .opacity(0.5),
-                                radius: 4
-                            )
+                            .shadow(color: Theme.saturatedOrange.opacity(0.5), radius: 4)
 
                         Text("REGIONAL ALL TIME").font(.system(size: 13, weight: .black))
                             .tracking(2)
@@ -1756,11 +1752,7 @@ struct RegionalAllTimeLeaderboard: View {
                                     endPoint: .bottom
                                 )
                             )
-                            .shadow(
-                                color: Theme.saturatedOrange
-                                    .opacity(0.5),
-                                radius: 4
-                            )
+                            .shadow(color: Theme.saturatedOrange.opacity(0.5), radius: 4)
                     }
 
                     Spacer()
@@ -1788,8 +1780,7 @@ struct RegionalAllTimeLeaderboard: View {
                     .fill(
                         LinearGradient(
                             colors: [
-                                Theme.saturatedOrange
-                                    .opacity(0.3),
+                                Theme.saturatedOrange.opacity(0.3),
                                 Color(red: 217 / 255, green: 119 / 255, blue: 6 / 255).opacity(0.2),
                             ],
                             startPoint: .leading,
@@ -1834,23 +1825,17 @@ struct RegionalAllTimeLeaderboard: View {
                 // Column headers for clarity
                 HStack {
                     Text("RANK").font(.system(size: 12, weight: .bold)).tracking(1)
-                        .foregroundColor(
-                            Theme.saturatedOrange.opacity(0.9)
-                        )
+                        .foregroundColor(Theme.saturatedOrange.opacity(0.9))
                         .frame(width: 50, alignment: .center)
 
                     Text("USER").font(.system(size: 12, weight: .bold)).tracking(1)
-                        .foregroundColor(
-                            Theme.saturatedOrange.opacity(0.9)
-                        )
+                        .foregroundColor(Theme.saturatedOrange.opacity(0.9))
                         .frame(alignment: .leading)
 
                     Spacer()
 
                     Text("MINUTES").font(.system(size: 12, weight: .bold)).tracking(1)
-                        .foregroundColor(
-                            Theme.saturatedOrange.opacity(0.9)
-                        )
+                        .foregroundColor(Theme.saturatedOrange.opacity(0.9))
                         .frame(width: 80, alignment: .trailing)
                 }
                 .padding(.horizontal, 16).padding(.top, 4).padding(.bottom, 8)
@@ -1956,12 +1941,9 @@ struct RegionalAllTimeLeaderboard: View {
                                 // All time minutes
                                 VStack(alignment: .trailing, spacing: 2) {
                                     Text("\(entry.minutes)").font(.system(size: 18, weight: .black))
-                                        .foregroundColor(
-                                            Theme.saturatedOrange
-                                        )
+                                        .foregroundColor(Theme.saturatedOrange)
                                         .shadow(
-                                            color: Theme.saturatedOrange
-                                            .opacity(0.3),
+                                            color: Theme.saturatedOrange.opacity(0.3),
                                             radius: 4
                                         )
 
@@ -1977,10 +1959,8 @@ struct RegionalAllTimeLeaderboard: View {
                                         LinearGradient(
                                             colors: index < 3
                                                 ? [
-                                                    Theme.saturatedOrange
-                                                    .opacity(0.2),
-                                                    Theme.saturatedOrange
-                                                    .opacity(0.1),
+                                                    Theme.saturatedOrange.opacity(0.2),
+                                                    Theme.saturatedOrange.opacity(0.1),
                                                 ]
                                                 : [
                                                     Color.white.opacity(0.08),
@@ -1995,8 +1975,8 @@ struct RegionalAllTimeLeaderboard: View {
                                             .stroke(
                                                 // Highlight current user
                                                 Auth.auth().currentUser?.uid == entry.userId
-                                                    ? Theme.saturatedOrange
-                                                    .opacity(0.5) : Color.white.opacity(0.2),
+                                                    ? Theme.saturatedOrange.opacity(0.5)
+                                                    : Color.white.opacity(0.2),
                                                 lineWidth: Auth.auth().currentUser?.uid
                                                     == entry.userId ? 1.5 : 1
                                             )
@@ -2031,8 +2011,7 @@ struct RegionalAllTimeLeaderboard: View {
                     .stroke(
                         LinearGradient(
                             colors: [
-                                Theme.saturatedOrange
-                                    .opacity(0.5),
+                                Theme.saturatedOrange.opacity(0.5),
                                 Color(red: 217 / 255, green: 119 / 255, blue: 6 / 255).opacity(0.2),
                             ],
                             startPoint: .topLeading,
