@@ -38,60 +38,7 @@ struct FlipLogo: View {
     }
 }
 
-// Current Building Indicator component will be embedded within a popup in the new design
-struct CurrentBuildingIndicator: View {
-    let buildingName: String
-    let action: () -> Void
 
-    var body: some View {
-        HStack(spacing: 10) {
-            VStack(alignment: .leading, spacing: 2) {
-                Text("CURRENT LOCATION").font(.system(size: 10, weight: .bold)).tracking(1)
-                    .foregroundColor(Theme.yellow.opacity(0.9))
-
-                Text(buildingName).font(.system(size: 14, weight: .bold)).foregroundColor(.white)
-                    .lineLimit(1)
-            }
-
-            Spacer()
-
-            Button(action: action) {
-                HStack(spacing: 4) {
-                    Text("CHANGE").font(.system(size: 10, weight: .bold)).tracking(1)
-
-                    Image(systemName: "chevron.right").font(.system(size: 8, weight: .bold))
-                }
-                .foregroundColor(Theme.yellow.opacity(0.9)).padding(.horizontal, 10)
-                .padding(.vertical, 6)
-                .background(
-                    RoundedRectangle(cornerRadius: 12).fill(Color.white.opacity(0.1))
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 12)
-                                .stroke(Color.white.opacity(0.2), lineWidth: 1)
-                        )
-                )
-            }
-        }
-        .padding(.horizontal, 16).padding(.vertical, 12)
-        .background(
-            ZStack {
-                RoundedRectangle(cornerRadius: 16)
-                    .fill(
-                        LinearGradient(
-                            colors: [Theme.mutedPink.opacity(0.3), Theme.deepBlue.opacity(0.2)],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        )
-                    )
-
-                RoundedRectangle(cornerRadius: 16).fill(Color.white.opacity(0.05))
-
-                RoundedRectangle(cornerRadius: 16).stroke(Theme.silveryGradient4, lineWidth: 1)
-            }
-        )
-        .shadow(color: Color.black.opacity(0.15), radius: 4)
-    }
-}
 struct BeginButton: View {
     let action: () -> Void
     var joinMode: Bool = false

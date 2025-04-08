@@ -101,15 +101,3 @@ class LiveSessionTimer: ObservableObject {
         syncTimer = nil
     }
 }
-
-struct LiveSessionTimerView: View {
-    @StateObject private var timer = LiveSessionTimer()
-    let liveSession: LiveSessionManager.LiveSessionData
-    var showRemaining: Bool = false  // Toggle to show remaining instead of elapsed
-
-    var body: some View {
-        Text(showRemaining ? timer.getFormattedRemainingTime() : timer.getFormattedElapsedTime())
-            .font(.system(size: 16, weight: .bold)).monospacedDigit().foregroundColor(.white)
-            .onAppear { timer.updateSession(session: liveSession) }.id(timer.currentTick)  // Force refresh on tick change
-    }
-}

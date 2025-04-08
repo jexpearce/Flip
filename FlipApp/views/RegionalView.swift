@@ -106,10 +106,6 @@ struct RegionalView: View {
     @StateObject private var globalWeeklyViewModel = GlobalWeeklyLeaderboardViewModel()
     @StateObject private var globalAllTimeViewModel = GlobalAllTimeLeaderboardViewModel()
 
-    // Flag to track if this is first launch
-    @State private var isFirstLaunch =
-        UserDefaults.standard.bool(forKey: "hasShownRegionalView") == false
-
     // Red glow effect for accents
     private let redGlow = Theme.darkRed.opacity(0.5)
 

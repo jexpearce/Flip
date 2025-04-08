@@ -434,7 +434,7 @@ struct FeedSessionCard: View {
         likesCount = viewModel.getLikesForSession(sessionId: sessionId)
     }
 
-    private func saveComment(_ newComment: String) {
+    private func saveComment() {
         guard !comment.isEmpty else { return }
 
         // Get the current user's ID and name

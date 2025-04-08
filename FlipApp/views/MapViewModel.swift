@@ -40,25 +40,6 @@ struct FriendLocation: Identifiable, Equatable {
         return formatter.localizedString(for: sessionStartTime, relativeTo: Date())
     }
 
-    var formattedStartTime: String {
-        let formatter = DateFormatter()
-        formatter.dateStyle = .short
-        formatter.timeStyle = .short
-        return formatter.string(from: sessionStartTime)
-    }
-
-    var sessionDurationString: String {
-        let minutes = sessionMinutesElapsed
-        let hours = minutes / 60
-        let remainingMinutes = minutes % 60
-
-        if hours > 0 {
-            return "\(hours)h \(remainingMinutes)m"
-        }
-        else {
-            return "\(minutes)m"
-        }
-    }
 
     // Required for Equatable conformance - needed for proper map view refreshing
     static func == (lhs: FriendLocation, rhs: FriendLocation) -> Bool {
@@ -115,11 +96,6 @@ class MapPrivacyViewModel: ObservableObject {
 
     func updateVisibilityLevel(_ level: LocationVisibilityLevel) {
         visibilityLevel = level
-        saveSettings()
-    }
-
-    func updateShowSessionHistory(_ show: Bool) {
-        showSessionHistory = show
         saveSettings()
     }
 
@@ -498,86 +474,6 @@ class MapViewModel: NSObject, ObservableObject, CLLocationManagerDelegate {
             }
     }
 
-    private func processLocationDocuments(
-        _ documents: [QueryDocumentSnapshot],
-        isHistorical: Bool,
-        sessionIndex: Int
-    ) -> [FriendLocation] {
-        return documents.compactMap { document -> FriendLocation? in
-            let data = document.data()
-
-            guard let userId = data["userId"] as? String,
-                let username = data["username"] as? String,
-                let geoPoint = data["currentLocation"] as? GeoPoint,
-                let isFlipped = data["isCurrentlyFlipped"] as? Bool,
-                let timestamp = (data["lastFlipTime"] as? Timestamp)?.dateValue(),
-                Date().timeIntervalSince(timestamp) < 7200  // Ignore sessions older than 2 hours
-            else {
-                print("Skipping document - missing required fields or too old")
-                return nil
-            }
-
-            // Properly handle the success/failure state
-            let wasSuccessful: Bool
-            if let successField = data["lastFlipWasSuccessful"] as? Bool {
-                wasSuccessful = successField
-            }
-            else {
-                // Default to true if field is missing
-                wasSuccessful = true
-            }
-
-            let sessionDuration = data["sessionDuration"] as? Int ?? 25  // Default to 25 min
-            let sessionStartTime =
-                (data["sessionStartTime"] as? Timestamp)?.dateValue() ?? timestamp
-
-            return FriendLocation(
-                id: userId,
-                username: username,
-                coordinate: CLLocationCoordinate2D(
-                    latitude: geoPoint.latitude,
-                    longitude: geoPoint.longitude
-                ),
-                isCurrentlyFlipped: isFlipped,
-                lastFlipTime: timestamp,
-                lastFlipWasSuccessful: wasSuccessful,
-                sessionDuration: sessionDuration,
-                sessionStartTime: sessionStartTime,
-                isHistorical: isHistorical,
-                sessionIndex: sessionIndex,
-                participants: nil,
-                participantNames: nil
-            )
-        }
-    }
-
-    // MARK: - Profile Navigation
-
-    func loadUserForProfile(
-        userId: String,
-        completion: @escaping (FirebaseManager.FlipUser?) -> Void
-    ) {
-        // Extract clean userId from potential composite IDs (like userId_hist_1)
-        let cleanUserId = userId.split(separator: "_").first.map(String.init) ?? userId
-
-        // Fetch the user data from Firestore
-        db.collection("users").document(cleanUserId)
-            .getDocument { document, error in
-                if let error = error {
-                    print("Error loading user for profile: \(error.localizedDescription)")
-                    completion(nil)
-                    return
-                }
-
-                guard let userData = try? document?.data(as: FirebaseManager.FlipUser.self) else {
-                    print("Could not decode user data for profile")
-                    completion(nil)
-                    return
-                }
-
-                DispatchQueue.main.async { completion(userData) }
-            }
-    }
 
     // MARK: - CLLocationManagerDelegate methods
 

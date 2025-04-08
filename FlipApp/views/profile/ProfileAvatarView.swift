@@ -172,38 +172,7 @@ struct EnhancedProfileAvatarWithStreak: View {
         .shadow(color: Theme.lightTealBlue.opacity(0.5), radius: size * 0.075)
     }
 }
-// Helper view for fire emblems around the streak circle
-struct FireEmblems: View {
-    let size: CGFloat
-    let color: Color
-    let angle: Double
-    let distance: CGFloat
-    let delay: Double
 
-    @State private var isAnimating = false
-
-    var body: some View {
-        Image(systemName: "flame.fill").font(.system(size: size, weight: .bold))
-            .foregroundStyle(
-                LinearGradient(
-                    colors: [color, color == .red ? Color.orange : Color.yellow],
-                    startPoint: .top,
-                    endPoint: .bottom
-                )
-            )
-            .shadow(color: color.opacity(0.6), radius: 3)
-            .scaleEffect(isAnimating ? 1.0 + Double.random(in: 0.1...0.25) : 0.8)
-            .offset(x: cos(angle * .pi / 180) * distance, y: sin(angle * .pi / 180) * distance)
-            .animation(
-                Animation.easeInOut(duration: 0.8 + Double.random(in: 0...0.4))
-                    .repeatForever(autoreverses: true).delay(delay),
-                value: isAnimating
-            )
-            .onAppear {
-                DispatchQueue.main.asyncAfter(deadline: .now() + delay) { isAnimating = true }
-            }
-    }
-}
 
 // Helper for caching profile images and optimizing loading
 // Update the existing ProfileImageCache class in ProfileAvatarView.swift

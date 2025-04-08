@@ -9,7 +9,6 @@ class LocationPermissionManager: NSObject, ObservableObject, CLLocationManagerDe
     @Published var authorizationStatus: CLAuthorizationStatus = .notDetermined
     @Published var showCustomAlert = false
     @Published var showSettingsAlert = false  // New alert for directing to Settings
-    @Published var showRegionalUnavailableAlert = false  // Alert for Regional feature being unavailable
 
     // Track if we've already shown the alert to avoid repeated prompts
     private var hasShownCustomAlert = false

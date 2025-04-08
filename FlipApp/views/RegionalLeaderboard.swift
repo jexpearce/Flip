@@ -9,22 +9,6 @@ struct RegionalLeaderboard: View {
     @State private var selectedUserId: String?
     @State private var showUserProfile = false
 
-    // Silver-red theme colors
-    private let silverRedGradient = LinearGradient(
-        colors: [
-            Theme.silverLight,  // Light silver
-            Theme.darkerRed,  // Deep red
-        ],
-        startPoint: .top,
-        endPoint: .bottom
-    )
-
-    private let silverRedBackgroundGradient = LinearGradient(
-        colors: [Theme.oldBrick.opacity(0.4), Theme.darkRuby.opacity(0.3)],
-        startPoint: .topLeading,
-        endPoint: .bottomTrailing
-    )
-
     var body: some View {
         VStack(spacing: 12) {
             // Title section with enhanced visual style
@@ -744,7 +728,6 @@ class RegionalLeaderboardViewModel: ObservableObject {
     @Published var isBuildingSpecific: Bool = true  // Default to building-specific mode
     var userCache: [String: UserCacheItem] = [:]
 
-    private var currentLocation: CLLocation?
     private let firebaseManager = FirebaseManager.shared
     private let geocoder = CLGeocoder()
 
@@ -1280,32 +1263,5 @@ struct RegionalLeaderboardEntry: Identifiable {
     let isFriend: Bool
     let isCurrentUser: Bool
     var isAnonymous: Bool = false  // Add this property
-
-    var formattedDistance: String {
-        if isCurrentUser {
-            return ""
-        }
-        else if distance < 500 {
-            return "nearby"
-        }
-        else if distance < 1609 {  // Less than a mile
-            return "<1 mi"
-        }
-        else {
-            let miles = Int(distance / 1609.34)
-            return "\(miles) mi"
-        }
-    }
 }
 
-// STRUCTURE 5: SessionWithLocation struct - moved outside
-struct SessionWithLocation {
-    let id: String
-    let userId: String
-    let username: String
-    let duration: Int
-    let location: CLLocation
-    let distance: Double
-    let isFriend: Bool
-    let isCurrentUser: Bool
-}

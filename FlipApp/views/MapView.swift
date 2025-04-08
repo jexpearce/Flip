@@ -523,14 +523,6 @@ struct FriendMapMarker: View {
                 }
             }
     }
-
-    // Helper to create a thumbnail image
-    private func createThumbnail(from image: UIImage, size: CGFloat) -> UIImage {
-        let renderer = UIGraphicsImageRenderer(size: CGSize(width: size, height: size))
-        return renderer.image { (context) in
-            image.draw(in: CGRect(origin: .zero, size: CGSize(width: size, height: size)))
-        }
-    }
 }
 
 // Add this helper extension if not already present

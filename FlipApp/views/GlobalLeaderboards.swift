@@ -19,25 +19,6 @@ struct GlobalWeeklyLeaderboard: View {
     @State private var showUserProfile = false
     @State private var selectedUserId: String?
 
-    // Blue theme colors - different from the red of regional and gold of friends
-    private let blueGradient = LinearGradient(
-        colors: [
-            Theme.standardBlue,  // Blue 500
-            Theme.blue,  // Blue 600
-        ],
-        startPoint: .top,
-        endPoint: .bottom
-    )
-
-    private let blueBackgroundGradient = LinearGradient(
-        colors: [
-            Theme.darkBlue.opacity(0.4),  // Blue 900
-            Theme.blue800.opacity(0.3),  // Blue 800
-        ],
-        startPoint: .topLeading,
-        endPoint: .bottomTrailing
-    )
-
     var body: some View {
         VStack(spacing: 12) {
             // Title section with navigation arrows
@@ -987,7 +968,6 @@ class GlobalAllTimeLeaderboardViewModel: ObservableObject {
     @Published var isLoading = false
 
     private let db = Firestore.firestore()
-    var userCache: [String: UserCacheItem] = [:]
 
     func loadGlobalAllTimeLeaderboard() {
         isLoading = true
@@ -2213,7 +2193,6 @@ class RegionalAllTimeLeaderboardViewModel: ObservableObject {
     private let regionRadiusInMiles: Double = 15.0  // ~15 mile radius
 
     private let db = Firestore.firestore()
-    var userCache: [String: UserCacheItem] = [:]
 
     @MainActor func loadRegionalAllTimeLeaderboard() {
         isLoading = true
@@ -2500,19 +2479,5 @@ class RegionalAllTimeLeaderboardViewModel: ObservableObject {
         }
 
         dispatchGroup.notify(queue: .main) { completion(scores, streaks) }
-    }
-}
-
-// Navigation arrow button reusable component
-struct NavigationArrowButton: View {
-    let direction: Edge
-    let action: () -> Void
-
-    var body: some View {
-        Button(action: action) {
-            Image(systemName: direction == .leading ? "chevron.left" : "chevron.right")
-                .font(.system(size: 18)).foregroundColor(.white.opacity(0.7)).padding(8)
-                .background(Circle().fill(Color.white.opacity(0.1)))
-        }
     }
 }

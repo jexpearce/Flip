@@ -7,7 +7,6 @@ struct EnhancedFriendCard: View {
     let friend: FirebaseManager.FlipUser
     @State private var isPressed = false
     @State private var isGlowing = false
-    @State private var elapsedSeconds: Int = 0
     @State private var timer: Timer? = nil
     @StateObject private var sessionTimer = LiveSessionTimer()
     @State private var streakStatus: StreakStatus = .none
@@ -333,22 +332,6 @@ struct EnhancedFriendCard: View {
             // Consistent shadow regardless of streak status
             return Color.black.opacity(0.2)
         }
-    }
-
-    // Start timer to update the elapsed time every second
-    private func startTimer() {
-        // Only start the timer if this is a live session and not paused
-        guard isLive, let session = liveSession, !session.isPaused else { return }
-
-        elapsedSeconds = 0
-        timer?.invalidate()
-
-        timer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { _ in
-            elapsedSeconds += 1
-        }
-
-        // Make sure timer runs during scrolling
-        if let timer = timer { RunLoop.current.add(timer, forMode: .common) }
     }
 
     private func stopTimer() {

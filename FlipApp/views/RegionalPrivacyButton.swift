@@ -23,7 +23,6 @@ struct RegionalPrivacySheet: View {
     @State private var regionalDisplayMode: RegionalDisplayMode
     @State private var regionalOptOut: Bool
 
-    private let cyanBlueAccent = Theme.lightTealBlue
     private let redAccent = Theme.mutedRed
 
     init() {
