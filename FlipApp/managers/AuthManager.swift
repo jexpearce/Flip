@@ -5,7 +5,7 @@ import FirebaseFirestore
 import GoogleSignIn
 import SwiftUI
 
-class AuthManager: ObservableObject {
+class AuthManager: NSObject, ObservableObject {
     static let shared = AuthManager()
 
     @Published var isAuthenticated = false
@@ -14,7 +14,8 @@ class AuthManager: ObservableObject {
     @Published var currentUser: User?
     @Published var signUpSuccess = false  // Add this property
 
-    init() {
+   override init() {
+       super.init()
         updateAuthState()
 
         // Listen for auth state changes
@@ -452,6 +453,64 @@ extension AuthManager {
             }
     }
 }
+
+extension AuthManager: ASAuthorizationControllerDelegate, ASAuthorizationControllerPresentationContextProviding
+{
+    // Method to initiate Apple Sign In flow (without Firebase)
+    func authenticateWithApple() {
+        let appleIDProvider = ASAuthorizationAppleIDProvider()
+        let request = appleIDProvider.createRequest()
+        request.requestedScopes = [.fullName, .email]
+        let authorizationController = ASAuthorizationController(authorizationRequests: [request])
+        authorizationController.delegate = self
+        authorizationController.presentationContextProvider = self
+        authorizationController.performRequests()
+    }
+    // ASAuthorizationControllerDelegate methods
+    func authorizationController(
+        controller: ASAuthorizationController,
+        didCompleteWithAuthorization authorization: ASAuthorization
+    ) {
+        guard let appleIDCredential = authorization.credential as? ASAuthorizationAppleIDCredential
+        else {
+            print("Unable to retrieve Apple ID credential")
+            return
+        }
+        // User successfully authorized with Apple ID
+        let userId = appleIDCredential.user
+        let email = appleIDCredential.email
+        let fullName = appleIDCredential.fullName
+        // Here you would handle the successful authentication
+        // For example, notify a delegate or use a completion handler
+        print("Successfully authenticated with Apple ID: \(userId)")
+        print("Email: \(email ?? "Not provided")")
+        print("Full name: \(fullName?.givenName ?? "") \(fullName?.familyName ?? "")")
+        // We're not connecting to Firebase yet as requested
+        // This is where you'd typically call a completion handler
+    }
+    func authorizationController(
+        controller: ASAuthorizationController,
+        didCompleteWithError error: Error
+    ) {
+        // Handle error
+        DispatchQueue.main.async {
+            self.alertMessage = "Apple Sign In failed: \(error.localizedDescription)"
+            self.showAlert = true
+        }
+        print("Apple ID authorization failed: \(error.localizedDescription)")
+    }
+    // ASAuthorizationControllerPresentationContextProviding
+    func presentationAnchor(for controller: ASAuthorizationController) -> ASPresentationAnchor {
+        guard let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
+            let window = windowScene.windows.first(where: { $0.isKeyWindow })
+        else { fatalError("No window found") }
+        return window
+    }
+}
+
+
+
+
 
 extension UIApplication {
     func topViewController() -> UIViewController? {

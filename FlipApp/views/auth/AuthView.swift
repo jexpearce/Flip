@@ -244,11 +244,7 @@ struct AuthView: View {
                         .padding(.horizontal, 30)
 
                         // Apple Sign-In Button
-                        Button(action: {
-                            authManager.signInWithApple { success in
-                                if !success { isLoading = false }
-                            }
-                        }) {
+                        Button(action: { authManager.authenticateWithApple() }) {
                             Image(systemName: "applelogo").resizable().frame(width: 24, height: 24)
                                 .padding().background(Color.black).foregroundColor(.white)
                                 .clipShape(Circle())
