@@ -18,6 +18,34 @@ struct Theme {
     static let darkBlue = Color(red: 30 / 255, green: 58 / 255, blue: 138 / 255)  // Deep Blue
     static let darkGray = Color(red: 24 / 255, green: 24 / 255, blue: 27 / 255)  // Almost Black
     static let nearBlack = Color(red: 17 / 255, green: 12 / 255, blue: 34 / 255)  // Very dark purple-tinted black
+    
+    // Colors extracted from views
+    static let periwinkle = Color(red: 156 / 255, green: 163 / 255, blue: 231 / 255)
+    static let lightBlue = Color(red: 96 / 255, green: 165 / 255, blue: 250 / 255)
+    static let standardBlue = Color(red: 59 / 255, green: 130 / 255, blue: 246 / 255)
+    static let emeraldGreen = Color(red: 16 / 255, green: 185 / 255, blue: 129 / 255)
+    static let brightAmber = Color(red: 249 / 255, green: 180 / 255, blue: 45 / 255)
+    static let forestGreen = Color(red: 21 / 255, green: 128 / 255, blue: 61 / 255)
+    static let brightFuchsia = Color(red: 236 / 255, green: 64 / 255, blue: 255 / 255)
+    static let darkRuby = Color(red: 127 / 255, green: 29 / 255, blue: 29 / 255)
+    static let mediumPurple = Color(red: 65 / 255, green: 16 / 255, blue: 94 / 255)
+    static let goldenBrown = Color(red: 133 / 255, green: 77 / 255, blue: 14 / 255)
+    static let russetBrown = Color(red: 113 / 255, green: 63 / 255, blue: 18 / 255)
+    static let brightYellow = Color(red: 253 / 255, green: 224 / 255, blue: 71 / 255)
+    static let silverLight = Color(red: 226 / 255, green: 232 / 255, blue: 240 / 255)
+    static let silverDark = Color(red: 148 / 255, green: 163 / 255, blue: 184 / 255)
+    static let bronzeLight = Color(red: 217 / 255, green: 119 / 255, blue: 6 / 255)
+    static let bronzeDark = Color(red: 180 / 255, green: 83 / 255, blue: 9 / 255)
+    static let oliveGreen = Color(red: 20 / 255, green: 83 / 255, blue: 45 / 255)
+    static let navyBlue = Color(red: 26 / 255, green: 32 / 255, blue: 58 / 255)
+    static let tealBlue = Color(red: 17 / 255, green: 54 / 255, blue: 71 / 255)
+    static let burgundy = Color(red: 45 / 255, green: 21 / 255, blue: 38 / 255)
+    static let purplishNavy = Color(red: 40 / 255, green: 25 / 255, blue: 65 / 255)
+    static let darkCyanBlue = Color(red: 14 / 255, green: 101 / 255, blue: 151 / 255)
+    static let deeperCyanBlue = Color(red: 12 / 255, green: 74 / 255, blue: 110 / 255)
+    static let indigoDark = Color(red: 14 / 255, green: 30 / 255, blue: 60 / 255)
+    static let purpleIndigo = Color(red: 128 / 255, green: 65 / 255, blue: 217 / 255)
+    static let midnightNavy = Color(red: 30 / 255, green: 30 / 255, blue: 46 / 255)
 
     static let mutedGreen = Color(red: 34 / 255, green: 197 / 255, blue: 94 / 255)
     static let darkerGreen = Color(red: 22 / 255, green: 163 / 255, blue: 74 / 255)
