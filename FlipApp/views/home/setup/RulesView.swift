@@ -97,16 +97,7 @@ struct RulesView: View {
                                 RoundedRectangle(cornerRadius: 22).fill(Color.white.opacity(0.1))
 
                                 RoundedRectangle(cornerRadius: 22)
-                                    .stroke(
-                                        LinearGradient(
-                                            colors: [
-                                                Color.white.opacity(0.6), Color.white.opacity(0.2),
-                                            ],
-                                            startPoint: .topLeading,
-                                            endPoint: .bottomTrailing
-                                        ),
-                                        lineWidth: 1
-                                    )
+                                    .stroke(Theme.silveryGradient, lineWidth: 1)
                             }
                         )
                         .shadow(color: Theme.lightTealBlue.opacity(0.5), radius: 8)
@@ -120,15 +111,7 @@ struct RulesView: View {
 
                     RoundedRectangle(cornerRadius: 20).fill(Color.black.opacity(0.3))
 
-                    RoundedRectangle(cornerRadius: 20)
-                        .stroke(
-                            LinearGradient(
-                                colors: [Color.white.opacity(0.5), Color.white.opacity(0.1)],
-                                startPoint: .topLeading,
-                                endPoint: .bottomTrailing
-                            ),
-                            lineWidth: 1
-                        )
+                    RoundedRectangle(cornerRadius: 20).stroke(Theme.silveryGradient2, lineWidth: 1)
                 }
             )
             .frame(maxWidth: 380).offset(y: animateContent ? 0 : 50).opacity(animateContent ? 1 : 0)

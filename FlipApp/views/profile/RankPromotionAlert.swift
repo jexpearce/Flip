@@ -117,16 +117,7 @@ struct RankPromotionAlert: View {
                                 RoundedRectangle(cornerRadius: 15).fill(Color.white.opacity(0.1))
 
                                 RoundedRectangle(cornerRadius: 15)
-                                    .stroke(
-                                        LinearGradient(
-                                            colors: [
-                                                Color.white.opacity(0.6), Color.white.opacity(0.2),
-                                            ],
-                                            startPoint: .topLeading,
-                                            endPoint: .bottomTrailing
-                                        ),
-                                        lineWidth: 1
-                                    )
+                                    .stroke(Theme.silveryGradient, lineWidth: 1)
                             }
                         )
                         .shadow(color: rankColor.opacity(0.5), radius: 8)

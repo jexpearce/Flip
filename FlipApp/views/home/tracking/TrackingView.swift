@@ -218,15 +218,7 @@ struct TrackingView: View {
 
                 RoundedRectangle(cornerRadius: 20).fill(Color.white.opacity(0.05))
 
-                RoundedRectangle(cornerRadius: 20)
-                    .stroke(
-                        LinearGradient(
-                            colors: [Color.white.opacity(0.5), Color.white.opacity(0.1)],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        ),
-                        lineWidth: 1.5
-                    )
+                RoundedRectangle(cornerRadius: 20).stroke(Theme.silveryGradient2, lineWidth: 1.5)
             }
         )
         .shadow(color: Color.black.opacity(0.25), radius: 12)
@@ -263,16 +255,7 @@ struct TrackingView: View {
                             RoundedRectangle(cornerRadius: 20).fill(Color.white.opacity(0.1))
 
                             RoundedRectangle(cornerRadius: 20)
-                                .stroke(
-                                    LinearGradient(
-                                        colors: [
-                                            Color.white.opacity(0.6), Color.white.opacity(0.2),
-                                        ],
-                                        startPoint: .topLeading,
-                                        endPoint: .bottomTrailing
-                                    ),
-                                    lineWidth: 1
-                                )
+                                .stroke(Theme.silveryGradient, lineWidth: 1)
                         }
                     )
                     .shadow(color: Theme.lightTealBlue.opacity(0.5), radius: 8)
@@ -291,14 +274,7 @@ struct TrackingView: View {
                         .foregroundColor(.white).frame(maxWidth: .infinity).frame(height: 44)
                         .background(
                             ZStack {
-                                RoundedRectangle(cornerRadius: 15)
-                                    .fill(
-                                        LinearGradient(
-                                            colors: [Theme.mutedRed, Theme.darkerRed],
-                                            startPoint: .top,
-                                            endPoint: .bottom
-                                        )
-                                    )
+                                RoundedRectangle(cornerRadius: 15).fill(Theme.redGradient)
                                     .opacity(0.8)
 
                                 RoundedRectangle(cornerRadius: 15).fill(Color.white.opacity(0.1))

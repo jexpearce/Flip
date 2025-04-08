@@ -37,12 +37,7 @@ struct RegionalPrivacySheet: View {
         NavigationView {
             ZStack {
                 // Background gradient
-                LinearGradient(
-                    colors: [Theme.deepMidnightPurple, Theme.mediumMidnightPurple],
-                    startPoint: .top,
-                    endPoint: .bottom
-                )
-                .edgesIgnoringSafeArea(.all)
+                Theme.darkPurpleGradient.edgesIgnoringSafeArea(.all)
 
                 VStack(spacing: 24) {
                     // Header

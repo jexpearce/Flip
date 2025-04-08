@@ -39,20 +39,7 @@ struct SetupView: View {
                         }) {
                             ZStack {
                                 Circle().fill(Theme.buttonGradient).frame(width: 35, height: 35)
-                                    .overlay(
-                                        Circle()
-                                            .stroke(
-                                                LinearGradient(
-                                                    colors: [
-                                                        Color.white.opacity(0.6),
-                                                        Color.white.opacity(0.2),
-                                                    ],
-                                                    startPoint: .topLeading,
-                                                    endPoint: .bottomTrailing
-                                                ),
-                                                lineWidth: 1
-                                            )
-                                    )
+                                    .overlay(Circle().stroke(Theme.silveryGradient, lineWidth: 1))
                                     .shadow(color: Theme.purpleShadow.opacity(0.3), radius: 4)
 
                                 Image(systemName: "building.2")
@@ -315,17 +302,7 @@ struct SetupView: View {
                                                 .fill(Color.white.opacity(0.1))
 
                                             RoundedRectangle(cornerRadius: 25)
-                                                .stroke(
-                                                    LinearGradient(
-                                                        colors: [
-                                                            Color.white.opacity(0.6),
-                                                            Color.white.opacity(0.2),
-                                                        ],
-                                                        startPoint: .topLeading,
-                                                        endPoint: .bottomTrailing
-                                                    ),
-                                                    lineWidth: 1
-                                                )
+                                                .stroke(Theme.silveryGradient, lineWidth: 1)
                                         }
                                     )
                                     .shadow(color: Theme.yellowShadow, radius: 8)
@@ -340,16 +317,7 @@ struct SetupView: View {
                                 RoundedRectangle(cornerRadius: 20).fill(Color.black.opacity(0.3))
 
                                 RoundedRectangle(cornerRadius: 20)
-                                    .stroke(
-                                        LinearGradient(
-                                            colors: [
-                                                Color.white.opacity(0.5), Color.white.opacity(0.1),
-                                            ],
-                                            startPoint: .topLeading,
-                                            endPoint: .bottomTrailing
-                                        ),
-                                        lineWidth: 1
-                                    )
+                                    .stroke(Theme.silveryGradient2, lineWidth: 1)
                             }
                         )
                         .shadow(color: Color.black.opacity(0.5), radius: 20)
@@ -580,15 +548,7 @@ struct LocationSelectorPopup: View {
 
                 RoundedRectangle(cornerRadius: 16).fill(Color.white.opacity(0.05))
 
-                RoundedRectangle(cornerRadius: 16)
-                    .stroke(
-                        LinearGradient(
-                            colors: [Color.white.opacity(0.4), Color.white.opacity(0.1)],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        ),
-                        lineWidth: 1
-                    )
+                RoundedRectangle(cornerRadius: 16).stroke(Theme.silveryGradient4, lineWidth: 1)
             }
         )
         .shadow(color: Color.black.opacity(0.15), radius: 4)
@@ -721,17 +681,7 @@ struct PermissionRequiredAlert: View {
                                         .fill(Color.white.opacity(0.1))
 
                                     RoundedRectangle(cornerRadius: 20)
-                                        .stroke(
-                                            LinearGradient(
-                                                colors: [
-                                                    Color.white.opacity(0.6),
-                                                    Color.white.opacity(0.2),
-                                                ],
-                                                startPoint: .topLeading,
-                                                endPoint: .bottomTrailing
-                                            ),
-                                            lineWidth: 1
-                                        )
+                                        .stroke(Theme.silveryGradient, lineWidth: 1)
                                 }
                             )
                             .shadow(color: Theme.purpleShadow, radius: 4)

@@ -110,14 +110,7 @@ struct GlobalWeeklyLeaderboard: View {
                     )
                     .overlay(
                         RoundedRectangle(cornerRadius: 12)
-                            .stroke(
-                                LinearGradient(
-                                    colors: [Color.white.opacity(0.5), Color.white.opacity(0.2)],
-                                    startPoint: .topLeading,
-                                    endPoint: .bottomTrailing
-                                ),
-                                lineWidth: 1
-                            )
+                            .stroke(Theme.silveryGradient5, lineWidth: 1)
                     )
             )
 
@@ -413,14 +406,7 @@ struct GlobalAllTimeLeaderboard: View {
                     )
                     .overlay(
                         RoundedRectangle(cornerRadius: 12)
-                            .stroke(
-                                LinearGradient(
-                                    colors: [Color.white.opacity(0.5), Color.white.opacity(0.2)],
-                                    startPoint: .topLeading,
-                                    endPoint: .bottomTrailing
-                                ),
-                                lineWidth: 1
-                            )
+                            .stroke(Theme.silveryGradient5, lineWidth: 1)
                     )
             )
 
@@ -1205,23 +1191,11 @@ struct RegionalWeeklyLeaderboard: View {
                     // Main title with icon
                     HStack {
                         Image(systemName: "mappin.circle.fill").font(.system(size: 20))
-                            .foregroundStyle(
-                                LinearGradient(
-                                    colors: [Theme.mutedRed, Theme.darkRed],
-                                    startPoint: .top,
-                                    endPoint: .bottom
-                                )
-                            )
+                            .foregroundStyle(Theme.redGradient2)
                             .shadow(color: Theme.mutedRed.opacity(0.5), radius: 4)
 
                         Text("REGIONAL WEEKLY").font(.system(size: 13, weight: .black)).tracking(2)
-                            .foregroundStyle(
-                                LinearGradient(
-                                    colors: [Theme.mutedRed, Theme.darkRed],
-                                    startPoint: .top,
-                                    endPoint: .bottom
-                                )
-                            )
+                            .foregroundStyle(Theme.redGradient2)
                             .shadow(color: Theme.mutedRed.opacity(0.5), radius: 4)
                     }
 
@@ -1256,14 +1230,7 @@ struct RegionalWeeklyLeaderboard: View {
                     )
                     .overlay(
                         RoundedRectangle(cornerRadius: 12)
-                            .stroke(
-                                LinearGradient(
-                                    colors: [Color.white.opacity(0.5), Color.white.opacity(0.2)],
-                                    startPoint: .topLeading,
-                                    endPoint: .bottomTrailing
-                                ),
-                                lineWidth: 1
-                            )
+                            .stroke(Theme.silveryGradient5, lineWidth: 1)
                     )
             )
 
@@ -1568,14 +1535,7 @@ struct RegionalAllTimeLeaderboard: View {
                     )
                     .overlay(
                         RoundedRectangle(cornerRadius: 12)
-                            .stroke(
-                                LinearGradient(
-                                    colors: [Color.white.opacity(0.5), Color.white.opacity(0.2)],
-                                    startPoint: .topLeading,
-                                    endPoint: .bottomTrailing
-                                ),
-                                lineWidth: 1
-                            )
+                            .stroke(Theme.silveryGradient5, lineWidth: 1)
                     )
             )
 
@@ -1640,8 +1600,9 @@ struct RegionalAllTimeLeaderboard: View {
                                         Circle()
                                             .fill(
                                                 index == 0
-                                                ? Theme.goldColor
-                                                : (index == 1 ? Theme.silverColor : Theme.bronzeColor)
+                                                    ? Theme.goldColor
+                                                    : (index == 1
+                                                        ? Theme.silverColor : Theme.bronzeColor)
                                             )
                                             .frame(width: 26, height: 26)
 

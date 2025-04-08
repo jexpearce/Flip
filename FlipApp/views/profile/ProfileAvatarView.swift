@@ -22,17 +22,7 @@ struct ProfileAvatarView: View {
                 )
                 .scaleFactor(UIScreen.main.scale).resizable().aspectRatio(contentMode: .fill)
                 .frame(width: size, height: size).clipShape(Circle())
-                .overlay(
-                    Circle()
-                        .stroke(
-                            LinearGradient(
-                                colors: [Color.white.opacity(0.5), Color.white.opacity(0.1)],
-                                startPoint: .topLeading,
-                                endPoint: .bottomTrailing
-                            ),
-                            lineWidth: 2
-                        )
-                )
+                .overlay(Circle().stroke(Theme.silveryGradient2, lineWidth: 2))
                 .shadow(color: Color.black.opacity(0.3), radius: 4)
         }
         else {
@@ -139,17 +129,7 @@ struct EnhancedProfileAvatarWithStreak: View {
                     )
                     .scaleFactor(UIScreen.main.scale).resizable().aspectRatio(contentMode: .fill)
                     .frame(width: size, height: size).clipShape(Circle())
-                    .overlay(
-                        Circle()
-                            .stroke(
-                                LinearGradient(
-                                    colors: [Color.white.opacity(0.5), Color.white.opacity(0.1)],
-                                    startPoint: .topLeading,
-                                    endPoint: .bottomTrailing
-                                ),
-                                lineWidth: 2
-                            )
-                    )
+                    .overlay(Circle().stroke(Theme.silveryGradient2, lineWidth: 2))
                     .shadow(color: Color.black.opacity(0.3), radius: 4)
             }
             else {

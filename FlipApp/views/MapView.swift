@@ -798,16 +798,7 @@ struct MapPrivacySettingsView: View {
                             RoundedRectangle(cornerRadius: 15).fill(Color.white.opacity(0.05))
 
                             RoundedRectangle(cornerRadius: 15)
-                                .stroke(
-                                    LinearGradient(
-                                        colors: [
-                                            Color.white.opacity(0.5), Color.white.opacity(0.1),
-                                        ],
-                                        startPoint: .topLeading,
-                                        endPoint: .bottomTrailing
-                                    ),
-                                    lineWidth: 1
-                                )
+                                .stroke(Theme.silveryGradient2, lineWidth: 1)
                         }
                     )
                     .offset(x: animateSettings ? 0 : -300)
@@ -849,16 +840,7 @@ struct MapPrivacySettingsView: View {
                             RoundedRectangle(cornerRadius: 15).fill(Color.white.opacity(0.05))
 
                             RoundedRectangle(cornerRadius: 15)
-                                .stroke(
-                                    LinearGradient(
-                                        colors: [
-                                            Color.white.opacity(0.5), Color.white.opacity(0.1),
-                                        ],
-                                        startPoint: .topLeading,
-                                        endPoint: .bottomTrailing
-                                    ),
-                                    lineWidth: 1
-                                )
+                                .stroke(Theme.silveryGradient2, lineWidth: 1)
                         }
                     )
                     .offset(x: animateSettings ? 0 : 300)

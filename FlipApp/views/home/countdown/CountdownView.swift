@@ -118,15 +118,7 @@ struct CountdownView: View {
                     )
                     .opacity(0.1)
 
-                Circle()
-                    .stroke(
-                        LinearGradient(
-                            colors: [Color.white.opacity(0.6), Color.white.opacity(0.2)],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        ),
-                        lineWidth: 1
-                    )
+                Circle().stroke(Theme.silveryGradient, lineWidth: 1)
 
                 Text(number).font(.system(size: 24, weight: .black)).foregroundColor(.white)
             }

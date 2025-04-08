@@ -148,17 +148,7 @@ struct FeedView: View {
 
                                         // Subtle border
                                         RoundedRectangle(cornerRadius: 20)
-                                            .stroke(
-                                                LinearGradient(
-                                                    colors: [
-                                                        Color.white.opacity(0.6),
-                                                        Color.white.opacity(0.1),
-                                                    ],
-                                                    startPoint: .topLeading,
-                                                    endPoint: .bottomTrailing
-                                                ),
-                                                lineWidth: 1
-                                            )
+                                            .stroke(Theme.silveryGradient3, lineWidth: 1)
                                     }
                                 )
                                 .shadow(color: Color.black.opacity(0.2), radius: 10)
@@ -535,15 +525,7 @@ struct NavigationFeedSessionCard: View {
 
                 RoundedRectangle(cornerRadius: 15).fill(Color.white.opacity(0.05))
 
-                RoundedRectangle(cornerRadius: 15)
-                    .stroke(
-                        LinearGradient(
-                            colors: [Color.white.opacity(0.5), Color.white.opacity(0.1)],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        ),
-                        lineWidth: 1
-                    )
+                RoundedRectangle(cornerRadius: 15).stroke(Theme.silveryGradient2, lineWidth: 1)
             }
         )
         .shadow(color: Color.black.opacity(0.2), radius: 4, x: 0, y: 2).contentShape(Rectangle())

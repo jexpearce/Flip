@@ -160,19 +160,7 @@ struct ProfileView: View {
                                 Image(systemName: "gearshape.fill").font(.system(size: 20))
                                     .foregroundColor(.white)
                             }
-                            .overlay(
-                                Circle()
-                                    .stroke(
-                                        LinearGradient(
-                                            colors: [
-                                                Color.white.opacity(0.6), Color.white.opacity(0.2),
-                                            ],
-                                            startPoint: .topLeading,
-                                            endPoint: .bottomTrailing
-                                        ),
-                                        lineWidth: 1
-                                    )
-                            )
+                            .overlay(Circle().stroke(Theme.silveryGradient, lineWidth: 1))
                             .shadow(color: cyanBlueGlow, radius: 5)
                         }
                     }
@@ -309,16 +297,7 @@ struct ProfileView: View {
                             RoundedRectangle(cornerRadius: 15).fill(Color.white.opacity(0.05))
 
                             RoundedRectangle(cornerRadius: 15)
-                                .stroke(
-                                    LinearGradient(
-                                        colors: [
-                                            Color.white.opacity(0.5), Color.white.opacity(0.1),
-                                        ],
-                                        startPoint: .topLeading,
-                                        endPoint: .bottomTrailing
-                                    ),
-                                    lineWidth: 1
-                                )
+                                .stroke(Theme.silveryGradient2, lineWidth: 1)
                         }
                     )
                     .shadow(
@@ -411,16 +390,7 @@ struct ProfileView: View {
                             RoundedRectangle(cornerRadius: 15).fill(Color.white.opacity(0.05))
 
                             RoundedRectangle(cornerRadius: 15)
-                                .stroke(
-                                    LinearGradient(
-                                        colors: [
-                                            Color.white.opacity(0.5), Color.white.opacity(0.1),
-                                        ],
-                                        startPoint: .topLeading,
-                                        endPoint: .bottomTrailing
-                                    ),
-                                    lineWidth: 1
-                                )
+                                .stroke(Theme.silveryGradient2, lineWidth: 1)
                         }
                     )
                     .shadow(color: Color.black.opacity(0.2), radius: 4, x: 0, y: 2)
@@ -479,17 +449,7 @@ struct ProfileView: View {
                                             .fill(Color.white.opacity(0.05))
 
                                         RoundedRectangle(cornerRadius: 12)
-                                            .stroke(
-                                                LinearGradient(
-                                                    colors: [
-                                                        Color.white.opacity(0.5),
-                                                        Color.white.opacity(0.1),
-                                                    ],
-                                                    startPoint: .topLeading,
-                                                    endPoint: .bottomTrailing
-                                                ),
-                                                lineWidth: 1
-                                            )
+                                            .stroke(Theme.silveryGradient2, lineWidth: 1)
                                     }
                                 )
                                 .shadow(color: cyanBlueGlow, radius: 6)

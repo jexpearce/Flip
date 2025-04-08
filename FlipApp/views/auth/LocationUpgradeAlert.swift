@@ -68,17 +68,7 @@ struct LocationUpgradeAlert: View {
                                         .fill(Color.white.opacity(0.1))
 
                                     RoundedRectangle(cornerRadius: 25)
-                                        .stroke(
-                                            LinearGradient(
-                                                colors: [
-                                                    Color.white.opacity(0.6),
-                                                    Color.white.opacity(0.2),
-                                                ],
-                                                startPoint: .topLeading,
-                                                endPoint: .bottomTrailing
-                                            ),
-                                            lineWidth: 1
-                                        )
+                                        .stroke(Theme.silveryGradient, lineWidth: 1)
                                 }
                             )
                             .shadow(color: Theme.yellowShadow, radius: 8)
@@ -106,15 +96,7 @@ struct LocationUpgradeAlert: View {
 
                     RoundedRectangle(cornerRadius: 25).fill(Color.black.opacity(0.3))
 
-                    RoundedRectangle(cornerRadius: 25)
-                        .stroke(
-                            LinearGradient(
-                                colors: [Color.white.opacity(0.5), Color.white.opacity(0.1)],
-                                startPoint: .topLeading,
-                                endPoint: .bottomTrailing
-                            ),
-                            lineWidth: 1
-                        )
+                    RoundedRectangle(cornerRadius: 25).stroke(Theme.silveryGradient2, lineWidth: 1)
                 }
             )
             .frame(maxWidth: 350).shadow(color: Color.black.opacity(0.5), radius: 20)

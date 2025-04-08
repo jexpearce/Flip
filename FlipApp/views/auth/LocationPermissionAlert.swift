@@ -124,15 +124,7 @@ struct LocationPermissionAlert: View {
                     Circle().fill(Theme.lightTealBlue.opacity(0.2)).frame(width: 90, height: 90)
                         .scaleEffect(animateContent ? 1.3 : 0.8).opacity(animateContent ? 0.0 : 0.5)
 
-                    Circle()
-                        .fill(
-                            LinearGradient(
-                                colors: [Theme.lightTealBlue, Theme.darkTealBlue],
-                                startPoint: .top,
-                                endPoint: .bottom
-                            )
-                        )
-                        .frame(width: 70, height: 70)
+                    Circle().fill(Theme.tealyGradient).frame(width: 70, height: 70)
 
                     Image(systemName: "location.fill").font(.system(size: 32))
                         .foregroundColor(.white).shadow(color: Color.white.opacity(0.5), radius: 4)
@@ -238,14 +230,7 @@ struct LocationPermissionAlert: View {
                     RoundedRectangle(cornerRadius: 25).fill(Color.white.opacity(0.05))
 
                     RoundedRectangle(cornerRadius: 25)
-                        .stroke(
-                            LinearGradient(
-                                colors: [Color.white.opacity(0.6), Color.white.opacity(0.1)],
-                                startPoint: .topLeading,
-                                endPoint: .bottomTrailing
-                            ),
-                            lineWidth: 1.5
-                        )
+                        .stroke(Theme.silveryGradient3, lineWidth: 1.5)
                 }
             )
             .frame(maxWidth: 350).shadow(color: Color.black.opacity(0.3), radius: 20)

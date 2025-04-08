@@ -151,17 +151,7 @@ struct ModernPickerStyle: View {
                                         )
                                         .overlay(
                                             RoundedRectangle(cornerRadius: 12)
-                                                .stroke(
-                                                    LinearGradient(
-                                                        colors: [
-                                                            Color.white.opacity(0.5),
-                                                            Color.white.opacity(0.1),
-                                                        ],
-                                                        startPoint: .topLeading,
-                                                        endPoint: .bottomTrailing
-                                                    ),
-                                                    lineWidth: 1
-                                                )
+                                                .stroke(Theme.silveryGradient2, lineWidth: 1)
                                         )
                                         .shadow(color: Theme.purpleShadow.opacity(0.3), radius: 4)
                                 }
@@ -206,16 +196,7 @@ struct InfinityToggle: View {
                             )
                             .overlay(
                                 RoundedRectangle(cornerRadius: 12)
-                                    .stroke(
-                                        LinearGradient(
-                                            colors: [
-                                                Color.white.opacity(0.5), Color.white.opacity(0.1),
-                                            ],
-                                            startPoint: .topLeading,
-                                            endPoint: .bottomTrailing
-                                        ),
-                                        lineWidth: 1
-                                    )
+                                    .stroke(Theme.silveryGradient2, lineWidth: 1)
                             )
                             .shadow(color: Theme.purpleShadow.opacity(0.3), radius: 4)
                     }

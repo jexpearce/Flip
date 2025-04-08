@@ -12,23 +12,11 @@ struct WeeklyLeaderboard: View {
             // Rich golden title with icon
             HStack {
                 Image(systemName: "crown.fill").font(.system(size: 18))
-                    .foregroundStyle(
-                        LinearGradient(
-                            colors: [Theme.yellow, Theme.yellowyOrange],
-                            startPoint: .top,
-                            endPoint: .bottom
-                        )
-                    )
+                    .foregroundStyle(Theme.yellowyGradient)
                     .shadow(color: Theme.yellowyOrange.opacity(0.6), radius: 8)
 
                 Text("WEEKLY CHAMPIONS").font(.system(size: 18, weight: .black)).tracking(2)
-                    .foregroundStyle(
-                        LinearGradient(
-                            colors: [Theme.yellow, Theme.yellowyOrange],
-                            startPoint: .top,
-                            endPoint: .bottom
-                        )
-                    )
+                    .foregroundStyle(Theme.yellowyGradient)
                     .shadow(color: Theme.yellowyOrange.opacity(0.6), radius: 8)
 
                 Spacer()
@@ -79,13 +67,7 @@ struct WeeklyLeaderboard: View {
                     // Empty State
                     VStack(spacing: 15) {
                         Image(systemName: "crown").font(.system(size: 40))
-                            .foregroundStyle(
-                                LinearGradient(
-                                    colors: [Theme.yellow, Theme.yellowyOrange],
-                                    startPoint: .top,
-                                    endPoint: .bottom
-                                )
-                            )
+                            .foregroundStyle(Theme.yellowyGradient)
                             .shadow(color: Theme.yellowyOrange.opacity(0.6), radius: 8)
 
                         Text("No sessions recorded this week")

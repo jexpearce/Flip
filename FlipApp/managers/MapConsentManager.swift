@@ -206,14 +206,7 @@ struct MapPrivacyAlert: View {
 
                         // Border
                         RoundedRectangle(cornerRadius: 25)
-                            .stroke(
-                                LinearGradient(
-                                    colors: [Color.white.opacity(0.6), Color.white.opacity(0.1)],
-                                    startPoint: .topLeading,
-                                    endPoint: .bottomTrailing
-                                ),
-                                lineWidth: 1.5
-                            )
+                            .stroke(Theme.silveryGradient3, lineWidth: 1.5)
                     }
                 )
                 .frame(maxWidth: 350).shadow(color: Color.black.opacity(0.3), radius: 20)

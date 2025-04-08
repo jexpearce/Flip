@@ -147,13 +147,7 @@ func DynamicIslandView(context: ActivityViewContext<FlipActivityAttributes>) -> 
     } compactTrailing: {
         if context.state.isPaused, let pauseTime = context.state.pauseTimeRemaining {
             Text(pauseTime).font(.system(size: 13, design: .monospaced)).fontWeight(.bold)
-                .foregroundStyle(
-                    LinearGradient(
-                        colors: [Theme.yellow, Theme.yellowyOrange],
-                        startPoint: .top,
-                        endPoint: .bottom
-                    )
-                )
+                .foregroundStyle(Theme.yellowyGradient)
         }
         else {
             Text(context.state.remainingTime).font(.system(size: 13, design: .monospaced))

@@ -10,13 +10,7 @@ struct FirstSessionRequiredAlert: View {
             VStack(spacing: 20) {
                 // Icon
                 Image(systemName: "exclamationmark.triangle.fill").font(.system(size: 50))
-                    .foregroundStyle(
-                        LinearGradient(
-                            colors: [Theme.yellow, Theme.yellowyOrange],
-                            startPoint: .top,
-                            endPoint: .bottom
-                        )
-                    )
+                    .foregroundStyle(Theme.yellowyGradient)
                     .shadow(color: Theme.yellow.opacity(0.5), radius: 5)
 
                 // Title
@@ -36,26 +30,10 @@ struct FirstSessionRequiredAlert: View {
                         .frame(width: 140, height: 44)
                         .background(
                             ZStack {
-                                RoundedRectangle(cornerRadius: 22)
-                                    .fill(
-                                        LinearGradient(
-                                            colors: [Theme.vibrantPurple, Theme.deepPurple],
-                                            startPoint: .topLeading,
-                                            endPoint: .bottomTrailing
-                                        )
-                                    )
+                                RoundedRectangle(cornerRadius: 22).fill(Theme.purplyGradient)
 
                                 RoundedRectangle(cornerRadius: 22)
-                                    .stroke(
-                                        LinearGradient(
-                                            colors: [
-                                                Color.white.opacity(0.6), Color.white.opacity(0.2),
-                                            ],
-                                            startPoint: .topLeading,
-                                            endPoint: .bottomTrailing
-                                        ),
-                                        lineWidth: 1
-                                    )
+                                    .stroke(Theme.silveryGradient, lineWidth: 1)
                             }
                         )
                         .shadow(color: Theme.vibrantPurple.opacity(0.4), radius: 5)
@@ -65,16 +43,7 @@ struct FirstSessionRequiredAlert: View {
             .padding(25)
             .background(
                 ZStack {
-                    RoundedRectangle(cornerRadius: 20)
-                        .fill(
-                            LinearGradient(
-                                colors: [
-                                    Theme.mutedPink.opacity(0.6), Theme.deepBlue.opacity(0.4),
-                                ],
-                                startPoint: .topLeading,
-                                endPoint: .bottomTrailing
-                            )
-                        )
+                    RoundedRectangle(cornerRadius: 20).fill(Theme.pinkBlueGradient)
 
                     RoundedRectangle(cornerRadius: 20).fill(Color.black.opacity(0.2))
 

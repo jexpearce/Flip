@@ -65,15 +65,7 @@ struct SessionHistoryCard: View {
                 RoundedRectangle(cornerRadius: 15).fill(Color.white.opacity(0.05))
 
                 // Gradient border
-                RoundedRectangle(cornerRadius: 15)
-                    .stroke(
-                        LinearGradient(
-                            colors: [Color.white.opacity(0.5), Color.white.opacity(0.1)],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        ),
-                        lineWidth: 1
-                    )
+                RoundedRectangle(cornerRadius: 15).stroke(Theme.silveryGradient2, lineWidth: 1)
 
                 // Inner glow
                 RoundedRectangle(cornerRadius: 15)

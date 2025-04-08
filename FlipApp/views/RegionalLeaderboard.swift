@@ -39,12 +39,7 @@ struct RegionalLeaderboard: View {
                                     colors: [Theme.yellowyOrange, Theme.darkYellow],
                                     startPoint: .top,
                                     endPoint: .bottom
-                                )
-                                : LinearGradient(
-                                    colors: [Theme.mutedRed, Theme.darkerRed],
-                                    startPoint: .top,
-                                    endPoint: .bottom
-                                )
+                                ) : Theme.redGradient
                         )
                         .shadow(
                             color: viewModel.isBuildingSpecific
@@ -63,12 +58,7 @@ struct RegionalLeaderboard: View {
                                 colors: [Theme.yellowyOrange, Theme.darkYellow],
                                 startPoint: .top,
                                 endPoint: .bottom
-                            )
-                            : LinearGradient(
-                                colors: [Theme.mutedRed, Theme.darkerRed],
-                                startPoint: .top,
-                                endPoint: .bottom
-                            )
+                            ) : Theme.redGradient
                     )
                     .shadow(
                         color: viewModel.isBuildingSpecific
@@ -107,14 +97,7 @@ struct RegionalLeaderboard: View {
                     )
                     .overlay(
                         RoundedRectangle(cornerRadius: 12)
-                            .stroke(
-                                LinearGradient(
-                                    colors: [Color.white.opacity(0.5), Color.white.opacity(0.2)],
-                                    startPoint: .topLeading,
-                                    endPoint: .bottomTrailing
-                                ),
-                                lineWidth: 1
-                            )
+                            .stroke(Theme.silveryGradient5, lineWidth: 1)
                     )
             )
 

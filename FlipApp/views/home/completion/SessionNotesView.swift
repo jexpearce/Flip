@@ -131,15 +131,7 @@ struct SessionNotesView: View {
 
                 RoundedRectangle(cornerRadius: 16).fill(Color.white.opacity(0.05))
 
-                RoundedRectangle(cornerRadius: 16)
-                    .stroke(
-                        LinearGradient(
-                            colors: [Color.white.opacity(0.4), Color.white.opacity(0.1)],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        ),
-                        lineWidth: 1
-                    )
+                RoundedRectangle(cornerRadius: 16).stroke(Theme.silveryGradient4, lineWidth: 1)
             }
         )
         .shadow(color: Color.black.opacity(0.15), radius: 8)

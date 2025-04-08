@@ -167,15 +167,7 @@ struct SearchBarView: View {
         .background(
             RoundedRectangle(cornerRadius: 12).fill(Color.white.opacity(0.1))
                 .overlay(
-                    RoundedRectangle(cornerRadius: 12)
-                        .stroke(
-                            LinearGradient(
-                                colors: [Color.white.opacity(0.4), Color.white.opacity(0.1)],
-                                startPoint: .topLeading,
-                                endPoint: .bottomTrailing
-                            ),
-                            lineWidth: 1
-                        )
+                    RoundedRectangle(cornerRadius: 12).stroke(Theme.silveryGradient4, lineWidth: 1)
                 )
         )
         .padding(.horizontal).padding(.top, 16).padding(.bottom, 12)
@@ -372,16 +364,7 @@ struct RecommendationsSection: View {
                                     )
 
                                 RoundedRectangle(cornerRadius: 12)
-                                    .stroke(
-                                        LinearGradient(
-                                            colors: [
-                                                Color.white.opacity(0.4), Color.white.opacity(0.1),
-                                            ],
-                                            startPoint: .topLeading,
-                                            endPoint: .bottomTrailing
-                                        ),
-                                        lineWidth: 1
-                                    )
+                                    .stroke(Theme.silveryGradient4, lineWidth: 1)
                             }
                         )
                         .shadow(color: orangeAccent.opacity(0.2), radius: 4)
@@ -569,17 +552,7 @@ struct EnhancedUserSearchCard: View {
                                         .fill(Color.white.opacity(0.1))
 
                                     RoundedRectangle(cornerRadius: 20)
-                                        .stroke(
-                                            LinearGradient(
-                                                colors: [
-                                                    Color.white.opacity(0.5),
-                                                    Color.white.opacity(0.2),
-                                                ],
-                                                startPoint: .topLeading,
-                                                endPoint: .bottomTrailing
-                                            ),
-                                            lineWidth: 1
-                                        )
+                                        .stroke(Theme.silveryGradient5, lineWidth: 1)
                                 }
                             )
                             .shadow(color: orangeGlow, radius: 4)

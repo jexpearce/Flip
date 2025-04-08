@@ -25,24 +25,10 @@ struct RemoveFriendAlert: View {
             VStack(spacing: 20) {
                 // Icon
                 ZStack {
-                    Circle()
-                        .fill(
-                            LinearGradient(
-                                colors: [Theme.mutedRed, Theme.darkerRed],
-                                startPoint: .top,
-                                endPoint: .bottom
-                            )
-                        )
-                        .frame(width: 70, height: 70).opacity(0.2)
+                    Circle().fill(Theme.redGradient).frame(width: 70, height: 70).opacity(0.2)
 
                     Image(systemName: "person.fill.badge.minus").font(.system(size: 36))
-                        .foregroundStyle(
-                            LinearGradient(
-                                colors: [Theme.mutedRed, Theme.darkerRed],
-                                startPoint: .top,
-                                endPoint: .bottom
-                            )
-                        )
+                        .foregroundStyle(Theme.redGradient)
                         .shadow(color: Color.red.opacity(0.5), radius: 8)
                 }
                 .padding(.top, 20)
@@ -100,14 +86,7 @@ struct RemoveFriendAlert: View {
                             .foregroundColor(.white).frame(height: 44).frame(maxWidth: .infinity)
                             .background(
                                 ZStack {
-                                    RoundedRectangle(cornerRadius: 22)
-                                        .fill(
-                                            LinearGradient(
-                                                colors: [Theme.mutedRed, Theme.darkerRed],
-                                                startPoint: .top,
-                                                endPoint: .bottom
-                                            )
-                                        )
+                                    RoundedRectangle(cornerRadius: 22).fill(Theme.redGradient)
                                         .opacity(0.8)
 
                                     RoundedRectangle(cornerRadius: 22)
@@ -139,15 +118,7 @@ struct RemoveFriendAlert: View {
 
                     RoundedRectangle(cornerRadius: 20).fill(Color.black.opacity(0.3))
 
-                    RoundedRectangle(cornerRadius: 20)
-                        .stroke(
-                            LinearGradient(
-                                colors: [Color.white.opacity(0.5), Color.white.opacity(0.1)],
-                                startPoint: .topLeading,
-                                endPoint: .bottomTrailing
-                            ),
-                            lineWidth: 1
-                        )
+                    RoundedRectangle(cornerRadius: 20).stroke(Theme.silveryGradient2, lineWidth: 1)
                 }
             )
             .shadow(color: Color.black.opacity(0.5), radius: 20)

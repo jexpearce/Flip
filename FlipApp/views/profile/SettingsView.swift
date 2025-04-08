@@ -136,12 +136,7 @@ struct SettingsView: View {
         NavigationView {
             ZStack {
                 // Background gradient
-                LinearGradient(
-                    colors: [Theme.deepMidnightPurple, Theme.mediumMidnightPurple],
-                    startPoint: .top,
-                    endPoint: .bottom
-                )
-                .edgesIgnoringSafeArea(.all)
+                Theme.darkPurpleGradient.edgesIgnoringSafeArea(.all)
 
                 // Decorative background elements
                 Circle().fill(cyanBlueAccent.opacity(0.1)).frame(width: 300).offset(x: 150, y: -200)
@@ -620,15 +615,7 @@ struct SettingsSection<Content: View>: View {
 
                 RoundedRectangle(cornerRadius: 16).fill(Color.white.opacity(0.05))
 
-                RoundedRectangle(cornerRadius: 16)
-                    .stroke(
-                        LinearGradient(
-                            colors: [Color.white.opacity(0.5), Color.white.opacity(0.1)],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        ),
-                        lineWidth: 1
-                    )
+                RoundedRectangle(cornerRadius: 16).stroke(Theme.silveryGradient2, lineWidth: 1)
             }
         )
         .shadow(color: Color.black.opacity(0.2), radius: 8)
@@ -641,12 +628,7 @@ struct HelpSupportView: View {
     var body: some View {
         ZStack {
             // Background gradient
-            LinearGradient(
-                colors: [Theme.deepMidnightPurple, Theme.mediumMidnightPurple],
-                startPoint: .top,
-                endPoint: .bottom
-            )
-            .edgesIgnoringSafeArea(.all)
+            Theme.darkPurpleGradient.edgesIgnoringSafeArea(.all)
 
             VStack(spacing: 30) {
                 // Header

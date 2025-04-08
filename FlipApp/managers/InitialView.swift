@@ -41,12 +41,7 @@ struct InitialView: View {
     var body: some View {
         ZStack {
             // Background gradient
-            LinearGradient(
-                colors: [Theme.deepMidnightPurple, Theme.mediumMidnightPurple],
-                startPoint: .top,
-                endPoint: .bottom
-            )
-            .edgesIgnoringSafeArea(.all)
+            Theme.darkPurpleGradient.edgesIgnoringSafeArea(.all)
 
             // Main content
             VStack(spacing: 30) {
@@ -89,16 +84,7 @@ struct InitialView: View {
                     RoundedRectangle(cornerRadius: 20).fill(Color.white.opacity(0.05))
                         .overlay(
                             RoundedRectangle(cornerRadius: 20)
-                                .stroke(
-                                    LinearGradient(
-                                        colors: [
-                                            Color.white.opacity(0.5), Color.white.opacity(0.1),
-                                        ],
-                                        startPoint: .topLeading,
-                                        endPoint: .bottomTrailing
-                                    ),
-                                    lineWidth: 1
-                                )
+                                .stroke(Theme.silveryGradient2, lineWidth: 1)
                         )
                 )
                 .padding(.horizontal)
@@ -147,16 +133,7 @@ struct InitialView: View {
                                 RoundedRectangle(cornerRadius: 16).fill(Color.white.opacity(0.1))
 
                                 RoundedRectangle(cornerRadius: 16)
-                                    .stroke(
-                                        LinearGradient(
-                                            colors: [
-                                                Color.white.opacity(0.6), Color.white.opacity(0.2),
-                                            ],
-                                            startPoint: .topLeading,
-                                            endPoint: .bottomTrailing
-                                        ),
-                                        lineWidth: 1
-                                    )
+                                    .stroke(Theme.silveryGradient, lineWidth: 1)
                             }
                         )
                         .shadow(color: Theme.softViolet.opacity(0.4), radius: 8)
@@ -415,15 +392,7 @@ struct EnhancedLocationPermissionAlert: View {
                     Circle().fill(Theme.lightTealBlue.opacity(0.2)).frame(width: 90, height: 90)
                         .scaleEffect(animateContent ? 1.3 : 0.8).opacity(animateContent ? 0.0 : 0.5)
 
-                    Circle()
-                        .fill(
-                            LinearGradient(
-                                colors: [Theme.lightTealBlue, Theme.darkTealBlue],
-                                startPoint: .top,
-                                endPoint: .bottom
-                            )
-                        )
-                        .frame(width: 70, height: 70)
+                    Circle().fill(Theme.tealyGradient).frame(width: 70, height: 70)
 
                     Image(systemName: "location.fill").font(.system(size: 32))
                         .foregroundColor(.white).shadow(color: Color.white.opacity(0.5), radius: 4)
@@ -541,14 +510,7 @@ struct EnhancedLocationPermissionAlert: View {
                     RoundedRectangle(cornerRadius: 25).fill(Color.white.opacity(0.05))
 
                     RoundedRectangle(cornerRadius: 25)
-                        .stroke(
-                            LinearGradient(
-                                colors: [Color.white.opacity(0.6), Color.white.opacity(0.1)],
-                                startPoint: .topLeading,
-                                endPoint: .bottomTrailing
-                            ),
-                            lineWidth: 1.5
-                        )
+                        .stroke(Theme.silveryGradient3, lineWidth: 1.5)
                 }
             )
             .frame(maxWidth: 350).shadow(color: Color.black.opacity(0.3), radius: 20)

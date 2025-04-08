@@ -16,40 +16,19 @@ struct FailedLockView: View {
         VStack(spacing: 15) {
             // Failed Icon with gradient
             ZStack {
-                Circle()
-                    .fill(
-                        LinearGradient(
-                            colors: [Theme.mutedRed, Theme.darkerRed],
-                            startPoint: .top,
-                            endPoint: .bottom
-                        )
-                    )
-                    .frame(width: 60, height: 60).opacity(0.2)
+                Circle().fill(Theme.redGradient).frame(width: 60, height: 60).opacity(0.2)
 
                 Circle().fill(Color.white.opacity(0.1)).frame(width: 65, height: 65)
 
                 Image(systemName: "xmark.circle.fill").font(.system(size: 40, weight: .bold))
-                    .foregroundStyle(
-                        LinearGradient(
-                            colors: [Theme.mutedRed, Theme.darkerRed],
-                            startPoint: .top,
-                            endPoint: .bottom
-                        )
-                    )
+                    .foregroundStyle(Theme.redGradient)
                     .shadow(color: Color.red.opacity(0.5), radius: 8)
             }
             .scaleEffect(scale).opacity(opacity)
 
             Text("SESSION FAILED").font(.system(size: 24, weight: .black)).tracking(4)
-                .foregroundStyle(
-                    LinearGradient(
-                        colors: [Theme.mutedRed, Theme.darkerRed],
-                        startPoint: .top,
-                        endPoint: .bottom
-                    )
-                )
-                .shadow(color: Color.red.opacity(0.5), radius: 8).scaleEffect(scale)
-                .opacity(opacity)
+                .foregroundStyle(Theme.redGradient).shadow(color: Color.red.opacity(0.5), radius: 8)
+                .scaleEffect(scale).opacity(opacity)
 
             Text("Phone was flipped during session").font(.system(size: 16, weight: .medium))
                 .foregroundColor(.white.opacity(0.9)).multilineTextAlignment(.center)

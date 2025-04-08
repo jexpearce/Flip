@@ -6,12 +6,7 @@ struct PrivacyPolicyView: View {
     var body: some View {
         ZStack {
             // Background gradient
-            LinearGradient(
-                colors: [Theme.deepMidnightPurple, Theme.mediumMidnightPurple],
-                startPoint: .top,
-                endPoint: .bottom
-            )
-            .edgesIgnoringSafeArea(.all)
+            Theme.darkPurpleGradient.edgesIgnoringSafeArea(.all)
 
             VStack {
                 // Header with dismiss button

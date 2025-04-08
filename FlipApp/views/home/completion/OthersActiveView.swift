@@ -52,15 +52,7 @@ struct OthersActiveView: View {
                         )
                         .frame(width: 110, height: 110)
 
-                    Circle()
-                        .stroke(
-                            LinearGradient(
-                                colors: [Color.white.opacity(0.6), Color.white.opacity(0.1)],
-                                startPoint: .topLeading,
-                                endPoint: .bottomTrailing
-                            ),
-                            lineWidth: 1
-                        )
+                    Circle().stroke(Theme.silveryGradient3, lineWidth: 1)
                         .frame(width: 110, height: 110)
 
                     Image(
@@ -173,14 +165,7 @@ struct OthersActiveView: View {
                         RoundedRectangle(cornerRadius: 20).fill(Color.white.opacity(0.05))
 
                         RoundedRectangle(cornerRadius: 20)
-                            .stroke(
-                                LinearGradient(
-                                    colors: [Color.white.opacity(0.5), Color.white.opacity(0.1)],
-                                    startPoint: .topLeading,
-                                    endPoint: .bottomTrailing
-                                ),
-                                lineWidth: 1
-                            )
+                            .stroke(Theme.silveryGradient2, lineWidth: 1)
                     }
                 )
                 .shadow(color: Color.black.opacity(0.2), radius: 10).offset(y: showStats ? 0 : 50)
@@ -231,28 +216,12 @@ struct OthersActiveView: View {
                     .frame(height: 56).frame(maxWidth: .infinity)
                     .background(
                         ZStack {
-                            RoundedRectangle(cornerRadius: 16)
-                                .fill(
-                                    LinearGradient(
-                                        colors: [Theme.vibrantPurple, Theme.deepPurple],
-                                        startPoint: .topLeading,
-                                        endPoint: .bottomTrailing
-                                    )
-                                )
+                            RoundedRectangle(cornerRadius: 16).fill(Theme.purplyGradient)
 
                             RoundedRectangle(cornerRadius: 16).fill(Color.white.opacity(0.1))
 
                             RoundedRectangle(cornerRadius: 16)
-                                .stroke(
-                                    LinearGradient(
-                                        colors: [
-                                            Color.white.opacity(0.6), Color.white.opacity(0.2),
-                                        ],
-                                        startPoint: .topLeading,
-                                        endPoint: .bottomTrailing
-                                    ),
-                                    lineWidth: 1
-                                )
+                                .stroke(Theme.silveryGradient, lineWidth: 1)
                         }
                     )
                     .shadow(color: Theme.vibrantPurple.opacity(0.5), radius: 8)

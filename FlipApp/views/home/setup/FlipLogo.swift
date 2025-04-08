@@ -86,15 +86,7 @@ struct CurrentBuildingIndicator: View {
 
                 RoundedRectangle(cornerRadius: 16).fill(Color.white.opacity(0.05))
 
-                RoundedRectangle(cornerRadius: 16)
-                    .stroke(
-                        LinearGradient(
-                            colors: [Color.white.opacity(0.4), Color.white.opacity(0.1)],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        ),
-                        lineWidth: 1
-                    )
+                RoundedRectangle(cornerRadius: 16).stroke(Theme.silveryGradient4, lineWidth: 1)
             }
         )
         .shadow(color: Color.black.opacity(0.15), radius: 4)
@@ -153,14 +145,7 @@ struct BeginButton: View {
 
                         // Border
                         RoundedRectangle(cornerRadius: 35)
-                            .stroke(
-                                LinearGradient(
-                                    colors: [Color.white.opacity(0.6), Color.white.opacity(0.2)],
-                                    startPoint: .topLeading,
-                                    endPoint: .bottomTrailing
-                                ),
-                                lineWidth: 1.5
-                            )
+                            .stroke(Theme.silveryGradient, lineWidth: 1.5)
                     }
                 )
                 .shadow(

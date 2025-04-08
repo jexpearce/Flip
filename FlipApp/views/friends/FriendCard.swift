@@ -320,11 +320,7 @@ struct EnhancedFriendCard: View {
         }
         else {
             // Default border regardless of streak (since streak is shown on avatar now)
-            return LinearGradient(
-                colors: [Color.white.opacity(0.5), Color.white.opacity(0.1)],
-                startPoint: .topLeading,
-                endPoint: .bottomTrailing
-            )
+            return Theme.silveryGradient2
         }
     }
 

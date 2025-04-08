@@ -385,12 +385,7 @@ struct FeedSessionCard: View {
                 colors: [Theme.mutedGreen, Theme.darkerGreen],
                 startPoint: .top,
                 endPoint: .bottom
-            )
-            : LinearGradient(
-                colors: [Theme.mutedRed, Theme.darkerRed],
-                startPoint: .top,
-                endPoint: .bottom
-            )
+            ) : Theme.redGradient
     }
 
     // Status glow color
@@ -512,15 +507,7 @@ struct GroupParticipantBadge: View {
                     .fill(Color.white.opacity(0.1)).rotationEffect(.degrees(180)).padding(1)
 
                 // Subtle border
-                RoundedRectangle(cornerRadius: 12)
-                    .stroke(
-                        LinearGradient(
-                            colors: [Color.white.opacity(0.6), Color.white.opacity(0.1)],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        ),
-                        lineWidth: 1
-                    )
+                RoundedRectangle(cornerRadius: 12).stroke(Theme.silveryGradient3, lineWidth: 1)
             }
         )
         .shadow(color: Color.black.opacity(0.15), radius: 4)
@@ -800,20 +787,7 @@ struct CompactLikesListView: View {
                                         size: 40,
                                         username: user.username
                                     )
-                                    .overlay(
-                                        Circle()
-                                            .stroke(
-                                                LinearGradient(
-                                                    colors: [
-                                                        Color.white.opacity(0.6),
-                                                        Color.white.opacity(0.1),
-                                                    ],
-                                                    startPoint: .topLeading,
-                                                    endPoint: .bottomTrailing
-                                                ),
-                                                lineWidth: 1
-                                            )
-                                    )
+                                    .overlay(Circle().stroke(Theme.silveryGradient3, lineWidth: 1))
 
                                     // Username with subtle shadow
                                     Text(user.username).font(.system(size: 15, weight: .medium))
@@ -864,15 +838,7 @@ struct CompactLikesListView: View {
                 Color.white.opacity(0.05)
 
                 // Border
-                RoundedRectangle(cornerRadius: 16)
-                    .stroke(
-                        LinearGradient(
-                            colors: [Color.white.opacity(0.6), Color.white.opacity(0.1)],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        ),
-                        lineWidth: 1
-                    )
+                RoundedRectangle(cornerRadius: 16).stroke(Theme.silveryGradient3, lineWidth: 1)
             }
         )
         .cornerRadius(16).shadow(color: Color.black.opacity(0.3), radius: 20).frame(width: 300)

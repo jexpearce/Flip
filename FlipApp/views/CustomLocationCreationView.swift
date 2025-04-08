@@ -61,16 +61,7 @@ struct CustomLocationCreationView: View {
                                 RoundedRectangle(cornerRadius: 12).fill(Color.white.opacity(0.1))
 
                                 RoundedRectangle(cornerRadius: 12)
-                                    .stroke(
-                                        LinearGradient(
-                                            colors: [
-                                                Color.white.opacity(0.5), Color.white.opacity(0.2),
-                                            ],
-                                            startPoint: .topLeading,
-                                            endPoint: .bottomTrailing
-                                        ),
-                                        lineWidth: 1
-                                    )
+                                    .stroke(Theme.silveryGradient5, lineWidth: 1)
                             }
                         )
                         .foregroundColor(.white)
@@ -158,16 +149,7 @@ struct CustomLocationCreationView: View {
 
                             // Edge highlight
                             RoundedRectangle(cornerRadius: 12)
-                                .stroke(
-                                    LinearGradient(
-                                        colors: [
-                                            Color.white.opacity(0.6), Color.white.opacity(0.2),
-                                        ],
-                                        startPoint: .topLeading,
-                                        endPoint: .bottomTrailing
-                                    ),
-                                    lineWidth: 1
-                                )
+                                .stroke(Theme.silveryGradient, lineWidth: 1)
                         }
                     )
                     .shadow(

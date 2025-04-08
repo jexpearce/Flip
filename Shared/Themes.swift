@@ -345,6 +345,67 @@ struct Theme {
     // Shadows
     static let purpleShadow = purple.opacity(0.5)  // Using existing purple color
     static let yellowShadow = yellow.opacity(0.5)  // Using existing yellow color
+
+    static let yellowyGradient = LinearGradient(
+        colors: [Theme.yellow, Theme.yellowyOrange],
+        startPoint: .top,
+        endPoint: .bottom
+    )
+    static let purplyGradient = LinearGradient(
+        colors: [Theme.vibrantPurple, Theme.deepPurple],
+        startPoint: .topLeading,
+        endPoint: .bottomTrailing
+    )
+    static let silveryGradient = LinearGradient(
+        colors: [Color.white.opacity(0.6), Color.white.opacity(0.2)],
+        startPoint: .topLeading,
+        endPoint: .bottomTrailing
+    )
+    static let silveryGradient2 = LinearGradient(
+        colors: [Color.white.opacity(0.5), Color.white.opacity(0.1)],
+        startPoint: .topLeading,
+        endPoint: .bottomTrailing
+    )
+    static let silveryGradient3 = LinearGradient(
+        colors: [Color.white.opacity(0.6), Color.white.opacity(0.1)],
+        startPoint: .topLeading,
+        endPoint: .bottomTrailing
+    )
+    static let silveryGradient4 = LinearGradient(
+        colors: [Color.white.opacity(0.4), Color.white.opacity(0.1)],
+        startPoint: .topLeading,
+        endPoint: .bottomTrailing
+    )
+    static let silveryGradient5 = LinearGradient(
+        colors: [Color.white.opacity(0.5), Color.white.opacity(0.2)],
+        startPoint: .topLeading,
+        endPoint: .bottomTrailing
+    )
+    static let redGradient = LinearGradient(
+        colors: [Theme.mutedRed, Theme.darkerRed],
+        startPoint: .top,
+        endPoint: .bottom
+    )
+    static let redGradient2 = LinearGradient(
+        colors: [Theme.mutedRed, Theme.darkRed],
+        startPoint: .top,
+        endPoint: .bottom
+    )
+    static let pinkBlueGradient = LinearGradient(
+        colors: [Theme.mutedPink.opacity(0.6), Theme.deepBlue.opacity(0.4)],
+        startPoint: .topLeading,
+        endPoint: .bottomTrailing
+    )
+    static let darkPurpleGradient = LinearGradient(
+        colors: [Theme.deepMidnightPurple, Theme.mediumMidnightPurple],
+        startPoint: .top,
+        endPoint: .bottom
+    )
+    static let tealyGradient = LinearGradient(
+        colors: [Theme.lightTealBlue, Theme.darkTealBlue],
+        startPoint: .top,
+        endPoint: .bottom
+    )
 }
 
 // Text Style Extensions

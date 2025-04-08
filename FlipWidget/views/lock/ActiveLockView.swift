@@ -135,11 +135,7 @@ struct ActiveLockView: View {
                     .padding(.vertical, 6)  // Reduced from 8 to 6
                     .background(
                         ZStack {
-                            LinearGradient(
-                                colors: [Theme.mutedRed, Theme.darkerRed],
-                                startPoint: .top,
-                                endPoint: .bottom
-                            )
+                            Theme.redGradient
                             glassEffect
                         }
                     )

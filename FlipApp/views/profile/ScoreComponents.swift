@@ -81,15 +81,7 @@ struct DisciplineRankCard: View {
 
                 RoundedRectangle(cornerRadius: 15).fill(Color.white.opacity(0.05))
 
-                RoundedRectangle(cornerRadius: 15)
-                    .stroke(
-                        LinearGradient(
-                            colors: [Color.white.opacity(0.5), Color.white.opacity(0.1)],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        ),
-                        lineWidth: 1
-                    )
+                RoundedRectangle(cornerRadius: 15).stroke(Theme.silveryGradient2, lineWidth: 1)
             }
         )
         .shadow(color: Color.black.opacity(0.2), radius: 4, x: 0, y: 2)
