@@ -1,4 +1,5 @@
 import AuthenticationServices
+import CryptoKit
 import Firebase
 import FirebaseAuth
 import FirebaseFirestore
@@ -392,13 +393,45 @@ extension AuthManager {
 extension AuthManager: ASAuthorizationControllerDelegate,
     ASAuthorizationControllerPresentationContextProviding
 {
+    private func randomNonceString(length: Int = 32) -> String {
+        precondition(length > 0)
+        var randomBytes = [UInt8](repeating: 0, count: length)
+        let errorCode = SecRandomCopyBytes(kSecRandomDefault, randomBytes.count, &randomBytes)
+        if errorCode != errSecSuccess {
+            fatalError(
+                "Unable to generate nonce. SecRandomCopyBytes failed with OSStatus \(errorCode)"
+            )
+        }
+
+        let charset: [Character] = Array(
+            "0123456789ABCDEFGHIJKLMNOPQRSTUVXYZabcdefghijklmnopqrstuvwxyz-._"
+        )
+
+        let nonce = randomBytes.map { byte in
+            // Pick a random character from the set, wrapping around if needed.
+            charset[Int(byte) % charset.count]
+        }
+
+        return String(nonce)
+    }
+    @available(iOS 13, *) private func sha256(_ input: String) -> String {
+        let inputData = Data(input.utf8)
+        let hashedData = SHA256.hash(data: inputData)
+        let hashString = hashedData.compactMap { String(format: "%02x", $0) }.joined()
+
+        return hashString
+    }
+
     // Method to initiate Apple Sign In flow with Firebase
     func authenticateWithApple(completion: @escaping (Bool) -> Void) {
+        let nonce = randomNonceString()
         let appleIDProvider = ASAuthorizationAppleIDProvider()
         let request = appleIDProvider.createRequest()
         request.requestedScopes = [.fullName, .email]
-        // Store the completion handler for use after authentication
+        request.nonce = sha256(nonce)
+        // Store the completion handler and nonce for use after authentication
         self.appleSignInCompletion = completion
+        UserDefaults.standard.set(nonce, forKey: "appleSignInNonce")
         let authorizationController = ASAuthorizationController(authorizationRequests: [request])
         authorizationController.delegate = self
         authorizationController.presentationContextProvider = self
@@ -425,25 +458,28 @@ extension AuthManager: ASAuthorizationControllerDelegate,
         let fullName = appleIDCredential.fullName
         // Get the identity token data and convert to string
         guard let identityTokenData = appleIDCredential.identityToken,
-            let identityToken = String(data: identityTokenData, encoding: .utf8)
+            let identityToken = String(data: identityTokenData, encoding: .utf8),
+            let nonce = UserDefaults.standard.string(forKey: "appleSignInNonce")
         else {
-            print("Unable to fetch identity token")
+            print("Unable to fetch identity token or nonce")
             if let completion = self.appleSignInCompletion {
                 completion(false)
                 self.appleSignInCompletion = nil
             }
             return
         }
-        // Create Firebase credential with Apple ID token
+        // Create Firebase credential with Apple ID token and nonce
         let credential = OAuthProvider.credential(
             withProviderID: "apple.com",
             idToken: identityToken,
-            rawNonce: nil
+            rawNonce: nonce
         )
         // Sign in to Firebase with the Apple credential
         Auth.auth()
             .signIn(with: credential) { [weak self] (authResult, error) in
                 guard let self = self else { return }
+                // Clear the stored nonce
+                UserDefaults.standard.removeObject(forKey: "appleSignInNonce")
                 if let error = error {
                     print("Firebase sign in with Apple failed: \(error.localizedDescription)")
                     DispatchQueue.main.async {
