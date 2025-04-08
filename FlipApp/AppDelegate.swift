@@ -1,3 +1,4 @@
+import AuthenticationServices
 import FirebaseAuth
 import FirebaseCore
 import FirebaseFirestore
@@ -6,6 +7,7 @@ import GoogleSignIn
 import UIKit
 import UserNotifications
 
+@UIApplicationMain
 class FlipAppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCenterDelegate,
     MessagingDelegate
 {

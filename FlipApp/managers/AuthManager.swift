@@ -1,3 +1,4 @@
+import AuthenticationServices
 import Firebase
 import FirebaseAuth
 import FirebaseFirestore
@@ -380,6 +381,72 @@ extension AuthManager {
             .setData(userData) { error in
                 if let error = error {
                     print("Error creating user document: \(error.localizedDescription)")
+                }
+                completion()
+            }
+    }
+
+    func signInWithApple(completion: @escaping (Bool) -> Void) {
+        let provider = OAuthProvider(providerID: "apple.com")
+        provider.getCredentialWith(nil) { credential, error in
+            if let error = error {
+                self.alertMessage = "Apple Sign-In failed: \(error.localizedDescription)"
+                self.showAlert = true
+                completion(false)
+                return
+            }
+
+            guard let credential = credential else {
+                self.alertMessage = "Missing authentication data"
+                self.showAlert = true
+                completion(false)
+                return
+            }
+
+            Auth.auth()
+                .signIn(with: credential) { [weak self] authResult, error in
+                    guard let self = self else { return }
+
+                    if let error = error {
+                        self.alertMessage = self.handleAuthError(error)
+                        self.showAlert = true
+                        completion(false)
+                        return
+                    }
+
+                    guard let user = authResult?.user else {
+                        self.alertMessage = "Authentication failed"
+                        self.showAlert = true
+                        completion(false)
+                        return
+                    }
+
+                    // Handle new users
+                    if authResult?.additionalUserInfo?.isNewUser == true {
+                        self.createAppleUserDocument(user: user) {
+                            self.loadUserData(userId: user.uid) { completion(true) }
+                        }
+                    }
+                    else {
+                        self.loadUserData(userId: user.uid) { completion(true) }
+                    }
+                }
+        }
+    }
+
+    private func createAppleUserDocument(user: User, completion: @escaping () -> Void) {
+        let db = Firestore.firestore()
+        let userData: [String: Any] = [
+            "id": user.uid, "username": user.displayName ?? "User\(Int.random(in: 1000...9999))",
+            "email": user.email ?? "", "totalFocusTime": 0, "totalSessions": 0, "longestSession": 0,
+            "friends": [], "friendRequests": [], "sentRequests": [],
+            "createdAt": FieldValue.serverTimestamp(),
+        ]
+
+        db.collection("users").document(user.uid)
+            .setData(userData) { error in
+                if let error = error {
+                    print("Error creating Apple user document: \(error.localizedDescription)")
                 }
                 completion()
             }

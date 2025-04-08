@@ -242,6 +242,18 @@ struct AuthView: View {
                                 .resizable().aspectRatio(contentMode: .fit).frame(height: 50)  // Adjust as needed
                         }
                         .padding(.horizontal, 30)
+
+                        // Apple Sign-In Button
+                        Button(action: {
+                            authManager.signInWithApple { success in
+                                if !success { isLoading = false }
+                            }
+                        }) {
+                            Image(systemName: "applelogo").resizable().frame(width: 24, height: 24)
+                                .padding().background(Color.black).foregroundColor(.white)
+                                .clipShape(Circle())
+                        }
+                        .padding(.top, 10)
                     }
                     .padding(.horizontal).frame(minHeight: geometry.size.height)
                 }
