@@ -245,11 +245,22 @@ struct AuthView: View {
 
                         // Apple Sign-In Button
                         Button(action: { authManager.authenticateWithApple() }) {
-                            Image(systemName: "applelogo").resizable().frame(width: 24, height: 24)
-                                .padding().background(Color.black).foregroundColor(.white)
-                                .clipShape(Circle())
+                            HStack {
+                                Image(systemName: "applelogo").resizable()
+                                    .aspectRatio(contentMode: .fit).frame(height: 20)
+                                Text("Sign in with Apple")
+                                    .font(.system(size: 17, weight: .semibold))
+                            }
+                            .foregroundColor(.white).frame(maxWidth: .infinity).frame(height: 50)
+                            .background(
+                                ZStack {
+                                    RoundedRectangle(cornerRadius: 8).fill(Color.black)
+                                    RoundedRectangle(cornerRadius: 8)
+                                        .stroke(Color.white.opacity(0.5), lineWidth: 1)
+                                }
+                            )
                         }
-                        .padding(.top, 10)
+                        .padding(.horizontal, 30).padding(.top, 10)
                     }
                     .padding(.horizontal).frame(minHeight: geometry.size.height)
                 }
