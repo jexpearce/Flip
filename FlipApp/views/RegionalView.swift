@@ -558,20 +558,29 @@ class RegionalViewModel: NSObject, ObservableObject, CLLocationManagerDelegate {
     }
 
     @MainActor func loadNearbyUsers() {
-        // If we have a selected building, load building leaderboard
-        if let building = selectedBuilding {
-            leaderboardViewModel.loadBuildingLeaderboard(building: building)
-            return
-        }
+        // Ensure the user has completed at least one session before loading the leaderboard
+        guard let userId = Auth.auth().currentUser?.uid else { return }
 
-        // Otherwise load regional leaderboard based on location
-        let location = LocationHandler.shared.lastLocation
-        if location.horizontalAccuracy > 0 {
-            leaderboardViewModel.loadRegionalLeaderboard(near: location)
-        }
-        else if let managerLocation = currentLocation {
-            leaderboardViewModel.loadRegionalLeaderboard(near: managerLocation)
-        }
+        FirebaseManager.shared.db.collection("sessions").whereField("userId", isEqualTo: userId)
+            .getDocuments { [weak self] snapshot, error in
+                guard let self = self else { return }
+
+                if let documents = snapshot?.documents, !documents.isEmpty {
+                    // User has completed at least one session, proceed to load leaderboard
+                    if let building = self.selectedBuilding {
+                        self.leaderboardViewModel.loadBuildingLeaderboard(building: building)
+                    } else {
+                        let location = LocationHandler.shared.lastLocation
+                        if location.horizontalAccuracy > 0 {
+                            self.leaderboardViewModel.loadRegionalLeaderboard(near: location)
+                        } else if let managerLocation = self.currentLocation {
+                            self.leaderboardViewModel.loadRegionalLeaderboard(near: managerLocation)
+                        }
+                    }
+                } else {
+                    print("User has no completed sessions. Skipping leaderboard loading.")
+                }
+            }
     }
 
     @MainActor func startBuildingIdentification() {
