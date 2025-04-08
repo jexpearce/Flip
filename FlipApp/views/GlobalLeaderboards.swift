@@ -1640,8 +1640,8 @@ struct RegionalAllTimeLeaderboard: View {
                                         Circle()
                                             .fill(
                                                 index == 0
-                                                    ? goldColor
-                                                    : (index == 1 ? silverColor : bronzeColor)
+                                                ? Theme.goldColor
+                                                : (index == 1 ? Theme.silverColor : Theme.bronzeColor)
                                             )
                                             .frame(width: 26, height: 26)
 
