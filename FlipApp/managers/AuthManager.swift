@@ -13,9 +13,10 @@ class AuthManager: NSObject, ObservableObject {
     @Published var alertMessage = ""
     @Published var currentUser: User?
     @Published var signUpSuccess = false  // Add this property
+    private var appleSignInCompletion: ((Bool) -> Void)?
 
-   override init() {
-       super.init()
+    override init() {
+        super.init()
         updateAuthState()
 
         // Listen for auth state changes
@@ -386,86 +387,24 @@ extension AuthManager {
                 completion()
             }
     }
-
-    func signInWithApple(completion: @escaping (Bool) -> Void) {
-        let provider = OAuthProvider(providerID: "apple.com")
-        provider.getCredentialWith(nil) { credential, error in
-            if let error = error {
-                self.alertMessage = "Apple Sign-In failed: \(error.localizedDescription)"
-                self.showAlert = true
-                completion(false)
-                return
-            }
-
-            guard let credential = credential else {
-                self.alertMessage = "Missing authentication data"
-                self.showAlert = true
-                completion(false)
-                return
-            }
-
-            Auth.auth()
-                .signIn(with: credential) { [weak self] authResult, error in
-                    guard let self = self else { return }
-
-                    if let error = error {
-                        self.alertMessage = self.handleAuthError(error)
-                        self.showAlert = true
-                        completion(false)
-                        return
-                    }
-
-                    guard let user = authResult?.user else {
-                        self.alertMessage = "Authentication failed"
-                        self.showAlert = true
-                        completion(false)
-                        return
-                    }
-
-                    // Handle new users
-                    if authResult?.additionalUserInfo?.isNewUser == true {
-                        self.createAppleUserDocument(user: user) {
-                            self.loadUserData(userId: user.uid) { completion(true) }
-                        }
-                    }
-                    else {
-                        self.loadUserData(userId: user.uid) { completion(true) }
-                    }
-                }
-        }
-    }
-
-    private func createAppleUserDocument(user: User, completion: @escaping () -> Void) {
-        let db = Firestore.firestore()
-        let userData: [String: Any] = [
-            "id": user.uid, "username": user.displayName ?? "User\(Int.random(in: 1000...9999))",
-            "email": user.email ?? "", "totalFocusTime": 0, "totalSessions": 0, "longestSession": 0,
-            "friends": [], "friendRequests": [], "sentRequests": [],
-            "createdAt": FieldValue.serverTimestamp(),
-        ]
-
-        db.collection("users").document(user.uid)
-            .setData(userData) { error in
-                if let error = error {
-                    print("Error creating Apple user document: \(error.localizedDescription)")
-                }
-                completion()
-            }
-    }
 }
 
-extension AuthManager: ASAuthorizationControllerDelegate, ASAuthorizationControllerPresentationContextProviding
+extension AuthManager: ASAuthorizationControllerDelegate,
+    ASAuthorizationControllerPresentationContextProviding
 {
-    // Method to initiate Apple Sign In flow (without Firebase)
-    func authenticateWithApple() {
+    // Method to initiate Apple Sign In flow with Firebase
+    func authenticateWithApple(completion: @escaping (Bool) -> Void) {
         let appleIDProvider = ASAuthorizationAppleIDProvider()
         let request = appleIDProvider.createRequest()
         request.requestedScopes = [.fullName, .email]
+        // Store the completion handler for use after authentication
+        self.appleSignInCompletion = completion
         let authorizationController = ASAuthorizationController(authorizationRequests: [request])
         authorizationController.delegate = self
         authorizationController.presentationContextProvider = self
         authorizationController.performRequests()
     }
+
     // ASAuthorizationControllerDelegate methods
     func authorizationController(
         controller: ASAuthorizationController,
@@ -474,19 +413,107 @@ extension AuthManager: ASAuthorizationControllerDelegate, ASAuthorizationControl
         guard let appleIDCredential = authorization.credential as? ASAuthorizationAppleIDCredential
         else {
             print("Unable to retrieve Apple ID credential")
+            if let completion = self.appleSignInCompletion {
+                completion(false)
+                self.appleSignInCompletion = nil
+            }
             return
         }
-        // User successfully authorized with Apple ID
+        // Get Apple Sign In data
         let userId = appleIDCredential.user
         let email = appleIDCredential.email
         let fullName = appleIDCredential.fullName
-        // Here you would handle the successful authentication
-        // For example, notify a delegate or use a completion handler
-        print("Successfully authenticated with Apple ID: \(userId)")
-        print("Email: \(email ?? "Not provided")")
-        print("Full name: \(fullName?.givenName ?? "") \(fullName?.familyName ?? "")")
-        // We're not connecting to Firebase yet as requested
-        // This is where you'd typically call a completion handler
+        // Get the identity token data and convert to string
+        guard let identityTokenData = appleIDCredential.identityToken,
+            let identityToken = String(data: identityTokenData, encoding: .utf8)
+        else {
+            print("Unable to fetch identity token")
+            if let completion = self.appleSignInCompletion {
+                completion(false)
+                self.appleSignInCompletion = nil
+            }
+            return
+        }
+        // Create Firebase credential with Apple ID token
+        let credential = OAuthProvider.credential(
+            withProviderID: "apple.com",
+            idToken: identityToken,
+            rawNonce: nil
+        )
+        // Sign in to Firebase with the Apple credential
+        Auth.auth()
+            .signIn(with: credential) { [weak self] (authResult, error) in
+                guard let self = self else { return }
+                if let error = error {
+                    print("Firebase sign in with Apple failed: \(error.localizedDescription)")
+                    DispatchQueue.main.async {
+                        self.alertMessage = "Sign in failed: \(error.localizedDescription)"
+                        self.showAlert = true
+                        if let completion = self.appleSignInCompletion {
+                            completion(false)
+                            self.appleSignInCompletion = nil
+                        }
+                    }
+                    return
+                }
+                guard let user = authResult?.user else {
+                    DispatchQueue.main.async {
+                        self.alertMessage = "Authentication failed"
+                        self.showAlert = true
+                        if let completion = self.appleSignInCompletion {
+                            completion(false)
+                            self.appleSignInCompletion = nil
+                        }
+                    }
+                    return
+                }
+                // Check if this is a new user
+                if authResult?.additionalUserInfo?.isNewUser == true {
+                    // For new users, create a document in Firestore
+                    var displayName = "User\(Int.random(in: 1000...9999))"
+                    if let firstName = fullName?.givenName, let lastName = fullName?.familyName {
+                        displayName = "\(firstName) \(lastName)"
+                    }
+                    else if let firstName = fullName?.givenName {
+                        displayName = firstName
+                    }
+                    else if let lastName = fullName?.familyName {
+                        displayName = lastName
+                    }
+                    // Set display name for the user
+                    let changeRequest = user.createProfileChangeRequest()
+                    changeRequest.displayName = displayName
+                    changeRequest.commitChanges { error in
+                        if let error = error {
+                            print("Error updating display name: \(error.localizedDescription)")
+                        }
+                    }
+                    // Create the user document
+                    self.createAppleUserDocument(
+                        user: user,
+                        displayName: displayName,
+                        email: email ?? user.email ?? ""
+                    ) {
+                        self.loadUserData(userId: user.uid) {
+                            UserSettingsManager.shared.onUserSignIn()
+                            if let completion = self.appleSignInCompletion {
+                                completion(true)
+                                self.appleSignInCompletion = nil
+                            }
+                        }
+                    }
+                }
+                else {
+                    // Existing user, just load their data
+                    self.loadUserData(userId: user.uid) {
+                        UserSettingsManager.shared.onUserSignIn()
+                        if let completion = self.appleSignInCompletion {
+                            completion(true)
+                            self.appleSignInCompletion = nil
+                        }
+                    }
+                }
+            }
     }
     func authorizationController(
         controller: ASAuthorizationController,
@@ -496,6 +523,10 @@ extension AuthManager: ASAuthorizationControllerDelegate, ASAuthorizationControl
         DispatchQueue.main.async {
             self.alertMessage = "Apple Sign In failed: \(error.localizedDescription)"
             self.showAlert = true
+            if let completion = self.appleSignInCompletion {
+                completion(false)
+                self.appleSignInCompletion = nil
+            }
         }
         print("Apple ID authorization failed: \(error.localizedDescription)")
     }
@@ -506,11 +537,28 @@ extension AuthManager: ASAuthorizationControllerDelegate, ASAuthorizationControl
         else { fatalError("No window found") }
         return window
     }
+    // Helper method to create a user document for Apple Sign In users
+    private func createAppleUserDocument(
+        user: User,
+        displayName: String,
+        email: String,
+        completion: @escaping () -> Void
+    ) {
+        let db = Firestore.firestore()
+        let userData: [String: Any] = [
+            "id": user.uid, "username": displayName, "email": email, "totalFocusTime": 0,
+            "totalSessions": 0, "longestSession": 0, "friends": [], "friendRequests": [],
+            "sentRequests": [], "createdAt": FieldValue.serverTimestamp(),
+        ]
+        db.collection("users").document(user.uid)
+            .setData(userData) { error in
+                if let error = error {
+                    print("Error creating user document: \(error.localizedDescription)")
+                }
+                completion()
+            }
+    }
 }
-
-
-
-
 
 extension UIApplication {
     func topViewController() -> UIViewController? {
