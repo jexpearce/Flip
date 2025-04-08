@@ -217,8 +217,7 @@ struct EmptyFeedView: View {
                     .fill(
                         RadialGradient(
                             gradient: Gradient(colors: [
-                                Theme.mutedGreen.opacity(0.5),
-                                Color(red: 20 / 255, green: 83 / 255, blue: 45 / 255).opacity(0.0),
+                                Theme.mutedGreen.opacity(0.5), Theme.oliveGreen.opacity(0.0),
                             ]),
                             center: .center,
                             startRadius: 10,
@@ -531,27 +530,7 @@ struct NavigationFeedSessionCard: View {
             ZStack {
                 RoundedRectangle(cornerRadius: 20)
                     .fill(
-                        session.wasSuccessful
-                            ? LinearGradient(
-                                colors: [
-                                    Color(red: 26 / 255, green: 32 / 255, blue: 58 / 255)
-                                        .opacity(0.6),
-                                    Color(red: 17 / 255, green: 54 / 255, blue: 71 / 255)
-                                        .opacity(0.5),
-                                ],
-                                startPoint: .topLeading,
-                                endPoint: .bottomTrailing
-                            )
-                            : LinearGradient(
-                                colors: [
-                                    Color(red: 45 / 255, green: 21 / 255, blue: 38 / 255)
-                                        .opacity(0.9),
-                                    Color(red: 26 / 255, green: 32 / 255, blue: 58 / 255)
-                                        .opacity(0.8),
-                                ],
-                                startPoint: .topLeading,
-                                endPoint: .bottomTrailing
-                            )
+                        session.wasSuccessful ? Theme.successGradient2 : Theme.nonSuccessGradient2
                     )
 
                 RoundedRectangle(cornerRadius: 15).fill(Color.white.opacity(0.05))

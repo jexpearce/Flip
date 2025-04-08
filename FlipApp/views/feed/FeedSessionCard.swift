@@ -371,26 +371,10 @@ struct FeedSessionCard: View {
     // Enhanced gradient based on session success/failure
     private var cardGradient: LinearGradient {
         if session.wasSuccessful {
-            return LinearGradient(
-                colors: [
-                    Color(red: 25 / 255, green: 52 / 255, blue: 65 / 255).opacity(0.85),
-                    Color(red: 17 / 255, green: 48 / 255, blue: 66 / 255).opacity(0.9),
-                    Color(red: 15 / 255, green: 35 / 255, blue: 55 / 255).opacity(0.95),
-                ],
-                startPoint: .top,
-                endPoint: .bottom
-            )
+            return Theme.successGradient
         }
         else {
-            return LinearGradient(
-                colors: [
-                    Color(red: 55 / 255, green: 30 / 255, blue: 50 / 255).opacity(0.95),
-                    Color(red: 45 / 255, green: 28 / 255, blue: 58 / 255).opacity(0.9),
-                    Color(red: 35 / 255, green: 24 / 255, blue: 55 / 255).opacity(0.85),
-                ],
-                startPoint: .top,
-                endPoint: .bottom
-            )
+            return Theme.nonSuccessGradient
         }
     }
 
@@ -874,14 +858,7 @@ struct CompactLikesListView: View {
         .background(
             ZStack {
                 // Base gradient
-                LinearGradient(
-                    colors: [
-                        Color(red: 17 / 255, green: 24 / 255, blue: 39 / 255),  // Dark blue-green
-                        Color(red: 24 / 255, green: 45 / 255, blue: 60 / 255),  // Midnight teal
-                    ],
-                    startPoint: .top,
-                    endPoint: .bottom
-                )
+                Theme.baseGradient
 
                 // Glass effect
                 Color.white.opacity(0.05)

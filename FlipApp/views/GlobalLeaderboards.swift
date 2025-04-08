@@ -22,8 +22,8 @@ struct GlobalWeeklyLeaderboard: View {
     // Blue theme colors - different from the red of regional and gold of friends
     private let blueGradient = LinearGradient(
         colors: [
-            Color(red: 59 / 255, green: 130 / 255, blue: 246 / 255),  // Blue 500
-            Color(red: 37 / 255, green: 99 / 255, blue: 235 / 255),  // Blue 600
+            Theme.standardBlue,  // Blue 500
+            Theme.blue,  // Blue 600
         ],
         startPoint: .top,
         endPoint: .bottom
@@ -31,8 +31,8 @@ struct GlobalWeeklyLeaderboard: View {
 
     private let blueBackgroundGradient = LinearGradient(
         colors: [
-            Color(red: 30 / 255, green: 58 / 255, blue: 138 / 255).opacity(0.4),  // Blue 900
-            Color(red: 30 / 255, green: 64 / 255, blue: 175 / 255).opacity(0.3),  // Blue 800
+            Theme.darkBlue.opacity(0.4),  // Blue 900
+            Theme.blue800.opacity(0.3),  // Blue 800
         ],
         startPoint: .topLeading,
         endPoint: .bottomTrailing
@@ -61,36 +61,22 @@ struct GlobalWeeklyLeaderboard: View {
                         Image(systemName: "globe").font(.system(size: 20))
                             .foregroundStyle(
                                 LinearGradient(
-                                    colors: [
-                                        Color(red: 59 / 255, green: 130 / 255, blue: 246 / 255),
-                                        Color(red: 37 / 255, green: 99 / 255, blue: 235 / 255),
-                                    ],
+                                    colors: [Theme.standardBlue, Theme.blue],
                                     startPoint: .top,
                                     endPoint: .bottom
                                 )
                             )
-                            .shadow(
-                                color: Color(red: 59 / 255, green: 130 / 255, blue: 246 / 255)
-                                    .opacity(0.5),
-                                radius: 4
-                            )
+                            .shadow(color: Theme.standardBlue.opacity(0.5), radius: 4)
 
                         Text("GLOBAL WEEKLY").font(.system(size: 13, weight: .black)).tracking(2)
                             .foregroundStyle(
                                 LinearGradient(
-                                    colors: [
-                                        Color(red: 59 / 255, green: 130 / 255, blue: 246 / 255),
-                                        Color(red: 37 / 255, green: 99 / 255, blue: 235 / 255),
-                                    ],
+                                    colors: [Theme.standardBlue, Theme.blue],
                                     startPoint: .top,
                                     endPoint: .bottom
                                 )
                             )
-                            .shadow(
-                                color: Color(red: 59 / 255, green: 130 / 255, blue: 246 / 255)
-                                    .opacity(0.5),
-                                radius: 4
-                            )
+                            .shadow(color: Theme.standardBlue.opacity(0.5), radius: 4)
                     }
 
                     Spacer()
@@ -117,11 +103,7 @@ struct GlobalWeeklyLeaderboard: View {
                 RoundedRectangle(cornerRadius: 12)
                     .fill(
                         LinearGradient(
-                            colors: [
-                                Color(red: 59 / 255, green: 130 / 255, blue: 246 / 255)
-                                    .opacity(0.3),
-                                Color(red: 37 / 255, green: 99 / 255, blue: 235 / 255).opacity(0.2),
-                            ],
+                            colors: [Theme.standardBlue.opacity(0.3), Theme.blue.opacity(0.2)],
                             startPoint: .leading,
                             endPoint: .trailing
                         )
@@ -163,23 +145,16 @@ struct GlobalWeeklyLeaderboard: View {
                 // Column headers for clarity
                 HStack {
                     Text("RANK").font(.system(size: 12, weight: .bold)).tracking(1)
-                        .foregroundColor(
-                            Color(red: 59 / 255, green: 130 / 255, blue: 246 / 255).opacity(0.9)
-                        )
+                        .foregroundColor(Theme.standardBlue.opacity(0.9))
                         .frame(width: 50, alignment: .center)
 
                     Text("USER").font(.system(size: 12, weight: .bold)).tracking(1)
-                        .foregroundColor(
-                            Color(red: 59 / 255, green: 130 / 255, blue: 246 / 255).opacity(0.9)
-                        )
-                        .frame(alignment: .leading)
+                        .foregroundColor(Theme.standardBlue.opacity(0.9)).frame(alignment: .leading)
 
                     Spacer()
 
                     Text("MINUTES").font(.system(size: 12, weight: .bold)).tracking(1)
-                        .foregroundColor(
-                            Color(red: 59 / 255, green: 130 / 255, blue: 246 / 255).opacity(0.9)
-                        )
+                        .foregroundColor(Theme.standardBlue.opacity(0.9))
                         .frame(width: 80, alignment: .trailing)
                 }
                 .padding(.horizontal, 16).padding(.top, 4).padding(.bottom, 8)
@@ -286,18 +261,8 @@ struct GlobalWeeklyLeaderboard: View {
                                 // Weekly minutes
                                 VStack(alignment: .trailing, spacing: 2) {
                                     Text("\(entry.minutes)").font(.system(size: 18, weight: .black))
-                                        .foregroundColor(
-                                            Color(red: 59 / 255, green: 130 / 255, blue: 246 / 255)
-                                        )
-                                        .shadow(
-                                            color: Color(
-                                                red: 59 / 255,
-                                                green: 130 / 255,
-                                                blue: 246 / 255
-                                            )
-                                            .opacity(0.3),
-                                            radius: 4
-                                        )
+                                        .foregroundColor(Theme.standardBlue)
+                                        .shadow(color: Theme.standardBlue.opacity(0.3), radius: 4)
 
                                     Text("minutes").font(.system(size: 10, weight: .medium))
                                         .foregroundColor(.white.opacity(0.7))
@@ -311,18 +276,8 @@ struct GlobalWeeklyLeaderboard: View {
                                         LinearGradient(
                                             colors: index < 3
                                                 ? [
-                                                    Color(
-                                                        red: 59 / 255,
-                                                        green: 130 / 255,
-                                                        blue: 246 / 255
-                                                    )
-                                                    .opacity(0.2),
-                                                    Color(
-                                                        red: 59 / 255,
-                                                        green: 130 / 255,
-                                                        blue: 246 / 255
-                                                    )
-                                                    .opacity(0.1),
+                                                    Theme.standardBlue.opacity(0.2),
+                                                    Theme.standardBlue.opacity(0.1),
                                                 ]
                                                 : [
                                                     Color.white.opacity(0.08),
@@ -337,20 +292,15 @@ struct GlobalWeeklyLeaderboard: View {
                                             .stroke(
                                                 // Highlight current user
                                                 Auth.auth().currentUser?.uid == entry.userId
-                                                    ? Color(
-                                                        red: 59 / 255,
-                                                        green: 130 / 255,
-                                                        blue: 246 / 255
-                                                    )
-                                                    .opacity(0.5) : Color.white.opacity(0.2),
+                                                    ? Theme.standardBlue.opacity(0.5)
+                                                    : Color.white.opacity(0.2),
                                                 lineWidth: Auth.auth().currentUser?.uid
                                                     == entry.userId ? 1.5 : 1
                                             )
                                     )
                             )
                         }
-                        .buttonStyle(PlainButtonStyle()).padding(.vertical, 2)
-                        // Disable the button for anonymous users
+                        .buttonStyle(PlainButtonStyle()).padding(.vertical, 2)  // Disable the button for anonymous users
                         .disabled(entry.isAnonymous)
                     }
                 }
@@ -362,10 +312,7 @@ struct GlobalWeeklyLeaderboard: View {
                 RoundedRectangle(cornerRadius: 18)
                     .fill(
                         LinearGradient(
-                            colors: [
-                                Color(red: 30 / 255, green: 58 / 255, blue: 138 / 255).opacity(0.3),
-                                Color(red: 30 / 255, green: 64 / 255, blue: 175 / 255).opacity(0.2),
-                            ],
+                            colors: [Theme.darkBlue.opacity(0.3), Theme.blue800.opacity(0.2)],
                             startPoint: .topLeading,
                             endPoint: .bottomTrailing
                         )
@@ -376,11 +323,7 @@ struct GlobalWeeklyLeaderboard: View {
                 RoundedRectangle(cornerRadius: 18)
                     .stroke(
                         LinearGradient(
-                            colors: [
-                                Color(red: 59 / 255, green: 130 / 255, blue: 246 / 255)
-                                    .opacity(0.5),
-                                Color(red: 37 / 255, green: 99 / 255, blue: 235 / 255).opacity(0.2),
-                            ],
+                            colors: [Theme.standardBlue.opacity(0.5), Theme.blue.opacity(0.2)],
                             startPoint: .topLeading,
                             endPoint: .bottomTrailing
                         ),
@@ -403,53 +346,6 @@ struct GlobalAllTimeLeaderboard: View {
     @Binding var currentLeaderboard: LeaderboardType
     @State private var showUserProfile = false
     @State private var selectedUserId: String?
-
-    // Purple theme colors - different from the red of regional and blue of weekly
-    private let purpleGradient = LinearGradient(
-        colors: [
-            Theme.softViolet,  // Purple 500
-            Color(red: 124 / 255, green: 58 / 255, blue: 237 / 255),  // Purple 600
-        ],
-        startPoint: .top,
-        endPoint: .bottom
-    )
-
-    private let purpleBackgroundGradient = LinearGradient(
-        colors: [
-            Color(red: 88 / 255, green: 28 / 255, blue: 135 / 255).opacity(0.4),  // Purple 900
-            Color(red: 91 / 255, green: 33 / 255, blue: 182 / 255).opacity(0.3),  // Purple 800
-        ],
-        startPoint: .topLeading,
-        endPoint: .bottomTrailing
-    )
-
-    // Medal colors - same across all leaderboards
-    private let goldColor = LinearGradient(
-        colors: [
-            Color(red: 255 / 255, green: 215 / 255, blue: 0 / 255),
-            Color(red: 212 / 255, green: 175 / 255, blue: 55 / 255),
-        ],
-        startPoint: .top,
-        endPoint: .bottom
-    )
-
-    private let silverColor = LinearGradient(
-        colors: [
-            Color(red: 226 / 255, green: 232 / 255, blue: 240 / 255),
-            Color(red: 148 / 255, green: 163 / 255, blue: 184 / 255),
-        ],
-        startPoint: .top,
-        endPoint: .bottom
-    )
-
-    private let bronzeColor = LinearGradient(
-        colors: [
-            Color(red: 205 / 255, green: 127 / 255, blue: 50 / 255),
-            Color(red: 165 / 255, green: 113 / 255, blue: 78 / 255),
-        ],
-        startPoint: .top,
-        endPoint: .bottom
-    )
 
     var body: some View {
         VStack(spacing: 12) {
@@ -474,10 +370,7 @@ struct GlobalAllTimeLeaderboard: View {
                         Image(systemName: "infinity").font(.system(size: 20))
                             .foregroundStyle(
                                 LinearGradient(
-                                    colors: [
-                                        Theme.softViolet,
-                                        Color(red: 124 / 255, green: 58 / 255, blue: 237 / 255),
-                                    ],
+                                    colors: [Theme.softViolet, Theme.electricViolet],
                                     startPoint: .top,
                                     endPoint: .bottom
                                 )
@@ -487,10 +380,7 @@ struct GlobalAllTimeLeaderboard: View {
                         Text("GLOBAL ALL TIME").font(.system(size: 13, weight: .black)).tracking(2)
                             .foregroundStyle(
                                 LinearGradient(
-                                    colors: [
-                                        Theme.softViolet,
-                                        Color(red: 124 / 255, green: 58 / 255, blue: 237 / 255),
-                                    ],
+                                    colors: [Theme.softViolet, Theme.electricViolet],
                                     startPoint: .top,
                                     endPoint: .bottom
                                 )
@@ -515,9 +405,7 @@ struct GlobalAllTimeLeaderboard: View {
                     .fill(
                         LinearGradient(
                             colors: [
-                                Theme.softViolet.opacity(0.3),
-                                Color(red: 124 / 255, green: 58 / 255, blue: 237 / 255)
-                                    .opacity(0.2),
+                                Theme.softViolet.opacity(0.3), Theme.electricViolet.opacity(0.2),
                             ],
                             startPoint: .leading,
                             endPoint: .trailing
@@ -596,8 +484,9 @@ struct GlobalAllTimeLeaderboard: View {
                                         Circle()
                                             .fill(
                                                 index == 0
-                                                    ? goldColor
-                                                    : (index == 1 ? silverColor : bronzeColor)
+                                                    ? Theme.goldColor
+                                                    : (index == 1
+                                                        ? Theme.silverColor : Theme.bronzeColor)
                                             )
                                             .frame(width: 26, height: 26)
 
@@ -715,8 +604,7 @@ struct GlobalAllTimeLeaderboard: View {
                                     )
                             )
                         }
-                        .buttonStyle(PlainButtonStyle()).padding(.vertical, 2)
-                        // Disable the button for anonymous users
+                        .buttonStyle(PlainButtonStyle()).padding(.vertical, 2)  // Disable the button for anonymous users
                         .disabled(entry.isAnonymous)
                     }
                 }
@@ -728,10 +616,7 @@ struct GlobalAllTimeLeaderboard: View {
                 RoundedRectangle(cornerRadius: 18)
                     .fill(
                         LinearGradient(
-                            colors: [
-                                Color(red: 88 / 255, green: 28 / 255, blue: 135 / 255).opacity(0.3),
-                                Color(red: 91 / 255, green: 33 / 255, blue: 182 / 255).opacity(0.2),
-                            ],
+                            colors: [Theme.deepPurple.opacity(0.3), Theme.purple800.opacity(0.2)],
                             startPoint: .topLeading,
                             endPoint: .bottomTrailing
                         )
@@ -743,9 +628,7 @@ struct GlobalAllTimeLeaderboard: View {
                     .stroke(
                         LinearGradient(
                             colors: [
-                                Theme.softViolet.opacity(0.5),
-                                Color(red: 124 / 255, green: 58 / 255, blue: 237 / 255)
-                                    .opacity(0.2),
+                                Theme.softViolet.opacity(0.5), Theme.electricViolet.opacity(0.2),
                             ],
                             startPoint: .topLeading,
                             endPoint: .bottomTrailing
@@ -1303,53 +1186,6 @@ struct RegionalWeeklyLeaderboard: View {
     @State private var showUserProfile = false
     @State private var selectedUserId: String?
 
-    // Red theme colors - maintaining original regional theme
-    private let redGradient = LinearGradient(
-        colors: [
-            Theme.mutedRed,  // Red 500
-            Theme.darkRed,  // Red 600
-        ],
-        startPoint: .top,
-        endPoint: .bottom
-    )
-
-    private let redBackgroundGradient = LinearGradient(
-        colors: [
-            Color(red: 153 / 255, green: 27 / 255, blue: 27 / 255).opacity(0.4),  // Red 900
-            Color(red: 127 / 255, green: 29 / 255, blue: 29 / 255).opacity(0.3),  // Red 800
-        ],
-        startPoint: .topLeading,
-        endPoint: .bottomTrailing
-    )
-
-    // Medal colors
-    private let goldColor = LinearGradient(
-        colors: [
-            Color(red: 255 / 255, green: 215 / 255, blue: 0 / 255),
-            Color(red: 212 / 255, green: 175 / 255, blue: 55 / 255),
-        ],
-        startPoint: .top,
-        endPoint: .bottom
-    )
-
-    private let silverColor = LinearGradient(
-        colors: [
-            Color(red: 226 / 255, green: 232 / 255, blue: 240 / 255),
-            Color(red: 148 / 255, green: 163 / 255, blue: 184 / 255),
-        ],
-        startPoint: .top,
-        endPoint: .bottom
-    )
-
-    private let bronzeColor = LinearGradient(
-        colors: [
-            Color(red: 205 / 255, green: 127 / 255, blue: 50 / 255),
-            Color(red: 165 / 255, green: 113 / 255, blue: 78 / 255),
-        ],
-        startPoint: .top,
-        endPoint: .bottom
-    )
-
     var body: some View {
         VStack(spacing: 12) {
             // Title section with navigation arrows
@@ -1490,8 +1326,9 @@ struct RegionalWeeklyLeaderboard: View {
                                         Circle()
                                             .fill(
                                                 index == 0
-                                                    ? goldColor
-                                                    : (index == 1 ? silverColor : bronzeColor)
+                                                    ? Theme.goldColor
+                                                    : (index == 1
+                                                        ? Theme.silverColor : Theme.bronzeColor)
                                             )
                                             .frame(width: 26, height: 26)
 
@@ -1609,8 +1446,7 @@ struct RegionalWeeklyLeaderboard: View {
                                     )
                             )
                         }
-                        .buttonStyle(PlainButtonStyle()).padding(.vertical, 2)
-                        // Disable the button for anonymous users
+                        .buttonStyle(PlainButtonStyle()).padding(.vertical, 2)  // Disable the button for anonymous users
                         .disabled(entry.isAnonymous)
                     }
                 }
@@ -1622,10 +1458,7 @@ struct RegionalWeeklyLeaderboard: View {
                 RoundedRectangle(cornerRadius: 18)
                     .fill(
                         LinearGradient(
-                            colors: [
-                                Color(red: 153 / 255, green: 27 / 255, blue: 27 / 255).opacity(0.3),
-                                Color(red: 127 / 255, green: 29 / 255, blue: 29 / 255).opacity(0.2),
-                            ],
+                            colors: [Theme.oldBrick.opacity(0.3), Theme.darkRuby.opacity(0.2)],
                             startPoint: .topLeading,
                             endPoint: .bottomTrailing
                         )
@@ -1660,53 +1493,6 @@ struct RegionalAllTimeLeaderboard: View {
     @State private var showUserProfile = false
     @State private var selectedUserId: String?
 
-    // Amber/Gold theme colors - distinctive from the others
-    private let amberGradient = LinearGradient(
-        colors: [
-            Theme.saturatedOrange,  // Amber 500
-            Color(red: 217 / 255, green: 119 / 255, blue: 6 / 255),  // Amber 600
-        ],
-        startPoint: .top,
-        endPoint: .bottom
-    )
-
-    private let amberBackgroundGradient = LinearGradient(
-        colors: [
-            Color(red: 120 / 255, green: 53 / 255, blue: 15 / 255).opacity(0.4),  // Amber 900
-            Color(red: 146 / 255, green: 64 / 255, blue: 14 / 255).opacity(0.3),  // Amber 800
-        ],
-        startPoint: .topLeading,
-        endPoint: .bottomTrailing
-    )
-
-    // Medal colors - same across all leaderboards
-    private let goldColor = LinearGradient(
-        colors: [
-            Color(red: 255 / 255, green: 215 / 255, blue: 0 / 255),
-            Color(red: 212 / 255, green: 175 / 255, blue: 55 / 255),
-        ],
-        startPoint: .top,
-        endPoint: .bottom
-    )
-
-    private let silverColor = LinearGradient(
-        colors: [
-            Color(red: 226 / 255, green: 232 / 255, blue: 240 / 255),
-            Color(red: 148 / 255, green: 163 / 255, blue: 184 / 255),
-        ],
-        startPoint: .top,
-        endPoint: .bottom
-    )
-
-    private let bronzeColor = LinearGradient(
-        colors: [
-            Color(red: 205 / 255, green: 127 / 255, blue: 50 / 255),
-            Color(red: 165 / 255, green: 113 / 255, blue: 78 / 255),
-        ],
-        startPoint: .top,
-        endPoint: .bottom
-    )
-
     var body: some View {
         VStack(spacing: 12) {
             // Title section with navigation arrows
@@ -1730,10 +1516,7 @@ struct RegionalAllTimeLeaderboard: View {
                         Image(systemName: "clock.arrow.circlepath").font(.system(size: 20))
                             .foregroundStyle(
                                 LinearGradient(
-                                    colors: [
-                                        Theme.saturatedOrange,
-                                        Color(red: 217 / 255, green: 119 / 255, blue: 6 / 255),
-                                    ],
+                                    colors: [Theme.saturatedOrange, Theme.bronzeLight],
                                     startPoint: .top,
                                     endPoint: .bottom
                                 )
@@ -1744,10 +1527,7 @@ struct RegionalAllTimeLeaderboard: View {
                             .tracking(2)
                             .foregroundStyle(
                                 LinearGradient(
-                                    colors: [
-                                        Theme.saturatedOrange,
-                                        Color(red: 217 / 255, green: 119 / 255, blue: 6 / 255),
-                                    ],
+                                    colors: [Theme.saturatedOrange, Theme.bronzeLight],
                                     startPoint: .top,
                                     endPoint: .bottom
                                 )
@@ -1780,8 +1560,7 @@ struct RegionalAllTimeLeaderboard: View {
                     .fill(
                         LinearGradient(
                             colors: [
-                                Theme.saturatedOrange.opacity(0.3),
-                                Color(red: 217 / 255, green: 119 / 255, blue: 6 / 255).opacity(0.2),
+                                Theme.saturatedOrange.opacity(0.3), Theme.bronzeLight.opacity(0.2),
                             ],
                             startPoint: .leading,
                             endPoint: .trailing
@@ -1983,8 +1762,7 @@ struct RegionalAllTimeLeaderboard: View {
                                     )
                             )
                         }
-                        .buttonStyle(PlainButtonStyle()).padding(.vertical, 2)
-                        // Disable the button for anonymous users
+                        .buttonStyle(PlainButtonStyle()).padding(.vertical, 2)  // Disable the button for anonymous users
                         .disabled(entry.isAnonymous)
                     }
                 }
@@ -1993,17 +1771,7 @@ struct RegionalAllTimeLeaderboard: View {
         .padding(.vertical, 16).padding(.horizontal, 18)
         .background(
             ZStack {
-                RoundedRectangle(cornerRadius: 18)
-                    .fill(
-                        LinearGradient(
-                            colors: [
-                                Color(red: 120 / 255, green: 53 / 255, blue: 15 / 255).opacity(0.3),
-                                Color(red: 146 / 255, green: 64 / 255, blue: 14 / 255).opacity(0.2),
-                            ],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        )
-                    )
+                RoundedRectangle(cornerRadius: 18).fill(Theme.amberBackgroundGradient)
 
                 RoundedRectangle(cornerRadius: 18).fill(Color.white.opacity(0.05))
 
@@ -2011,8 +1779,7 @@ struct RegionalAllTimeLeaderboard: View {
                     .stroke(
                         LinearGradient(
                             colors: [
-                                Theme.saturatedOrange.opacity(0.5),
-                                Color(red: 217 / 255, green: 119 / 255, blue: 6 / 255).opacity(0.2),
+                                Theme.saturatedOrange.opacity(0.5), Theme.bronzeLight.opacity(0.2),
                             ],
                             startPoint: .topLeading,
                             endPoint: .bottomTrailing

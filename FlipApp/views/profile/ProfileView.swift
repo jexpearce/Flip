@@ -21,8 +21,8 @@ struct ProfileView: View {
         colors: [
             Theme.deepMidnightPurple,  // Deep midnight purple
             Theme.mediumMidnightPurple,  // Medium midnight purple
-            Color(red: 14 / 255, green: 101 / 255, blue: 151 / 255).opacity(0.7),  // Dark cyan blue
-            Color(red: 12 / 255, green: 74 / 255, blue: 110 / 255).opacity(0.6),  // Deeper cyan blue
+            Theme.darkCyanBlue.opacity(0.7),  // Dark cyan blue
+            Theme.deeperCyanBlue.opacity(0.6),  // Deeper cyan blue
         ],
         startPoint: .top,
         endPoint: .bottom
@@ -343,14 +343,7 @@ struct ProfileView: View {
                                     Image(systemName: "crown.fill").font(.system(size: 12))
                                         .foregroundStyle(
                                             LinearGradient(
-                                                colors: [
-                                                    cyanBlueAccent,
-                                                    Color(
-                                                        red: 125 / 255,
-                                                        green: 211 / 255,
-                                                        blue: 252 / 255
-                                                    ),
-                                                ],
+                                                colors: [cyanBlueAccent, Theme.cyanBlue],
                                                 startPoint: .top,
                                                 endPoint: .bottom
                                             )

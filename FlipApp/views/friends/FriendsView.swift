@@ -21,7 +21,7 @@ struct FriendsView: View {
                 LinearGradient(
                     gradient: Gradient(colors: [
                         Theme.mutedPurple,  // Deep purple
-                        Color(red: 65 / 255, green: 16 / 255, blue: 94 / 255),  // Medium purple
+                        Theme.mediumPurple,  // Medium purple
                         Theme.darkPurpleBlue,  // Purple-red transition
                     ]),
                     startPoint: .topLeading,
@@ -153,12 +153,7 @@ struct FriendsView: View {
                                             RadialGradient(
                                                 gradient: Gradient(colors: [
                                                     Theme.lightTealBlue.opacity(0.7),
-                                                    Color(
-                                                        red: 14 / 255,
-                                                        green: 165 / 255,
-                                                        blue: 233 / 255
-                                                    )
-                                                    .opacity(0.3),
+                                                    Theme.darkTealBlue.opacity(0.3),
                                                 ]),
                                                 center: .center,
                                                 startRadius: 0,

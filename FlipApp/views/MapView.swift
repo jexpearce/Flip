@@ -302,7 +302,7 @@ struct FriendMapMarker: View {
         }
         else if friend.isCurrentlyFlipped {
             // Live session - use blue instead of green
-            return Color(red: 59 / 255, green: 130 / 255, blue: 246 / 255)  // Blue
+            return Theme.standardBlue  // Blue
         }
         else {
             // Completed or failed session - FIXED
@@ -366,8 +366,7 @@ struct FriendMapMarker: View {
 
             // Pulsing animation for active sessions - blue color for LIVE sessions
             if friend.isCurrentlyFlipped && !friend.isHistorical {
-                Circle()
-                    .stroke(Color(red: 59 / 255, green: 130 / 255, blue: 246 / 255), lineWidth: 2)
+                Circle().stroke(Theme.standardBlue, lineWidth: 2)
                     .frame(width: animate ? 60 : 40, height: animate ? 60 : 40)
                     .opacity(animate ? 0 : 0.7)
                     .animation(
@@ -380,8 +379,7 @@ struct FriendMapMarker: View {
             // Session indicator icon
             if friend.isCurrentlyFlipped && !friend.isHistorical {
                 ZStack {
-                    Circle().fill(Color(red: 59 / 255, green: 130 / 255, blue: 246 / 255))
-                        .frame(width: 20, height: 20)
+                    Circle().fill(Theme.standardBlue).frame(width: 20, height: 20)
 
                     Text("LIVE").font(.system(size: 8, weight: .bold)).foregroundColor(.white)
                 }
@@ -663,8 +661,7 @@ struct FriendPreviewCard: View {
         .frame(width: 280, height: 140)  // Reduced height since removing profile button
         .background(
             ZStack {
-                RoundedRectangle(cornerRadius: 14)
-                    .fill(Color(red: 28 / 255, green: 28 / 255, blue: 45 / 255).opacity(0.95))
+                RoundedRectangle(cornerRadius: 14).fill(Theme.silverBlue.opacity(0.95))
 
                 RoundedRectangle(cornerRadius: 14).fill(Color.white.opacity(0.05))
 
@@ -705,7 +702,7 @@ struct FriendPreviewCard: View {
         }
         else if friend.isCurrentlyFlipped {
             // Active session - blue
-            return Color(red: 59 / 255, green: 130 / 255, blue: 246 / 255)
+            return Theme.standardBlue
         }
         else {
             // Completed or failed session

@@ -26,8 +26,7 @@ struct BuildingSelectionView: View {
                     .fill(
                         RadialGradient(
                             gradient: Gradient(colors: [
-                                Theme.darkRed.opacity(0.1),
-                                Color(red: 127 / 255, green: 29 / 255, blue: 29 / 255).opacity(0.0),
+                                Theme.darkRed.opacity(0.1), Theme.darkRuby.opacity(0.0),
                             ]),
                             center: .center,
                             startRadius: 10,

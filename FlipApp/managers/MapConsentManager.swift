@@ -195,10 +195,7 @@ struct MapPrivacyAlert: View {
                         RoundedRectangle(cornerRadius: 25)
                             .fill(
                                 LinearGradient(
-                                    colors: [
-                                        Theme.mediumMidnightPurple,
-                                        Color(red: 38 / 255, green: 18 / 255, blue: 58 / 255),
-                                    ],
+                                    colors: [Theme.mediumMidnightPurple, Theme.lighterPurple],
                                     startPoint: .top,
                                     endPoint: .bottom
                                 )

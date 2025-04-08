@@ -20,8 +20,7 @@ struct PausedView: View {
                                 LinearGradient(
                                     colors: [
                                         Theme.vibrantPurple.opacity(0.2),
-                                        Color(red: 88 / 255, green: 28 / 255, blue: 135 / 255)
-                                            .opacity(0.1),
+                                        Theme.deepPurple.opacity(0.1),
                                     ],
                                     startPoint: .top,
                                     endPoint: .bottom
@@ -195,14 +194,7 @@ struct PausedView: View {
                                 RoundedRectangle(cornerRadius: 16)
                                     .fill(
                                         LinearGradient(
-                                            colors: [
-                                                Theme.vibrantPurple,
-                                                Color(
-                                                    red: 88 / 255,
-                                                    green: 28 / 255,
-                                                    blue: 135 / 255
-                                                ),
-                                            ],
+                                            colors: [Theme.vibrantPurple, Theme.deepPurple],
                                             startPoint: .topLeading,
                                             endPoint: .bottomTrailing
                                         )

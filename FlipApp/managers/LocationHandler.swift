@@ -81,8 +81,7 @@ import SwiftUI
             }
         }
         else {
-            print("Cannot start location updates: No permission")
-            // Don't request here - let PermissionManager handle it
+            print("Cannot start location updates: No permission")  // Don't request here - let PermissionManager handle it
         }
     }
 

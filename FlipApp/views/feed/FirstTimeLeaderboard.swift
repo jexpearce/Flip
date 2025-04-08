@@ -508,8 +508,7 @@ struct LeaderboardRow: View {
                             LinearGradient(
                                 colors: [
                                     Theme.vibrantPurple.opacity(0.3),
-                                    Color(red: 128 / 255, green: 65 / 255, blue: 217 / 255)
-                                        .opacity(0.2),
+                                    Theme.purpleIndigo.opacity(0.2),
                                 ],
                                 startPoint: .leading,
                                 endPoint: .trailing

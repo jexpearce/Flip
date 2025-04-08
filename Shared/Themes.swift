@@ -18,7 +18,11 @@ struct Theme {
     static let darkBlue = Color(red: 30 / 255, green: 58 / 255, blue: 138 / 255)  // Deep Blue
     static let darkGray = Color(red: 24 / 255, green: 24 / 255, blue: 27 / 255)  // Almost Black
     static let nearBlack = Color(red: 17 / 255, green: 12 / 255, blue: 34 / 255)  // Very dark purple-tinted black
-
+    static let silverBlue = Color(red: 28 / 255, green: 28 / 255, blue: 45 / 255)
+    static let oldBrick = Color(red: 153 / 255, green: 27 / 255, blue: 27 / 255)
+    static let cyanBlue = Color(red: 125 / 255, green: 211 / 255, blue: 252 / 255)
+    static let blue800 = Color(red: 30 / 255, green: 64 / 255, blue: 175 / 255)
+    static let purple800 = Color(red: 91 / 255, green: 33 / 255, blue: 182 / 255)
     // Colors extracted from views
     static let periwinkle = Color(red: 156 / 255, green: 163 / 255, blue: 231 / 255)
     static let lightBlue = Color(red: 96 / 255, green: 165 / 255, blue: 250 / 255)
@@ -79,7 +83,8 @@ struct Theme {
     static let mutedRed = Color(red: 239 / 255, green: 68 / 255, blue: 68 / 255)
     static let darkerRed = Color(red: 185 / 255, green: 28 / 255, blue: 28 / 255)
     static let darkRed = Color(red: 220 / 255, green: 38 / 255, blue: 38 / 255)
-
+    static let electricViolet = Color(red: 124 / 255, green: 58 / 255, blue: 237 / 255)
+    static let lighterPurple = Color(red: 38 / 255, green: 18 / 255, blue: 58 / 255)
     static let saturatedOrange = Color(red: 245 / 255, green: 158 / 255, blue: 11 / 255)
     // Medal colors
     static let goldColor = LinearGradient(
@@ -128,6 +133,89 @@ struct Theme {
         startPoint: .top,
         endPoint: .bottom
     )
+
+    // Amber/Gold theme colors - distinctive from the others
+    static let amberGradient = LinearGradient(
+        colors: [
+            Theme.saturatedOrange,  // Amber 500
+            Theme.bronzeLight,  // Amber 600
+        ],
+        startPoint: .top,
+        endPoint: .bottom
+    )
+
+    static let amberBackgroundGradient = LinearGradient(
+        colors: [
+            Color(red: 120 / 255, green: 53 / 255, blue: 15 / 255).opacity(0.4),  // Amber 900
+            Color(red: 146 / 255, green: 64 / 255, blue: 14 / 255).opacity(0.3),  // Amber 800
+        ],
+        startPoint: .topLeading,
+        endPoint: .bottomTrailing
+    )
+
+    // Purple theme colors - different from the red of regional and blue of weekly
+    private let purpleGradient = LinearGradient(
+        colors: [
+            Theme.softViolet,  // Purple 500
+            Theme.electricViolet,  // Purple 600
+        ],
+        startPoint: .top,
+        endPoint: .bottom
+    )
+
+    private let purpleBackgroundGradient = LinearGradient(
+        colors: [
+            Theme.deepPurple.opacity(0.4),  // Purple 900
+            Theme.purple800.opacity(0.3),  // Purple 800
+        ],
+        startPoint: .topLeading,
+        endPoint: .bottomTrailing
+    )
+
+    static let buildingGradient = LinearGradient(
+        colors: [
+            Color(red: 146 / 255, green: 123 / 255, blue: 21 / 255).opacity(0.3),
+            Color(red: 133 / 255, green: 109 / 255, blue: 7 / 255).opacity(0.2),
+        ],
+        startPoint: .topLeading,
+        endPoint: .bottomTrailing
+    )
+    static let nonBuildingGradient = LinearGradient(
+        colors: [Theme.oldBrick.opacity(0.3), Theme.darkRuby.opacity(0.2)],
+        startPoint: .topLeading,
+        endPoint: .bottomTrailing
+    )
+    static let successGradient = LinearGradient(
+        colors: [
+            Color(red: 25 / 255, green: 52 / 255, blue: 65 / 255).opacity(0.85),
+            Color(red: 17 / 255, green: 48 / 255, blue: 66 / 255).opacity(0.9),
+            Color(red: 15 / 255, green: 35 / 255, blue: 55 / 255).opacity(0.95),
+        ],
+        startPoint: .top,
+        endPoint: .bottom
+    )
+    static let successGradient2 = LinearGradient(
+        colors: [Theme.navyBlue.opacity(0.6), Theme.tealBlue.opacity(0.5)],
+        startPoint: .topLeading,
+        endPoint: .bottomTrailing
+    )
+    static let nonSuccessGradient = LinearGradient(
+        colors: [
+            Color(red: 55 / 255, green: 30 / 255, blue: 50 / 255).opacity(0.95),
+            Color(red: 45 / 255, green: 28 / 255, blue: 58 / 255).opacity(0.9),
+            Color(red: 35 / 255, green: 24 / 255, blue: 55 / 255).opacity(0.85),
+        ],
+        startPoint: .top,
+        endPoint: .bottom
+    )
+    static let nonSuccessGradient2 = LinearGradient(
+        colors: [
+            Color(red: 45 / 255, green: 21 / 255, blue: 38 / 255).opacity(0.9),
+            Color(red: 26 / 255, green: 32 / 255, blue: 58 / 255).opacity(0.8),
+        ],
+        startPoint: .topLeading,
+        endPoint: .bottomTrailing
+    )
     static let profileGradient = LinearGradient(
         colors: [
             deepMidnightPurple, mediumMidnightPurple, darkCyanBlue.opacity(0.7),  // Using existing darkCyanBlue
@@ -149,6 +237,25 @@ struct Theme {
         endPoint: .bottom
     )
 
+    // Orange-purple theme colors for friend-related views
+    static let orangePurpleGradient = LinearGradient(
+        colors: [
+            Theme.mutedPurple,  // Deep purple
+            Color(red: 47 / 255, green: 17 / 255, blue: 67 / 255),  // Medium purple
+            Color(red: 65 / 255, green: 20 / 255, blue: 60 / 255),  // Purple with hint of red
+            Color(red: 35 / 255, green: 15 / 255, blue: 50 / 255),  // Back to deeper purple
+        ],
+        startPoint: .top,
+        endPoint: .bottom
+    )
+    static let baseGradient = LinearGradient(
+        colors: [
+            Color(red: 17 / 255, green: 24 / 255, blue: 39 / 255),  // Dark blue-green
+            Color(red: 24 / 255, green: 45 / 255, blue: 60 / 255),  // Midnight teal
+        ],
+        startPoint: .top,
+        endPoint: .bottom
+    )
     // Custom gradient for the creation view
     static let creationGradient = LinearGradient(
         colors: [
@@ -163,7 +270,7 @@ struct Theme {
     static let selectionGradient = LinearGradient(
         colors: [
             mediumMidnightPurple,  // Deep midnight purple
-            Color(red: 38 / 255, green: 18 / 255, blue: 58 / 255),  // Lighter purple with slight red
+            lighterPurple,  // Lighter purple with slight red
             Color(red: 45 / 255, green: 20 / 255, blue: 60 / 255),  // Medium purple
         ],
         startPoint: .top,
@@ -236,47 +343,40 @@ struct Theme {
 // Text Style Extensions
 extension Text {
     func title() -> Text {
-        self.font(.system(size: 28, weight: .black)).tracking(8)
-            .foregroundColor(Color(red: 255 / 255, green: 255 / 255, blue: 255 / 255))
+        self.font(.system(size: 28, weight: .black)).tracking(8).foregroundColor(Theme.glowWhite)
     }
 
     func subtitle() -> Text {
         self.font(.system(size: 12, weight: .medium)).tracking(4)
-            .foregroundColor(Color(red: 255 / 255, green: 255 / 255, blue: 255 / 255).opacity(0.7))
+            .foregroundColor(Theme.glowWhite.opacity(0.7))
     }
 
     func retro() -> Text {
-        self.font(.system(size: 60, weight: .black)).tracking(8)
-            .foregroundColor(Color(red: 255 / 255, green: 255 / 255, blue: 255 / 255))
+        self.font(.system(size: 60, weight: .black)).tracking(8).foregroundColor(Theme.glowWhite)
     }
 
     func japanese() -> Text {
         self.font(.system(size: 14, weight: .medium)).tracking(3)
-            .foregroundColor(Color(red: 255 / 255, green: 255 / 255, blue: 255 / 255).opacity(0.7))
+            .foregroundColor(Theme.glowWhite.opacity(0.7))
     }
 }
 
 // View Extensions for Common Styles
 extension View {
     func glowingButton() -> some View {
-        self.font(.system(size: 24, weight: .black)).tracking(4)
-            .foregroundColor(Color(red: 255 / 255, green: 255 / 255, blue: 255 / 255))
+        self.font(.system(size: 24, weight: .black)).tracking(4).foregroundColor(Theme.glowWhite)
             .frame(maxWidth: .infinity).frame(height: 60)
             .background(
                 ZStack {
                     RoundedRectangle(cornerRadius: 30).fill(Theme.headerGradient)
 
-                    RoundedRectangle(cornerRadius: 30)
-                        .fill(Color(red: 255 / 255, green: 255 / 255, blue: 255 / 255).opacity(0.1))
+                    RoundedRectangle(cornerRadius: 30).fill(Theme.glowWhite.opacity(0.1))
 
                     RoundedRectangle(cornerRadius: 30)
                         .stroke(
                             LinearGradient(
                                 colors: [
-                                    Color(red: 255 / 255, green: 255 / 255, blue: 255 / 255)
-                                        .opacity(0.6),
-                                    Color(red: 255 / 255, green: 255 / 255, blue: 255 / 255)
-                                        .opacity(0.1),
+                                    Theme.glowWhite.opacity(0.6), Theme.glowWhite.opacity(0.1),
                                 ],
                                 startPoint: .topLeading,
                                 endPoint: .bottomTrailing
@@ -292,16 +392,10 @@ extension View {
         self.padding(.vertical, 12).padding(.horizontal, 16)
             .background(
                 ZStack {
-                    RoundedRectangle(cornerRadius: 15)
-                        .fill(
-                            Color(red: 255 / 255, green: 255 / 255, blue: 255 / 255).opacity(0.08)
-                        )
+                    RoundedRectangle(cornerRadius: 15).fill(Theme.glowWhite.opacity(0.08))
 
                     RoundedRectangle(cornerRadius: 15)
-                        .stroke(
-                            Color(red: 255 / 255, green: 255 / 255, blue: 255 / 255).opacity(0.2),
-                            lineWidth: 1
-                        )
+                        .stroke(Theme.glowWhite.opacity(0.2), lineWidth: 1)
                 }
             )
             .shadow(
@@ -315,18 +409,12 @@ extension View {
     func glassCard() -> some View {
         self.background(
             ZStack {
-                RoundedRectangle(cornerRadius: 16)
-                    .fill(Color(red: 255 / 255, green: 255 / 255, blue: 255 / 255).opacity(0.06))
+                RoundedRectangle(cornerRadius: 16).fill(Theme.glowWhite.opacity(0.06))
 
                 RoundedRectangle(cornerRadius: 16)
                     .stroke(
                         LinearGradient(
-                            colors: [
-                                Color(red: 255 / 255, green: 255 / 255, blue: 255 / 255)
-                                    .opacity(0.5),
-                                Color(red: 255 / 255, green: 255 / 255, blue: 255 / 255)
-                                    .opacity(0.1),
-                            ],
+                            colors: [Theme.glowWhite.opacity(0.5), Theme.glowWhite.opacity(0.1)],
                             startPoint: .topLeading,
                             endPoint: .bottomTrailing
                         ),

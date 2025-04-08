@@ -258,18 +258,8 @@ struct EnhancedFriendCard: View {
                     .fill(
                         LinearGradient(
                             colors: isLive && !isFull
-                                ? [
-                                    Color(red: 21 / 255, green: 128 / 255, blue: 61 / 255)
-                                        .opacity(0.3),
-                                    Color(red: 30 / 255, green: 58 / 255, blue: 138 / 255)
-                                        .opacity(0.2),
-                                ]
-                                : [
-                                    Color(red: 30 / 255, green: 58 / 255, blue: 138 / 255)
-                                        .opacity(0.2),
-                                    Color(red: 88 / 255, green: 28 / 255, blue: 135 / 255)
-                                        .opacity(0.2),
-                                ],
+                                ? [Theme.forestGreen.opacity(0.3), Theme.darkBlue.opacity(0.2)]
+                                : [Theme.darkBlue.opacity(0.2), Theme.deepPurple.opacity(0.2)],
                             startPoint: .topLeading,
                             endPoint: .bottomTrailing
                         )

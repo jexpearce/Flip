@@ -478,10 +478,7 @@ struct MotionPermissionAlert: View {
                         Circle()
                             .fill(
                                 LinearGradient(
-                                    colors: [
-                                        Theme.softViolet,
-                                        Color(red: 124 / 255, green: 58 / 255, blue: 237 / 255),
-                                    ],
+                                    colors: [Theme.softViolet, Theme.electricViolet],
                                     startPoint: .top,
                                     endPoint: .bottom
                                 )

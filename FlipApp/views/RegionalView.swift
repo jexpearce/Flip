@@ -128,9 +128,7 @@ struct RegionalView: View {
                             .fill(
                                 RadialGradient(
                                     gradient: Gradient(colors: [
-                                        Theme.darkRed.opacity(0.15),
-                                        Color(red: 127 / 255, green: 29 / 255, blue: 29 / 255)
-                                            .opacity(0.05),
+                                        Theme.darkRed.opacity(0.15), Theme.darkRuby.opacity(0.05),
                                     ]),
                                     center: .center,
                                     startRadius: 10,
@@ -144,9 +142,7 @@ struct RegionalView: View {
                             .fill(
                                 RadialGradient(
                                     gradient: Gradient(colors: [
-                                        Theme.darkRed.opacity(0.1),
-                                        Color(red: 127 / 255, green: 29 / 255, blue: 29 / 255)
-                                            .opacity(0.05),
+                                        Theme.darkRed.opacity(0.1), Theme.darkRuby.opacity(0.05),
                                     ]),
                                     center: .center,
                                     startRadius: 5,
@@ -363,8 +359,7 @@ struct RegionalView: View {
                             }
                             .frame(height: 80)
                         }
-                        .padding(.horizontal, 20).padding(.bottom, 30)
-                        // Add animation to ensure smooth transition when leaderboard content changes
+                        .padding(.horizontal, 20).padding(.bottom, 30)  // Add animation to ensure smooth transition when leaderboard content changes
                         .animation(.easeInOut, value: currentLeaderboard)
                     }
                     .padding(.bottom, 20)  // Add padding to ensure content is not cut off
@@ -405,8 +400,7 @@ struct RegionalView: View {
                 secondaryButton: .cancel()
             )
         }
-        .background(Theme.regionalGradient.edgesIgnoringSafeArea(.all))
-        // Load appropriate leaderboard data when switching tabs
+        .background(Theme.regionalGradient.edgesIgnoringSafeArea(.all))  // Load appropriate leaderboard data when switching tabs
         .onChange(of: currentLeaderboard) {
             switch currentLeaderboard {
             case .building:

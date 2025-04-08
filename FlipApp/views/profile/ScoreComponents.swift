@@ -122,8 +122,7 @@ struct StreakIndicatorBar: View {
                     .frame(width: 32, height: 32)
 
                 Image(systemName: "flame.fill").font(.system(size: 16))
-                    .foregroundColor(Color(red: 255 / 255, green: 255 / 255, blue: 255 / 255))
-                    .scaleEffect(isAnimating ? 1.1 : 0.9)
+                    .foregroundColor(Theme.glowWhite).scaleEffect(isAnimating ? 1.1 : 0.9)
                     .animation(
                         Animation.easeInOut(duration: 1.2).repeatForever(autoreverses: true),
                         value: isAnimating
@@ -257,8 +256,7 @@ struct StreakIndicator: View {
                 )
 
             Image(systemName: "flame.fill").font(.system(size: 10, weight: .bold))
-                .foregroundColor(Color(red: 255 / 255, green: 255 / 255, blue: 255 / 255))
-                .scaleEffect(isAnimating ? 1.2 : 1.0)
+                .foregroundColor(Theme.glowWhite).scaleEffect(isAnimating ? 1.2 : 1.0)
                 .animation(
                     Animation.easeInOut(duration: 0.8).repeatForever(autoreverses: true),
                     value: isAnimating
@@ -317,8 +315,8 @@ struct ScoreHistoryView: View {
                                                 ? Color.red.opacity(0.7)
                                                 : Color.orange.opacity(0.7),
                                             scoreManager.streakStatus == .redFlame
-                                                ? Color.red.opacity(0.5)
-                                                : Color.orange.opacity(0.5),
+                                                ? Color.red.opacity(0.5) : Color.orange.opacity(0.5)
+                                                ,
                                         ],
                                         startPoint: .top,
                                         endPoint: .bottom
@@ -327,9 +325,7 @@ struct ScoreHistoryView: View {
                                 .frame(width: 50, height: 50)
 
                             Image(systemName: "flame.fill").font(.system(size: 24))
-                                .foregroundColor(
-                                    Color(red: 255 / 255, green: 255 / 255, blue: 255 / 255)
-                                )
+                                .foregroundColor(Theme.glowWhite)
                         }
                         .shadow(
                             color: scoreManager.streakStatus == .redFlame
@@ -494,16 +490,16 @@ struct RankSegment: View {
     // UPDATED: More vibrant rank colors
     private func getRankColor(for score: Double) -> Color {
         switch score {
-        case 0.0..<30.0: return Color(red: 156 / 255, green: 163 / 255, blue: 231 / 255)  // Periwinkle
-        case 30.0..<60.0: return Color(red: 96 / 255, green: 165 / 255, blue: 250 / 255)  // Light blue
-        case 60.0..<90.0: return Color(red: 59 / 255, green: 130 / 255, blue: 246 / 255)  // Blue
-        case 90.0..<120.0: return Color(red: 16 / 255, green: 185 / 255, blue: 129 / 255)  // Green
-        case 120.0..<150.0: return Color(red: 249 / 255, green: 180 / 255, blue: 45 / 255)  // Bright amber
+        case 0.0..<30.0: return Theme.periwinkle  // Periwinkle
+        case 30.0..<60.0: return Theme.lightBlue  // Light blue
+        case 60.0..<90.0: return Theme.standardBlue  // Blue
+        case 90.0..<120.0: return Theme.emeraldGreen  // Green
+        case 120.0..<150.0: return Theme.brightAmber  // Bright amber
         case 150.0..<180.0: return Theme.orange  // Orange
         case 180.0..<210.0: return Theme.mutedRed  // Red
-        case 210.0..<240.0: return Color(red: 236 / 255, green: 72 / 255, blue: 153 / 255)  // Pink
-        case 240.0..<270.0: return Color(red: 147 / 255, green: 51 / 255, blue: 234 / 255)  // Vivid purple
-        case 270.0...300.0: return Color(red: 236 / 255, green: 64 / 255, blue: 255 / 255)  // Bright fuchsia
+        case 210.0..<240.0: return Theme.pink  // Pink
+        case 240.0..<270.0: return Theme.purple  // Vivid purple
+        case 270.0...300.0: return Theme.brightFuchsia  // Bright fuchsia
         default: return Color.gray
         }
     }
@@ -616,9 +612,7 @@ struct ScoreInfoView: View {
                         Circle().fill(Color.orange.opacity(0.7)).frame(width: 40, height: 40)
 
                         Image(systemName: "flame.fill").font(.system(size: 20))
-                            .foregroundColor(
-                                Color(red: 255 / 255, green: 255 / 255, blue: 255 / 255)
-                            )
+                            .foregroundColor(Theme.glowWhite)
                     }
 
                     VStack(alignment: .leading, spacing: 4) {
@@ -638,9 +632,7 @@ struct ScoreInfoView: View {
                         Circle().fill(Color.red.opacity(0.7)).frame(width: 40, height: 40)
 
                         Image(systemName: "flame.fill").font(.system(size: 20))
-                            .foregroundColor(
-                                Color(red: 255 / 255, green: 255 / 255, blue: 255 / 255)
-                            )
+                            .foregroundColor(Theme.glowWhite)
                     }
 
                     VStack(alignment: .leading, spacing: 4) {
@@ -790,16 +782,16 @@ struct ScoreInfoView: View {
     // UPDATED: More vibrant rank colors
     private func getRankColor(for score: Double) -> Color {
         switch score {
-        case 0.0..<30.0: return Color(red: 156 / 255, green: 163 / 255, blue: 231 / 255)  // Periwinkle
-        case 30.0..<60.0: return Color(red: 96 / 255, green: 165 / 255, blue: 250 / 255)  // Light blue
-        case 60.0..<90.0: return Color(red: 59 / 255, green: 130 / 255, blue: 246 / 255)  // Blue
-        case 90.0..<120.0: return Color(red: 16 / 255, green: 185 / 255, blue: 129 / 255)  // Green
-        case 120.0..<150.0: return Color(red: 249 / 255, green: 180 / 255, blue: 45 / 255)  // Bright amber
+        case 0.0..<30.0: return Theme.periwinkle  // Periwinkle
+        case 30.0..<60.0: return Theme.lightBlue  // Light blue
+        case 60.0..<90.0: return Theme.standardBlue  // Blue
+        case 90.0..<120.0: return Theme.emeraldGreen  // Green
+        case 120.0..<150.0: return Theme.brightAmber  // Bright amber
         case 150.0..<180.0: return Theme.orange  // Orange
         case 180.0..<210.0: return Theme.mutedRed  // Red
-        case 210.0..<240.0: return Color(red: 236 / 255, green: 72 / 255, blue: 153 / 255)  // Pink
-        case 240.0..<270.0: return Color(red: 147 / 255, green: 51 / 255, blue: 234 / 255)  // Vivid purple
-        case 270.0...300.0: return Color(red: 236 / 255, green: 64 / 255, blue: 255 / 255)  // Bright fuchsia
+        case 210.0..<240.0: return Theme.pink  // Pink
+        case 240.0..<270.0: return Theme.purple  // Vivid purple
+        case 270.0...300.0: return Theme.brightFuchsia  // Bright fuchsia
         default: return Color.gray
         }
     }
@@ -865,7 +857,7 @@ struct ProfilePictureWithStreak: View {
                         .frame(width: size * 0.25, height: size * 0.25)
 
                     Image(systemName: "flame.fill").font(.system(size: size * 0.15))
-                        .foregroundColor(Color(red: 255 / 255, green: 255 / 255, blue: 255 / 255))
+                        .foregroundColor(Theme.glowWhite)
                 }
                 .position(x: size * 0.8, y: size * 0.2)
             }

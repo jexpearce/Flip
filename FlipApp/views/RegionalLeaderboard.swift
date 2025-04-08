@@ -12,7 +12,7 @@ struct RegionalLeaderboard: View {
     // Silver-red theme colors
     private let silverRedGradient = LinearGradient(
         colors: [
-            Color(red: 226 / 255, green: 232 / 255, blue: 240 / 255),  // Light silver
+            Theme.silverLight,  // Light silver
             Theme.darkerRed,  // Deep red
         ],
         startPoint: .top,
@@ -20,10 +20,7 @@ struct RegionalLeaderboard: View {
     )
 
     private let silverRedBackgroundGradient = LinearGradient(
-        colors: [
-            Color(red: 153 / 255, green: 27 / 255, blue: 27 / 255).opacity(0.4),
-            Color(red: 127 / 255, green: 29 / 255, blue: 29 / 255).opacity(0.3),
-        ],
+        colors: [Theme.oldBrick.opacity(0.4), Theme.darkRuby.opacity(0.3)],
         startPoint: .topLeading,
         endPoint: .bottomTrailing
     )
@@ -39,10 +36,7 @@ struct RegionalLeaderboard: View {
                         .foregroundStyle(
                             viewModel.isBuildingSpecific
                                 ? LinearGradient(
-                                    colors: [
-                                        Theme.yellowyOrange,
-                                        Color(red: 202 / 255, green: 138 / 255, blue: 4 / 255),
-                                    ],
+                                    colors: [Theme.yellowyOrange, Theme.darkYellow],
                                     startPoint: .top,
                                     endPoint: .bottom
                                 )
@@ -66,10 +60,7 @@ struct RegionalLeaderboard: View {
                     .foregroundStyle(
                         viewModel.isBuildingSpecific
                             ? LinearGradient(
-                                colors: [
-                                    Theme.yellowyOrange,
-                                    Color(red: 202 / 255, green: 138 / 255, blue: 4 / 255),
-                                ],
+                                colors: [Theme.yellowyOrange, Theme.darkYellow],
                                 startPoint: .top,
                                 endPoint: .bottom
                             )
@@ -101,9 +92,7 @@ struct RegionalLeaderboard: View {
                         viewModel.isBuildingSpecific
                             ? LinearGradient(
                                 colors: [
-                                    Theme.yellowyOrange.opacity(0.3),
-                                    Color(red: 202 / 255, green: 138 / 255, blue: 4 / 255)
-                                        .opacity(0.2),
+                                    Theme.yellowyOrange.opacity(0.3), Theme.darkYellow.opacity(0.2),
                                 ],
                                 startPoint: .leading,
                                 endPoint: .trailing
@@ -353,8 +342,7 @@ struct RegionalLeaderboard: View {
                                     )
                             )
                         }
-                        .buttonStyle(PlainButtonStyle()).padding(.vertical, 2)
-                        // Disable the button for anonymous users
+                        .buttonStyle(PlainButtonStyle()).padding(.vertical, 2)  // Disable the button for anonymous users
                         .disabled(entry.isAnonymous)
                     }
 
@@ -393,26 +381,7 @@ struct RegionalLeaderboard: View {
                 RoundedRectangle(cornerRadius: 18)
                     .fill(
                         viewModel.isBuildingSpecific
-                            ? LinearGradient(
-                                colors: [
-                                    Color(red: 146 / 255, green: 123 / 255, blue: 21 / 255)
-                                        .opacity(0.3),
-                                    Color(red: 133 / 255, green: 109 / 255, blue: 7 / 255)
-                                        .opacity(0.2),
-                                ],
-                                startPoint: .topLeading,
-                                endPoint: .bottomTrailing
-                            )
-                            : LinearGradient(
-                                colors: [
-                                    Color(red: 153 / 255, green: 27 / 255, blue: 27 / 255)
-                                        .opacity(0.3),
-                                    Color(red: 127 / 255, green: 29 / 255, blue: 29 / 255)
-                                        .opacity(0.2),
-                                ],
-                                startPoint: .topLeading,
-                                endPoint: .bottomTrailing
-                            )
+                            ? Theme.buildingGradient : Theme.nonBuildingGradient
                     )
 
                 RoundedRectangle(cornerRadius: 18).fill(Color.white.opacity(0.05))

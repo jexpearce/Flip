@@ -92,8 +92,8 @@ struct UserProfileView: View {
         colors: [
             Theme.deepMidnightPurple,  // Deep midnight purple
             Theme.mediumMidnightPurple,  // Medium midnight purple
-            Color(red: 14 / 255, green: 101 / 255, blue: 151 / 255).opacity(0.7),  // Dark cyan blue
-            Color(red: 12 / 255, green: 74 / 255, blue: 110 / 255).opacity(0.6),  // Deeper cyan blue
+            Theme.darkCyanBlue.opacity(0.7),  // Dark cyan blue
+            Theme.deeperCyanBlue.opacity(0.6),  // Deeper cyan blue
         ],
         startPoint: .top,
         endPoint: .bottom
@@ -464,24 +464,16 @@ struct ProfileHeaderView: View {
     // Helper function to get rank
     private func getRank(for score: Double) -> (name: String, color: Color) {
         switch score {
-        case 0.0..<30.0:
-            return ("Novice", Color(red: 156 / 255, green: 163 / 255, blue: 231 / 255))  // Periwinkle
-        case 30.0..<60.0:
-            return ("Apprentice", Color(red: 96 / 255, green: 165 / 255, blue: 250 / 255))  // Light blue
-        case 60.0..<90.0:
-            return ("Beginner", Color(red: 59 / 255, green: 130 / 255, blue: 246 / 255))  // Blue
-        case 90.0..<120.0:
-            return ("Steady", Color(red: 16 / 255, green: 185 / 255, blue: 129 / 255))  // Green
-        case 120.0..<150.0:
-            return ("Focused", Color(red: 249 / 255, green: 180 / 255, blue: 45 / 255))  // Bright amber
+        case 0.0..<30.0: return ("Novice", Theme.periwinkle)  // Periwinkle
+        case 30.0..<60.0: return ("Apprentice", Theme.lightBlue)  // Light blue
+        case 60.0..<90.0: return ("Beginner", Theme.standardBlue)  // Blue
+        case 90.0..<120.0: return ("Steady", Theme.emeraldGreen)  // Green
+        case 120.0..<150.0: return ("Focused", Theme.brightAmber)  // Bright amber
         case 150.0..<180.0: return ("Disciplined", Theme.orange)  // Orange
         case 180.0..<210.0: return ("Resolute", Theme.mutedRed)  // Red
-        case 210.0..<240.0:
-            return ("Master", Color(red: 236 / 255, green: 72 / 255, blue: 153 / 255))  // Pink
-        case 240.0..<270.0:
-            return ("Guru", Color(red: 147 / 255, green: 51 / 255, blue: 234 / 255))  // Vivid purple
-        case 270.0...300.0:
-            return ("Enlightened", Color(red: 236 / 255, green: 64 / 255, blue: 255 / 255))  // Bright fuchsia
+        case 210.0..<240.0: return ("Master", Theme.pink)  // Pink
+        case 240.0..<270.0: return ("Guru", Theme.purple)  // Vivid purple
+        case 270.0...300.0: return ("Enlightened", Theme.brightFuchsia)  // Bright fuchsia
         default: return ("Unranked", Color.gray)
         }
     }
@@ -1102,10 +1094,7 @@ struct UserFriendsListView: View {
                     RoundedRectangle(cornerRadius: 20)
                         .fill(
                             LinearGradient(
-                                colors: [
-                                    Theme.mediumMidnightPurple,
-                                    Color(red: 14 / 255, green: 30 / 255, blue: 60 / 255),
-                                ],
+                                colors: [Theme.mediumMidnightPurple, Theme.indigoDark],
                                 startPoint: .topLeading,
                                 endPoint: .bottomTrailing
                             )
@@ -1423,8 +1412,8 @@ struct FriendStatsView: View {
                 colors: [
                     Theme.deepMidnightPurple,  // Deep midnight purple
                     Theme.mediumMidnightPurple,  // Medium midnight purple
-                    Color(red: 14 / 255, green: 101 / 255, blue: 151 / 255).opacity(0.7),  // Dark cyan blue
-                    Color(red: 12 / 255, green: 74 / 255, blue: 110 / 255).opacity(0.6),  // Deeper cyan blue
+                    Theme.darkCyanBlue.opacity(0.7),  // Dark cyan blue
+                    Theme.deeperCyanBlue.opacity(0.6),  // Deeper cyan blue
                 ],
                 startPoint: .top,
                 endPoint: .bottom
@@ -1494,7 +1483,7 @@ struct FriendStatsView: View {
                         value: "\(user.totalSessions)",
                         unit: "completed",
                         icon: "checkmark.circle.fill",
-                        color: Color(red: 16 / 255, green: 185 / 255, blue: 129 / 255),
+                        color: Theme.emeraldGreen,
                         delay: 0.1
                     )
                     .scaleEffect(animateStats ? 1 : 0.8).opacity(animateStats ? 1 : 0)
@@ -1516,7 +1505,7 @@ struct FriendStatsView: View {
                         value: "\(user.longestSession)",
                         unit: "minutes",
                         icon: "crown.fill",
-                        color: Color(red: 236 / 255, green: 72 / 255, blue: 153 / 255),
+                        color: Theme.pink,
                         delay: 0.3
                     )
                     .scaleEffect(animateStats ? 1 : 0.8).opacity(animateStats ? 1 : 0)
@@ -1716,10 +1705,8 @@ struct WeeklySessionList: View {
                                 .fill(
                                     LinearGradient(
                                         colors: [
-                                            Color(red: 16 / 255, green: 185 / 255, blue: 129 / 255)
-                                                .opacity(0.5),
-                                            Color(red: 16 / 255, green: 185 / 255, blue: 129 / 255)
-                                                .opacity(0.3),
+                                            Theme.emeraldGreen.opacity(0.5),
+                                            Theme.emeraldGreen.opacity(0.3),
                                         ],
                                         startPoint: .top,
                                         endPoint: .bottom

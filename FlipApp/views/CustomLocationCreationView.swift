@@ -22,9 +22,7 @@ struct CustomLocationCreationView: View {
                     .fill(
                         RadialGradient(
                             gradient: Gradient(colors: [
-                                Theme.darkRed.opacity(0.15),
-                                Color(red: 127 / 255, green: 29 / 255, blue: 29 / 255)
-                                    .opacity(0.05),
+                                Theme.darkRed.opacity(0.15), Theme.darkRuby.opacity(0.05),
                             ]),
                             center: .center,
                             startRadius: 10,

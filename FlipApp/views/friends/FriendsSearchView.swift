@@ -11,26 +11,14 @@ struct FriendsSearchView: View {
     @State private var showUserProfile = false
     @State private var selectedUser: FirebaseManager.FlipUser?
 
-    // Orange-purple theme colors for friend-related views
-    private let orangePurpleGradient = LinearGradient(
-        colors: [
-            Theme.mutedPurple,  // Deep purple
-            Color(red: 47 / 255, green: 17 / 255, blue: 67 / 255),  // Medium purple
-            Color(red: 65 / 255, green: 20 / 255, blue: 60 / 255),  // Purple with hint of red
-            Color(red: 35 / 255, green: 15 / 255, blue: 50 / 255),  // Back to deeper purple
-        ],
-        startPoint: .top,
-        endPoint: .bottom
-    )
-
     private let orangeAccent = Theme.orange  // Warm Orange
     private let orangeGlow = Theme.orange.opacity(0.5)
-    private let purpleAccent = Color(red: 147 / 255, green: 51 / 255, blue: 234 / 255)  // Vibrant Purple
+    private let purpleAccent = Theme.purple  // Vibrant Purple
 
     var body: some View {
         ZStack {
             // Main background with decorative elements
-            orangePurpleGradient.edgesIgnoringSafeArea(.all)
+            Theme.orangePurpleGradient.edgesIgnoringSafeArea(.all)
 
             // Decorative elements
             BackgroundDecorationView(orangeAccent: orangeAccent, purpleAccent: purpleAccent)
@@ -41,7 +29,7 @@ struct FriendsSearchView: View {
                 searchText: $searchText,
                 orangeAccent: orangeAccent,
                 orangeGlow: orangeGlow,
-                orangePurpleGradient: orangePurpleGradient,
+                orangePurpleGradient: Theme.orangePurpleGradient,
                 selectedUser: $selectedUser,
                 showUserProfile: $showUserProfile,
                 dismiss: dismiss
@@ -460,8 +448,8 @@ struct CancelFriendRequestAlert: View {
                     .background(Color.red.opacity(0.7)).cornerRadius(10)
                 }
             }
-            .padding(25).background(Color(red: 30 / 255, green: 30 / 255, blue: 46 / 255))
-            .cornerRadius(15).shadow(radius: 10).padding(30)
+            .padding(25).background(Theme.midnightNavy).cornerRadius(15).shadow(radius: 10)
+            .padding(30)
         }
     }
 }
@@ -488,7 +476,7 @@ struct EnhancedUserSearchCard: View {
 
     private let orangeAccent = Theme.orange
     private let orangeGlow = Theme.orange.opacity(0.5)
-    private let purpleAccent = Color(red: 147 / 255, green: 51 / 255, blue: 234 / 255)
+    private let purpleAccent = Theme.purple
     private let goldAccent = Theme.yellow  // Gold color for mutual friends
 
     var body: some View {

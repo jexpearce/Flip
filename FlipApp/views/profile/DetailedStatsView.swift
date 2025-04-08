@@ -51,7 +51,7 @@ struct DetailedStatsView: View {
                         value: "\(userData?.totalFocusTime ?? sessionManager.totalFocusTime)",
                         unit: "minutes",
                         icon: "clock.fill",
-                        color: Color(red: 59 / 255, green: 130 / 255, blue: 246 / 255),
+                        color: Theme.standardBlue,
                         delay: 0
                     )
                     .scaleEffect(animateStats ? 1 : 0.8).opacity(animateStats ? 1 : 0)
@@ -63,7 +63,7 @@ struct DetailedStatsView: View {
                             "\(userData?.totalSessions ?? sessionManager.totalSuccessfulSessions)",
                         unit: "completed",
                         icon: "checkmark.circle.fill",
-                        color: Color(red: 16 / 255, green: 185 / 255, blue: 129 / 255),
+                        color: Theme.emeraldGreen,
                         delay: 0.1
                     )
                     .scaleEffect(animateStats ? 1 : 0.8).opacity(animateStats ? 1 : 0)
@@ -90,7 +90,7 @@ struct DetailedStatsView: View {
                         value: "\(userData?.longestSession ?? sessionManager.longestSession)",
                         unit: "minutes",
                         icon: "crown.fill",
-                        color: Color(red: 236 / 255, green: 72 / 255, blue: 153 / 255),
+                        color: Theme.pink,
                         delay: 0.3
                     )
                     .scaleEffect(animateStats ? 1 : 0.8).opacity(animateStats ? 1 : 0)

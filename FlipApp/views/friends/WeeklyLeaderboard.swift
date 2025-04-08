@@ -123,8 +123,7 @@ struct WeeklyLeaderboard: View {
                     .fill(
                         LinearGradient(
                             colors: [
-                                Color(red: 133 / 255, green: 77 / 255, blue: 14 / 255).opacity(0.3),
-                                Color(red: 113 / 255, green: 63 / 255, blue: 18 / 255).opacity(0.2),
+                                Theme.goldenBrown.opacity(0.3), Theme.russetBrown.opacity(0.2),
                             ],
                             startPoint: .topLeading,
                             endPoint: .bottomTrailing
@@ -165,27 +164,19 @@ struct WeeklyLeaderboard: View {
         switch index {
         case 0:  // Gold
             return LinearGradient(
-                colors: [
-                    Color(red: 253 / 255, green: 224 / 255, blue: 71 / 255), Theme.yellowyOrange,
-                ],
+                colors: [Theme.brightYellow, Theme.yellowyOrange],
                 startPoint: .top,
                 endPoint: .bottom
             )
         case 1:  // Silver
             return LinearGradient(
-                colors: [
-                    Color(red: 226 / 255, green: 232 / 255, blue: 240 / 255),
-                    Color(red: 148 / 255, green: 163 / 255, blue: 184 / 255),
-                ],
+                colors: [Theme.silverLight, Theme.silverDark],
                 startPoint: .top,
                 endPoint: .bottom
             )
         case 2:  // Bronze
             return LinearGradient(
-                colors: [
-                    Color(red: 217 / 255, green: 119 / 255, blue: 6 / 255),
-                    Color(red: 180 / 255, green: 83 / 255, blue: 9 / 255),
-                ],
+                colors: [Theme.bronzeLight, Theme.bronzeDark],
                 startPoint: .top,
                 endPoint: .bottom
             )
@@ -202,8 +193,8 @@ struct WeeklyLeaderboard: View {
     private func medalShadowColor(for index: Int) -> Color {
         switch index {
         case 0: return Theme.yellowyOrange.opacity(0.6)
-        case 1: return Color(red: 148 / 255, green: 163 / 255, blue: 184 / 255).opacity(0.6)
-        case 2: return Color(red: 180 / 255, green: 83 / 255, blue: 9 / 255).opacity(0.6)
+        case 1: return Theme.silverDark.opacity(0.6)
+        case 2: return Theme.bronzeDark.opacity(0.6)
         default: return Color.gray.opacity(0.6)
         }
     }
@@ -341,27 +332,19 @@ struct EnhancedLeaderboardRow: View {
         switch index {
         case 0:  // Gold
             return LinearGradient(
-                colors: [
-                    Color(red: 253 / 255, green: 224 / 255, blue: 71 / 255), Theme.yellowyOrange,
-                ],
+                colors: [Theme.brightYellow, Theme.yellowyOrange],
                 startPoint: .top,
                 endPoint: .bottom
             )
         case 1:  // Silver
             return LinearGradient(
-                colors: [
-                    Color(red: 226 / 255, green: 232 / 255, blue: 240 / 255),
-                    Color(red: 148 / 255, green: 163 / 255, blue: 184 / 255),
-                ],
+                colors: [Theme.silverLight, Theme.silverDark],
                 startPoint: .top,
                 endPoint: .bottom
             )
         case 2:  // Bronze
             return LinearGradient(
-                colors: [
-                    Color(red: 217 / 255, green: 119 / 255, blue: 6 / 255),
-                    Color(red: 180 / 255, green: 83 / 255, blue: 9 / 255),
-                ],
+                colors: [Theme.bronzeLight, Theme.bronzeDark],
                 startPoint: .top,
                 endPoint: .bottom
             )
@@ -378,8 +361,8 @@ struct EnhancedLeaderboardRow: View {
     private func medalShadowColor(for index: Int) -> Color {
         switch index {
         case 0: return Theme.yellowyOrange.opacity(0.6)
-        case 1: return Color(red: 148 / 255, green: 163 / 255, blue: 184 / 255).opacity(0.6)
-        case 2: return Color(red: 180 / 255, green: 83 / 255, blue: 9 / 255).opacity(0.6)
+        case 1: return Theme.silverDark.opacity(0.6)
+        case 2: return Theme.bronzeDark.opacity(0.6)
         default: return Color.gray.opacity(0.6)
         }
     }

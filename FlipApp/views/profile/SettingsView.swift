@@ -130,7 +130,7 @@ struct SettingsView: View {
     // Colors from the app's theme
     private let cyanBlueAccent = Theme.lightTealBlue
     private let deepPurple = Theme.mutedPurple
-    private let darkPurple = Color(red: 30 / 255, green: 30 / 255, blue: 46 / 255)
+    private let darkPurple = Theme.midnightNavy
 
     var body: some View {
         NavigationView {
@@ -612,10 +612,7 @@ struct SettingsSection<Content: View>: View {
                 RoundedRectangle(cornerRadius: 16)
                     .fill(
                         LinearGradient(
-                            colors: [
-                                Theme.mediumMidnightPurple,
-                                Color(red: 40 / 255, green: 25 / 255, blue: 65 / 255),
-                            ],
+                            colors: [Theme.mediumMidnightPurple, Theme.purplishNavy],
                             startPoint: .topLeading,
                             endPoint: .bottomTrailing
                         )

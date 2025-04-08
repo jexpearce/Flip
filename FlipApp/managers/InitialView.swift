@@ -138,14 +138,7 @@ struct InitialView: View {
                                 RoundedRectangle(cornerRadius: 16)
                                     .fill(
                                         LinearGradient(
-                                            colors: [
-                                                Theme.softViolet,
-                                                Color(
-                                                    red: 79 / 255,
-                                                    green: 70 / 255,
-                                                    blue: 229 / 255
-                                                ),
-                                            ],
+                                            colors: [Theme.softViolet, Theme.indigoAccent],
                                             startPoint: .leading,
                                             endPoint: .trailing
                                         )
