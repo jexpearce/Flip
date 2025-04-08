@@ -587,7 +587,6 @@ class LiveSessionManager: ObservableObject {
             }
     }
 
-
     func refreshLiveSessions() {
         print("Refreshing live sessions...")
 

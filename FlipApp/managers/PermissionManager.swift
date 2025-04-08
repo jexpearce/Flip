@@ -154,7 +154,6 @@ class PermissionManager: NSObject, ObservableObject {
         )
     }
 
-
     // Open Settings app to app-specific location settings
     func openLocationSettings() {
         if let url = URL(string: UIApplication.openSettingsURLString) {

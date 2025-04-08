@@ -332,9 +332,10 @@ struct AuthView: View {
             .padding(.horizontal, 30)
 
             // Apple Sign-In Button
-            Button(
-                action: { authManager.authenticateWithApple(completion: <#(Bool) -> Void#>)
-                }) {
+            Button(action: {
+                authManager.authenticateWithApple { success in if !success { isLoading = false } }
+
+            }) {
                 HStack {
                     Image(systemName: "applelogo").resizable().aspectRatio(contentMode: .fit)
                         .frame(height: 20)

@@ -143,7 +143,6 @@ class UserSettingsManager: ObservableObject {
         return getSetting(key: "commentNotifications", defaultValue: true)
     }
 
-
     // MARK: - Regional leaderboard privacy settings
 
     // Set regional display mode

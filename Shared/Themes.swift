@@ -132,7 +132,6 @@ struct Theme {
         endPoint: .bottom
     )
 
-
     static let amberBackgroundGradient = LinearGradient(
         colors: [
             Color(red: 120 / 255, green: 53 / 255, blue: 15 / 255).opacity(0.4),  // Amber 900
@@ -260,7 +259,6 @@ struct Theme {
         endPoint: .bottomTrailing
     )
 
-
     static let accentGradient = LinearGradient(
         colors: [yellow, orange],
         startPoint: .leading,
@@ -347,12 +345,9 @@ struct Theme {
     )
 }
 
-
 // View Extensions for Common Styles
 extension View {
 
-
     func retroGlow() -> some View { self.shadow(color: Theme.yellow.opacity(0.5), radius: 8) }
-
 
 }

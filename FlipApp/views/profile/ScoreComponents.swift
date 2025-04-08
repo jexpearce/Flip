@@ -307,8 +307,8 @@ struct ScoreHistoryView: View {
                                                 ? Color.red.opacity(0.7)
                                                 : Color.orange.opacity(0.7),
                                             scoreManager.streakStatus == .redFlame
-                                                ? Color.red.opacity(0.5) : Color.orange.opacity(0.5)
-                                                ,
+                                                ? Color.red.opacity(0.5)
+                                                : Color.orange.opacity(0.5),
                                         ],
                                         startPoint: .top,
                                         endPoint: .bottom

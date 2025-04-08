@@ -569,15 +569,18 @@ class RegionalViewModel: NSObject, ObservableObject, CLLocationManagerDelegate {
                     // User has completed at least one session, proceed to load leaderboard
                     if let building = self.selectedBuilding {
                         self.leaderboardViewModel.loadBuildingLeaderboard(building: building)
-                    } else {
+                    }
+                    else {
                         let location = LocationHandler.shared.lastLocation
                         if location.horizontalAccuracy > 0 {
                             self.leaderboardViewModel.loadRegionalLeaderboard(near: location)
-                        } else if let managerLocation = self.currentLocation {
+                        }
+                        else if let managerLocation = self.currentLocation {
                             self.leaderboardViewModel.loadRegionalLeaderboard(near: managerLocation)
                         }
                     }
-                } else {
+                }
+                else {
                     print("User has no completed sessions. Skipping leaderboard loading.")
                 }
             }

@@ -785,7 +785,6 @@ class AppManager: NSObject, ObservableObject {
         lastOrientationCheck = Date()
     }
 
-
     func scheduleBackgroundRefresh() {
         let request = BGAppRefreshTaskRequest(identifier: AppManager.backgroundRefreshIdentifier)
         request.earliestBeginDate = Date(timeIntervalSinceNow: 60)
