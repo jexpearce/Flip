@@ -38,283 +38,20 @@ struct FeedSessionCard: View {
         VStack(alignment: .leading, spacing: 0) {
             // Card content with padding
             VStack(alignment: .leading, spacing: 14) {
-                // Top section with user info and action buttons
-                HStack(spacing: 12) {
-                    // Left side: User info - only show if requested
-                    if showUserHeader {
-                        NavigationLink(destination: UserProfileLoader(userId: session.userId)) {
-                            // UPDATED: Simplified avatar with streak - no outer ring
-                            EnhancedProfileAvatarWithStreak(
-                                imageURL: userProfileImageURL,
-                                size: 46,
-                                username: session.username,
-                                streakStatus: viewModel.getUserStreakStatus(userId: session.userId)
-                            )
-                        }
-                        .buttonStyle(PlainButtonStyle())
-
-                        VStack(alignment: .leading, spacing: 2) {
-                            NavigationLink(destination: UserProfileLoader(userId: session.userId)) {
-                                Text(session.username).font(.system(size: 17, weight: .bold))
-                                    .foregroundColor(.white)
-                            }
-                            .buttonStyle(PlainButtonStyle())
-
-                            Text(session.formattedStartTime).font(.system(size: 13))
-                                .foregroundColor(.white.opacity(0.7))
-                        }
-                    }
-
-                    Spacer()
-
-                    // Right side: Status icon
-                    ZStack {
-                        Circle().fill(statusColor).frame(width: 40, height: 40)
-                            .overlay(Circle().stroke(Color.white.opacity(0.4), lineWidth: 1))
-                            .shadow(color: statusGlow, radius: 5)
-
-                        // Status icon
-                        Image(systemName: session.wasSuccessful ? "checkmark" : "xmark")
-                            .font(.system(size: 16, weight: .black)).foregroundColor(.white)
-                    }
-                }
-
-                // Rest of the card content remains the same
-                // ... (existing code for session info, content sections, etc.)
-
-                // Session info section
-                HStack {
-                    Text(sessionStatusText).font(.system(size: 18, weight: .bold))
-                        .foregroundColor(.white).shadow(color: statusGlow.opacity(0.5), radius: 4)
-
-                    if !session.wasSuccessful {
-                        Text("• Lasted \(session.actualDuration) min").font(.system(size: 14))
-                            .foregroundColor(.white.opacity(0.8))
-                    }
-
-                    Spacer()
-                }
-                .padding(.vertical, 6)
-
-                // Content sections - Enhanced with better styling
-                if hasContent {
-                    VStack(alignment: .leading, spacing: 8) {
-                        if let title = session.sessionTitle, !title.isEmpty {
-                            Text(title).font(.system(size: 16, weight: .bold))
-                                .foregroundColor(.white).lineLimit(2)
-                        }
-
-                        if let notes = session.sessionNotes, !notes.isEmpty {
-                            Text(notes).font(.system(size: 14)).foregroundColor(.white.opacity(0.9))
-                                .multilineTextAlignment(.leading).lineLimit(3)
-                        }
-                    }
-                    .padding(.vertical, 10).padding(.horizontal, 12)
-                    .background(
-                        ZStack {
-                            // Glass effect background
-                            RoundedRectangle(cornerRadius: 10).fill(Color.white.opacity(0.05))
-
-                            // Highlight on top edge
-                            RoundedRectangle(cornerRadius: 10).trim(from: 0, to: 0.5)
-                                .fill(Color.white.opacity(0.08)).rotationEffect(.degrees(180))
-                                .padding(1)
-
-                            // Subtle border
-                            RoundedRectangle(cornerRadius: 10)
-                                .stroke(Color.white.opacity(0.15), lineWidth: 0.5)
-                        }
-                    )
-                }
-
-                // Comment section with improved visual design
-                if hasComment || (viewModel.sessionComments[session.id.uuidString]?.count ?? 0) > 0
-                {
-                    CommentsView(session: session, viewModel: viewModel).padding(.vertical, 6)
-                }
-
-                // Group session participants with enhanced visual style
-                if hasGroupParticipants {
-                    VStack(alignment: .leading, spacing: 10) {
-                        // Header with subtle glow
-                        Text("GROUP SESSION").font(.system(size: 12, weight: .bold)).tracking(2)
-                            .foregroundColor(
-                                session.wasSuccessful
-                                    ? Theme.mutedGreen.opacity(0.9) : Theme.mutedRed.opacity(0.9)
-                            )
-                            .shadow(color: statusGlow.opacity(0.4), radius: 4)
-
-                        // Horizontal scrolling participant badges
-                        ScrollView(.horizontal, showsIndicators: false) {
-                            HStack(spacing: 8) {
-                                ForEach(session.participants!) { participant in
-                                    NavigationLink(
-                                        destination: UserProfileLoader(userId: participant.id)
-                                    ) {
-                                        GroupParticipantBadge(
-                                            username: participant.username,
-                                            wasSuccessful: participant.wasSuccessful
-                                        )
-                                    }
-                                    .buttonStyle(PlainButtonStyle())
-                                }
-                            }
-                            .padding(.horizontal, 2).padding(.bottom, 2)
-                        }
-                    }
-                    .padding(.vertical, 6)
-                }
-
-                // Action buttons and likes section with improved styling
-                VStack(spacing: 10) {
-                    // Like info section with enhanced styling
-                    if likesCount > 0 {
-                        Button(action: { showLikesSheet = true }) {
-                            HStack(spacing: 6) {
-                                Image(systemName: "heart.fill").font(.system(size: 12))
-                                    .foregroundColor(Theme.orange.opacity(0.9))
-
-                                if likesCount == 1 {
-                                    Text("1 like").font(.system(size: 12, weight: .medium))
-                                        .foregroundColor(.white.opacity(0.8))
-                                }
-                                else {
-                                    Text("\(likesCount) likes")
-                                        .font(.system(size: 12, weight: .medium))
-                                        .foregroundColor(.white.opacity(0.8))
-                                }
-                            }
-                            .frame(maxWidth: .infinity, alignment: .leading).padding(.top, 2)
-                        }
-                        .buttonStyle(PlainButtonStyle())
-                    }
-
-                    Divider().background(Color.white.opacity(0.15)).padding(.vertical, 4)
-
-                    // Action buttons with enhanced styling
-                    HStack(spacing: 20) {
-                        // Like button
-                        Button(action: {
-                            // Toggle like state via ViewModel
-                            viewModel.likeSession(sessionId: session.id.uuidString)
-
-                            // Haptic feedback
-                            let generator = UIImpactFeedbackGenerator(style: .medium)
-                            generator.impactOccurred()
-                        }) {
-                            HStack(spacing: 8) {
-                                Image(systemName: isLiked ? "heart.fill" : "heart")
-                                    .font(.system(size: 16, weight: .semibold))
-                                    .foregroundColor(isLiked ? Theme.orange : .white.opacity(0.9))
-
-                                Text("Like").font(.system(size: 14, weight: .medium))
-                                    .foregroundColor(isLiked ? Theme.orange : .white.opacity(0.9))
-                            }
-                        }
-                        .buttonStyle(PlainButtonStyle())
-
-                        // Comment button
-                        Button(action: {
-                            print("Comment button pressed, current state: \(showCommentField)")
-                            // Force reset the comment field if it's already in a hidden state
-                            withAnimation(.spring()) {
-                                if !showCommentField {
-                                    comment = ""  // Clear any previous comment text
-                                    showCommentField = true
-                                    // Focus the comment field after a brief delay
-                                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-                                        isCommentFocused = true
-                                    }
-                                }
-                                else {
-                                    showCommentField = false
-                                    isCommentFocused = false
-                                }
-                            }
-
-                            // Haptic feedback
-                            let generator = UIImpactFeedbackGenerator(style: .light)
-                            generator.impactOccurred()
-                        }) {
-                            HStack(spacing: 8) {
-                                Image(systemName: hasComment ? "text.bubble.fill" : "text.bubble")
-                                    .font(.system(size: 16, weight: .semibold))
-                                    .foregroundColor(.white.opacity(0.9))
-
-                                Text("Comment").font(.system(size: 14, weight: .medium))
-                                    .foregroundColor(.white.opacity(0.9))
-                            }
-                        }
-                        .buttonStyle(PlainButtonStyle())
-
-                        Spacer()
-                    }
-                }
-                .padding(.top, 4)
-
-                // Comment field with improved styling
-                if showCommentField {
-                    CommentInputField(
-                        comment: $comment,
-                        isFocused: _isCommentFocused,
-                        showSavedIndicator: $showSavedIndicator,
-                        showCommentField: $showCommentField,
-                        onSubmit: { newComment in saveComment(newComment) }
-                    )
-                    .transition(.move(edge: .bottom).combined(with: .opacity)).padding(.top, 12)
-                }
+                userHeaderView
+                sessionInfoSection
+                contentSectionsView
+                commentSectionView
+                groupParticipantsView
+                actionButtonsView
+                commentFieldView
             }
             .padding(.vertical, 18).padding(.horizontal, 18)
         }
-        .background(
-            ZStack {
-                // Base gradient background
-                RoundedRectangle(cornerRadius: 20).fill(cardGradient)
-                LinearGradient(
-                    colors: [
-                        Color.white.opacity(0.1),  // More visible at top
-                        Color.white.opacity(0.0),  // Fades to invisible at 1/3 down
-                    ],
-                    startPoint: .top,
-                    endPoint: UnitPoint(x: 0.5, y: 0.2)  // End at 30% down the card
-                )
-                .mask(RoundedRectangle(cornerRadius: 20))
-
-                // Subtle glass effect overlay
-                RoundedRectangle(cornerRadius: 20).fill(Color.white.opacity(0.05))
-
-                // Top highlight for glass effect
-                RoundedRectangle(cornerRadius: 20).trim(from: 0, to: 0.5)
-                    .fill(Color.white.opacity(0.08)).rotationEffect(.degrees(180)).padding(1)
-
-                // Glowing border based on session status
-                RoundedRectangle(cornerRadius: 20)
-                    .stroke(
-                        LinearGradient(
-                            colors: [
-                                Color.white.opacity(0.7),
-                                session.wasSuccessful
-                                    ? Theme.mutedGreen.opacity(0.3) : Theme.mutedRed.opacity(0.3),
-                                Color.white.opacity(0.2),
-                            ],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        ),
-                        lineWidth: 1.2
-                    )
-
-                // Subtle indicator at the top
-                RoundedRectangle(cornerRadius: 2)
-                    .fill(
-                        session.wasSuccessful
-                            ? Theme.mutedGreen.opacity(0.8) : Theme.mutedRed.opacity(0.8)
-                    )
-                    .frame(width: 40, height: 3).padding(.top, 8)
-                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
-            }
-        )
+        .background(cardBackground)
         .shadow(color: Color.black.opacity(0.2), radius: 10, x: 0, y: 5)
-        .shadow(color: statusGlow.opacity(0.2), radius: 15, x: 0, y: 5).contentShape(Rectangle())
+        .shadow(color: statusGlow.opacity(0.2), radius: 15, x: 0, y: 5)
+        .contentShape(Rectangle())
         .onTapGesture {
             // Dismiss keyboard when tapping on the card
             if isCommentFocused { isCommentFocused = false }
@@ -330,40 +67,327 @@ struct FeedSessionCard: View {
                 viewModel: viewModel
             )
         }
-        .onAppear {
-            // Update like state when the view appears
-            updateLikeState()
-
-            // Load user's streak status
-            viewModel.loadUserStreakStatus(userId: session.userId) { status in
-                self.userStreakStatus = status
-            }
-
-            // Set up keyboard notifications
-            NotificationCenter.default.addObserver(
-                forName: UIResponder.keyboardWillShowNotification,
-                object: nil,
-                queue: .main
-            ) { notification in
-                if let keyboardFrame = notification.userInfo?[
-                    UIResponder.keyboardFrameEndUserInfoKey
-                ] as? CGRect {
-                    keyboardHeight = keyboardFrame.height
-                }
-            }
-
-            NotificationCenter.default.addObserver(
-                forName: UIResponder.keyboardWillHideNotification,
-                object: nil,
-                queue: .main
-            ) { _ in keyboardHeight = 0 }
-        }
+        .onAppear(perform: onAppearSetup)
         .onDisappear {
             // Remove keyboard observers
             NotificationCenter.default.removeObserver(self)
         }
         .onChange(of: viewModel.likedByUser[session.id.uuidString]) { updateLikeState() }
         .onChange(of: viewModel.sessionLikes[session.id.uuidString]) { updateLikeState() }
+    }
+    
+    // MARK: - View Components
+    
+    private var userHeaderView: some View {
+        // Top section with user info and action buttons
+        HStack(spacing: 12) {
+            // Left side: User info - only show if requested
+            if showUserHeader {
+                NavigationLink(destination: UserProfileLoader(userId: session.userId)) {
+                    // UPDATED: Simplified avatar with streak - no outer ring
+                    EnhancedProfileAvatarWithStreak(
+                        imageURL: userProfileImageURL,
+                        size: 46,
+                        username: session.username,
+                        streakStatus: viewModel.getUserStreakStatus(userId: session.userId)
+                    )
+                }
+                .buttonStyle(PlainButtonStyle())
+
+                VStack(alignment: .leading, spacing: 2) {
+                    NavigationLink(destination: UserProfileLoader(userId: session.userId)) {
+                        Text(session.username).font(.system(size: 17, weight: .bold))
+                            .foregroundColor(.white)
+                    }
+                    .buttonStyle(PlainButtonStyle())
+
+                    Text(session.formattedStartTime).font(.system(size: 13))
+                        .foregroundColor(.white.opacity(0.7))
+                }
+            }
+
+            Spacer()
+
+            // Right side: Status icon
+            statusIconView
+        }
+    }
+    
+    private var statusIconView: some View {
+        ZStack {
+            Circle().fill(statusColor).frame(width: 40, height: 40)
+                .overlay(Circle().stroke(Color.white.opacity(0.4), lineWidth: 1))
+                .shadow(color: statusGlow, radius: 5)
+
+            // Status icon
+            Image(systemName: session.wasSuccessful ? "checkmark" : "xmark")
+                .font(.system(size: 16, weight: .black)).foregroundColor(.white)
+        }
+    }
+    
+    private var sessionInfoSection: some View {
+        // Session info section
+        HStack {
+            Text(sessionStatusText).font(.system(size: 18, weight: .bold))
+                .foregroundColor(.white).shadow(color: statusGlow.opacity(0.5), radius: 4)
+
+            if !session.wasSuccessful {
+                Text("• Lasted \(session.actualDuration) min").font(.system(size: 14))
+                    .foregroundColor(.white.opacity(0.8))
+            }
+
+            Spacer()
+        }
+        .padding(.vertical, 6)
+    }
+    
+    private var contentSectionsView: some View {
+        Group {
+            if hasContent {
+                VStack(alignment: .leading, spacing: 8) {
+                    if let title = session.sessionTitle, !title.isEmpty {
+                        Text(title).font(.system(size: 16, weight: .bold))
+                            .foregroundColor(.white).lineLimit(2)
+                    }
+
+                    if let notes = session.sessionNotes, !notes.isEmpty {
+                        Text(notes).font(.system(size: 14)).foregroundColor(.white.opacity(0.9))
+                            .multilineTextAlignment(.leading).lineLimit(3)
+                    }
+                }
+                .padding(.vertical, 10).padding(.horizontal, 12)
+                .background(contentBackground)
+            }
+        }
+    }
+    
+    private var contentBackground: some View {
+        ZStack {
+            // Glass effect background
+            RoundedRectangle(cornerRadius: 10).fill(Color.white.opacity(0.05))
+
+            // Highlight on top edge
+            RoundedRectangle(cornerRadius: 10).trim(from: 0, to: 0.5)
+                .fill(Color.white.opacity(0.08)).rotationEffect(.degrees(180))
+                .padding(1)
+
+            // Subtle border
+            RoundedRectangle(cornerRadius: 10)
+                .stroke(Color.white.opacity(0.15), lineWidth: 0.5)
+        }
+    }
+    
+    private var commentSectionView: some View {
+        Group {
+            if hasComment || (viewModel.sessionComments[session.id.uuidString]?.count ?? 0) > 0 {
+                CommentsView(session: session, viewModel: viewModel).padding(.vertical, 6)
+            }
+        }
+    }
+    
+    private var groupParticipantsView: some View {
+        Group {
+            if hasGroupParticipants {
+                VStack(alignment: .leading, spacing: 10) {
+                    // Header with subtle glow
+                    Text("GROUP SESSION").font(.system(size: 12, weight: .bold)).tracking(2)
+                        .foregroundColor(
+                            session.wasSuccessful
+                                ? Theme.mutedGreen.opacity(0.9) : Theme.mutedRed.opacity(0.9)
+                        )
+                        .shadow(color: statusGlow.opacity(0.4), radius: 4)
+
+                    // Horizontal scrolling participant badges
+                    ScrollView(.horizontal, showsIndicators: false) {
+                        HStack(spacing: 8) {
+                            ForEach(session.participants!) { participant in
+                                NavigationLink(
+                                    destination: UserProfileLoader(userId: participant.id)
+                                ) {
+                                    GroupParticipantBadge(
+                                        username: participant.username,
+                                        wasSuccessful: participant.wasSuccessful
+                                    )
+                                }
+                                .buttonStyle(PlainButtonStyle())
+                            }
+                        }
+                        .padding(.horizontal, 2).padding(.bottom, 2)
+                    }
+                }
+                .padding(.vertical, 6)
+            }
+        }
+    }
+    
+    private var actionButtonsView: some View {
+        // Action buttons and likes section with improved styling
+        VStack(spacing: 10) {
+            // Like info section with enhanced styling
+            likeInfoSection
+            
+            Divider().background(Color.white.opacity(0.15)).padding(.vertical, 4)
+
+            // Action buttons with enhanced styling
+            actionButtonsRow
+        }
+        .padding(.top, 4)
+    }
+    
+    private var likeInfoSection: some View {
+        Group {
+            if likesCount > 0 {
+                Button(action: { showLikesSheet = true }) {
+                    HStack(spacing: 6) {
+                        Image(systemName: "heart.fill").font(.system(size: 12))
+                            .foregroundColor(Theme.orange.opacity(0.9))
+
+                        if likesCount == 1 {
+                            Text("1 like").font(.system(size: 12, weight: .medium))
+                                .foregroundColor(.white.opacity(0.8))
+                        }
+                        else {
+                            Text("\(likesCount) likes")
+                                .font(.system(size: 12, weight: .medium))
+                                .foregroundColor(.white.opacity(0.8))
+                        }
+                    }
+                    .frame(maxWidth: .infinity, alignment: .leading).padding(.top, 2)
+                }
+                .buttonStyle(PlainButtonStyle())
+            }
+        }
+    }
+    
+    private var actionButtonsRow: some View {
+        HStack(spacing: 20) {
+            // Like button
+            likeButton
+            
+            // Comment button
+            commentButton
+            
+            Spacer()
+        }
+    }
+    
+    private var likeButton: some View {
+        Button(action: {
+            // Toggle like state via ViewModel
+            viewModel.likeSession(sessionId: session.id.uuidString)
+
+            // Haptic feedback
+            let generator = UIImpactFeedbackGenerator(style: .medium)
+            generator.impactOccurred()
+        }) {
+            HStack(spacing: 8) {
+                Image(systemName: isLiked ? "heart.fill" : "heart")
+                    .font(.system(size: 16, weight: .semibold))
+                    .foregroundColor(isLiked ? Theme.orange : .white.opacity(0.9))
+
+                Text("Like").font(.system(size: 14, weight: .medium))
+                    .foregroundColor(isLiked ? Theme.orange : .white.opacity(0.9))
+            }
+        }
+        .buttonStyle(PlainButtonStyle())
+    }
+    
+    private var commentButton: some View {
+        Button(action: {
+            print("Comment button pressed, current state: \(showCommentField)")
+            // Force reset the comment field if it's already in a hidden state
+            withAnimation(.spring()) {
+                if !showCommentField {
+                    comment = ""  // Clear any previous comment text
+                    showCommentField = true
+                    // Focus the comment field after a brief delay
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                        isCommentFocused = true
+                    }
+                }
+                else {
+                    showCommentField = false
+                    isCommentFocused = false
+                }
+            }
+
+            // Haptic feedback
+            let generator = UIImpactFeedbackGenerator(style: .light)
+            generator.impactOccurred()
+        }) {
+            HStack(spacing: 8) {
+                Image(systemName: hasComment ? "text.bubble.fill" : "text.bubble")
+                    .font(.system(size: 16, weight: .semibold))
+                    .foregroundColor(.white.opacity(0.9))
+
+                Text("Comment").font(.system(size: 14, weight: .medium))
+                    .foregroundColor(.white.opacity(0.9))
+            }
+        }
+        .buttonStyle(PlainButtonStyle())
+    }
+    
+    private var commentFieldView: some View {
+        Group {
+            if showCommentField {
+                CommentInputField(
+                    comment: $comment,
+                    isFocused: _isCommentFocused,
+                    showSavedIndicator: $showSavedIndicator,
+                    showCommentField: $showCommentField,
+                    onSubmit: { newComment in saveComment() }
+                )
+                .transition(.move(edge: .bottom).combined(with: .opacity)).padding(.top, 12)
+            }
+        }
+    }
+    
+    private var cardBackground: some View {
+        ZStack {
+            // Base gradient background
+            RoundedRectangle(cornerRadius: 20).fill(cardGradient)
+            LinearGradient(
+                colors: [
+                    Color.white.opacity(0.1),  // More visible at top
+                    Color.white.opacity(0.0),  // Fades to invisible at 1/3 down
+                ],
+                startPoint: .top,
+                endPoint: UnitPoint(x: 0.5, y: 0.2)  // End at 30% down the card
+            )
+            .mask(RoundedRectangle(cornerRadius: 20))
+
+            // Subtle glass effect overlay
+            RoundedRectangle(cornerRadius: 20).fill(Color.white.opacity(0.05))
+
+            // Top highlight for glass effect
+            RoundedRectangle(cornerRadius: 20).trim(from: 0, to: 0.5)
+                .fill(Color.white.opacity(0.08)).rotationEffect(.degrees(180)).padding(1)
+
+            // Glowing border based on session status
+            RoundedRectangle(cornerRadius: 20)
+                .stroke(
+                    LinearGradient(
+                        colors: [
+                            Color.white.opacity(0.7),
+                            session.wasSuccessful
+                                ? Theme.mutedGreen.opacity(0.3) : Theme.mutedRed.opacity(0.3),
+                            Color.white.opacity(0.2),
+                        ],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    ),
+                    lineWidth: 1.2
+                )
+
+            // Subtle indicator at the top
+            RoundedRectangle(cornerRadius: 2)
+                .fill(
+                    session.wasSuccessful
+                        ? Theme.mutedGreen.opacity(0.8) : Theme.mutedRed.opacity(0.8)
+                )
+                .frame(width: 40, height: 3).padding(.top, 8)
+                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+        }
     }
 
     // MARK: - Helper Properties
@@ -425,6 +449,39 @@ struct FeedSessionCard: View {
     }
 
     // MARK: - Helper Methods
+    
+    private func onAppearSetup() {
+        // Update like state when the view appears
+        updateLikeState()
+
+        // Load user's streak status
+        viewModel.loadUserStreakStatus(userId: session.userId) { status in
+            self.userStreakStatus = status
+        }
+
+        setupKeyboardNotifications()
+    }
+    
+    private func setupKeyboardNotifications() {
+        // Set up keyboard notifications
+        NotificationCenter.default.addObserver(
+            forName: UIResponder.keyboardWillShowNotification,
+            object: nil,
+            queue: .main
+        ) { notification in
+            if let keyboardFrame = notification.userInfo?[
+                UIResponder.keyboardFrameEndUserInfoKey
+            ] as? CGRect {
+                keyboardHeight = keyboardFrame.height
+            }
+        }
+
+        NotificationCenter.default.addObserver(
+            forName: UIResponder.keyboardWillHideNotification,
+            object: nil,
+            queue: .main
+        ) { _ in keyboardHeight = 0 }
+    }
 
     private func updateLikeState() {
         let sessionId = session.id.uuidString
