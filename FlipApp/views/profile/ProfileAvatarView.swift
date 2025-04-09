@@ -173,7 +173,6 @@ struct EnhancedProfileAvatarWithStreak: View {
     }
 }
 
-
 // Helper for caching profile images and optimizing loading
 // Update the existing ProfileImageCache class in ProfileAvatarView.swift
 class ProfileImageCache {

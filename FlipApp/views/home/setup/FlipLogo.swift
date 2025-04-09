@@ -38,7 +38,6 @@ struct FlipLogo: View {
     }
 }
 
-
 struct BeginButton: View {
     let action: () -> Void
     var joinMode: Bool = false

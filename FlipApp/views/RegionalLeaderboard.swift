@@ -1264,4 +1264,3 @@ struct RegionalLeaderboardEntry: Identifiable {
     let isCurrentUser: Bool
     var isAnonymous: Bool = false  // Add this property
 }
-

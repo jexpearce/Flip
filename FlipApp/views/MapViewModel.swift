@@ -40,7 +40,6 @@ struct FriendLocation: Identifiable, Equatable {
         return formatter.localizedString(for: sessionStartTime, relativeTo: Date())
     }
 
-
     // Required for Equatable conformance - needed for proper map view refreshing
     static func == (lhs: FriendLocation, rhs: FriendLocation) -> Bool {
         return lhs.id == rhs.id && lhs.username == rhs.username
@@ -473,7 +472,6 @@ class MapViewModel: NSObject, ObservableObject, CLLocationManagerDelegate {
                 }
             }
     }
-
 
     // MARK: - CLLocationManagerDelegate methods
 

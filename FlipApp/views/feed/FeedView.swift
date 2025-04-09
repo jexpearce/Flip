@@ -868,7 +868,6 @@ class FeedViewModel: ObservableObject {
             }
     }
 
-
     func loadAllSessionData() {
         print("Loading data for all visible sessions")
 

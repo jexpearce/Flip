@@ -165,6 +165,3 @@ struct ModernPickerStyle: View {
         .opacity(isDisabled ? 0.5 : 1)
     }
 }
-
-
-
