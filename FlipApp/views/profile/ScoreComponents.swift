@@ -1,86 +1,6 @@
 import Foundation
 import SwiftUI
 
-// NEW: Streak indicator bar component
-struct StreakIndicatorBar: View {
-    @ObservedObject var scoreManager: ScoreManager
-    @State private var isAnimating = false
-
-    var body: some View {
-        HStack(spacing: 10) {
-            // Streak flame icon
-            ZStack {
-                Circle()
-                    .fill(
-                        LinearGradient(
-                            colors: [
-                                scoreManager.streakStatus == .redFlame
-                                    ? Color.red.opacity(0.7) : Color.orange.opacity(0.7),
-                                scoreManager.streakStatus == .redFlame
-                                    ? Color.red.opacity(0.5) : Color.orange.opacity(0.5),
-                            ],
-                            startPoint: .top,
-                            endPoint: .bottom
-                        )
-                    )
-                    .frame(width: 32, height: 32)
-
-                Image(systemName: "flame.fill").font(.system(size: 16))
-                    .foregroundColor(Theme.glowWhite).scaleEffect(isAnimating ? 1.1 : 0.9)
-                    .animation(
-                        Animation.easeInOut(duration: 1.2).repeatForever(autoreverses: true),
-                        value: isAnimating
-                    )
-            }
-            .shadow(
-                color: scoreManager.streakStatus == .redFlame
-                    ? Color.red.opacity(0.8) : Color.orange.opacity(0.8),
-                radius: 8
-            )
-
-            // Streak info
-            VStack(alignment: .leading, spacing: 2) {
-                Text(scoreManager.streakStatus == .redFlame ? "BLAZING STREAK! 🔥" : "STREAK! 🔥")
-                    .font(.system(size: 12, weight: .black))
-                    .foregroundColor(
-                        scoreManager.streakStatus == .redFlame ? Color.red : Color.orange
-                    )
-
-                Text(
-                    "\(scoreManager.currentStreak) sessions · \(scoreManager.streakSessionsTime) minutes"
-                )
-                .font(.system(size: 11, weight: .medium)).foregroundColor(.white.opacity(0.8))
-            }
-
-            Spacer()
-        }
-        .padding(.vertical, 8).padding(.horizontal, 12)
-        .background(
-            RoundedRectangle(cornerRadius: 10)
-                .fill(
-                    LinearGradient(
-                        colors: [
-                            scoreManager.streakStatus == .redFlame
-                                ? Color.red.opacity(0.15) : Color.orange.opacity(0.15),
-                            scoreManager.streakStatus == .redFlame
-                                ? Color.red.opacity(0.05) : Color.orange.opacity(0.05),
-                        ],
-                        startPoint: .leading,
-                        endPoint: .trailing
-                    )
-                )
-                .overlay(
-                    RoundedRectangle(cornerRadius: 10)
-                        .stroke(
-                            scoreManager.streakStatus == .redFlame
-                                ? Color.red.opacity(0.3) : Color.orange.opacity(0.3),
-                            lineWidth: 1
-                        )
-                )
-        )
-        .onAppear { isAnimating = true }
-    }
-}
 
 // ENHANCED: Updated with more vibrant colors and indicator for streaks
 struct RankCircle: View {
@@ -698,19 +618,6 @@ struct ScoreInfoView: View {
         case 270.0...300.0: return Theme.brightFuchsia  // Bright fuchsia
         default: return Color.gray
         }
-    }
-}
-
-// Helper extension for optional SwiftUI modifiers
-extension View {
-    // Helper to extract common modifiers for section titles
-    func sectionTitle() -> some View {
-        self.font(.system(size: 20, weight: .bold)).foregroundColor(.white)
-    }
-
-    // Helper to extract common modifiers for section text
-    func sectionText() -> some View {
-        self.font(.system(size: 16)).foregroundColor(.white.opacity(0.8)).padding(.bottom, 10)
     }
 }
 

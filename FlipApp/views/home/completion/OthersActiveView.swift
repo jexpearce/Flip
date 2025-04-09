@@ -7,7 +7,6 @@ struct OthersActiveView: View {
     @State private var showIcon = false
     @State private var showTitle = false
     @State private var showStats = false
-    @State private var showNotes = false
     @State private var showButton = false
     @State private var isGlowing = false
     @State private var isButtonPressed = false
@@ -256,7 +255,6 @@ struct OthersActiveView: View {
 
     struct ActiveParticipantsList: View {
         let participants: [ParticipantDetail]
-        @State private var timeString: String = ""
         private let timer = Timer.publish(every: 1, on: .main, in: .common).autoconnect()
 
         var body: some View {

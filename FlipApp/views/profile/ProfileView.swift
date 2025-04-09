@@ -3,17 +3,13 @@ import SwiftUI
 
 struct ProfileView: View {
     @EnvironmentObject var sessionManager: SessionManager
-    @StateObject private var authManager = AuthManager.shared
     @StateObject private var scoreManager = ScoreManager.shared
     @StateObject private var profileImageManager = ProfileImageManager()
 
-    @State private var isSigningOut = false
     @State private var showAllSessions = false
     @State private var showStatsDetail = false
     @State private var showDetailedStats = false
-    @State private var showSettings = false
     @State private var username = FirebaseManager.shared.currentUser?.username ?? "User"
-    @State private var showUploadProgress = false
     @State private var showSettingsSheet = false
 
     // Cyan-midnight theme colors

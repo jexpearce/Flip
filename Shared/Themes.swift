@@ -9,7 +9,6 @@ struct Theme {
 
     static let glowWhite = Color.white
     static let offWhite = Color(white: 0.9)
-    static let lightGray = Color(white: 0.3)
     // CONSOLIDATED: yellow family
     static let yellow = Color(red: 250 / 255, green: 204 / 255, blue: 21 / 255)  // Vibrant yellow
     static let darkYellow = Color(red: 202 / 255, green: 138 / 255, blue: 4 / 255)  // Darker yellow
@@ -61,8 +60,6 @@ struct Theme {
     static let bronzeLight = Color(red: 217 / 255, green: 119 / 255, blue: 6 / 255)
     static let bronzeDark = Color(red: 180 / 255, green: 83 / 255, blue: 9 / 255)
     static let oliveGreen = Color(red: 20 / 255, green: 83 / 255, blue: 45 / 255)
-    static let navyBlue = Color(red: 26 / 255, green: 32 / 255, blue: 58 / 255)
-    static let tealBlue = Color(red: 17 / 255, green: 54 / 255, blue: 71 / 255)
     static let purplishNavy = Color(red: 40 / 255, green: 25 / 255, blue: 65 / 255)
     static let darkCyanBlue = Color(red: 14 / 255, green: 101 / 255, blue: 151 / 255)
     static let deeperCyanBlue = Color(red: 12 / 255, green: 74 / 255, blue: 110 / 255)
@@ -163,11 +160,7 @@ struct Theme {
         startPoint: .top,
         endPoint: .bottom
     )
-    static let successGradient2 = LinearGradient(
-        colors: [Theme.navyBlue.opacity(0.6), Theme.tealBlue.opacity(0.5)],
-        startPoint: .topLeading,
-        endPoint: .bottomTrailing
-    )
+
     static let nonSuccessGradient = LinearGradient(
         colors: [
             Color(red: 55 / 255, green: 30 / 255, blue: 50 / 255).opacity(0.95),
@@ -177,14 +170,7 @@ struct Theme {
         startPoint: .top,
         endPoint: .bottom
     )
-    static let nonSuccessGradient2 = LinearGradient(
-        colors: [
-            Color(red: 45 / 255, green: 21 / 255, blue: 38 / 255).opacity(0.9),
-            Color(red: 26 / 255, green: 32 / 255, blue: 58 / 255).opacity(0.8),
-        ],
-        startPoint: .topLeading,
-        endPoint: .bottomTrailing
-    )
+
     static let profileGradient = LinearGradient(
         colors: [
             deepMidnightPurple, mediumMidnightPurple, darkCyanBlue.opacity(0.7),  // Using existing darkCyanBlue

@@ -230,12 +230,6 @@ struct PausedView: View {
                 .foregroundColor(.white.opacity(0.6))
         }
     }
-
-    private func formatTime(seconds: Int) -> String {
-        let minutes = seconds / 60
-        let remainingSeconds = seconds % 60
-        return String(format: "%d:%02d", minutes, remainingSeconds)
-    }
 }
 
 struct CustomCancelAlert: View {

@@ -77,7 +77,6 @@ struct UserProfileView: View {
     @State private var showFriendsList = false
     @State private var friendRequestSent = false
     @StateObject private var weeklyViewModel = WeeklySessionListViewModel()
-    @StateObject private var scoreManager = ScoreManager.shared
     @StateObject private var friendManager = FriendManager()
     @StateObject private var searchManager = SearchManager()
     @Environment(\.presentationMode) var presentationMode

@@ -130,56 +130,6 @@ struct WeeklyLeaderboard: View {
         .shadow(color: Theme.yellowyOrange.opacity(0.2), radius: 10)
         .onAppear { viewModel.loadLeaderboard() }
     }
-
-    // Medal view for top 3
-    private func medalView(for index: Int) -> some View {
-        ZStack {
-            // Medal color based on rank
-            Image(systemName: "medal.fill").font(.system(size: 22))
-                .foregroundStyle(medalGradient(for: index))
-                .shadow(color: medalShadowColor(for: index), radius: 4)
-        }
-    }
-
-    // Medal gradients
-    private func medalGradient(for index: Int) -> LinearGradient {
-        switch index {
-        case 0:  // Gold
-            return LinearGradient(
-                colors: [Theme.brightYellow, Theme.yellowyOrange],
-                startPoint: .top,
-                endPoint: .bottom
-            )
-        case 1:  // Silver
-            return LinearGradient(
-                colors: [Theme.silverLight, Theme.silverDark],
-                startPoint: .top,
-                endPoint: .bottom
-            )
-        case 2:  // Bronze
-            return LinearGradient(
-                colors: [Theme.bronzeLight, Theme.bronzeDark],
-                startPoint: .top,
-                endPoint: .bottom
-            )
-        default:
-            return LinearGradient(
-                colors: [Color.gray, Color.gray.opacity(0.7)],
-                startPoint: .top,
-                endPoint: .bottom
-            )
-        }
-    }
-
-    // Medal shadow colors
-    private func medalShadowColor(for index: Int) -> Color {
-        switch index {
-        case 0: return Theme.yellowyOrange.opacity(0.6)
-        case 1: return Theme.silverDark.opacity(0.6)
-        case 2: return Theme.bronzeDark.opacity(0.6)
-        default: return Color.gray.opacity(0.6)
-        }
-    }
 }
 
 // NEW: Enhanced leaderboard row with streak indicators

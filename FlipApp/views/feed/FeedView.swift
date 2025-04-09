@@ -502,33 +502,6 @@ class FeedViewModel: ObservableObject {
     func getUserStreakStatus(userId: String) -> StreakStatus {
         return userStreakStatus[userId] ?? .none
     }
-    func getUser(for userId: String) -> FirebaseManager.FlipUser {
-        // Return the user if we have it, otherwise return a default user
-        // We attempt to get the cached data first
-        if let cachedUser = users[userId],
-            !cachedUser.username.isEmpty && cachedUser.username != "User"
-        {
-            return cachedUser
-        }
-
-        // If we don't have it cached, make sure we load it for next time
-        // Use a higher priority for this immediate request
-        DispatchQueue.global(qos: .userInitiated).async { self.loadUserData(userId: userId) }
-
-        // Return a placeholder user until the data loads
-        // Use userId prefix as fallback for better identification
-        let userIdPrefix = String(userId.prefix(4))
-        return FirebaseManager.FlipUser(
-            id: userId,
-            username: "User \(userIdPrefix)",
-            totalFocusTime: 0,
-            totalSessions: 0,
-            longestSession: 0,
-            friends: [],
-            friendRequests: [],
-            sentRequests: []
-        )
-    }
     func preloadUserData(for sessions: [Session]) {
         print("Preloading user data for \(sessions.count) sessions")
         let dispatchGroup = DispatchGroup()
@@ -850,22 +823,6 @@ class FeedViewModel: ObservableObject {
     func cleanupLikesListeners() {
         for (_, listener) in likesListeners { listener.remove() }
         likesListeners.removeAll()
-    }
-
-    // Original comment method - kept for backward compatibility
-    func saveComment(sessionId: String, comment: String) {
-        guard !comment.isEmpty, let _currentUserId = Auth.auth().currentUser?.uid else { return }
-
-        // Update the Firestore document
-        firebaseManager.db.collection("sessions").document(sessionId)
-            .updateData(["comment": comment]) { [weak self] error in
-                if let error = error {
-                    DispatchQueue.main.async {
-                        self?.showError = true
-                        self?.errorMessage = "Failed to save comment: \(error.localizedDescription)"
-                    }
-                }
-            }
     }
 
     func loadAllSessionData() {

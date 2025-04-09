@@ -267,7 +267,7 @@ extension ScoreManager {
         )
 
         // Check both rank promotion and streak achievement
-        let rankPromotion = checkForRankPromotion(oldScore: oldScore, newScore: currentScore)
+        let rankPromotion = checkForRankPromotion(oldScore: oldScore)
 
         let streakAchievement: (Bool, StreakStatus, Int)? =
             if let achievement = checkForStreakAchievement(oldStatus: oldStreakStatus) {

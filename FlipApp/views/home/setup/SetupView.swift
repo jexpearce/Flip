@@ -7,16 +7,13 @@ struct SetupView: View {
     @State private var isInfinitePauses = false
     @State private var selectedPauseDurationIndex = 1  // Default to 5 minutes (index 1)
     @AppStorage("hasShownPauseWarning") private var hasShownPauseWarning = false
-    @ObservedObject private var liveSessionManager = LiveSessionManager.shared
     @ObservedObject private var regionalViewModel = RegionalViewModel.shared
-    @State private var isJoining = false
     @State private var showJoiningIndicator = false
     @ObservedObject private var permissionManager = PermissionManager.shared
     @State private var viewRouter = ViewRouter()
     @State private var showLocationSelector = false
     @State private var showRules = false
     @State private var showLocationUpgradeAlert = false
-    @State private var showFirstSessionAlert: Bool = false
 
     // Check if we're navigating back from a joined session view
     @State private var joinLiveSessionMode = false
@@ -492,7 +489,6 @@ struct LocationSelectorPopup: View {
     let buildingName: String  // Keep for compatibility
     @Binding var isPresented: Bool
     let onChangeLocation: () -> Void  // Keep for compatibility
-    @ObservedObject private var regionalViewModel = RegionalViewModel.shared
 
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {

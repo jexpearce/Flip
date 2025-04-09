@@ -190,46 +190,5 @@ class ProfileImageCache {
         cache.setObject(image, forKey: NSString(string: userId))
     }
 
-    // Clear cache for specific user
-    func clearCacheForUser(_ userId: String) {
-        cache.removeObject(forKey: NSString(string: userId))
-    }
-
-    // This method is for backward compatibility with your existing code
-    func getImage(for urlString: String, completion: @escaping (UIImage?) -> Void) {
-        // Extract user ID from URL if it contains one, otherwise use the whole URL
-        let userId =
-            urlString.split(separator: "/").last?.split(separator: "_").first.map(String.init)
-            ?? urlString
-
-        // Check if image is already in memory cache
-        let cacheKey = NSString(string: urlString)
-        if let cachedImage = cache.object(forKey: cacheKey) {
-            completion(cachedImage)
-            return
-        }
-
-        // If not in cache, download from Firebase
-        guard let url = URL(string: urlString) else {
-            completion(nil)
-            return
-        }
-
-        URLSession.shared
-            .dataTask(with: url) { [weak self] data, response, error in
-                guard let data = data, error == nil, let image = UIImage(data: data) else {
-                    DispatchQueue.main.async { completion(nil) }
-                    return
-                }
-
-                // Store in cache - both with URL and with userId if available
-                self?.cache.setObject(image, forKey: cacheKey)
-                self?.cache.setObject(image, forKey: NSString(string: userId))
-
-                DispatchQueue.main.async { completion(image) }
-            }
-            .resume()
-    }
-
     func clearCache() { cache.removeAllObjects() }
 }

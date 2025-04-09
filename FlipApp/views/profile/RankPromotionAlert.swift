@@ -225,7 +225,7 @@ struct ConfettiPiece: View {
 // Usage example - integrate with ScoreManager
 extension ScoreManager {
     // Add method to check for rank changes
-    func checkForRankPromotion(oldScore: Double, newScore: Double) -> (
+    func checkForRankPromotion(oldScore: Double) -> (
         isPromoted: Bool, newRank: (name: String, color: Color)
     )? {
         let oldRank = getRankForScore(oldScore).name
@@ -250,28 +250,5 @@ extension ScoreManager {
         case 270.0...300.0: return ("Enlightened", Theme.brightFuchsia)  // Bright fuchsia
         default: return ("Unranked", Color.gray)
         }
-    }
-
-    // Add to processSession to trigger promotion check
-    func processSessionWithPromotionCheck(
-        duration: Int,
-        wasSuccessful: Bool,
-        actualDuration: Int,
-        pausesEnabled: Bool
-    ) -> (Bool, (String, Color))? {
-        guard let _userId = Auth.auth().currentUser?.uid else { return nil }
-
-        let oldScore = currentScore
-
-        // Call the regular process session method
-        processSession(
-            duration: duration,
-            wasSuccessful: wasSuccessful,
-            actualDuration: actualDuration,
-            pausesEnabled: pausesEnabled
-        )
-
-        // Check if user was promoted
-        return checkForRankPromotion(oldScore: oldScore, newScore: currentScore)
     }
 }

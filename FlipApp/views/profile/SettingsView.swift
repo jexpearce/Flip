@@ -97,11 +97,6 @@ class SettingsViewModel: ObservableObject {
         saveSettings()
     }
 
-    func toggleShowSessionHistory() {
-        showSessionHistory.toggle()
-        saveSettings()
-    }
-
     // New methods for regional privacy settings
     func updateRegionalDisplayMode(_ mode: RegionalDisplayMode) {
         regionalDisplayMode = mode
@@ -129,8 +124,6 @@ struct SettingsView: View {
 
     // Colors from the app's theme
     private let cyanBlueAccent = Theme.lightTealBlue
-    private let deepPurple = Theme.mutedPurple
-    private let darkPurple = Theme.midnightNavy
 
     var body: some View {
         NavigationView {

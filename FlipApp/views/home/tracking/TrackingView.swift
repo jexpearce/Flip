@@ -7,7 +7,6 @@ struct TrackingView: View {
     @State private var isCancelPressed = false
     @State private var showingCancelAlert = false
     @State private var isGlowing = false
-    @ObservedObject private var liveSessionManager = LiveSessionManager.shared
 
     var body: some View {
         ZStack {
@@ -49,7 +48,6 @@ struct TrackingView: View {
             }
         }
     }
-    var flipBackTimeRemaining: Int { return appManager.flipBackTimeRemaining }
     private func statusCard() -> some View {
         VStack(spacing: 20) {
             // First check phone position and display appropriate icon

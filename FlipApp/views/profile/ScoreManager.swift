@@ -425,23 +425,6 @@ class ScoreManager: ObservableObject {
         return nil  // Already at max rank
     }
 
-    // Reset score to initial value (for testing)
-    func resetScore() {
-        guard let userId = Auth.auth().currentUser?.uid else { return }
-        currentScore = initialScore
-        saveScore(userId: userId, score: initialScore, scoreChange: nil)
-    }
-
-    // NEW: Reset streak (for testing)
-    func resetStreak() {
-        guard let userId = Auth.auth().currentUser?.uid else { return }
-        currentStreak = 0
-        streakSessionsTime = 0
-        streakStatus = .none
-        lastSuccessfulSession = nil
-        saveStreakData(userId: userId)
-    }
-
     // NEW: Get streak description for info panel
     func getStreakDescription() -> String {
         switch streakStatus {
@@ -488,24 +471,3 @@ enum StreakStatus: String, Codable {
     case redFlame = "redFlame"
 }
 
-// SwiftUI Color extension for Firestore compatibility
-extension Color {
-    var components: (red: Double, green: Double, blue: Double, opacity: Double) {
-        #if canImport(UIKit)
-            typealias NativeColor = UIColor
-        #elseif canImport(AppKit)
-            typealias NativeColor = NSColor
-        #endif
-
-        var r: CGFloat = 0
-        var g: CGFloat = 0
-        var b: CGFloat = 0
-        var o: CGFloat = 0
-
-        guard NativeColor(self).getRed(&r, green: &g, blue: &b, alpha: &o) else {
-            return (0, 0, 0, 0)
-        }
-
-        return (Double(r), Double(g), Double(b), Double(o))
-    }
-}

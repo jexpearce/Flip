@@ -55,45 +55,6 @@ class LiveSessionTimer: ObservableObject {
         }
     }
 
-    // Helper method to calculate current elapsed time with drift compensation
-    func calculateElapsedTime() -> Int {
-        guard let session = liveSession else { return 0 }
-
-        let baseElapsed = session.elapsedSeconds
-        let timeSinceUpdate = Int(
-            Date().timeIntervalSince1970 - session.lastUpdateTime.timeIntervalSince1970
-        )
-
-        // Apply drift correction and limit extreme values
-        let correction = min(2, max(-2, timeSinceUpdate / 60))  // ±2 seconds max correction
-
-        // Only add elapsed time if session is active
-        let adjustment = session.isPaused ? 0 : min(timeSinceUpdate + correction, 300)  // Cap at 5 minutes
-
-        return baseElapsed + adjustment
-    }
-
-    // Format the time as mm:ss
-    func getFormattedElapsedTime() -> String {
-        let elapsed = calculateElapsedTime()
-        let minutes = elapsed / 60
-        let seconds = elapsed % 60
-        return String(format: "%d:%02d", minutes, seconds)
-    }
-
-    // Format the remaining time as mm:ss
-    func getFormattedRemainingTime() -> String {
-        guard let session = liveSession else { return "0:00" }
-
-        let elapsed = calculateElapsedTime()
-        let totalSeconds = session.targetDuration * 60
-        let remaining = max(0, totalSeconds - elapsed)
-
-        let minutes = remaining / 60
-        let seconds = remaining % 60
-        return String(format: "%d:%02d", minutes, seconds)
-    }
-
     deinit {
         timer?.invalidate()
         syncTimer?.invalidate()
