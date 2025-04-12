@@ -105,6 +105,8 @@ struct RegionalView: View {
     @StateObject private var regionalAllTimeViewModel = RegionalAllTimeLeaderboardViewModel()
     @StateObject private var globalWeeklyViewModel = GlobalWeeklyLeaderboardViewModel()
     @StateObject private var globalAllTimeViewModel = GlobalAllTimeLeaderboardViewModel()
+    @StateObject private var leaderboardConsentManager = LeaderboardConsentManager.shared
+    @State private var showLeaderboardConsent = false
 
     // Red glow effect for accents
     private let redGlow = Theme.darkRed.opacity(0.5)
@@ -374,7 +376,22 @@ struct RegionalView: View {
         .onAppear {
             checkLocationPermission()
             viewModel.loadCurrentBuilding()
-
+            
+            // Check if we need to show leaderboard consent
+            if !leaderboardConsentManager.hasGivenConsent && !leaderboardConsentManager.hasSeenRegionalTab {
+                // Mark that the user has seen this tab
+                leaderboardConsentManager.markRegionalTabSeen()
+                
+                // Check if we have location permission first
+                let authStatus = locationPermissionManager.authorizationStatus
+                if authStatus == .authorizedWhenInUse || authStatus == .authorizedAlways {
+                    // Only show consent if we have location permission
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                        showLeaderboardConsent = true
+                    }
+                }
+            }
+            
             // Initialize all leaderboards when the view appears
             switch currentLeaderboard {
             case .regionalWeekly: regionalWeeklyViewModel.loadRegionalWeeklyLeaderboard()
@@ -383,7 +400,8 @@ struct RegionalView: View {
             case .globalAllTime: globalAllTimeViewModel.loadGlobalAllTimeLeaderboard()
             default: break
             }
-        }  // Show "Open Settings" alert when location permission is denied
+        }
+        // Show "Open Settings" alert when location permission is denied
         .alert(isPresented: $locationPermissionManager.showSettingsAlert) {
             Alert(
                 title: Text("Location Permission Required"),
@@ -397,6 +415,13 @@ struct RegionalView: View {
             )
         }
         .background(Theme.regionalGradient.edgesIgnoringSafeArea(.all))  // Load appropriate leaderboard data when switching tabs
+        .overlay(
+            ZStack {
+                if showLeaderboardConsent {
+                    LeaderboardConsentAlert(isPresented: $showLeaderboardConsent)
+                }
+            }
+        )
         .onChange(of: currentLeaderboard) {
             switch currentLeaderboard {
             case .building:
@@ -553,9 +578,20 @@ class RegionalViewModel: NSObject, ObservableObject, CLLocationManagerDelegate {
         print("Location manager failed with error: \(error.localizedDescription)")
     }
 
+    func canLoadLeaderboardData() -> Bool {
+        return LeaderboardConsentManager.shared.canAddToLeaderboard()
+    }
+
+    // Modify the loadNearbyUsers method to check for consent:
     @MainActor func loadNearbyUsers() {
         // Ensure the user has completed at least one session before loading the leaderboard
         guard let userId = Auth.auth().currentUser?.uid else { return }
+        
+        // Check if user has consented to leaderboards
+        guard canLoadLeaderboardData() else {
+            print("User has not consented to leaderboards. Skipping leaderboard loading.")
+            return
+        }
 
         FirebaseManager.shared.db.collection("sessions").whereField("userId", isEqualTo: userId)
             .getDocuments { [weak self] snapshot, error in
@@ -581,6 +617,7 @@ class RegionalViewModel: NSObject, ObservableObject, CLLocationManagerDelegate {
                 }
             }
     }
+
 
     @MainActor func startBuildingIdentification() {
         // Request high-accuracy location for building identification
@@ -642,6 +679,12 @@ class RegionalViewModel: NSObject, ObservableObject, CLLocationManagerDelegate {
         print("🌐 Coordinates: \(building.coordinate.latitude), \(building.coordinate.longitude)")
         print("🆔 Standardized ID: \(standardizedId)")
 
+        // Check for leaderboard consent before saving to Firestore
+        guard LeaderboardConsentManager.shared.canAddToLeaderboard() else {
+            print("User has not consented to leaderboards. Not saving building selection.")
+            return
+        }
+
         // Save the selected building to Firestore
         if let userId = Auth.auth().currentUser?.uid {
             let buildingData: [String: Any] = [
@@ -670,7 +713,6 @@ class RegionalViewModel: NSObject, ObservableObject, CLLocationManagerDelegate {
                 }
         }
     }
-
     func loadCurrentBuilding() {
         guard let userId = Auth.auth().currentUser?.uid else { return }
 

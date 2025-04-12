@@ -298,9 +298,13 @@ extension FirebaseManager {
                 }
             }
     }
+
     func saveSessionLocation(session: CompletedSession) {
         let sessionId = "\(session.userId)_\(Int(Date().timeIntervalSince1970))"
 
+        // Check if user has consented to leaderboards
+        let hasConsent = LeaderboardConsentManager.shared.canAddToLeaderboard()
+        
         // CRITICAL FIX: Make sure actualDuration is calculated properly
         // Only apply a minimum if it makes sense
         let validActualDuration = session.actualDuration
@@ -309,16 +313,22 @@ extension FirebaseManager {
         )
 
         var sessionData: [String: Any] = [
-            "userId": session.userId, "username": session.username,
+            "userId": session.userId,
+            "username": session.username,
             "location": GeoPoint(
                 latitude: session.location.latitude,
                 longitude: session.location.longitude
-            ), "isCurrentlyFlipped": false, "lastFlipTime": Timestamp(date: Date()),
-            "lastFlipWasSuccessful": session.wasSuccessful, "sessionDuration": session.duration,
+            ),
+            "isCurrentlyFlipped": false,
+            "lastFlipTime": Timestamp(date: Date()),
+            "lastFlipWasSuccessful": session.wasSuccessful,
+            "sessionDuration": session.duration,
             "actualDuration": validActualDuration,
             "sessionStartTime": Timestamp(date: session.startTime),
             "sessionEndTime": Timestamp(date: sessionEndTime),
             "createdAt": FieldValue.serverTimestamp(),
+            // Add flag to indicate if session should be included in leaderboards
+            "includeInLeaderboards": hasConsent
         ]
 
         // Add building information if available
@@ -343,8 +353,8 @@ extension FirebaseManager {
                     // Prune old sessions to keep the map clean
                     self?.pruneOldSessions(forUserId: session.userId)
 
-                    // Force refresh building leaderboard if needed
-                    if let building = session.building {
+                    // Force refresh building leaderboard if needed and consent is given
+                    if let building = session.building, hasConsent {
                         DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
                             RegionalViewModel.shared.leaderboardViewModel.loadBuildingLeaderboard(
                                 building: building

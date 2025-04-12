@@ -30,25 +30,46 @@ class ViewRouter: ObservableObject {
     }
     deinit { NotificationCenter.default.removeObserver(self) }
 }
+
 struct MainView: View {
     @StateObject private var authManager = AuthManager.shared
     @StateObject private var viewRouter = ViewRouter()
+    @StateObject private var leaderboardConsentManager = LeaderboardConsentManager.shared
 
     @EnvironmentObject var appManager: AppManager
     @StateObject private var permissionManager = PermissionManager.shared
     @State private var checkPermissionsOnAppear = true
+    
     var body: some View {
         if authManager.isAuthenticated {
             TabView(selection: $viewRouter.selectedTab) {
                 // First tab (left-most)
-                FeedView().tabItem { Label("Feed", systemImage: "list.bullet.rectangle.fill") }
+                FeedView()
+                    .tabItem { Label("Feed", systemImage: "list.bullet.rectangle.fill") }
                     .tag(0)
 
                 // Second tab (left of center) - RegionalView
-                RegionalView().tabItem { Label("Regional", systemImage: "location.fill") }.tag(1)
+                RegionalView()
+                    .overlay(
+                        Group {
+                            if leaderboardConsentManager.shouldPulseRegionalTab {
+                                VStack {
+                                    HStack {
+                                        Spacer()
+                                        PulsingTabIndicator()
+                                        Spacer()
+                                    }
+                                    Spacer()
+                                }
+                            }
+                        }
+                    )
+                    .tabItem { Label("Regional", systemImage: "location.fill") }
+                    .tag(1)
 
                 // Center tab (Home)
-                HomeView().background(Theme.mainGradient)
+                HomeView()
+                    .background(Theme.mainGradient)
                     .tabItem {
                         VStack {
                             Image(systemName: "house.fill").font(.system(size: 24))
@@ -58,11 +79,15 @@ struct MainView: View {
                     .tag(2)
 
                 // Fourth tab (right of center)
-                FriendsView().tabItem { Label("Friends", systemImage: "person.2.fill") }.tag(3)
+                FriendsView()
+                    .tabItem { Label("Friends", systemImage: "person.2.fill") }
+                    .tag(3)
 
                 // Fifth tab (right-most)
-                ProfileView().background(Theme.mainGradient)
-                    .tabItem { Label("Profile", systemImage: "person.fill") }.tag(4)
+                ProfileView()
+                    .background(Theme.mainGradient)
+                    .tabItem { Label("Profile", systemImage: "person.fill") }
+                    .tag(4)
             }
             .accentColor(Theme.lightTealBlue)  // Set accent color for selected tab
             .frame(maxWidth: .infinity, maxHeight: .infinity).background(Theme.mainGradient)
