@@ -126,20 +126,15 @@ struct MainView: View {
                 }
 
                 // NEW CODE: Check permissions when app launches
-                if checkPermissionsOnAppear {
-                    checkPermissionsOnAppear = false
+                if checkPermissionsOnAppear && UserDefaults.standard.bool(forKey: "hasCompletedPermissionFlow") {
+                        checkPermissionsOnAppear = false
 
-                    // Check permissions status
-                    permissionManager.checkPermissions()
-
-                    // If permissions are not granted and this is a returning user,
-                    // start the permission flow after a short delay
-                    if !permissionManager.allPermissionsGranted {
-                        DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
-                            permissionManager.requestAllPermissions()
-                        }
+                        // Check permissions status - but don't start the permission flow
+                        permissionManager.checkPermissions()
+                        
+                        // Only refresh permissions if we've already completed the flow
+                        // DO NOT call requestAllPermissions here!
                     }
-                }
             }
             .environmentObject(viewRouter)  // Add the permission manager as an environment object
             .environmentObject(permissionManager)

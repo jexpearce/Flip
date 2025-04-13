@@ -500,15 +500,9 @@ class RegionalViewModel: NSObject, ObservableObject, CLLocationManagerDelegate {
 
         // CRITICAL: Only request if permission flow is complete
         let authStatus = locationManager.authorizationStatus
-        let isFirstLaunch = UserDefaults.standard.bool(forKey: "isPotentialFirstTimeUser")
-
-        // Only request permissions automatically if:
-        // 1. Not the first launch (to allow your sequence to run)
-        // 2. Or permissions are already determined (already granted or denied)
-        if !isFirstLaunch || authStatus != .notDetermined {
-            // Safe to request permissions here
-            if authStatus == .notDetermined { locationManager.requestWhenInUseAuthorization() }
-        }
+        if !PermissionManager.shared.isPermissionLocked() && authStatus == .notDetermined {
+                locationManager.requestWhenInUseAuthorization()
+            }
 
         // Listen for location updates from LocationHandler
         NotificationCenter.default.addObserver(
@@ -524,6 +518,10 @@ class RegionalViewModel: NSObject, ObservableObject, CLLocationManagerDelegate {
     }
 
     @MainActor func refreshCurrentBuilding() {
+        if PermissionManager.shared.isPermissionLocked() {
+                print("⏸️ RegionalView: Deferring building refresh until InitialView completes")
+                return
+            }
         isRefreshing = true
 
         // Request a high accuracy location update
@@ -620,6 +618,10 @@ class RegionalViewModel: NSObject, ObservableObject, CLLocationManagerDelegate {
 
 
     @MainActor func startBuildingIdentification() {
+        if PermissionManager.shared.isPermissionLocked() {
+                print("⏸️ RegionalView: Deferring building identification until InitialView completes")
+                return
+            }
         // Request high-accuracy location for building identification
         locationManager.desiredAccuracy = kCLLocationAccuracyBest
         locationManager.requestLocation()

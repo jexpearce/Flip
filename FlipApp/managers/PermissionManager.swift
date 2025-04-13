@@ -40,6 +40,9 @@ class PermissionManager: NSObject, ObservableObject {
     private var isProcessingLocationPermission = false
     var isProcessingMotionPermission = false
     private var isProcessingNotificationPermission = false
+    private var permissionLockEnabled = true
+    var isInitialPermissionFlow = false
+
 
     override init() {
         super.init()
@@ -54,6 +57,29 @@ class PermissionManager: NSObject, ObservableObject {
             name: UIApplication.didBecomeActiveNotification,
             object: nil
         )
+    }
+    func lockPermissions() {
+        print("🔒 Locking permission requests")
+        permissionLockEnabled = true
+    }
+
+    func unlockPermissions() {
+        print("🔓 Unlocking permission requests")
+        permissionLockEnabled = false
+    }
+
+    func isPermissionLocked() -> Bool {
+        // If we're in the initial permission flow, always allow permissions
+        if isInitialPermissionFlow {
+            return false
+        }
+        
+        // Check if we're in the completed flow
+        if UserDefaults.standard.bool(forKey: "hasCompletedPermissionFlow") {
+            return false // Allow permissions if flow is complete
+        }
+        
+        return permissionLockEnabled
     }
 
     deinit { NotificationCenter.default.removeObserver(self) }
@@ -214,6 +240,9 @@ class PermissionManager: NSObject, ObservableObject {
     }
     func requestAllPermissions() {
         print("Starting permission flow sequence")
+        // Set flag to allow permissions during this flow
+        isInitialPermissionFlow = true
+        
         // Reset flow state flags
         isProcessingLocationPermission = false
         isProcessingMotionPermission = false

@@ -15,6 +15,8 @@ class FlipAppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCenter
         _ application: UIApplication,
         didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]? = nil
     ) -> Bool {
+        let permissionsLocked = PermissionManager.shared.isPermissionLocked()
+            print("App delegate launch - permissions locked: \(permissionsLocked)")
 
         if FirebaseApp.app() == nil { FirebaseApp.configure() }
         if let clientID = FirebaseApp.app()?.options.clientID {
@@ -42,9 +44,13 @@ class FlipAppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCenter
         }
 
         // Set up push notifications
-        UNUserNotificationCenter.current().delegate = self
+        if !PermissionManager.shared.isPermissionLocked() {
+            UNUserNotificationCenter.current().delegate = self
+        }
 
-        application.registerForRemoteNotifications()
+        if !PermissionManager.shared.isPermissionLocked() {
+            application.registerForRemoteNotifications()
+        }
 
         // Set up FCM
         Messaging.messaging().delegate = self

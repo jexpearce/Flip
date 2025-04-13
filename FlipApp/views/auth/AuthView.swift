@@ -96,6 +96,7 @@ struct AuthView: View {
                 DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
                     // Make sure isPotentialFirstTimeUser is true to trigger InitialView
                     UserDefaults.standard.set(true, forKey: "isPotentialFirstTimeUser")
+                    UserDefaults.standard.set(false, forKey: "hasCompletedPermissionFlow")
                     // Post notification to app to check and show permission flow
                     NotificationCenter.default.post(
                         name: NSNotification.Name("ShowPermissionsFlow"),

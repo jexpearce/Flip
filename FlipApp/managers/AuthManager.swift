@@ -360,8 +360,19 @@ extension AuthManager {
 
                     // Handle new users
                     if authResult?.additionalUserInfo?.isNewUser == true {
+                        // Set first-time user flags for new Google users
+                        UserDefaults.standard.set(true, forKey: "isPotentialFirstTimeUser")
+                        UserDefaults.standard.set(false, forKey: "hasCompletedPermissionFlow")
+                        
                         self.createGoogleUserDocument(user: user) {
-                            self.loadUserData(userId: user.uid) { completion(true) }
+                            self.loadUserData(userId: user.uid) { 
+                                // Post notification to show permission flow
+                                NotificationCenter.default.post(
+                                    name: NSNotification.Name("ShowPermissionsFlow"),
+                                    object: nil
+                                )
+                                completion(true) 
+                            }
                         }
                     }
                     else {

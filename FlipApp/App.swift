@@ -3,6 +3,8 @@ import FirebaseCore
 import FirebaseMessaging
 import SwiftUI
 import UserNotifications
+import CoreMotion
+import FirebaseAuth
 
 @main struct FlipApp: App {
     @UIApplicationDelegateAdaptor(FlipAppDelegate.self) var delegate
@@ -28,20 +30,64 @@ import UserNotifications
         // Schedule background refresh
         AppManager.shared.scheduleBackgroundRefresh()
 
-        if !UserDefaults.standard.bool(forKey: "hasLaunchedBefore") {
-            UserDefaults.standard.set(true, forKey: "isPotentialFirstTimeUser")
-            UserDefaults.standard.set(false, forKey: "hasCompletedPermissionFlow")
-            print("New installation - forcing permission flow")
+        // Enhanced detection of first time users or reinstalls
+        let defaults = UserDefaults.standard
+        let isFirstLaunch = !defaults.bool(forKey: "hasLaunchedBefore")
+        let isPotentialFirstTimeUser = defaults.bool(forKey: "isPotentialFirstTimeUser")
+        let hasCompletedPermissions = defaults.bool(forKey: "hasCompletedPermissionFlow")
+        let isResettingPermissions = defaults.bool(forKey: "isResettingPermissions")
+
+        if isFirstLaunch {
+            print("🔑 Fresh install detected - forcing sign out")
+            
+            // Force Firebase sign out
+            try? Auth.auth().signOut()
+            
+            // Clear ALL keychain credentials to ensure complete logout
+            let secItemClasses = [
+                kSecClassGenericPassword,
+                kSecClassInternetPassword,
+                kSecClassCertificate,
+                kSecClassKey,
+                kSecClassIdentity
+            ]
+            for secItemClass in secItemClasses {
+                let query = [kSecClass as String: secItemClass]
+                SecItemDelete(query as CFDictionary)
+            }
         }
 
-        // Determine if we should show permissions flow
-        let hasCompletedPermissions = UserDefaults.standard.bool(
-            forKey: "hasCompletedPermissionFlow"
-        )
-        let isFirstTimeUser = UserDefaults.standard.bool(forKey: "isPotentialFirstTimeUser")
-
-        // Show permissions flow for new users or if permissions haven't been completed
-        showPermissionsFlow = isFirstTimeUser || !hasCompletedPermissions
+        // Determine if we should show the permission flow
+        if isFirstLaunch {
+            print("📱 NEW INSTALLATION DETECTED - enabling permission flow")
+            defaults.set(true, forKey: "isPotentialFirstTimeUser")
+            defaults.set(false, forKey: "hasCompletedPermissionFlow")
+            defaults.set(true, forKey: "hasLaunchedBefore")
+            showPermissionsFlow = true
+        } else if isResettingPermissions {
+            print("🔄 PERMISSION RESET REQUESTED - enabling permission flow")
+            defaults.set(false, forKey: "hasCompletedPermissionFlow")
+            defaults.set(false, forKey: "isResettingPermissions") // Reset the flag
+            showPermissionsFlow = true
+        } else if isPotentialFirstTimeUser && !hasCompletedPermissions {
+            print("👤 FIRST TIME USER DETECTED - enabling permission flow")
+            showPermissionsFlow = true
+        } else if !hasCompletedPermissions {
+            // Double-check permissions status to determine if flow is needed
+            let permManager = PermissionManager.shared
+            
+            // Get current status
+            let motionAuthStatus = CMMotionActivityManager.authorizationStatus()
+            let motionGranted = (motionAuthStatus == .authorized)
+            
+            if !motionGranted {
+                print("🚨 REQUIRED PERMISSION MISSING - enabling permission flow")
+                showPermissionsFlow = true
+            } else {
+                print("✅ All required permissions already granted")
+                defaults.set(true, forKey: "hasCompletedPermissionFlow")
+            }
+        }
     }
 
     var body: some Scene {
