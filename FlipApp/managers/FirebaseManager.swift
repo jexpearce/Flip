@@ -27,33 +27,33 @@ class FirebaseManager: ObservableObject {
 extension FirebaseManager {
     // Function to create a test session to ensure the collection exists
     @MainActor func createTestSessionLocation() {
-        guard let userId = Auth.auth().currentUser?.uid else { return }
-
-        let sessionId = "\(userId)_test_\(Int(Date().timeIntervalSince1970))"
-        let currentCoordinates = LocationHandler.shared.lastLocation.coordinate
-
-        // Create basic test session data
-        let sessionData: [String: Any] = [
-            "userId": userId, "username": FirebaseManager.shared.currentUser?.username ?? "User",
-            "location": GeoPoint(
-                latitude: currentCoordinates.latitude,
-                longitude: currentCoordinates.longitude
-            ), "isCurrentlyFlipped": false, "lastFlipTime": Timestamp(date: Date()),
-            "lastFlipWasSuccessful": true, "sessionDuration": 1, "actualDuration": 1,
-            "sessionStartTime": Timestamp(date: Date().addingTimeInterval(-60)),
-            "sessionEndTime": Timestamp(date: Date()), "createdAt": FieldValue.serverTimestamp(),
-        ]
-
-        // Directly save to Firestore to create the collection
-        db.collection("session_locations").document(sessionId)
-            .setData(sessionData) { error in
-                if let error = error {
-                    print("❌ TEST SESSION ERROR: \(error.localizedDescription)")
-                }
-                else {
-                    print("✅ TEST SESSION CREATED SUCCESSFULLY: \(sessionId)")
-                }
-            }
+//        guard let userId = Auth.auth().currentUser?.uid else { return }
+//
+//        let sessionId = "\(userId)_test_\(Int(Date().timeIntervalSince1970))"
+//        let currentCoordinates = LocationHandler.shared.lastLocation.coordinate
+//
+//        // Create basic test session data
+//        let sessionData: [String: Any] = [
+//            "userId": userId, "username": FirebaseManager.shared.currentUser?.username ?? "User",
+//            "location": GeoPoint(
+//                latitude: currentCoordinates.latitude,
+//                longitude: currentCoordinates.longitude
+//            ), "isCurrentlyFlipped": false, "lastFlipTime": Timestamp(date: Date()),
+//            "lastFlipWasSuccessful": true, "sessionDuration": 1, "actualDuration": 1,
+//            "sessionStartTime": Timestamp(date: Date().addingTimeInterval(-60)),
+//            "sessionEndTime": Timestamp(date: Date()), "createdAt": FieldValue.serverTimestamp(),
+//        ]
+//
+//        // Directly save to Firestore to create the collection
+//        db.collection("session_locations").document(sessionId)
+//            .setData(sessionData) { error in
+//                if let error = error {
+//                    print("❌ TEST SESSION ERROR: \(error.localizedDescription)")
+//                }
+//                else {
+//                    print("✅ TEST SESSION CREATED SUCCESSFULLY: \(sessionId)")
+//                }
+//            }
     }
     // Add this to FirebaseManager.swift
     func inspectUserData() {
