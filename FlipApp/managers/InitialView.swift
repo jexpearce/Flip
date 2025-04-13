@@ -348,6 +348,15 @@ struct InitialView: View {
                     onContinue: { permissionManager.requestMotionPermission() }
                 )
             }
+            
+            if permissionManager.showMotionSettingsAlert {
+                SettingsAlertView(
+                    isPresented: $permissionManager.showMotionSettingsAlert,
+                    title: "Motion Permission Required",
+                    message: "Motion permission is required to use Flip. Please enable it in Settings to continue.",
+                    settingsAction: { permissionManager.openMotionSettings() }
+                )
+            }
 
             if showNotificationPermission {
                 NotificationPermissionAlert(
@@ -545,7 +554,15 @@ struct InitialView: View {
 
         switch permission {
         case .location: showLocationPermission = true
-        case .motion: showMotionPermission = true
+        case .motion: 
+            // Check if motion permission was previously denied
+            let motionAuthStatus = CMMotionActivityManager.authorizationStatus()
+            if motionAuthStatus == .denied {
+                // Show settings alert instead of the custom alert
+                permissionManager.showMotionSettingsAlert = true
+            } else {
+                showMotionPermission = true
+            }
         case .notification: showNotificationPermission = true
         }
     }
@@ -777,5 +794,119 @@ struct EnhancedLocationPermissionAlert: View {
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
+    }
+}
+
+struct SettingsAlertView: View {
+    @Binding var isPresented: Bool
+    let title: String
+    let message: String
+    let settingsAction: () -> Void
+    
+    var body: some View {
+        ZStack {
+            // Dimmed background
+            Color.black.opacity(0.7).edgesIgnoringSafeArea(.all)
+                .onTapGesture {
+                    // Prevent dismissing by tapping outside
+                }
+            
+            // Alert content
+            VStack(spacing: 20) {
+                // Header with icon
+                ZStack {
+                    Circle().fill(Theme.softViolet.opacity(0.2)).frame(width: 90, height: 90)
+                    
+                    Image(systemName: "gear")
+                        .font(.system(size: 32))
+                        .foregroundColor(.white)
+                }
+                
+                Text(title)
+                    .font(.system(size: 22, weight: .black))
+                    .tracking(4)
+                    .foregroundColor(.white)
+                
+                Text(message)
+                    .font(.system(size: 16))
+                    .foregroundColor(.white.opacity(0.8))
+                    .multilineTextAlignment(.center)
+                    .padding(.horizontal)
+                
+                // Buttons
+                HStack(spacing: 15) {
+                    // Cancel button
+                    Button(action: { isPresented = false }) {
+                        Text("Cancel")
+                            .font(.system(size: 16, weight: .medium))
+                            .foregroundColor(.white.opacity(0.7))
+                            .frame(width: 100, height: 48)
+                            .background(
+                                RoundedRectangle(cornerRadius: 12)
+                                    .fill(Color.white.opacity(0.1))
+                                    .overlay(
+                                        RoundedRectangle(cornerRadius: 12)
+                                            .stroke(Color.white.opacity(0.2), lineWidth: 1)
+                                    )
+                            )
+                    }
+                    
+                    // Settings button
+                    Button(action: {
+                        isPresented = false
+                        settingsAction()
+                    }) {
+                        Text("Settings")
+                            .font(.system(size: 16, weight: .bold))
+                            .foregroundColor(.white)
+                            .frame(width: 160, height: 48)
+                            .background(
+                                ZStack {
+                                    RoundedRectangle(cornerRadius: 12)
+                                        .fill(
+                                            LinearGradient(
+                                                colors: [Theme.softViolet, Theme.electricViolet],
+                                                startPoint: .leading,
+                                                endPoint: .trailing
+                                            )
+                                        )
+                                    
+                                    RoundedRectangle(cornerRadius: 12)
+                                        .fill(Color.white.opacity(0.1))
+                                    
+                                    RoundedRectangle(cornerRadius: 12)
+                                        .stroke(Color.white.opacity(0.3), lineWidth: 1)
+                                }
+                            )
+                            .shadow(color: Theme.softViolet.opacity(0.5), radius: 8)
+                    }
+                }
+                .padding(.top, 10)
+            }
+            .padding(25)
+            .background(
+                ZStack {
+                    RoundedRectangle(cornerRadius: 25)
+                        .fill(
+                            LinearGradient(
+                                colors: [Theme.mutedPurple, Theme.blueishPurple],
+                                startPoint: .top,
+                                endPoint: .bottom
+                            )
+                        )
+                    
+                    RoundedRectangle(cornerRadius: 25)
+                        .fill(Color.white.opacity(0.05))
+                    
+                    RoundedRectangle(cornerRadius: 25)
+                        .stroke(Theme.silveryGradient3, lineWidth: 1.5)
+                }
+            )
+            .frame(maxWidth: 350)
+            .shadow(color: Color.black.opacity(0.3), radius: 20)
+            .scaleEffect(isPresented ? 1 : 0.8)
+            .opacity(isPresented ? 1 : 0)
+            .animation(.spring(response: 0.5, dampingFraction: 0.8), value: isPresented)
+        }
     }
 }

@@ -91,21 +91,18 @@ class PermissionManager: NSObject, ObservableObject {
             let previousMotionStatus = self.motionPermissionGranted
             self.refreshPermissionStatus()
 
-            // Check if we were processing motion permission and now it's granted
-            if self.isProcessingMotionPermission && !previousMotionStatus
-                && self.motionPermissionGranted
-            {
+            // Check if motion permission was granted via Settings
+            if !previousMotionStatus && self.motionPermissionGranted {
                 print("Motion permission granted via Settings!")
-
-                // Reset processing flag
-                self.isProcessingMotionPermission = false
-
-                // Continue to notification flow after a short delay
-                DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
-                    self.showMotionAlert = false
-                    self.showMotionSettingsAlert = false
-                    self.startNotificationFlow()
-                }
+                
+                // Reset settings alert flag
+                self.showMotionSettingsAlert = false
+                
+                // Post notification to update UI
+                NotificationCenter.default.post(
+                    name: NSNotification.Name("locationPermissionChanged"),
+                    object: nil
+                )
             }
         }
     }
