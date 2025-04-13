@@ -214,8 +214,10 @@ class NotificationListener {
     func updateBadgeCount() {
         guard let currentUserId = Auth.auth().currentUser?.uid else { return }
 
+        // Use a more specific query that excludes session_failure notifications
         db.collection("users").document(currentUserId).collection("notifications")
             .whereField("read", isEqualTo: false)
+            .whereField("type", notIn: ["session_failure"])  // Exclude session failure notifications
             .getDocuments { snapshot, error in
                 if let error = error {
                     print("Error getting unread notifications: \(error.localizedDescription)")
@@ -224,6 +226,7 @@ class NotificationListener {
 
                 let count = snapshot?.documents.count ?? 0
                 DispatchQueue.main.async { UIApplication.shared.applicationIconBadgeNumber = count }
+                print("Updated badge count: \(count) (excluding session failure notifications)")
             }
     }
 }
