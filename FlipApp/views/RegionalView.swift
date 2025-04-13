@@ -705,41 +705,53 @@ class RegionalViewModel: NSObject, ObservableObject, CLLocationManagerDelegate {
     }
 
     func selectBuilding(_ building: BuildingInfo) {
-        self.selectedBuilding = building
+        // Store the building with standardized ID format
+        let standardizedBuilding = BuildingInfo(
+            id: "",  // The BuildingInfo init will standardize this
+            name: building.name,
+            coordinate: building.coordinate
+        )
+        
+        self.selectedBuilding = standardizedBuilding
 
         // For debugging - print exact coordinate values and building ID
-        let standardizedId = String(
-            format: "building-%.6f-%.6f",
-            building.coordinate.latitude,
-            building.coordinate.longitude
-        )
-        print("🏢 Selected building: \(building.name)")
-        print("🌐 Coordinates: \(building.coordinate.latitude), \(building.coordinate.longitude)")
-        print("🆔 Standardized ID: \(standardizedId)")
+        print("🏢 Selected building: \(standardizedBuilding.name)")
+        print("🌐 Coordinates: \(standardizedBuilding.coordinate.latitude), \(standardizedBuilding.coordinate.longitude)")
+        print("🆔 Building ID: \(standardizedBuilding.id)")
 
         // Save the selected building to Firestore regardless of leaderboard consent
         if let userId = Auth.auth().currentUser?.uid {
             let buildingData: [String: Any] = [
-                "id": standardizedId,  // Use standardized ID here
-                "name": building.name, "latitude": building.coordinate.latitude,
-                "longitude": building.coordinate.longitude,
+                "id": standardizedBuilding.id,
+                "name": standardizedBuilding.name,
+                "latitude": standardizedBuilding.coordinate.latitude,
+                "longitude": standardizedBuilding.coordinate.longitude,
                 "lastUpdated": FieldValue.serverTimestamp(),
             ]
 
             FirebaseManager.shared.db.collection("users").document(userId).collection("settings")
                 .document("currentBuilding")
-                .setData(buildingData) { error in
+                .setData(buildingData) { [weak self] error in
+                    guard let self = self else { return }
+                    
                     if let error = error {
                         print("Error saving building info: \(error.localizedDescription)")
-                    }
-                    else {
-                        print(
-                            "Building info saved successfully with standardized ID: \(standardizedId)"
-                        )
+                    } else {
+                        print("Building info saved successfully with ID: \(standardizedBuilding.id)")
 
-                        // Only load leaderboard if user has completed sessions and given consent
-                        DispatchQueue.main.async {
-                            self.loadNearbyUsers()
+                        // Only load leaderboard if user has given consent
+                        let hasConsent = LeaderboardConsentManager.shared.canAddToLeaderboard()
+                        if hasConsent {
+                            DispatchQueue.main.async {
+                                self.loadNearbyUsers()
+                                
+                                // Add a short additional delay and force a fresh leaderboard load
+                                DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+                                    self.leaderboardViewModel.loadBuildingLeaderboard(building: standardizedBuilding)
+                                }
+                            }
+                        } else {
+                            print("⚠️ User hasn't given leaderboard consent yet, not loading leaderboard")
                         }
                     }
                 }

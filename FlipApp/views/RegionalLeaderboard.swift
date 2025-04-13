@@ -758,10 +758,20 @@ class RegionalLeaderboardViewModel: ObservableObject {
     }
     
     // Remove the redundant implementation and keep the full implementation below
+    // Replace the fetchBuildingTopSessions in RegionalLeaderboardViewModel with this version
+    // This version uses a vicinity-based approach rather than exact building ID matching
+
     private func fetchBuildingTopSessions(building: BuildingInfo, friendIds: [String]) {
         guard let currentUserId = Auth.auth().currentUser?.uid else { return }
         isBuildingSpecific = true
         isLoading = true
+
+        // Set building name for display
+        self.locationName = building.name
+        
+        // Debug output to confirm building details
+        print("🏢 Building leaderboard search: \(building.name) [\(building.id)]")
+        print("🌐 Coordinates: \(building.coordinate.latitude), \(building.coordinate.longitude)")
 
         let db = Firestore.firestore()
 
@@ -769,7 +779,7 @@ class RegionalLeaderboardViewModel: ObservableObject {
         let calendar = Calendar.current
         let currentDate = Date()
         var components = calendar.dateComponents([.yearForWeekOfYear, .weekOfYear], from: currentDate)
-        components.weekday = 2  // Monday (2 = Monday in iOS Calendar)
+        components.weekday = 2  // Monday
         components.hour = 0
         components.minute = 0
         components.second = 0
@@ -781,210 +791,234 @@ class RegionalLeaderboardViewModel: ObservableObject {
 
         print("🗓️ Weekly leaderboard from: \(weekStart)")
 
-        // Use the standardized building ID
-        let buildingId = building.id
-        
-        // Debug - print the exact building ID we're querying for
-        print("🔍 Querying for sessions with buildingId: \(buildingId)")
-
         // Get the building's location as a CLLocation
         let buildingLocation = CLLocation(
             latitude: building.coordinate.latitude,
             longitude: building.coordinate.longitude
         )
-        let radius = 100.0  // Search within 100 meters of the building
+        
+        // Define radius for vicinity search (100 meters)
+        let searchRadius = 200.0  // Increased from 100m to 200m for more tolerance
+        
+        print("🔍 Searching for sessions within \(searchRadius)m of building: \(building.name)")
 
-        // IMPROVED QUERY: First try to find sessions by exact buildingId
+        // First query for sessions within the date range AND with consent
         db.collection("session_locations")
             .whereField("sessionStartTime", isGreaterThan: Timestamp(date: weekStart))
-            .whereField("buildingId", isEqualTo: buildingId)  // Only include sessions for this building
+            .whereField("includeInLeaderboards", isEqualTo: true)  // Only include sessions where user consented
             .getDocuments { [weak self] snapshot, error in
                 guard let self = self else { return }
-
+                
                 if let error = error {
-                    print("❌ Error fetching building sessions: \(error.localizedDescription)")
+                    print("❌ Error fetching sessions: \(error.localizedDescription)")
                     self.isLoading = false
                     return
                 }
-
-                var documents = snapshot?.documents ?? []
-                print("📊 Found \(documents.count) exact building match sessions this week")
                 
-                // If we don't find any sessions with exact buildingId, try spatial query
-                if documents.isEmpty {
-                    print("⚠️ No sessions found with exact buildingId match, trying spatial query...")
+                guard let documents = snapshot?.documents else {
+                    print("No documents found")
+                    self.isLoading = false
+                    return
+                }
+                
+                print("📊 Initial query found \(documents.count) total sessions this week with consent")
+                
+                // Debug: Print all session IDs and building IDs
+                for doc in documents {
+                    let data = doc.data()
+                    print("📝 Session ID: \(doc.documentID)")
+                    print("  - Building ID: \(data["buildingId"] as? String ?? "MISSING")")
+                    print("  - Include In Leaderboards: \(data["includeInLeaderboards"] as? Bool ?? false)")
+                    print("  - Session Start Time: \(data["sessionStartTime"] as? Timestamp ?? Timestamp())")
+                }
+                
+                // Filter documents by consent and collect building-specific sessions
+                var buildingDocuments: [QueryDocumentSnapshot] = []
+                
+                for document in documents {
+                    let data = document.data()
+                    var isForThisBuilding = false
                     
-                    // Secondary query by proximity
-                    db.collection("session_locations")
-                        .whereField("sessionStartTime", isGreaterThan: Timestamp(date: weekStart))
-                        .getDocuments { spatialSnapshot, spatialError in
-                            if let spatialError = spatialError {
-                                print("❌ Error fetching spatial sessions: \(spatialError.localizedDescription)")
-                                self.isLoading = false
-                                return
-                            }
-                            
-                            // Filter documents by proximity to building
-                            documents = (spatialSnapshot?.documents ?? []).filter { document in
-                                if let geoPoint = document.data()["location"] as? GeoPoint {
-                                    let sessionLocation = CLLocation(
-                                        latitude: geoPoint.latitude,
-                                        longitude: geoPoint.longitude
-                                    )
-                                    let distance = sessionLocation.distance(from: buildingLocation)
-                                    return distance <= radius
-                                }
-                                return false
-                            }
-                            
-                            print("📊 Found \(documents.count) sessions within \(radius)m of building")
-                            self.processSessionDocuments(documents, building: building, friendIds: friendIds)
+                    // APPROACH 1: Check by building ID with normalization
+                    if let buildingId = data["buildingId"] as? String {
+                        // First try exact match
+                        if buildingId == building.id {
+                            print("🔍 Found exact building ID match: \(buildingId)")
+                            buildingDocuments.append(document)
+                            continue
                         }
-                } else {
-                    // Process the documents found with exact buildingId match
-                    self.processSessionDocuments(documents, building: building, friendIds: friendIds)
+                        
+                        // Try normalized comparison (remove any extra precision)
+                        let normalizedSessionId = buildingId.replacingOccurrences(of: #"building-(\d+\.\d{6})-(-?\d+\.\d{6})"#, with: "building-$1-$2", options: .regularExpression)
+                        let normalizedTargetId = building.id.replacingOccurrences(of: #"building-(\d+\.\d{6})-(-?\d+\.\d{6})"#, with: "building-$1-$2", options: .regularExpression)
+                        
+                        if normalizedSessionId == normalizedTargetId {
+                            print("🔍 Found normalized building ID match: \(normalizedSessionId)")
+                            buildingDocuments.append(document)
+                            continue
+                        }
+                    }
+                    
+                    // APPROACH 2: Check by location proximity with increased tolerance
+                    if let geoPoint = data["location"] as? GeoPoint {
+                        let sessionLocation = CLLocation(
+                            latitude: geoPoint.latitude,
+                            longitude: geoPoint.longitude
+                        )
+                        
+                        let distance = sessionLocation.distance(from: buildingLocation)
+                        print("📍 Session distance from building: \(Int(distance))m")
+                        if distance <= searchRadius {
+                            print("🔍 Found session within \(Int(distance))m of building")
+                            buildingDocuments.append(document)
+                            continue
+                        }
+                    }
+                    
+                    // APPROACH 3: Check by building coordinates with increased tolerance
+                    if let buildingLat = data["buildingLatitude"] as? Double,
+                       let buildingLong = data["buildingLongitude"] as? Double {
+                        
+                        let sessionBuildingLocation = CLLocation(
+                            latitude: buildingLat,
+                            longitude: buildingLong
+                        )
+                        
+                        let distance = sessionBuildingLocation.distance(from: buildingLocation)
+                        print("🏢 Session building coordinates distance: \(Int(distance))m")
+                        
+                        // Use a more lenient radius for building coordinate matching
+                        let buildingCoordinateRadius: CLLocationDistance = 300 // 300 meters
+                        if distance <= buildingCoordinateRadius {
+                            print("🔍 Found session with building coordinates within \(Int(distance))m")
+                            buildingDocuments.append(document)
+                            continue
+                        }
+                        
+                        // Additional check: Compare coordinates directly with small tolerance
+                        let latDiff = abs(buildingLat - building.coordinate.latitude)
+                        let longDiff = abs(buildingLong - building.coordinate.longitude)
+                        let coordinateTolerance = 0.0001 // Approximately 11 meters
+                        
+                        if latDiff <= coordinateTolerance && longDiff <= coordinateTolerance {
+                            print("🔍 Found session with similar building coordinates (diff: \(latDiff), \(longDiff))")
+                            buildingDocuments.append(document)
+                        }
+                    }
+                }
+                
+                print("🏢 Final result: \(buildingDocuments.count) sessions for this building")
+
+                // Count sessions per user
+                var userSessionCounts: [String: (
+                    userId: String,
+                    username: String,
+                    sessionCount: Int,
+                    distance: Double,
+                    isFriend: Bool,
+                    isCurrentUser: Bool
+                )] = [:]
+                
+                var userIdsToFetch: Set<String> = []
+
+                for document in buildingDocuments {
+                    let data = document.data()
+
+                    // Extract basic session info
+                    guard let userId = data["userId"] as? String else { continue }
+                    
+                    print("📝 Found session for user: \(userId)")
+
+                    // Add this user ID to the list we need to fetch
+                    userIdsToFetch.insert(userId)
+                    
+                    // Default distance to 0
+                    var distance: Double = 0
+                    
+                    // Try to calculate accurate distance if location data available
+                    if let geoPoint = data["location"] as? GeoPoint {
+                        let sessionLocation = CLLocation(
+                            latitude: geoPoint.latitude,
+                            longitude: geoPoint.longitude
+                        )
+                        distance = sessionLocation.distance(from: buildingLocation)
+                    }
+
+                    // Update user's session count
+                    if let existingData = userSessionCounts[userId] {
+                        userSessionCounts[userId] = (
+                            userId: userId,
+                            username: existingData.username,
+                            sessionCount: existingData.sessionCount + 1,
+                            distance: min(existingData.distance, distance),
+                            isFriend: existingData.isFriend,
+                            isCurrentUser: existingData.isCurrentUser
+                        )
+                    } else {
+                        userSessionCounts[userId] = (
+                            userId: userId,
+                            username: data["username"] as? String ?? "User",
+                            sessionCount: 1,
+                            distance: distance,
+                            isFriend: friendIds.contains(userId),
+                            isCurrentUser: userId == currentUserId
+                        )
+                    }
+                }
+
+                // No data found - update UI now
+                if userSessionCounts.isEmpty {
+                    DispatchQueue.main.async { [weak self] in
+                        guard let self = self else { return }
+                        self.leaderboardEntries = []
+                        self.isLoading = false
+                    }
+                    return
+                }
+
+                // Print out user session counts for debugging
+                print("👥 User session counts:")
+                for (userId, data) in userSessionCounts {
+                    print("  - \(data.username) (\(userId)): \(data.sessionCount) sessions")
+                }
+
+                // Fetch usernames and scores for all users
+                self.fetchUserScoresAndStreaks(Array(userIdsToFetch)) { scoresMap, streaksMap in
+                    // Convert aggregated data to leaderboard entries with scores
+                    var entries: [RegionalLeaderboardEntry] = []
+
+                    for (userId, userData) in userSessionCounts {
+                        let entry = RegionalLeaderboardEntry(
+                            id: UUID().uuidString,  // Unique ID for SwiftUI
+                            userId: userId,
+                            username: userData.username,
+                            totalWeeklyTime: 0,  // We don't use this field anymore
+                            score: scoresMap[userId],
+                            streakStatus: streaksMap[userId] ?? .none,
+                            sessionCount: userData.sessionCount,
+                            distance: userData.distance,
+                            isFriend: userData.isFriend,
+                            isCurrentUser: userData.isCurrentUser,
+                            isAnonymous: false  // We'll update this later if needed
+                        )
+
+                        entries.append(entry)
+                    }
+
+                    // Sort entries by session count
+                    entries.sort { $0.sessionCount > $1.sessionCount }
+
+                    // Take top 10 for display
+                    let topEntries = Array(entries.prefix(10))
+
+                    // Update UI on main thread
+                    DispatchQueue.main.async { [weak self] in
+                        guard let self = self else { return }
+                        self.leaderboardEntries = topEntries
+                        self.isLoading = false
+                    }
                 }
             }
-    }
-    private func processSessionDocuments(_ documents: [QueryDocumentSnapshot], building: BuildingInfo, friendIds: [String]) {
-        guard let currentUserId = Auth.auth().currentUser?.uid else {
-            self.isLoading = false
-            return
-        }
-        
-        // Process each session document
-        var userWeeklyData: [String: (
-            userId: String,
-            username: String,
-            sessionCount: Int,
-            distance: Double,
-            isFriend: Bool,
-            isCurrentUser: Bool
-        )] = [:]
-
-        var userIdsToFetch: Set<String> = []
-
-        print("🔄 Processing \(documents.count) session documents")
-        
-        // CRITICAL: Examine ALL documents first to debug the issue
-        for (index, document) in documents.enumerated() {
-            let data = document.data()
-            print("📄 DOCUMENT \(index+1): ID \(document.documentID)")
-            print("  - userId: \(data["userId"] as? String ?? "MISSING")")
-            print("  - buildingId: \(data["buildingId"] as? String ?? "MISSING")")
-            print("  - includeInLeaderboards: \(data["includeInLeaderboards"] as? Bool ?? false)")
-            print("  - wasSuccessful: \(data["lastFlipWasSuccessful"] as? Bool ?? data["wasSuccessful"] as? Bool ?? false)")
-            
-            // Now proceed with RELAXED processing - don't require includeInLeaderboards
-            guard let userId = data["userId"] as? String else {
-                print("  ⚠️ Skipping - missing userId")
-                continue
-            }
-            
-            // Add this user ID to the list we need to fetch
-            userIdsToFetch.insert(userId)
-
-            // Get location data for distance calculation
-            let sessionLocation: CLLocation
-            if let geoPoint = data["location"] as? GeoPoint {
-                sessionLocation = CLLocation(
-                    latitude: geoPoint.latitude,
-                    longitude: geoPoint.longitude
-                )
-            } else if let latitude = data["buildingLatitude"] as? Double,
-                      let longitude = data["buildingLongitude"] as? Double {
-                sessionLocation = CLLocation(
-                    latitude: latitude,
-                    longitude: longitude
-                )
-            } else {
-                // Default to building center if no location data
-                sessionLocation = CLLocation(
-                    latitude: building.coordinate.latitude,
-                    longitude: building.coordinate.longitude
-                )
-            }
-            
-            // Get distance from building center
-            let distance = sessionLocation.distance(from: CLLocation(
-                latitude: building.coordinate.latitude,
-                longitude: building.coordinate.longitude
-            ))
-
-            // Update user data - count ALL sessions regardless of the includeInLeaderboards flag (for testing)
-            if let existingData = userWeeklyData[userId] {
-                userWeeklyData[userId] = (
-                    userId: userId,
-                    username: existingData.username,
-                    sessionCount: existingData.sessionCount + 1,
-                    distance: min(existingData.distance, distance),
-                    isFriend: existingData.isFriend,
-                    isCurrentUser: existingData.isCurrentUser
-                )
-            } else {
-                userWeeklyData[userId] = (
-                    userId: userId,
-                    username: data["username"] as? String ?? "User",
-                    sessionCount: 1,
-                    distance: distance,
-                    isFriend: friendIds.contains(userId),
-                    isCurrentUser: userId == currentUserId
-                )
-            }
-        }
-
-        // Debug output of aggregated data
-        print("👥 Found data for \(userWeeklyData.count) users")
-        for (userId, data) in userWeeklyData {
-            print("  - User \(userId): \(data.username) with \(data.sessionCount) sessions")
-        }
-
-        // No data found - update UI now
-        if userWeeklyData.isEmpty {
-            DispatchQueue.main.async {
-                self.leaderboardEntries = []
-                self.isLoading = false
-            }
-            return
-        }
-
-        // Fetch usernames and scores for all users
-        self.fetchUserScoresAndStreaks(Array(userIdsToFetch)) { scoresMap, streaksMap in
-            // Convert aggregated data to leaderboard entries with scores
-            var entries: [RegionalLeaderboardEntry] = []
-
-            for (userId, userData) in userWeeklyData {
-                let entry = RegionalLeaderboardEntry(
-                    id: UUID().uuidString,  // Unique ID for SwiftUI
-                    userId: userId,
-                    username: userData.username,
-                    totalWeeklyTime: 0,  // We don't use this field anymore
-                    score: scoresMap[userId],
-                    streakStatus: streaksMap[userId] ?? .none,
-                    sessionCount: userData.sessionCount,
-                    distance: userData.distance,
-                    isFriend: userData.isFriend,
-                    isCurrentUser: userData.isCurrentUser,
-                    isAnonymous: false  // We'll update this later if needed
-                )
-
-                entries.append(entry)
-            }
-
-            // Sort entries by session count (highest first)
-            entries.sort { $0.sessionCount > $1.sessionCount }
-
-            print("✅ Found \(entries.count) entries for building leaderboard")
-            
-            // Take top 10 for display
-            let topEntries = Array(entries.prefix(10))
-
-            // Update UI on main thread
-            DispatchQueue.main.async {
-                self.leaderboardEntries = topEntries
-                self.isLoading = false
-            }
-        }
     }
 
 

@@ -1,9 +1,11 @@
 import SwiftUI
+import FirebaseFirestore
+import FirebaseAuth
 
 class LeaderboardConsentManager: ObservableObject {
     static let shared = LeaderboardConsentManager()
     
-    // Keys for UserDefaults
+    // Keys for UserDefaults (for backward compatibility)
     private let consentKey = "hasGivenLeaderboardConsent"
     private let seenRegionalTabKey = "hasSeenRegionalTab"
     private let shouldPulseRegionalTabKey = "shouldPulseRegionalTab"
@@ -17,6 +19,9 @@ class LeaderboardConsentManager: ObservableObject {
     init() {
         // Load values after properties are initialized
         loadValuesFromDefaults()
+        
+        // Also check Firestore for consent status
+        loadConsentFromFirestore()
     }
     
     private func loadValuesFromDefaults() {
@@ -36,6 +41,29 @@ class LeaderboardConsentManager: ObservableObject {
         }
     }
     
+    private func loadConsentFromFirestore() {
+        guard let userId = Auth.auth().currentUser?.uid else { return }
+        
+        // Check user_settings collection for consent status
+        Firestore.firestore().collection("user_settings").document(userId)
+            .getDocument { [weak self] document, error in
+                guard let self = self else { return }
+                
+                if let data = document?.data() {
+                    // Get consent status from Firestore
+                    let hasConsent = data["hasLeaderboardConsent"] as? Bool ?? false
+                    
+                    // Update local state
+                    DispatchQueue.main.async {
+                        self.hasGivenConsent = hasConsent
+                        
+                        // Also update UserDefaults for backward compatibility
+                        UserDefaults.standard.set(hasConsent, forKey: self.consentKey)
+                    }
+                }
+            }
+    }
+    
     // Mark that the user has seen the regional tab
     func markRegionalTabSeen() {
         hasSeenRegionalTab = true
@@ -49,6 +77,18 @@ class LeaderboardConsentManager: ObservableObject {
     func setConsent(granted: Bool) {
         hasGivenConsent = granted
         UserDefaults.standard.set(granted, forKey: consentKey)
+        
+        // Also save to Firestore
+        guard let userId = Auth.auth().currentUser?.uid else { return }
+        
+        Firestore.firestore().collection("user_settings").document(userId)
+            .setData(["hasLeaderboardConsent": granted], merge: true) { error in
+                if let error = error {
+                    print("❌ Error saving consent to Firestore: \(error.localizedDescription)")
+                } else {
+                    print("✅ Successfully saved consent status to Firestore")
+                }
+            }
         
         // Stop pulsing after consent decision
         disablePulsing()
@@ -72,6 +112,6 @@ class LeaderboardConsentManager: ObservableObject {
     
     // Check if we have permission to add user to leaderboards
     func canAddToLeaderboard() -> Bool {
-        return true
+        return hasGivenConsent
     }
 }
