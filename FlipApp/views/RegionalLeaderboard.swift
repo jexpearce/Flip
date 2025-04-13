@@ -798,68 +798,73 @@ class RegionalLeaderboardViewModel: ObservableObject {
         )
         
         // Define radius for vicinity search (100 meters)
-        let searchRadius = 200.0  // Increased from 100m to 200m for more tolerance
+        let searchRadius = 100.0
         
         print("🔍 Searching for sessions within \(searchRadius)m of building: \(building.name)")
 
-        // First query for sessions within the date range AND with consent
+        // First get all successful sessions from this week
         db.collection("session_locations")
-            .whereField("sessionStartTime", isGreaterThan: Timestamp(date: weekStart))
-            .whereField("includeInLeaderboards", isEqualTo: true)  // Only include sessions where user consented
+            .whereField("lastFlipWasSuccessful", isEqualTo: true)
+            .whereField("includeInLeaderboards", isEqualTo: true)
             .getDocuments { [weak self] snapshot, error in
                 guard let self = self else { return }
                 
                 if let error = error {
-                    print("❌ Error fetching sessions: \(error.localizedDescription)")
+                    print("Error fetching sessions: \(error.localizedDescription)")
                     self.isLoading = false
                     return
                 }
                 
                 guard let documents = snapshot?.documents else {
-                    print("No documents found")
                     self.isLoading = false
                     return
                 }
                 
-                print("📊 Initial query found \(documents.count) total sessions this week with consent")
+                print("📊 Initial query found \(documents.count) total successful sessions")
                 
-                // Debug: Print all session IDs and building IDs
-                for doc in documents {
-                    let data = doc.data()
-                    print("📝 Session ID: \(doc.documentID)")
-                    print("  - Building ID: \(data["buildingId"] as? String ?? "MISSING")")
-                    print("  - Include In Leaderboards: \(data["includeInLeaderboards"] as? Bool ?? false)")
-                    print("  - Session Start Time: \(data["sessionStartTime"] as? Timestamp ?? Timestamp())")
+                // Filter sessions by date and consent
+                let filteredDocuments = documents.filter { document in
+                    let data = document.data()
+                    
+                    // 1. Check if user consented to leaderboards
+                    if let includeInLeaderboards = data["includeInLeaderboards"] as? Bool,
+                       !includeInLeaderboards {
+                        return false
+                    }
+                    
+                    // 2. Check if session is from this week
+                    if let startTime = data["sessionStartTime"] as? Timestamp,
+                       startTime.dateValue() >= weekStart {
+                        return true
+                    }
+                    
+                    if let endTime = data["sessionEndTime"] as? Timestamp,
+                       endTime.dateValue() >= weekStart {
+                        return true
+                    }
+                    
+                    return false
                 }
                 
-                // Filter documents by consent and collect building-specific sessions
-                var buildingDocuments: [QueryDocumentSnapshot] = []
+                print("📅 After filtering by consent and date: \(filteredDocuments.count) sessions this week")
                 
-                for document in documents {
+                // Process each filtered document to find those for our building
+                var buildingDocuments = [QueryDocumentSnapshot]()
+                
+                for document in filteredDocuments {
                     let data = document.data()
                     var isForThisBuilding = false
                     
-                    // APPROACH 1: Check by building ID with normalization
+                    // APPROACH 1: Check exact building ID match
                     if let buildingId = data["buildingId"] as? String {
-                        // First try exact match
                         if buildingId == building.id {
                             print("🔍 Found exact building ID match: \(buildingId)")
                             buildingDocuments.append(document)
                             continue
                         }
-                        
-                        // Try normalized comparison (remove any extra precision)
-                        let normalizedSessionId = buildingId.replacingOccurrences(of: #"building-(\d+\.\d{6})-(-?\d+\.\d{6})"#, with: "building-$1-$2", options: .regularExpression)
-                        let normalizedTargetId = building.id.replacingOccurrences(of: #"building-(\d+\.\d{6})-(-?\d+\.\d{6})"#, with: "building-$1-$2", options: .regularExpression)
-                        
-                        if normalizedSessionId == normalizedTargetId {
-                            print("🔍 Found normalized building ID match: \(normalizedSessionId)")
-                            buildingDocuments.append(document)
-                            continue
-                        }
                     }
                     
-                    // APPROACH 2: Check by location proximity with increased tolerance
+                    // APPROACH 2: Check by location proximity
                     if let geoPoint = data["location"] as? GeoPoint {
                         let sessionLocation = CLLocation(
                             latitude: geoPoint.latitude,
@@ -867,7 +872,6 @@ class RegionalLeaderboardViewModel: ObservableObject {
                         )
                         
                         let distance = sessionLocation.distance(from: buildingLocation)
-                        print("📍 Session distance from building: \(Int(distance))m")
                         if distance <= searchRadius {
                             print("🔍 Found session within \(Int(distance))m of building")
                             buildingDocuments.append(document)
@@ -875,7 +879,7 @@ class RegionalLeaderboardViewModel: ObservableObject {
                         }
                     }
                     
-                    // APPROACH 3: Check by building coordinates with increased tolerance
+                    // APPROACH 3: Check by building coordinates
                     if let buildingLat = data["buildingLatitude"] as? Double,
                        let buildingLong = data["buildingLongitude"] as? Double {
                         
@@ -885,30 +889,15 @@ class RegionalLeaderboardViewModel: ObservableObject {
                         )
                         
                         let distance = sessionBuildingLocation.distance(from: buildingLocation)
-                        print("🏢 Session building coordinates distance: \(Int(distance))m")
-                        
-                        // Use a more lenient radius for building coordinate matching
-                        let buildingCoordinateRadius: CLLocationDistance = 300 // 300 meters
-                        if distance <= buildingCoordinateRadius {
+                        if distance <= searchRadius {
                             print("🔍 Found session with building coordinates within \(Int(distance))m")
-                            buildingDocuments.append(document)
-                            continue
-                        }
-                        
-                        // Additional check: Compare coordinates directly with small tolerance
-                        let latDiff = abs(buildingLat - building.coordinate.latitude)
-                        let longDiff = abs(buildingLong - building.coordinate.longitude)
-                        let coordinateTolerance = 0.0001 // Approximately 11 meters
-                        
-                        if latDiff <= coordinateTolerance && longDiff <= coordinateTolerance {
-                            print("🔍 Found session with similar building coordinates (diff: \(latDiff), \(longDiff))")
                             buildingDocuments.append(document)
                         }
                     }
                 }
                 
                 print("🏢 Final result: \(buildingDocuments.count) sessions for this building")
-
+                
                 // Count sessions per user
                 var userSessionCounts: [String: (
                     userId: String,

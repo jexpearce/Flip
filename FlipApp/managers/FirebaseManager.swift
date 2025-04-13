@@ -303,9 +303,8 @@ extension FirebaseManager {
 
         print("⭐️ SAVING COMPLETED SESSION: \(sessionId)")
         
-        // Check if user has consented to leaderboards
-        let includeInLeaderboards = LeaderboardConsentManager.shared.canAddToLeaderboard()
-        print("📊 Leaderboard consent status for session: \(includeInLeaderboards ? "Granted" : "Not granted")")
+        // Always include in leaderboards for now
+        let includeInLeaderboards = true
         
         var sessionData: [String: Any] = [
             "userId": session.userId,
@@ -322,7 +321,7 @@ extension FirebaseManager {
             "sessionStartTime": Timestamp(date: session.startTime),
             "sessionEndTime": Timestamp(date: session.endTime),
             "createdAt": FieldValue.serverTimestamp(),
-            "includeInLeaderboards": includeInLeaderboards  // Use the correct consent flag
+            "includeInLeaderboards": includeInLeaderboards  // Force to true for now
         ]
 
         // Add building information if available
@@ -338,58 +337,42 @@ extension FirebaseManager {
 
         // SAVE TO FIRESTORE - with direct confirmation
         print("💾 Saving to session_locations collection...")
-        
-        // Add retry logic for network issues
-        func attemptSave(retryCount: Int = 0) {
-            db.collection("session_locations").document(sessionId)
-                .setData(sessionData) { [weak self] error in
-                    if let error = error {
-                        print("❌ ERROR SAVING COMPLETED SESSION: \(error.localizedDescription)")
-                        
-                        // Retry if it's a network error and we haven't exceeded max retries
-                        if retryCount < 3 && (error.localizedDescription.contains("Network") || error.localizedDescription.contains("connectivity")) {
-                            print("🔄 Retrying save attempt \(retryCount + 1) of 3...")
-                            DispatchQueue.main.asyncAfter(deadline: .now() + Double(retryCount + 1)) {
-                                attemptSave(retryCount: retryCount + 1)
+        db.collection("session_locations").document(sessionId)
+            .setData(sessionData) { [weak self] error in
+                if let error = error {
+                    print("❌ ERROR SAVING COMPLETED SESSION: \(error.localizedDescription)")
+                } else {
+                    print("✅ SUCCESSFULLY SAVED COMPLETED SESSION TO FIRESTORE: \(sessionId)")
+                    
+                    // Verify the save by reading back
+                    self?.db.collection("session_locations").document(sessionId)
+                        .getDocument { doc, error in
+                            if let doc = doc, doc.exists {
+                                print("✓ VERIFICATION: Session document exists in Firestore")
+                                print("  - Building ID: \(doc.data()?["buildingId"] as? String ?? "MISSING")")
+                                print("  - Include In Leaderboards: \(doc.data()?["includeInLeaderboards"] as? Bool ?? false)")
+                                
+                                // Force refresh building leaderboard
+                                if let building = session.building {
+                                    DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
+                                        print("🔄 Force refreshing building leaderboard after successful save")
+                                        RegionalViewModel.shared.leaderboardViewModel.loadBuildingLeaderboard(
+                                            building: building
+                                        )
+                                    }
+                                }
+                            } else {
+                                print("❌ VERIFICATION FAILED: Session document does not exist!")
                             }
                         }
-                    } else {
-                        print("✅ SUCCESSFULLY SAVED COMPLETED SESSION TO FIRESTORE: \(sessionId)")
-                        
-                        // Verify the save by reading back
-                        self?.db.collection("session_locations").document(sessionId)
-                            .getDocument { doc, error in
-                                if let doc = doc, doc.exists {
-                                    print("✓ VERIFICATION: Session document exists in Firestore")
-                                    print("  - Building ID: \(doc.data()?["buildingId"] as? String ?? "MISSING")")
-                                    print("  - Include In Leaderboards: \(doc.data()?["includeInLeaderboards"] as? Bool ?? false)")
-                                    
-                                    // Force refresh building leaderboard
-                                    if let building = session.building {
-                                        DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
-                                            print("🔄 Force refreshing building leaderboard after successful save")
-                                            RegionalViewModel.shared.leaderboardViewModel.loadBuildingLeaderboard(
-                                                building: building
-                                            )
-                                        }
-                                    }
-                                } else {
-                                    print("❌ VERIFICATION FAILED: Session document does not exist!")
-                                }
-                            }
-                    }
                 }
-        }
-        
-        // Start the first save attempt
-        attemptSave()
+            }
     }
     func saveSessionLocation(session: CompletedSession) {
         let sessionId = "\(session.userId)_\(Int(Date().timeIntervalSince1970))"
 
         // Check if user has consented to leaderboards
         let hasConsent = LeaderboardConsentManager.shared.canAddToLeaderboard()
-        print("📊 Leaderboard consent status for session: \(hasConsent ? "Granted" : "Not granted")")
         
         // Use consistent format for actual duration
         let validActualDuration = max(1, session.actualDuration) // Ensure at least 1 minute is recorded
@@ -420,11 +403,6 @@ extension FirebaseManager {
                                                building.coordinate.latitude,
                                                building.coordinate.longitude)
             
-            print("🏢 Standardizing building ID:")
-            print("  - Original ID: \(building.id)")
-            print("  - Standardized ID: \(standardizedBuildingId)")
-            print("  - Coordinates: \(building.coordinate.latitude), \(building.coordinate.longitude)")
-            
             sessionData["buildingId"] = standardizedBuildingId
             sessionData["buildingName"] = building.name
             sessionData["buildingLatitude"] = building.coordinate.latitude
@@ -435,64 +413,37 @@ extension FirebaseManager {
             print("⚠️ No building information available for this session")
         }
 
-        // Add retry logic for network issues
-        func attemptSave(retryCount: Int = 0) {
-            // Save to Firestore
-            db.collection("session_locations").document(sessionId)
-                .setData(sessionData) { [weak self] error in
-                    if let error = error {
-                        print("❌ SAVE ERROR: \(error.localizedDescription)")
+        // Save to Firestore
+        db.collection("session_locations").document(sessionId)
+            .setData(sessionData) { [weak self] error in
+                if let error = error {
+                    print("❌ SAVE ERROR: \(error.localizedDescription)")
+                } else {
+                    print("✅ SESSION SAVED SUCCESSFULLY: \(sessionId) with duration \(validActualDuration) minutes")
+                    
+                    // Debug output to verify data was saved correctly
+                    print("🔍 Session saved with building data: \(sessionData["buildingId"] as? String ?? "none")")
+
+                    // Prune old sessions to keep the map clean
+                    self?.pruneOldSessions(forUserId: session.userId)
+
+                    // Force refresh building leaderboard if building info exists and consent is given
+                    if let building = session.building, hasConsent {
+                        print("🔄 Triggering leaderboard refresh for building: \(building.name)")
                         
-                        // Retry if it's a network error and we haven't exceeded max retries
-                        if retryCount < 3 && (error.localizedDescription.contains("Network") || error.localizedDescription.contains("connectivity")) {
-                            print("🔄 Retrying save attempt \(retryCount + 1) of 3...")
-                            DispatchQueue.main.asyncAfter(deadline: .now() + Double(retryCount + 1)) {
-                                attemptSave(retryCount: retryCount + 1)
-                            }
-                        }
-                    } else {
-                        print("✅ SESSION SAVED SUCCESSFULLY: \(sessionId) with duration \(validActualDuration) minutes")
-                        
-                        // Debug output to verify data was saved correctly
-                        print("🔍 Session saved with building data: \(sessionData["buildingId"] as? String ?? "none")")
-                        print("🔍 Session saved with consent flag: \(sessionData["includeInLeaderboards"] as? Bool ?? false)")
-
-                        // Verify the save by reading back
-                        self?.db.collection("session_locations").document(sessionId)
-                            .getDocument { doc, error in
-                                if let doc = doc, doc.exists {
-                                    print("✓ VERIFICATION: Session document exists in Firestore")
-                                    print("  - Building ID: \(doc.data()?["buildingId"] as? String ?? "MISSING")")
-                                    print("  - Include In Leaderboards: \(doc.data()?["includeInLeaderboards"] as? Bool ?? false)")
-                                } else {
-                                    print("❌ VERIFICATION FAILED: Session document does not exist!")
-                                }
-                            }
-
-                        // Prune old sessions to keep the map clean
-                        self?.pruneOldSessions(forUserId: session.userId)
-
-                        // Force refresh building leaderboard if building info exists and consent is given
-                        if let building = session.building, hasConsent {
-                            print("🔄 Triggering leaderboard refresh for building: \(building.name)")
-                            
-                            // Add a short delay to ensure Firestore has time to process the write
-                            DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
-                                RegionalViewModel.shared.leaderboardViewModel.loadBuildingLeaderboard(building: building)
-                            }
-                        }
-
-                        // Clean up stale location data
-                        if session.wasSuccessful {
-                            // Only remove from active locations when session completed successfully
-                            self?.db.collection("locations").document(session.userId).delete()
+                        // Add a short delay to ensure Firestore has time to process the write
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
+                            RegionalViewModel.shared.leaderboardViewModel.loadBuildingLeaderboard(building: building)
                         }
                     }
+
+                    // Clean up stale location data
+                    if session.wasSuccessful {
+                        // Only remove from active locations when session completed successfully
+                        self?.db.collection("locations").document(session.userId).delete()
+                    }
                 }
-        }
-        
-        // Start the first save attempt
-        attemptSave()
+            }
     }
 }
 // Add this extension to FirebaseManager.swift
@@ -653,58 +604,4 @@ struct CompletedSession {
     let startTime: Date
     let endTime: Date
     let building: BuildingInfo?
-}
-
-// Add this function to update all existing sessions to have consent=true
-extension FirebaseManager {
-    // Add this function to update all existing sessions to have consent=true
-    func updateAllSessionsConsent() {
-        print("🔄 Starting update of all sessions consent flag...")
-        
-        // Get sessions from the last 30 days
-        let thirtyDaysAgo = Date().addingTimeInterval(-30 * 24 * 60 * 60)
-        
-        db.collection("session_locations")
-            .whereField("sessionStartTime", isGreaterThan: Timestamp(date: thirtyDaysAgo))
-            .getDocuments { [weak self] (snapshot: QuerySnapshot?, error: Error?) in
-                guard let self = self else { return }
-                
-                if let error = error {
-                    print("❌ Error fetching sessions: \(error.localizedDescription)")
-                    return
-                }
-                
-                guard let documents = snapshot?.documents else {
-                    print("❌ No documents found")
-                    return
-                }
-                
-                print("📊 Found \(documents.count) sessions to update")
-                
-                // Process in batches of 500 (Firestore limit)
-                let batchSize = 500
-                var currentBatch = 0
-                
-                for i in stride(from: 0, to: documents.count, by: batchSize) {
-                    let end = min(i + batchSize, documents.count)
-                    let batch = documents[i..<end]
-                    
-                    let batchRef = self.db.batch()
-                    
-                    for doc in batch {
-                        batchRef.updateData(["includeInLeaderboards": true], forDocument: doc.reference)
-                    }
-                    
-                    batchRef.commit { error in
-                        if let error = error {
-                            print("❌ Error updating batch \(currentBatch): \(error.localizedDescription)")
-                        } else {
-                            print("✅ Successfully updated batch \(currentBatch) (\(batch.count) sessions)")
-                        }
-                    }
-                    
-                    currentBatch += 1
-                }
-            }
-    }
 }

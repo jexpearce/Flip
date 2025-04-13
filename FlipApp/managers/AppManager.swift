@@ -241,6 +241,47 @@ class AppManager: NSObject, ObservableObject {
             // For new sessions, set the full duration
             remainingSeconds = selectedMinutes * 60
             remainingPauses = maxPauses  // Reset pauses for new sessions
+            
+            // IMMEDIATELY increment the leaderboard when session starts
+            if let building = RegionalViewModel.shared.selectedBuilding {
+                print("🏢 Incrementing leaderboard for building: \(building.name) [ID: \(building.id)]")
+                
+                // Create a session document immediately
+                let userId = Auth.auth().currentUser?.uid ?? ""
+                let username = FirebaseManager.shared.currentUser?.username ?? "User"
+                
+                let sessionData: [String: Any] = [
+                    "userId": userId,
+                    "username": username,
+                    "location": GeoPoint(
+                        latitude: building.coordinate.latitude,
+                        longitude: building.coordinate.longitude
+                    ),
+                    "isCurrentlyFlipped": true,
+                    "lastFlipTime": Timestamp(date: Date()),
+                    "lastFlipWasSuccessful": true,
+                    "sessionDuration": selectedMinutes,
+                    "actualDuration": 0,  // Will be updated when session ends
+                    "sessionStartTime": Timestamp(date: Date()),
+                    "sessionEndTime": Timestamp(date: Date()),
+                    "includeInLeaderboards": true,  // Always include for now
+                    "buildingId": building.id,
+                    "buildingName": building.name,
+                    "buildingLatitude": building.coordinate.latitude,
+                    "buildingLongitude": building.coordinate.longitude
+                ]
+                
+                // Save to Firestore
+                FirebaseManager.shared.db.collection("session_locations")
+                    .document("\(userId)_\(Int(Date().timeIntervalSince1970))")
+                    .setData(sessionData) { error in
+                        if let error = error {
+                            print("❌ Error saving session start: \(error.localizedDescription)")
+                        } else {
+                            print("✅ Successfully saved session start to leaderboard")
+                        }
+                    }
+            }
         }
         else {
             // For resumed sessions, restore the paused time

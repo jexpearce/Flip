@@ -2,44 +2,26 @@ import CoreLocation
 import Foundation
 
 // Building info model
-struct BuildingInfo: Codable, Identifiable, Equatable {
+struct BuildingInfo: Identifiable, Equatable {
     let id: String
     let name: String
     let coordinate: CLLocationCoordinate2D
-
-    enum CodingKeys: String, CodingKey {
-        case id, name, latitude, longitude
-    }
-
-    init(id: String, name: String, coordinate: CLLocationCoordinate2D) {
-        // Standardize building ID format regardless of what was passed in
-        self.id = String(format: "building-%.6f-%.6f", coordinate.latitude, coordinate.longitude)
+    
+    init(id: String = "", name: String, coordinate: CLLocationCoordinate2D) {
         self.name = name
         self.coordinate = coordinate
         
-        print("📍 Created BuildingInfo with standardized ID: \(self.id)")
+        // If no ID provided, generate one with consistent precision
+        if id.isEmpty {
+            // Round coordinates to 6 decimal places for consistency
+            let lat = round(coordinate.latitude * 1000000) / 1000000
+            let lon = round(coordinate.longitude * 1000000) / 1000000
+            self.id = "building-\(lat)-\(lon)"
+        } else {
+            self.id = id
+        }
     }
-
-    init(from decoder: Decoder) throws {
-        let container = try decoder.container(keyedBy: CodingKeys.self)
-        let rawId = try container.decode(String.self, forKey: .id)
-        name = try container.decode(String.self, forKey: .name)
-        let latitude = try container.decode(Double.self, forKey: .latitude)
-        let longitude = try container.decode(Double.self, forKey: .longitude)
-        coordinate = CLLocationCoordinate2D(latitude: latitude, longitude: longitude)
-        
-        // Standardize ID regardless of what was decoded
-        id = String(format: "building-%.6f-%.6f", latitude, longitude)
-    }
-
-    func encode(to encoder: Encoder) throws {
-        var container = encoder.container(keyedBy: CodingKeys.self)
-        try container.encode(id, forKey: .id)
-        try container.encode(name, forKey: .name)
-        try container.encode(coordinate.latitude, forKey: .latitude)
-        try container.encode(coordinate.longitude, forKey: .longitude)
-    }
-
+    
     static func == (lhs: BuildingInfo, rhs: BuildingInfo) -> Bool {
         // Compare based on coordinates proximity rather than exact ID match
         let lhsLocation = CLLocation(latitude: lhs.coordinate.latitude, longitude: lhs.coordinate.longitude)
