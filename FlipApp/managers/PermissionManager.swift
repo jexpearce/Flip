@@ -311,27 +311,62 @@ class PermissionManager: NSObject, ObservableObject {
             let motionManager = CMMotionActivityManager()
             let today = Date()
 
-            motionManager.queryActivityStarting(from: today, to: today, to: .main) {
-                [weak self] _, _ in
-                DispatchQueue.main.async {
-                    guard let self = self else { return }
+            // First check current status
+            let currentStatus = CMMotionActivityManager.authorizationStatus()
+            
+            if currentStatus == .notDetermined {
+                motionManager.queryActivityStarting(from: today, to: today, to: .main) {
+                    [weak self] _, _ in
+                    DispatchQueue.main.async {
+                        guard let self = self else { return }
 
-                    // Check current status after prompt
-                    let currentStatus = CMMotionActivityManager.authorizationStatus()
-                    self.motionPermissionGranted = (currentStatus == .authorized)
+                        // Check status after prompt
+                        let updatedStatus = CMMotionActivityManager.authorizationStatus()
+                        self.motionPermissionGranted = (updatedStatus == .authorized)
+                        print("Motion permission status after request: \(updatedStatus)")
 
-                    // IMPORTANT: Only show settings alert if permission was DENIED
-                    // NOT before requesting permission!
-                    if currentStatus == .denied {
-                        // Then it's appropriate to show settings alert
-                        self.showMotionSettingsAlert = true
+                        // Show settings alert if denied
+                        if updatedStatus == .denied {
+                            self.showMotionSettingsAlert = true
+                        }
+
+                        // Update UI state
+                        self.updatePermissionState()
+                        
+                        // Reset flag and continue to next permission
+                        self.isProcessingMotionPermission = false
+                        
+                        // Post notification for permission change
+                        NotificationCenter.default.post(name: NSNotification.Name("locationPermissionChanged"), object: nil)
+                        
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+                            self.showMotionAlert = false
+                            self.startNotificationFlow()
+                        }
                     }
-
-                    // Reset flag and continue to next permission
-                    self.isProcessingMotionPermission = false
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
-                        self.startNotificationFlow()
-                    }
+                }
+            } else {
+                // Already determined, update state immediately
+                self.motionPermissionGranted = (currentStatus == .authorized)
+                print("Motion permission already determined: \(currentStatus)")
+                
+                // Show settings alert if denied
+                if currentStatus == .denied {
+                    self.showMotionSettingsAlert = true
+                }
+                
+                // Update UI state
+                self.updatePermissionState()
+                
+                // Reset flag and continue to next permission
+                self.isProcessingMotionPermission = false
+                
+                // Post notification for permission change
+                NotificationCenter.default.post(name: NSNotification.Name("locationPermissionChanged"), object: nil)
+                
+                DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+                    self.showMotionAlert = false
+                    self.startNotificationFlow()
                 }
             }
         }

@@ -280,16 +280,16 @@ struct InitialView: View {
 
                     // Continue button with animated reveal
                     Button(action: {
+                        print("Continue button tapped")
+                        
                         // Mark permissions as completed
-                        withAnimation(.spring(response: 0.5, dampingFraction: 0.7)) {
-                            UserDefaults.standard.set(true, forKey: "hasCompletedPermissionFlow")
-                            
-                            // Proceed to main app
-                            NotificationCenter.default.post(
-                                name: NSNotification.Name("ProceedToMainApp"),
-                                object: nil
-                            )
-                        }
+                        UserDefaults.standard.set(true, forKey: "hasCompletedPermissionFlow")
+                        
+                        // Proceed to main app
+                        NotificationCenter.default.post(
+                            name: NSNotification.Name("ProceedToMainApp"),
+                            object: nil
+                        )
                     }) {
                         Text("CONTINUE")
                             .font(.system(size: 20, weight: .black))
@@ -376,7 +376,7 @@ struct InitialView: View {
             
             // Ensure no permissions are requested until we're ready
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) {
-                // Automatically start with first non-granted permission
+                // Start with first permission that isn't granted
                 startFirstMissingPermission()
             
                 // Add observers for permission changes
@@ -552,18 +552,9 @@ struct InitialView: View {
 
     // Start with first permission that isn't granted
     private func startFirstMissingPermission() {
-        for permission in PermissionType.allCases {
-            if !isPermissionGranted(permission) {
-                // Short delay before showing first permission
-                DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
-                    requestPermission(permission)
-                }
-                return
-            }
-        }
-
-        // If all granted, mark as ready
-        readyToProceed = true
+        // Don't automatically show permission alerts
+        // Just check if we can proceed
+        updateReadyToProceed()
     }
 
     // Set up observers for permission status changes
@@ -583,46 +574,26 @@ struct InitialView: View {
 
     // Handle permission status changes
     private func handlePermissionChanged() {
-        // If the current active permission was granted, move to the next one
-        if let active = activePermission, isPermissionGranted(active) {
-            // Close any open permission alerts
-            switch active {
-            case .location: showLocationPermission = false
-            case .motion: showMotionPermission = false
-            case .notification: showNotificationPermission = false
-            }
-
-            // Find next permission to request
-            activePermission = nil
-            var foundCurrent = false
-
-            for permission in PermissionType.allCases {
-                if foundCurrent && !isPermissionGranted(permission) {
-                    // Short delay before showing next permission
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
-                        requestPermission(permission)
-                    }
-                    return
-                }
-
-                if permission == active { foundCurrent = true }
-            }
-
-            // If we got here, we've processed all permissions
-            updateReadyToProceed()
-        }
+        // Update ready to proceed state
+        updateReadyToProceed()
     }
 
     // Check if we can proceed to the main app
     private func updateReadyToProceed() {
         // At minimum, we require motion permission since it's essential
         let requiredGranted = permissionManager.motionPermissionGranted
-
+        
+        print("Motion permission granted: \(requiredGranted)")
+        
         // Check if all permissions are granted
         let allGranted = PermissionType.allCases.allSatisfy { isPermissionGranted($0) }
+        
+        print("All permissions granted: \(allGranted)")
 
-        // Can proceed if either all granted or just required ones with others skipped
-        readyToProceed = requiredGranted || allGranted
+        // Can proceed if motion permission is granted
+        readyToProceed = requiredGranted
+        
+        print("Ready to proceed: \(readyToProceed)")
         
         // If all permissions are granted, make the continue button more prominent
         if allGranted {
