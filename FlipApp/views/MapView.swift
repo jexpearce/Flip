@@ -236,41 +236,19 @@ struct MapView: View {
                 )
                 .zIndex(10)  // Ensure it's above other content
             }
-
-            // Map privacy consent alert
-            if mapConsentManager.showMapPrivacyAlert {
-                MapPrivacyAlert(
-                    isPresented: $mapConsentManager.showMapPrivacyAlert,
-                    onAccept: {
-                        mapConsentManager.acceptMapPrivacy()
-                        viewModel.startLocationTracking()
-                        viewModel.refreshLocations()
-                    },
-                    onReject: {
-                        mapConsentManager.rejectMapPrivacy()
-                        // Return to previous screen
-                        presentationMode.wrappedValue.dismiss()
-                    }
-                )
-                .opacity(mapConsentManager.showMapPrivacyAlert ? 1 : 0).zIndex(20)  // Ensure it's on top of everything
-            }
         }  // Move .sheet modifier outside of ZStack
         .sheet(isPresented: $showPrivacySettings) { MapPrivacySettingsView() }
         .onAppear {
-            // Check for map consent first
-            mapConsentManager.checkAndRequestConsent { granted in
-                if granted {
-                    viewModel.startLocationTracking()
-
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-                        viewModel.refreshLocations()
-                    }
-                }
+            // Start tracking and refresh locations since consent is already handled
+            viewModel.startLocationTracking()
+            
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                viewModel.refreshLocations()
             }
         }
         .onDisappear {
             viewModel.stopLocationTracking()
-
+            
             Task { @MainActor in LocationHandler.shared.completelyStopLocationUpdates() }
         }
     }

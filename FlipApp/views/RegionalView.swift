@@ -93,6 +93,7 @@ struct RegionalView: View {
     @EnvironmentObject var viewRouter: ViewRouter
     @State private var showMap = false
     @StateObject private var locationPermissionManager = LocationPermissionManager.shared
+    @StateObject private var mapConsentManager = MapConsentManager.shared
 
     // Add this state variable for the privacy sheet
     @State private var showPrivacySettings = false
@@ -378,7 +379,7 @@ struct RegionalView: View {
             viewModel.loadCurrentBuilding()
             
             // Check if we need to show leaderboard consent
-            if !leaderboardConsentManager.hasGivenConsent && !leaderboardConsentManager.hasSeenRegionalTab {
+            if !leaderboardConsentManager.hasGivenConsent {
                 // Mark that the user has seen this tab
                 leaderboardConsentManager.markRegionalTabSeen()
                 
@@ -419,6 +420,20 @@ struct RegionalView: View {
             ZStack {
                 if showLeaderboardConsent {
                     LeaderboardConsentAlert(isPresented: $showLeaderboardConsent)
+                }
+                
+                // Add map privacy alert
+                if mapConsentManager.showMapPrivacyAlert {
+                    MapPrivacyAlert(
+                        isPresented: $mapConsentManager.showMapPrivacyAlert,
+                        onAccept: {
+                            mapConsentManager.acceptMapPrivacy()
+                            showMap = true
+                        },
+                        onReject: {
+                            mapConsentManager.rejectMapPrivacy()
+                        }
+                    )
                 }
             }
         )

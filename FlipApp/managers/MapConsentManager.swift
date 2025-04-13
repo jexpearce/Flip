@@ -49,7 +49,10 @@ class MapConsentManager: ObservableObject {
         pendingCompletion = completion
 
         // Important: ensure this happens on main thread
-        DispatchQueue.main.async { self.showMapPrivacyAlert = true }
+        DispatchQueue.main.async { 
+            self.showMapPrivacyAlert = true 
+            print("Map privacy alert should now be visible")
+        }
     }
 
     func acceptMapPrivacy() {
