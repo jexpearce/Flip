@@ -21,6 +21,20 @@ import FirebaseAuth
         // Set Firebase Messaging settings
         Messaging.messaging().isAutoInitEnabled = true
 
+        // Add auth state listener
+        Auth.auth().addStateDidChangeListener { auth, user in
+            if user != nil {
+                let defaults = UserDefaults.standard
+                let hasCompletedPermissions = defaults.bool(forKey: "hasCompletedPermissionFlow")
+                if !hasCompletedPermissions {
+                    NotificationCenter.default.post(
+                        name: NSNotification.Name("ShowPermissionsFlow"),
+                        object: nil
+                    )
+                }
+            }
+        }
+
         // Register tasks first, before scheduling anything
         BGTaskScheduler.shared.register(
             forTaskWithIdentifier: AppManager.backgroundRefreshIdentifier,

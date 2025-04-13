@@ -363,19 +363,33 @@ extension AuthManager {
                         // Set first-time user flags for new Google users
                         UserDefaults.standard.set(true, forKey: "isPotentialFirstTimeUser")
                         UserDefaults.standard.set(false, forKey: "hasCompletedPermissionFlow")
+                        UserDefaults.standard.set(true, forKey: "hasLaunchedBefore")
                         
                         self.createGoogleUserDocument(user: user) {
-                            self.loadUserData(userId: user.uid) { 
+                            self.loadUserData(userId: user.uid) {
                                 // Post notification to show permission flow
                                 NotificationCenter.default.post(
                                     name: NSNotification.Name("ShowPermissionsFlow"),
                                     object: nil
                                 )
-                                completion(true) 
+                                completion(true)
                             }
                         }
                     }
                     else {
+                        // For existing users, check if they need to complete permissions
+                        let hasCompletedPermissions = UserDefaults.standard.bool(forKey: "hasCompletedPermissionFlow")
+                        if !hasCompletedPermissions {
+                            // Set flags to trigger permission flow
+                            UserDefaults.standard.set(true, forKey: "isPotentialFirstTimeUser")
+                            UserDefaults.standard.set(false, forKey: "hasCompletedPermissionFlow")
+                            
+                            // Post notification to show permission flow
+                            NotificationCenter.default.post(
+                                name: NSNotification.Name("ShowPermissionsFlow"),
+                                object: nil
+                            )
+                        }
                         self.loadUserData(userId: user.uid) { completion(true) }
                     }
                 }
