@@ -1784,8 +1784,9 @@ class RegionalWeeklyLeaderboardViewModel: ObservableObject {
                 let regionRadiusInMeters = self.regionRadiusInMiles * 1609.34
 
                 // First, fetch all sessions from this week in the region
-                self.db.collection("sessions").whereField("wasSuccessful", isEqualTo: true)
-                    .whereField("startTime", isGreaterThan: Timestamp(date: weekStart))
+                self.db.collection("session_locations")
+                    .whereField("sessionStartTime", isGreaterThan: Timestamp(date: weekStart))
+                    .whereField("includeInLeaderboards", isEqualTo: true)  // Only include sessions where user consented
                     .getDocuments(source: .default) { [weak self] snapshot, error in
                         guard let self = self else { return }
 
@@ -1805,108 +1806,76 @@ class RegionalWeeklyLeaderboardViewModel: ObservableObject {
                         // Filter sessions by distance if location is available
                         var filteredDocuments = documents
 
-                        // If we have valid location, filter by distance using session_locations collection
+                        // If we have valid location, filter by distance
                         if location.horizontalAccuracy > 0 {
-                            // We'll need to fetch location data for each session to filter by region
-                            let dispatchGroup = DispatchGroup()
-                            var sessionsInRegion: Set<String> = []
-
-                            for document in documents {
-                                if let userId = document.data()["userId"] as? String {
-                                    dispatchGroup.enter()
-
-                                    // Use session_locations collection to get location data
-                                    self.db.collection("session_locations")
-                                        .whereField("userId", isEqualTo: userId)
-                                        .getDocuments { snapshot, error in
-                                            defer { dispatchGroup.leave() }
-
-                                            if let locationDocs = snapshot?.documents {
-                                                for locationDoc in locationDocs {
-                                                    if let geoPoint = locationDoc.data()["location"]
-                                                        as? GeoPoint
-                                                    {
-                                                        let sessionLocation = CLLocation(
-                                                            latitude: geoPoint.latitude,
-                                                            longitude: geoPoint.longitude
-                                                        )
-
-                                                        // Check if within region radius
-                                                        let distance = location.distance(
-                                                            from: sessionLocation
-                                                        )
-                                                        if distance <= regionRadiusInMeters {
-                                                            sessionsInRegion.insert(
-                                                                document.documentID
-                                                            )
-                                                        }
-                                                    }
-                                                }
-                                            }
-                                        }
+                            filteredDocuments = documents.filter { document in
+                                if let geoPoint = document.data()["location"] as? GeoPoint,
+                                   let lastFlipWasSuccessful = document.data()["lastFlipWasSuccessful"] as? Bool,
+                                   lastFlipWasSuccessful  // Only include successful sessions
+                                {
+                                    let sessionLocation = CLLocation(
+                                        latitude: geoPoint.latitude,
+                                        longitude: geoPoint.longitude
+                                    )
+                                    let distance = location.distance(from: sessionLocation)
+                                    return distance <= regionRadiusInMeters
                                 }
-                            }
-
-                            dispatchGroup.notify(queue: .main) {
-                                // Filter documents to only those in region
-                                filteredDocuments = documents.filter {
-                                    sessionsInRegion.contains($0.documentID)
-                                }
-                                print(
-                                    "📍 Found \(filteredDocuments.count) sessions in \(self.regionRadiusInMiles) mile radius"
-                                )
-
-                                // Process the filtered sessions
-                                self.processSessions(documents: filteredDocuments)
+                                return false
                             }
                         }
-                        else {
-                            // If location is not available, just use all sessions
-                            self.processSessions(documents: filteredDocuments)
+
+                        print("📍 Found \(filteredDocuments.count) sessions in region")
+
+                        // Process the filtered documents
+                        var userData: [String: (userId: String, username: String, minutes: Int)] = [:]
+                        var userIdsToFetch = Set<String>()
+
+                        for document in filteredDocuments {
+                            if let userId = document.data()["userId"] as? String,
+                               let username = document.data()["username"] as? String,
+                               let actualDuration = document.data()["actualDuration"] as? Int
+                            {
+                                userIdsToFetch.insert(userId)
+                                if let existing = userData[userId] {
+                                    userData[userId] = (
+                                        userId: userId,
+                                        username: existing.username,
+                                        minutes: existing.minutes + actualDuration
+                                    )
+                                } else {
+                                    userData[userId] = (
+                                        userId: userId,
+                                        username: username,
+                                        minutes: actualDuration
+                                    )
+                                }
+                            }
+                        }
+
+                        // Fetch privacy settings for all users
+                        self.fetchUserPrivacySettings(userIds: Array(userIdsToFetch)) { privacySettings in
+                            // Filter out users who have opted out
+                            let filteredUserData = userData.filter { userId, _ in
+                                !(privacySettings[userId]?.optOut ?? false)
+                            }
+
+                            // Process users and create leaderboard entries
+                            self.processUsers(userData: filteredUserData) { entries in
+                                DispatchQueue.main.async {
+                                    self.leaderboardEntries = entries
+                                    self.isLoading = false
+                                }
+                            }
                         }
                     }
             }
         }
     }
 
-    private func processSessions(documents: [QueryDocumentSnapshot]) {
-        // Dictionary to track each user's total time
-        var userWeeklyData: [String: (userId: String, username: String, minutes: Int)] = [:]
-
-        // Collection of user IDs we need to fetch privacy settings for
-        var userIdsToCheck = Set<String>()
-
-        // Process each session document
-        for document in documents {
-            let data = document.data()
-
-            // Extract basic session info
-            guard let userId = data["userId"] as? String,
-                let actualDuration = data["actualDuration"] as? Int
-            else { continue }
-
-            // Add this user ID to the list we need to check privacy for
-            userIdsToCheck.insert(userId)
-
-            // Get temp username (will be updated later if needed)
-            let tempUsername = data["username"] as? String ?? "User"
-
-            // Update the user's total time
-            if let existingData = userWeeklyData[userId] {
-                userWeeklyData[userId] = (
-                    userId: userId, username: existingData.username,
-                    minutes: existingData.minutes + actualDuration
-                )
-            }
-            else {
-                userWeeklyData[userId] = (
-                    userId: userId, username: tempUsername, minutes: actualDuration
-                )
-            }
-        }
-
+    private func processUsers(userData: [String: (userId: String, username: String, minutes: Int)],
+                              completion: @escaping ([GlobalLeaderboardEntry]) -> Void) {
         // No data found - update UI now
-        if userWeeklyData.isEmpty {
+        if userData.isEmpty {
             DispatchQueue.main.async {
                 self.leaderboardEntries = []
                 self.isLoading = false
@@ -1914,49 +1883,43 @@ class RegionalWeeklyLeaderboardViewModel: ObservableObject {
             return
         }
 
-        // Now check privacy settings for all users
-        fetchUserPrivacySettings(userIds: Array(userIdsToCheck)) { privacySettings in
-            // Get all usernames respecting privacy
-            self.fetchUsernamesRespectingPrivacy(
-                Array(userIdsToCheck),
-                privacySettings: privacySettings
-            ) { usernameMap in
-                // Get scores and streaks
-                self.fetchUserScoresAndStreaks(Array(userIdsToCheck)) { scoresMap, streaksMap in
-                    // Now build final entries respecting privacy
-                    var entries: [GlobalLeaderboardEntry] = []
+        // Get the user IDs to check privacy settings
+        let userIds = Array(userData.keys)
 
-                    for (userId, userData) in userWeeklyData {
-                        // Skip users who have opted out of leaderboards
-                        if let userPrivacy = privacySettings[userId], userPrivacy.optOut {
-                            continue
-                        }
+        // Check privacy settings for all users
+        fetchUserPrivacySettings(userIds: userIds) { privacySettings in
+            // Get scores and streaks
+            self.fetchUserScoresAndStreaks(userIds) { scoresMap, streaksMap in
+                // Now build final entries respecting privacy
+                var entries: [GlobalLeaderboardEntry] = []
 
-                        // Determine if user should be anonymous
-                        let isAnonymous = privacySettings[userId]?.isAnonymous ?? false
-                        let displayUsername =
-                            isAnonymous ? "Anonymous" : (usernameMap[userId] ?? userData.username)
+                for (userId, userInfo) in userData {
+                    // Skip users who have opted out of leaderboards
+                    if let userPrivacy = privacySettings[userId], userPrivacy.optOut { continue }
 
-                        let entry = GlobalLeaderboardEntry(
-                            id: UUID().uuidString,  // Unique ID for SwiftUI
-                            userId: userId,
-                            username: displayUsername,
-                            minutes: userData.minutes,
-                            score: scoresMap[userId],
-                            streakStatus: streaksMap[userId] ?? .none,
-                            isAnonymous: isAnonymous
-                        )
+                    // Determine if user should be anonymous
+                    let isAnonymous = privacySettings[userId]?.isAnonymous ?? false
+                    let displayUsername = isAnonymous ? "Anonymous" : userInfo.username
 
-                        entries.append(entry)
-                    }
+                    let entry = GlobalLeaderboardEntry(
+                        id: UUID().uuidString,  // Unique ID for SwiftUI
+                        userId: userId,
+                        username: displayUsername,
+                        minutes: userInfo.minutes,
+                        score: scoresMap[userId],
+                        streakStatus: streaksMap[userId] ?? .none,
+                        isAnonymous: isAnonymous
+                    )
 
-                    // Sort by minutes
-                    entries.sort { $0.minutes > $1.minutes }
+                    entries.append(entry)
+                }
 
-                    DispatchQueue.main.async {
-                        self.leaderboardEntries = entries
-                        self.isLoading = false
-                    }
+                // Sort by minutes
+                entries.sort { $0.minutes > $1.minutes }
+
+                DispatchQueue.main.async {
+                    self.leaderboardEntries = entries
+                    self.isLoading = false
                 }
             }
         }
@@ -2031,118 +1994,6 @@ class RegionalWeeklyLeaderboardViewModel: ObservableObject {
         }
 
         dispatchGroup.notify(queue: .main) { completion(result) }
-    }
-
-    private func fetchUsernamesRespectingPrivacy(
-        _ userIds: [String],
-        privacySettings: [String: (optOut: Bool, isAnonymous: Bool)],
-        completion: @escaping ([String: String]) -> Void
-    ) {
-        guard !userIds.isEmpty else {
-            completion([:])
-            return
-        }
-
-        // First check our cache
-        var result: [String: String] = [:]
-        var idsToFetch: [String] = []
-
-        for userId in userIds {
-            // Check if user is anonymous based on privacy settings
-            if let privacySetting = privacySettings[userId], privacySetting.isAnonymous {
-                result[userId] = "Anonymous"
-                continue
-            }
-
-            if let cachedUser = userCache[userId],
-                !cachedUser.username.isEmpty && cachedUser.username != "User"
-            {
-                result[userId] = cachedUser.username
-            }
-            else if let currentUser = FirebaseManager.shared.currentUser, currentUser.id == userId,
-                !currentUser.username.isEmpty
-            {
-                result[userId] = currentUser.username
-                // Update cache
-                userCache[userId] = UserCacheItem(
-                    userId: userId,
-                    username: currentUser.username,
-                    profileImageURL: currentUser.profileImageURL
-                )
-            }
-            else {
-                idsToFetch.append(userId)
-            }
-        }
-
-        // If we have all usernames already, return
-        if idsToFetch.isEmpty {
-            completion(result)
-            return
-        }
-
-        // Fetch in batches of 10 to avoid Firestore limitations
-        let batchSize = 10
-        let dispatchGroup = DispatchGroup()
-
-        for i in stride(from: 0, to: idsToFetch.count, by: batchSize) {
-            let end = min(i + batchSize, idsToFetch.count)
-            let batch = Array(idsToFetch[i..<end])
-
-            dispatchGroup.enter()
-            fetchUserBatch(batch) { batchResult in
-                // Add this batch to our results
-                for (id, username) in batchResult {
-                    // Apply privacy settings - override with "Anonymous" if needed
-                    if let privacySetting = privacySettings[id], privacySetting.isAnonymous {
-                        result[id] = "Anonymous"
-                    }
-                    else {
-                        result[id] = username
-                    }
-                }
-                dispatchGroup.leave()
-            }
-        }
-
-        dispatchGroup.notify(queue: .main) { completion(result) }
-    }
-
-    private func fetchUserBatch(
-        _ userIds: [String],
-        completion: @escaping ([String: String]) -> Void
-    ) {
-        let db = Firestore.firestore()
-        var batchResult: [String: String] = [:]
-        let dispatchGroup = DispatchGroup()
-
-        for userId in userIds {
-            dispatchGroup.enter()
-
-            db.collection("users").document(userId)
-                .getDocument(source: .default) { document, error in
-                    defer { dispatchGroup.leave() }
-
-                    // Try to get username from document
-                    if let data = document?.data(), let username = data["username"] as? String,
-                        !username.isEmpty
-                    {
-                        batchResult[userId] = username
-
-                        // Update our cache
-                        self.userCache[userId] = UserCacheItem(
-                            userId: userId,
-                            username: username,
-                            profileImageURL: data["profileImageURL"] as? String
-                        )
-                    }
-                    else {
-                        batchResult[userId] = "User"
-                    }
-                }
-        }
-
-        dispatchGroup.notify(queue: .main) { completion(batchResult) }
     }
 
     private func fetchUserScoresAndStreaks(

@@ -35,3 +35,10 @@ struct BuildingInfo: Codable, Identifiable, Equatable {
 
     static func == (lhs: BuildingInfo, rhs: BuildingInfo) -> Bool { return lhs.id == rhs.id }
 }
+extension BuildingInfo {
+    // Create a static method to ensure consistent ID generation
+    static func generateStandardBuildingId(for coordinate: CLLocationCoordinate2D) -> String {
+        // Always use 6 decimal places
+        return String(format: "building-%.6f-%.6f", coordinate.latitude, coordinate.longitude)
+    }
+}

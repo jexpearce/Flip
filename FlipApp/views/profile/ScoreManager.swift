@@ -32,6 +32,7 @@ class ScoreManager: ObservableObject {
     @Published private(set) var streakStatus: StreakStatus = .none
     @Published private(set) var streakSessionsTime: Int = 0  // Total minutes in current streak
     @Published private(set) var lastSuccessfulSession: Date?
+    private var streakCheckTimer: Timer?
 
     // NEW: Streak constants
     private let streakTimeWindow: TimeInterval = 48 * 3600  // 48 hours in seconds
@@ -62,6 +63,19 @@ class ScoreManager: ObservableObject {
     // Initialize without immediately accessing Firebase
     private init() {
         // We'll load score explicitly when needed
+        setupStreakCheckTimer()
+    }
+
+    deinit {
+        streakCheckTimer?.invalidate()
+    }
+
+    private func setupStreakCheckTimer() {
+        // Check streak expiry every hour
+        streakCheckTimer = Timer.scheduledTimer(withTimeInterval: 3600, repeats: true) { [weak self] _ in
+            self?.checkStreakExpiry()
+        }
+        RunLoop.current.add(streakCheckTimer!, forMode: .common)
     }
 
     // New method to explicitly load score and streak data
@@ -240,21 +254,31 @@ class ScoreManager: ObservableObject {
             && streakSessionsTime >= orangeStreakRequiredTime
     }
 
-    // NEW: Check if streak has expired (for app startup)
+    // NEW: Check if streak has expired (for app startup and periodic checks)
     private func checkStreakExpiry() {
         guard let lastSession = lastSuccessfulSession else {
             // No previous successful session
-            streakStatus = .none
-            currentStreak = 0
+            resetStreak()
             return
         }
 
-        if Date().timeIntervalSince(lastSession) > streakExpiryTime {
+        let timeSinceLastSession = Date().timeIntervalSince(lastSession)
+        
+        if timeSinceLastSession > streakExpiryTime {
             // Streak has expired
-            streakStatus = .none
-            currentStreak = 0
-            streakSessionsTime = 0
+            resetStreak()
+            
+            // Save the updated streak status to Firebase
+            if let userId = Auth.auth().currentUser?.uid {
+                saveStreakData(userId: userId)
+            }
         }
+    }
+
+    private func resetStreak() {
+        streakStatus = .none
+        currentStreak = 0
+        streakSessionsTime = 0
     }
 
     // NEW: Load streak data from Firebase

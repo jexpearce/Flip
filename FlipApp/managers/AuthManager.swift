@@ -99,81 +99,82 @@ class AuthManager: NSObject, ObservableObject {
                 }
 
                 // Create user account
-                Auth.auth()
-                    .createUser(withEmail: email, password: password) { [weak self] result, error in
-                        guard let self = self else { return }
+                Auth.auth().createUser(withEmail: email, password: password) { [weak self] result, error in
+                    guard let self = self else { return }
 
+                    if let error = error {
+                        print("Firebase Auth Error: \(error.localizedDescription)")
+                        DispatchQueue.main.async {
+                            self.alertMessage = self.handleAuthError(error)
+                            self.showAlert = true
+                            completion()
+                        }
+                        return
+                    }
+
+                    guard let user = result?.user else {
+                        DispatchQueue.main.async {
+                            self.alertMessage = "Unknown error occurred"
+                            self.showAlert = true
+                            completion()
+                        }
+                        return
+                    }
+
+                    // Set display name
+                    let changeRequest = user.createProfileChangeRequest()
+                    changeRequest.displayName = username
+                    changeRequest.commitChanges { error in
                         if let error = error {
-                            DispatchQueue.main.async {
-                                self.alertMessage = self.handleAuthError(error)
-                                self.showAlert = true
-                                completion()
-                            }
-                            return
-                        }
-
-                        guard let user = result?.user else {
-                            DispatchQueue.main.async {
-                                self.alertMessage = "Unknown error occurred"
-                                self.showAlert = true
-                                completion()
-                            }
-                            return
-                        }
-
-                        // Set display name
-                        let changeRequest = user.createProfileChangeRequest()
-                        changeRequest.displayName = username
-                        changeRequest.commitChanges { error in
-                            if let error = error {
-                                print("Error updating display name: \(error.localizedDescription)")
-                            }
+                            print("Error updating display name: \(error.localizedDescription)")
                         }
 
                         // Create user document in Firestore
                         let userData: [String: Any] = [
-                            "id": user.uid, "username": username, "email": email,
-                            "totalFocusTime": 0, "totalSessions": 0, "longestSession": 0,
-                            "friends": [], "friendRequests": [], "sentRequests": [],
+                            "id": user.uid,
+                            "username": username,
+                            "email": email,
+                            "totalFocusTime": 0,
+                            "totalSessions": 0,
+                            "longestSession": 0,
+                            "friends": [],
+                            "friendRequests": [],
+                            "sentRequests": [],
                             "createdAt": FieldValue.serverTimestamp(),
                         ]
 
-                        db.collection("users").document(user.uid)
-                            .setData(userData) { error in
-                                DispatchQueue.main.async {
-                                    if let error = error {
-                                        print(
-                                            "Error saving user data: \(error.localizedDescription)"
-                                        )
-                                        self.alertMessage =
-                                            "Account created but failed to save user data"
-                                        self.showAlert = true
-                                    }
-                                    else {
-                                        // Set the success flag for custom notification
-                                        self.signUpSuccess = true
-                                        // After success (where you set self.signUpSuccess = true)
-                                        FirebaseManager.shared.ensureFirstTimeExperience()
-                                        print("User created successfully with ID: \(user.uid)")
+                        db.collection("users").document(user.uid).setData(userData) { error in
+                            DispatchQueue.main.async {
+                                if let error = error {
+                                    print("Error saving user data: \(error.localizedDescription)")
+                                    self.alertMessage = "Account created but failed to save user data"
+                                    self.showAlert = true
+                                } else {
+                                    // Set the success flag for custom notification
+                                    self.signUpSuccess = true
+                                    // After success (where you set self.signUpSuccess = true)
+                                    FirebaseManager.shared.ensureFirstTimeExperience()
+                                    print("User created successfully with ID: \(user.uid)")
 
-                                        // Store the current user in FirebaseManager
-                                        let flipUser = FirebaseManager.FlipUser(
-                                            id: user.uid,
-                                            username: username,
-                                            totalFocusTime: 0,
-                                            totalSessions: 0,
-                                            longestSession: 0,
-                                            friends: [],
-                                            friendRequests: [],
-                                            sentRequests: [],
-                                            profileImageURL: nil
-                                        )
-                                        FirebaseManager.shared.currentUser = flipUser
-                                    }
-                                    completion()
+                                    // Store the current user in FirebaseManager
+                                    let flipUser = FirebaseManager.FlipUser(
+                                        id: user.uid,
+                                        username: username,
+                                        totalFocusTime: 0,
+                                        totalSessions: 0,
+                                        longestSession: 0,
+                                        friends: [],
+                                        friendRequests: [],
+                                        sentRequests: [],
+                                        profileImageURL: nil
+                                    )
+                                    FirebaseManager.shared.currentUser = flipUser
                                 }
+                                completion()
                             }
+                        }
                     }
+                }
             }
     }
 
@@ -299,10 +300,21 @@ class AuthManager: NSObject, ObservableObject {
         case AuthErrorCode.userDisabled.rawValue: return "This account has been disabled"
         case AuthErrorCode.emailAlreadyInUse.rawValue: return "This email is already registered"
         case AuthErrorCode.weakPassword.rawValue: return "Password is too weak"
-        case AuthErrorCode.networkError.rawValue:
-            return "Network error. Please check your connection"
-        case AuthErrorCode.tooManyRequests.rawValue:
-            return "Too many attempts. Please try again later"
+        case AuthErrorCode.networkError.rawValue: return "Network error. Please check your connection"
+        case AuthErrorCode.tooManyRequests.rawValue: return "Too many attempts. Please try again later"
+        case AuthErrorCode.operationNotAllowed.rawValue: return "Email/password accounts are not enabled. Please contact support."
+        case AuthErrorCode.invalidCredential.rawValue: return "Invalid credentials. Please try again."
+        case AuthErrorCode.accountExistsWithDifferentCredential.rawValue: return "An account already exists with this email using a different sign-in method."
+        case AuthErrorCode.requiresRecentLogin.rawValue: return "This operation requires recent authentication. Please sign in again."
+        case AuthErrorCode.invalidVerificationCode.rawValue: return "Invalid verification code."
+        case AuthErrorCode.invalidVerificationID.rawValue: return "Invalid verification ID."
+        case AuthErrorCode.missingVerificationCode.rawValue: return "Missing verification code."
+        case AuthErrorCode.missingVerificationID.rawValue: return "Missing verification ID."
+        case AuthErrorCode.missingMultiFactorSession.rawValue: return "Missing multi-factor session."
+        case AuthErrorCode.missingMultiFactorInfo.rawValue: return "Missing multi-factor info."
+        case AuthErrorCode.invalidMultiFactorSession.rawValue: return "Invalid multi-factor session."
+        case AuthErrorCode.multiFactorInfoNotFound.rawValue: return "Multi-factor info not found."
+        case AuthErrorCode.sessionExpired.rawValue: return "Session expired. Please sign in again."
         default: return "An error occurred: \(error.localizedDescription)"
         }
     }

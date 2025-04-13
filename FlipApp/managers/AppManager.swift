@@ -1981,14 +1981,76 @@ class AppManager: NSObject, ObservableObject {
         let userId = Auth.auth().currentUser?.uid ?? ""
         let username = FirebaseManager.shared.currentUser?.username ?? "User"
 
-        // Get current building information if available
-        let currentBuilding = RegionalViewModel.shared.selectedBuilding
+        // IMPORTANT FIX: Get current building information if available
+        // If no building is selected, attempt to identify nearby buildings
+        var currentBuilding = RegionalViewModel.shared.selectedBuilding
+        
+        if currentBuilding == nil {
+            // No building selected - attempt to identify one automatically
+            print("🔍 No building selected, attempting automatic identification")
+            
+            // Use a semaphore to make the async building identification synchronous
+            let semaphore = DispatchSemaphore(value: 0)
+            
+            // Create a local variable to store the identified building
+            var identifiedBuilding: BuildingInfo? = nil
+            
+            // Call building identification service directly
+            BuildingIdentificationService.shared.identifyNearbyBuildings(at: location) { buildings, error in
+                if let error = error {
+                    print("❌ Error identifying buildings: \(error.localizedDescription)")
+                } else if let buildings = buildings, !buildings.isEmpty {
+                    // Found buildings - use the first one
+                    let buildingName = BuildingIdentificationService.shared.getBuildingName(from: buildings[0])
+                    identifiedBuilding = BuildingInfo(
+                        id: "", // The BuildingInfo init will standardize this
+                        name: buildingName,
+                        coordinate: buildings[0].coordinate
+                    )
+                    print("✅ Successfully identified building: \(buildingName)")
+                } else {
+                    print("⚠️ No buildings found nearby")
+                }
+                
+                semaphore.signal()
+            }
+            
+            // Wait for building identification to complete with a timeout
+            _ = semaphore.wait(timeout: .now() + 2.0)
+            
+            // Use the identified building if found
+            if let building = identifiedBuilding {
+                currentBuilding = building
+                // Also update RegionalViewModel to ensure consistency for future sessions
+                RegionalViewModel.shared.selectedBuilding = building
+                
+                // Save the building to Firestore
+                if let userId = Auth.auth().currentUser?.uid {
+                    let buildingData: [String: Any] = [
+                        "id": building.id,
+                        "name": building.name,
+                        "latitude": building.coordinate.latitude,
+                        "longitude": building.coordinate.longitude,
+                        "lastUpdated": FieldValue.serverTimestamp(),
+                    ]
+                    
+                    FirebaseManager.shared.db.collection("users").document(userId).collection("settings")
+                        .document("currentBuilding")
+                        .setData(buildingData) { error in
+                            if let error = error {
+                                print("❌ Error saving building info: \(error.localizedDescription)")
+                            } else {
+                                print("✅ Building info saved during session completion: \(building.id)")
+                            }
+                        }
+                }
+            }
+        }
 
         if let building = currentBuilding {
             print("📍 Found building for session: \(building.name) [ID: \(building.id)]")
-        }
-        else {
-            print("⚠️ No building selected for this session")
+        } else {
+            print("⚠️ No building could be identified for this session")
         }
 
         // Calculate elapsed time and accurate duration
@@ -1996,21 +2058,22 @@ class AppManager: NSObject, ObservableObject {
         let actualDuration = elapsedSeconds / 60
 
         // Debug logs for duration calculation
-        print(
-            "🕙 Duration calculation: selectedMinutes=\(selectedMinutes), remainingSeconds=\(remainingSeconds)"
-        )
+        print("🕙 Duration calculation: selectedMinutes=\(selectedMinutes), remainingSeconds=\(remainingSeconds)")
         print("🕙 Elapsed seconds: \(elapsedSeconds), actual duration in minutes: \(actualDuration)")
 
         // Create common location data with more accurate duration info
         var locationData: [String: Any] = [
-            "userId": userId, "username": username,
+            "userId": userId,
+            "username": username,
             "currentLocation": GeoPoint(
                 latitude: location.coordinate.latitude,
                 longitude: location.coordinate.longitude
-            ), "isCurrentlyFlipped": currentState == .tracking && isFaceDown,
+            ),
+            "isCurrentlyFlipped": currentState == .tracking && isFaceDown,
             "lastFlipTime": Timestamp(date: Date()),
-            "lastFlipWasSuccessful": currentState != .failed, "sessionDuration": selectedMinutes,
-            "actualDuration": actualDuration,  // This is critical - ensure actual time is recorded
+            "lastFlipWasSuccessful": currentState != .failed,
+            "sessionDuration": selectedMinutes,
+            "actualDuration": actualDuration,
             "sessionStartTime": Timestamp(date: Date().addingTimeInterval(-Double(elapsedSeconds))),
             "locationUpdatedAt": Timestamp(date: Date()),
         ]
@@ -2028,8 +2091,7 @@ class AppManager: NSObject, ObservableObject {
             .setData(locationData, merge: true) { error in
                 if let error = error {
                     print("❌ Error updating location data: \(error.localizedDescription)")
-                }
-                else {
+                } else {
                     print("✅ Updated location data with duration: \(actualDuration) minutes")
                 }
             }
@@ -2041,6 +2103,7 @@ class AppManager: NSObject, ObservableObject {
                 return
             }
             locationSessionSaved = true
+            
             // Calculate accurate actual duration - this is critical
             let actualDurationMinutes = (selectedMinutes * 60 - remainingSeconds) / 60
             print("🕰️ Session completed with actual duration: \(actualDurationMinutes) minutes")
@@ -2053,14 +2116,14 @@ class AppManager: NSObject, ObservableObject {
                 duration: selectedMinutes,
                 actualDuration: actualDurationMinutes,
                 wasSuccessful: currentState == .completed,
-                startTime: Date()
-                    .addingTimeInterval(-Double(selectedMinutes * 60 - remainingSeconds)),
-                endTime: Date(),  // Add the actual end time
-                building: currentBuilding
+                startTime: Date().addingTimeInterval(-Double(selectedMinutes * 60 - remainingSeconds)),
+                endTime: Date(),
+                building: currentBuilding  // This will be the auto-identified building if none was selected
             )
 
-            // Use FirebaseManager to save
-            FirebaseManager.shared.saveSessionLocation(session: completedSession)
+            // Use FirebaseManager to save - IMPORTANT: add debug log to see if this line is reached
+            print("⭐️ CALLING FIREBASE MANAGER TO SAVE SESSION LOCATION")
+            FirebaseManager.shared.saveCompletedSession(session: completedSession)
         }
     }
 

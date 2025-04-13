@@ -8,7 +8,6 @@ struct FriendsSearchView: View {
     @Environment(\.dismiss) var dismiss
     @StateObject private var viewModel = SearchManager()
     @State private var searchText = ""
-    @State private var showUserProfile = false
     @State private var selectedUser: FirebaseManager.FlipUser?
 
     private let orangeAccent = Theme.orange  // Warm Orange
@@ -31,17 +30,8 @@ struct FriendsSearchView: View {
                 orangeGlow: orangeGlow,
                 orangePurpleGradient: Theme.orangePurpleGradient,
                 selectedUser: $selectedUser,
-                showUserProfile: $showUserProfile,
                 dismiss: dismiss
             )
-        }
-        .fullScreenCover(isPresented: $showUserProfile) {
-            if let user = selectedUser {
-                NavigationView {
-                    UserProfileLoader(userId: user.id)
-                        .navigationBarItems(leading: Button("Back") { showUserProfile = false })
-                }
-            }
         }
     }
 }
@@ -94,7 +84,6 @@ struct FriendsSearchContentView: View {
     let orangeGlow: Color
     let orangePurpleGradient: LinearGradient
     @Binding var selectedUser: FirebaseManager.FlipUser?
-    @Binding var showUserProfile: Bool
     var dismiss: DismissAction
 
     var body: some View {
@@ -116,10 +105,7 @@ struct FriendsSearchContentView: View {
                     searchText: searchText,
                     orangeAccent: orangeAccent,
                     orangeGlow: orangeGlow,
-                    onViewProfile: { user in
-                        selectedUser = user
-                        showUserProfile = true
-                    }
+                    selectedUser: $selectedUser
                 )
             }
             .background(orangePurpleGradient.edgesIgnoringSafeArea(.all))
@@ -141,8 +127,17 @@ struct FriendsSearchContentView: View {
                     }
                 }
             )
-            .navigationViewStyle(StackNavigationViewStyle())
+            .background(
+                NavigationLink(
+                    destination: selectedUser.map { UserProfileLoader(userId: $0.id) },
+                    isActive: Binding(
+                        get: { selectedUser != nil },
+                        set: { if !$0 { selectedUser = nil } }
+                    )
+                ) { EmptyView() }
+            )
         }
+        .navigationViewStyle(StackNavigationViewStyle())
     }
 }
 
@@ -180,7 +175,7 @@ struct ScrollableContentView: View {
     let searchText: String
     let orangeAccent: Color
     let orangeGlow: Color
-    var onViewProfile: (FirebaseManager.FlipUser) -> Void
+    @Binding var selectedUser: FirebaseManager.FlipUser?
 
     var body: some View {
         ScrollView {
@@ -190,7 +185,7 @@ struct ScrollableContentView: View {
                     RecommendationsSection(
                         viewModel: viewModel,
                         orangeGlow: orangeGlow,
-                        onViewProfile: onViewProfile
+                        selectedUser: $selectedUser
                     )
                 }
                 else {
@@ -199,7 +194,7 @@ struct ScrollableContentView: View {
                         viewModel: viewModel,
                         searchText: searchText,
                         orangeAccent: orangeAccent,
-                        onViewProfile: onViewProfile
+                        selectedUser: $selectedUser
                     )
                 }
             }
@@ -213,7 +208,7 @@ struct SearchResultsSection: View {
     @ObservedObject var viewModel: SearchManager
     let searchText: String
     let orangeAccent: Color
-    var onViewProfile: (FirebaseManager.FlipUser) -> Void
+    @Binding var selectedUser: FirebaseManager.FlipUser?
 
     var body: some View {
         if viewModel.isSearching {
@@ -250,7 +245,7 @@ struct SearchResultsSection: View {
                     mutualCount: viewModel.mutualFriendCount(for: user.id),
                     onSendRequest: { viewModel.sendFriendRequest(to: user.id) },
                     onCancelRequest: { viewModel.promptCancelRequest(for: user) },
-                    onViewProfile: { onViewProfile(user) }
+                    onViewProfile: { selectedUser = user }
                 )
             }
         }
@@ -261,7 +256,7 @@ struct SearchResultsSection: View {
 struct RecommendationsSection: View {
     @ObservedObject var viewModel: SearchManager
     let orangeGlow: Color
-    var onViewProfile: (FirebaseManager.FlipUser) -> Void
+    @Binding var selectedUser: FirebaseManager.FlipUser?
 
     // Gold color for mutual friends
     private let goldAccent = Theme.yellow
@@ -303,7 +298,7 @@ struct RecommendationsSection: View {
                         mutualCount: viewModel.mutualFriendCount(for: user.id),
                         onSendRequest: { viewModel.sendFriendRequest(to: user.id) },
                         onCancelRequest: { viewModel.promptCancelRequest(for: user) },
-                        onViewProfile: { onViewProfile(user) }
+                        onViewProfile: { selectedUser = user }
                     )
                 }
             }
@@ -330,7 +325,7 @@ struct RecommendationsSection: View {
                         mutualCount: 0,
                         onSendRequest: { viewModel.sendFriendRequest(to: user.id) },
                         onCancelRequest: { viewModel.promptCancelRequest(for: user) },
-                        onViewProfile: { onViewProfile(user) }
+                        onViewProfile: { selectedUser = user }
                     )
                 }
 

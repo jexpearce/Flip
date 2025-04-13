@@ -251,19 +251,29 @@ struct UserProfileView: View {
     private func loadInitialData() {
         // Start loading immediately
         Task {
-            // Load sessions data
-            weeklyViewModel.loadSessions(for: user.id)
-
-            // Load user's score
-            loadUserScore()
-
-            // Short delay to ensure data is loaded and view rendering is complete
-            try? await Task.sleep(nanoseconds: 500_000_000)  // 0.5 seconds
-
-            // Update UI with animation
-            withAnimation(.spring()) {
-                isLoading = false
-                showStats = true
+            do {
+                // Load sessions data
+                await weeklyViewModel.loadSessions(for: user.id)
+                
+                // Load user's score
+                loadUserScore()
+                
+                // Ensure we're on the main thread for UI updates
+                await MainActor.run {
+                    withAnimation(.spring()) {
+                        isLoading = false
+                        showStats = true
+                    }
+                }
+            } catch {
+                print("Error loading profile data: \(error)")
+                // Even if there's an error, we should show the profile
+                await MainActor.run {
+                    withAnimation(.spring()) {
+                        isLoading = false
+                        showStats = true
+                    }
+                }
             }
         }
     }

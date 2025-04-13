@@ -551,7 +551,30 @@ class RegionalViewModel: NSObject, ObservableObject, CLLocationManagerDelegate {
                 print(
                     "User has moved \(Int(distance))m from current building, checking for new buildings..."
                 )
-                startBuildingIdentification()
+                // Instead of showing building selection, automatically find and select the new building
+                BuildingIdentificationService.shared.identifyNearbyBuildings(at: location) { [weak self] buildings, error in
+                    guard let self = self else { return }
+                    
+                    if let error = error {
+                        print("Error identifying buildings: \(error.localizedDescription)")
+                        self.isRefreshing = false
+                        return
+                    }
+                    
+                    DispatchQueue.main.async {
+                        if let buildings = buildings, !buildings.isEmpty {
+                            // Automatically select the first building (which is already sorted by session count and distance)
+                            let buildingName = BuildingIdentificationService.shared.getBuildingName(from: buildings[0])
+                            let buildingInfo = BuildingInfo(
+                                id: "",  // The BuildingInfo init will standardize this
+                                name: buildingName,
+                                coordinate: buildings[0].coordinate
+                            )
+                            self.selectBuilding(buildingInfo)
+                        }
+                        self.isRefreshing = false
+                    }
+                }
             }
             else {
                 // Still in the same building
@@ -658,7 +681,20 @@ class RegionalViewModel: NSObject, ObservableObject, CLLocationManagerDelegate {
             DispatchQueue.main.async {
                 if let buildings = buildings, !buildings.isEmpty {
                     self.suggestedBuildings = buildings
-                    self.showBuildingSelection = true
+                    
+                    // If no building is selected, automatically select the first building
+                    // This is independent of leaderboard consent or session completion
+                    if self.selectedBuilding == nil {
+                        let buildingName = BuildingIdentificationService.shared.getBuildingName(from: buildings[0])
+                        let buildingInfo = BuildingInfo(
+                            id: "",  // The BuildingInfo init will standardize this
+                            name: buildingName,
+                            coordinate: buildings[0].coordinate
+                        )
+                        self.selectBuilding(buildingInfo)
+                    } else {
+                        self.showBuildingSelection = true
+                    }
                 }
                 else {
                     // No buildings found - show a custom popup
@@ -681,13 +717,7 @@ class RegionalViewModel: NSObject, ObservableObject, CLLocationManagerDelegate {
         print("🌐 Coordinates: \(building.coordinate.latitude), \(building.coordinate.longitude)")
         print("🆔 Standardized ID: \(standardizedId)")
 
-        // Check for leaderboard consent before saving to Firestore
-        guard LeaderboardConsentManager.shared.canAddToLeaderboard() else {
-            print("User has not consented to leaderboards. Not saving building selection.")
-            return
-        }
-
-        // Save the selected building to Firestore
+        // Save the selected building to Firestore regardless of leaderboard consent
         if let userId = Auth.auth().currentUser?.uid {
             let buildingData: [String: Any] = [
                 "id": standardizedId,  // Use standardized ID here
@@ -707,14 +737,15 @@ class RegionalViewModel: NSObject, ObservableObject, CLLocationManagerDelegate {
                             "Building info saved successfully with standardized ID: \(standardizedId)"
                         )
 
-                        // When loading the leaderboard, also check nearby sessions that might not have the exact building ID
+                        // Only load leaderboard if user has completed sessions and given consent
                         DispatchQueue.main.async {
-                            self.leaderboardViewModel.loadBuildingLeaderboard(building: building)
+                            self.loadNearbyUsers()
                         }
                     }
                 }
         }
     }
+
     func loadCurrentBuilding() {
         guard let userId = Auth.auth().currentUser?.uid else { return }
 
@@ -725,7 +756,6 @@ class RegionalViewModel: NSObject, ObservableObject, CLLocationManagerDelegate {
                     let name = data["name"] as? String, let latitude = data["latitude"] as? Double,
                     let longitude = data["longitude"] as? Double
                 {
-
                     let coordinate = CLLocationCoordinate2D(
                         latitude: latitude,
                         longitude: longitude
@@ -734,12 +764,15 @@ class RegionalViewModel: NSObject, ObservableObject, CLLocationManagerDelegate {
 
                     DispatchQueue.main.async {
                         self?.selectedBuilding = building
-                        self?.leaderboardViewModel.loadBuildingLeaderboard(building: building)
+                        // Only load leaderboard if user has completed sessions
+                        self?.loadNearbyUsers()
                     }
                 }
                 else {
-                    // No building set yet, load users based on GPS location
-                    DispatchQueue.main.async { self?.loadNearbyUsers() }
+                    // No building set yet, try to identify and select one automatically
+                    DispatchQueue.main.async { 
+                        self?.startBuildingIdentification()
+                    }
                 }
             }
     }

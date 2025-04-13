@@ -183,6 +183,7 @@ struct FriendsView: View {
                                                 friend: friend.user,
                                                 liveSession: friend.sessionData
                                             )
+                                            .id("\(friend.id)-\(friend.sessionData?.id ?? "no-session")")  // Improved ID for better state management
                                         }
                                         .buttonStyle(PlainButtonStyle())
                                         .disabled(isNavigationBlocked)
@@ -199,9 +200,7 @@ struct FriendsView: View {
             .background(Theme.mainGradient.edgesIgnoringSafeArea(.all))
             .sheet(isPresented: $showingSearch) { FriendsSearchView() }
             .refreshable {
-                viewModel.loadFriends()
-                leaderboardViewModel.loadLeaderboard()
-                liveSessionManager.listenForFriendSessions()
+                await refreshData()
             }
             .alert(isPresented: $showAlert) {
                 Alert(
@@ -211,12 +210,11 @@ struct FriendsView: View {
                 )
             }
             .onAppear {
-                liveSessionManager.listenForFriendSessions()
-                liveSessionManager.forceSessionStatusRefresh()
-                viewModel.loadFriends()
+                Task {
+                    await refreshData()
+                }
             }
-            .onChange(of: liveSessionManager.activeFriendSessions) {
-                // Force view refresh when live sessions change
+            .onChange(of: liveSessionManager.activeFriendSessions) { _ in
                 viewModel.objectWillChange.send()
             }
         }
@@ -288,5 +286,20 @@ struct FriendsView: View {
         let sessionData: LiveSessionManager.LiveSessionData?
 
         var id: String { return user.id }
+    }
+
+    private func refreshData() async {
+        // Refresh all data sources concurrently
+        async let friendsRefresh = viewModel.loadFriends()
+        async let leaderboardRefresh = leaderboardViewModel.loadLeaderboard()
+        async let sessionsRefresh = liveSessionManager.listenForFriendSessions()
+        
+        // Wait for all refreshes to complete
+        _ = await [friendsRefresh, leaderboardRefresh, sessionsRefresh]
+        
+        // Force a view refresh
+        await MainActor.run {
+            viewModel.objectWillChange.send()
+        }
     }
 }

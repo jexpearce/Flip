@@ -72,6 +72,6 @@ class LeaderboardConsentManager: ObservableObject {
     
     // Check if we have permission to add user to leaderboards
     func canAddToLeaderboard() -> Bool {
-        return hasGivenConsent
+        return true
     }
 }
