@@ -1,10 +1,4 @@
 import Foundation
-//
-//  LocationUpgradeAlert.swift
-//  FlipApp
-//
-//  Created by Jex Pearce on 3/17/25.
-//
 import SwiftUI
 
 // One-time alert to upgrade location permission
