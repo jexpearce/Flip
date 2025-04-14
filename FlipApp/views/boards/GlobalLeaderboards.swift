@@ -1810,8 +1810,9 @@ class RegionalWeeklyLeaderboardViewModel: ObservableObject {
                         if location.horizontalAccuracy > 0 {
                             filteredDocuments = documents.filter { document in
                                 if let geoPoint = document.data()["location"] as? GeoPoint,
-                                   let lastFlipWasSuccessful = document.data()["lastFlipWasSuccessful"] as? Bool,
-                                   lastFlipWasSuccessful  // Only include successful sessions
+                                    let lastFlipWasSuccessful =
+                                        document.data()["lastFlipWasSuccessful"] as? Bool,
+                                    lastFlipWasSuccessful  // Only include successful sessions
                                 {
                                     let sessionLocation = CLLocation(
                                         latitude: geoPoint.latitude,
@@ -1827,33 +1828,33 @@ class RegionalWeeklyLeaderboardViewModel: ObservableObject {
                         print("📍 Found \(filteredDocuments.count) sessions in region")
 
                         // Process the filtered documents
-                        var userData: [String: (userId: String, username: String, minutes: Int)] = [:]
+                        var userData: [String: (userId: String, username: String, minutes: Int)] =
+                            [:]
                         var userIdsToFetch = Set<String>()
 
                         for document in filteredDocuments {
                             if let userId = document.data()["userId"] as? String,
-                               let username = document.data()["username"] as? String,
-                               let actualDuration = document.data()["actualDuration"] as? Int
+                                let username = document.data()["username"] as? String,
+                                let actualDuration = document.data()["actualDuration"] as? Int
                             {
                                 userIdsToFetch.insert(userId)
                                 if let existing = userData[userId] {
                                     userData[userId] = (
-                                        userId: userId,
-                                        username: existing.username,
+                                        userId: userId, username: existing.username,
                                         minutes: existing.minutes + actualDuration
                                     )
-                                } else {
+                                }
+                                else {
                                     userData[userId] = (
-                                        userId: userId,
-                                        username: username,
-                                        minutes: actualDuration
+                                        userId: userId, username: username, minutes: actualDuration
                                     )
                                 }
                             }
                         }
 
                         // Fetch privacy settings for all users
-                        self.fetchUserPrivacySettings(userIds: Array(userIdsToFetch)) { privacySettings in
+                        self.fetchUserPrivacySettings(userIds: Array(userIdsToFetch)) {
+                            privacySettings in
                             // Filter out users who have opted out
                             let filteredUserData = userData.filter { userId, _ in
                                 !(privacySettings[userId]?.optOut ?? false)
@@ -1872,8 +1873,10 @@ class RegionalWeeklyLeaderboardViewModel: ObservableObject {
         }
     }
 
-    private func processUsers(userData: [String: (userId: String, username: String, minutes: Int)],
-                              completion: @escaping ([GlobalLeaderboardEntry]) -> Void) {
+    private func processUsers(
+        userData: [String: (userId: String, username: String, minutes: Int)],
+        completion: @escaping ([GlobalLeaderboardEntry]) -> Void
+    ) {
         // No data found - update UI now
         if userData.isEmpty {
             DispatchQueue.main.async {

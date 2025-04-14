@@ -383,9 +383,9 @@ struct SetupView: View {
         }
         .onAppear {
             if PermissionManager.shared.isPermissionLocked() {
-                    print("⏸️ SetupView: Deferring permission checks until InitialView completes")
-                    return
-                }
+                print("⏸️ SetupView: Deferring permission checks until InitialView completes")
+                return
+            }
             // Refresh permission status first to catch any changes made in Settings
             permissionManager.refreshPermissionStatus()
             if permissionManager.locationAuthStatus == .denied

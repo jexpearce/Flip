@@ -66,14 +66,12 @@ class ScoreManager: ObservableObject {
         setupStreakCheckTimer()
     }
 
-    deinit {
-        streakCheckTimer?.invalidate()
-    }
+    deinit { streakCheckTimer?.invalidate() }
 
     private func setupStreakCheckTimer() {
         // Check streak expiry every hour
-        streakCheckTimer = Timer.scheduledTimer(withTimeInterval: 3600, repeats: true) { [weak self] _ in
-            self?.checkStreakExpiry()
+        streakCheckTimer = Timer.scheduledTimer(withTimeInterval: 3600, repeats: true) {
+            [weak self] _ in self?.checkStreakExpiry()
         }
         RunLoop.current.add(streakCheckTimer!, forMode: .common)
     }
@@ -263,15 +261,11 @@ class ScoreManager: ObservableObject {
         }
 
         let timeSinceLastSession = Date().timeIntervalSince(lastSession)
-        
         if timeSinceLastSession > streakExpiryTime {
             // Streak has expired
             resetStreak()
-            
             // Save the updated streak status to Firebase
-            if let userId = Auth.auth().currentUser?.uid {
-                saveStreakData(userId: userId)
-            }
+            if let userId = Auth.auth().currentUser?.uid { saveStreakData(userId: userId) }
         }
     }
 
@@ -494,4 +488,3 @@ enum StreakStatus: String, Codable {
     case orangeFlame = "orangeFlame"
     case redFlame = "redFlame"
 }
-

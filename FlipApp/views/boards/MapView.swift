@@ -241,14 +241,10 @@ struct MapView: View {
         .onAppear {
             // Start tracking and refresh locations since consent is already handled
             viewModel.startLocationTracking()
-            
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-                viewModel.refreshLocations()
-            }
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) { viewModel.refreshLocations() }
         }
         .onDisappear {
             viewModel.stopLocationTracking()
-            
             Task { @MainActor in LocationHandler.shared.completelyStopLocationUpdates() }
         }
     }

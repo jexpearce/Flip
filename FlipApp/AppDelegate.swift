@@ -16,7 +16,7 @@ class FlipAppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCenter
         didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]? = nil
     ) -> Bool {
         let permissionsLocked = PermissionManager.shared.isPermissionLocked()
-            print("App delegate launch - permissions locked: \(permissionsLocked)")
+        print("App delegate launch - permissions locked: \(permissionsLocked)")
 
         if FirebaseApp.app() == nil { FirebaseApp.configure() }
         if let clientID = FirebaseApp.app()?.options.clientID {

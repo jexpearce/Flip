@@ -27,33 +27,33 @@ class FirebaseManager: ObservableObject {
 extension FirebaseManager {
     // Function to create a test session to ensure the collection exists
     @MainActor func createTestSessionLocation() {
-//        guard let userId = Auth.auth().currentUser?.uid else { return }
-//
-//        let sessionId = "\(userId)_test_\(Int(Date().timeIntervalSince1970))"
-//        let currentCoordinates = LocationHandler.shared.lastLocation.coordinate
-//
-//        // Create basic test session data
-//        let sessionData: [String: Any] = [
-//            "userId": userId, "username": FirebaseManager.shared.currentUser?.username ?? "User",
-//            "location": GeoPoint(
-//                latitude: currentCoordinates.latitude,
-//                longitude: currentCoordinates.longitude
-//            ), "isCurrentlyFlipped": false, "lastFlipTime": Timestamp(date: Date()),
-//            "lastFlipWasSuccessful": true, "sessionDuration": 1, "actualDuration": 1,
-//            "sessionStartTime": Timestamp(date: Date().addingTimeInterval(-60)),
-//            "sessionEndTime": Timestamp(date: Date()), "createdAt": FieldValue.serverTimestamp(),
-//        ]
-//
-//        // Directly save to Firestore to create the collection
-//        db.collection("session_locations").document(sessionId)
-//            .setData(sessionData) { error in
-//                if let error = error {
-//                    print("❌ TEST SESSION ERROR: \(error.localizedDescription)")
-//                }
-//                else {
-//                    print("✅ TEST SESSION CREATED SUCCESSFULLY: \(sessionId)")
-//                }
-//            }
+        //        guard let userId = Auth.auth().currentUser?.uid else { return }
+        //
+        //        let sessionId = "\(userId)_test_\(Int(Date().timeIntervalSince1970))"
+        //        let currentCoordinates = LocationHandler.shared.lastLocation.coordinate
+        //
+        //        // Create basic test session data
+        //        let sessionData: [String: Any] = [
+        //            "userId": userId, "username": FirebaseManager.shared.currentUser?.username ?? "User",
+        //            "location": GeoPoint(
+        //                latitude: currentCoordinates.latitude,
+        //                longitude: currentCoordinates.longitude
+        //            ), "isCurrentlyFlipped": false, "lastFlipTime": Timestamp(date: Date()),
+        //            "lastFlipWasSuccessful": true, "sessionDuration": 1, "actualDuration": 1,
+        //            "sessionStartTime": Timestamp(date: Date().addingTimeInterval(-60)),
+        //            "sessionEndTime": Timestamp(date: Date()), "createdAt": FieldValue.serverTimestamp(),
+        //        ]
+        //
+        //        // Directly save to Firestore to create the collection
+        //        db.collection("session_locations").document(sessionId)
+        //            .setData(sessionData) { error in
+        //                if let error = error {
+        //                    print("❌ TEST SESSION ERROR: \(error.localizedDescription)")
+        //                }
+        //                else {
+        //                    print("✅ TEST SESSION CREATED SUCCESSFULLY: \(sessionId)")
+        //                }
+        //            }
     }
     // Add this to FirebaseManager.swift
     func inspectUserData() {
@@ -302,26 +302,20 @@ extension FirebaseManager {
         let sessionId = "\(session.userId)_\(Int(Date().timeIntervalSince1970))"
 
         print("⭐️ SAVING COMPLETED SESSION: \(sessionId)")
-        
         // Always include in leaderboards for now
         let includeInLeaderboards = true
-        
         var sessionData: [String: Any] = [
-            "userId": session.userId,
-            "username": session.username,
+            "userId": session.userId, "username": session.username,
             "location": GeoPoint(
                 latitude: session.location.latitude,
                 longitude: session.location.longitude
-            ),
-            "isCurrentlyFlipped": false,
-            "lastFlipTime": Timestamp(date: Date()),
-            "lastFlipWasSuccessful": session.wasSuccessful,
-            "sessionDuration": session.duration,
+            ), "isCurrentlyFlipped": false, "lastFlipTime": Timestamp(date: Date()),
+            "lastFlipWasSuccessful": session.wasSuccessful, "sessionDuration": session.duration,
             "actualDuration": session.actualDuration,
             "sessionStartTime": Timestamp(date: session.startTime),
             "sessionEndTime": Timestamp(date: session.endTime),
             "createdAt": FieldValue.serverTimestamp(),
-            "includeInLeaderboards": includeInLeaderboards  // Force to true for now
+            "includeInLeaderboards": includeInLeaderboards,  // Force to true for now
         ]
 
         // Add building information if available
@@ -331,7 +325,8 @@ extension FirebaseManager {
             sessionData["buildingName"] = building.name
             sessionData["buildingLatitude"] = building.coordinate.latitude
             sessionData["buildingLongitude"] = building.coordinate.longitude
-        } else {
+        }
+        else {
             print("⚠️ No building associated with completed session!")
         }
 
@@ -341,27 +336,32 @@ extension FirebaseManager {
             .setData(sessionData) { [weak self] error in
                 if let error = error {
                     print("❌ ERROR SAVING COMPLETED SESSION: \(error.localizedDescription)")
-                } else {
+                }
+                else {
                     print("✅ SUCCESSFULLY SAVED COMPLETED SESSION TO FIRESTORE: \(sessionId)")
-                    
                     // Verify the save by reading back
                     self?.db.collection("session_locations").document(sessionId)
                         .getDocument { doc, error in
                             if let doc = doc, doc.exists {
                                 print("✓ VERIFICATION: Session document exists in Firestore")
-                                print("  - Building ID: \(doc.data()?["buildingId"] as? String ?? "MISSING")")
-                                print("  - Include In Leaderboards: \(doc.data()?["includeInLeaderboards"] as? Bool ?? false)")
-                                
+                                print(
+                                    "  - Building ID: \(doc.data()?["buildingId"] as? String ?? "MISSING")"
+                                )
+                                print(
+                                    "  - Include In Leaderboards: \(doc.data()?["includeInLeaderboards"] as? Bool ?? false)"
+                                )
                                 // Force refresh building leaderboard
                                 if let building = session.building {
                                     DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
-                                        print("🔄 Force refreshing building leaderboard after successful save")
-                                        RegionalViewModel.shared.leaderboardViewModel.loadBuildingLeaderboard(
-                                            building: building
+                                        print(
+                                            "🔄 Force refreshing building leaderboard after successful save"
                                         )
+                                        RegionalViewModel.shared.leaderboardViewModel
+                                            .loadBuildingLeaderboard(building: building)
                                     }
                                 }
-                            } else {
+                            }
+                            else {
                                 print("❌ VERIFICATION FAILED: Session document does not exist!")
                             }
                         }
@@ -373,43 +373,43 @@ extension FirebaseManager {
 
         // Check if user has consented to leaderboards
         let hasConsent = LeaderboardConsentManager.shared.canAddToLeaderboard()
-        
         // Use consistent format for actual duration
-        let validActualDuration = max(1, session.actualDuration) // Ensure at least 1 minute is recorded
-        
+        let validActualDuration = max(1, session.actualDuration)  // Ensure at least 1 minute is recorded
+
         // Calculate the real session end time
         let sessionEndTime = session.startTime.addingTimeInterval(Double(validActualDuration * 60))
 
         // Start with basic session data
         var sessionData: [String: Any] = [
-            "userId": session.userId,
-            "username": session.username,
-            "location": GeoPoint(latitude: session.location.latitude, longitude: session.location.longitude),
-            "isCurrentlyFlipped": false,
-            "lastFlipTime": Timestamp(date: Date()),
-            "lastFlipWasSuccessful": session.wasSuccessful,
-            "sessionDuration": session.duration,
+            "userId": session.userId, "username": session.username,
+            "location": GeoPoint(
+                latitude: session.location.latitude,
+                longitude: session.location.longitude
+            ), "isCurrentlyFlipped": false, "lastFlipTime": Timestamp(date: Date()),
+            "lastFlipWasSuccessful": session.wasSuccessful, "sessionDuration": session.duration,
             "actualDuration": validActualDuration,
             "sessionStartTime": Timestamp(date: session.startTime),
             "sessionEndTime": Timestamp(date: sessionEndTime),
-            "createdAt": FieldValue.serverTimestamp(),
-            "includeInLeaderboards": hasConsent
+            "createdAt": FieldValue.serverTimestamp(), "includeInLeaderboards": hasConsent,
         ]
 
         // Add building information if available - IMPORTANT: Use standardized building ID
         if let building = session.building {
             // Generate standardized building ID regardless of what's passed in
-            let standardizedBuildingId = String(format: "building-%.6f-%.6f",
-                                               building.coordinate.latitude,
-                                               building.coordinate.longitude)
-            
+            let standardizedBuildingId = String(
+                format: "building-%.6f-%.6f",
+                building.coordinate.latitude,
+                building.coordinate.longitude
+            )
             sessionData["buildingId"] = standardizedBuildingId
             sessionData["buildingName"] = building.name
             sessionData["buildingLatitude"] = building.coordinate.latitude
             sessionData["buildingLongitude"] = building.coordinate.longitude
-            
-            print("📍 Adding session to building: \(building.name) with ID: \(standardizedBuildingId)")
-        } else {
+            print(
+                "📍 Adding session to building: \(building.name) with ID: \(standardizedBuildingId)"
+            )
+        }
+        else {
             print("⚠️ No building information available for this session")
         }
 
@@ -418,11 +418,15 @@ extension FirebaseManager {
             .setData(sessionData) { [weak self] error in
                 if let error = error {
                     print("❌ SAVE ERROR: \(error.localizedDescription)")
-                } else {
-                    print("✅ SESSION SAVED SUCCESSFULLY: \(sessionId) with duration \(validActualDuration) minutes")
-                    
+                }
+                else {
+                    print(
+                        "✅ SESSION SAVED SUCCESSFULLY: \(sessionId) with duration \(validActualDuration) minutes"
+                    )
                     // Debug output to verify data was saved correctly
-                    print("🔍 Session saved with building data: \(sessionData["buildingId"] as? String ?? "none")")
+                    print(
+                        "🔍 Session saved with building data: \(sessionData["buildingId"] as? String ?? "none")"
+                    )
 
                     // Prune old sessions to keep the map clean
                     self?.pruneOldSessions(forUserId: session.userId)
@@ -430,10 +434,11 @@ extension FirebaseManager {
                     // Force refresh building leaderboard if building info exists and consent is given
                     if let building = session.building, hasConsent {
                         print("🔄 Triggering leaderboard refresh for building: \(building.name)")
-                        
                         // Add a short delay to ensure Firestore has time to process the write
                         DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
-                            RegionalViewModel.shared.leaderboardViewModel.loadBuildingLeaderboard(building: building)
+                            RegionalViewModel.shared.leaderboardViewModel.loadBuildingLeaderboard(
+                                building: building
+                            )
                         }
                     }
 

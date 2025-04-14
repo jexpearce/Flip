@@ -48,10 +48,8 @@ struct FeedSessionCard: View {
             }
             .padding(.vertical, 18).padding(.horizontal, 18)
         }
-        .background(cardBackground)
-        .shadow(color: Color.black.opacity(0.2), radius: 10, x: 0, y: 5)
-        .shadow(color: statusGlow.opacity(0.2), radius: 15, x: 0, y: 5)
-        .contentShape(Rectangle())
+        .background(cardBackground).shadow(color: Color.black.opacity(0.2), radius: 10, x: 0, y: 5)
+        .shadow(color: statusGlow.opacity(0.2), radius: 15, x: 0, y: 5).contentShape(Rectangle())
         .onTapGesture {
             // Dismiss keyboard when tapping on the card
             if isCommentFocused { isCommentFocused = false }
@@ -75,9 +73,8 @@ struct FeedSessionCard: View {
         .onChange(of: viewModel.likedByUser[session.id.uuidString]) { updateLikeState() }
         .onChange(of: viewModel.sessionLikes[session.id.uuidString]) { updateLikeState() }
     }
-    
     // MARK: - View Components
-    
+
     private var userHeaderView: some View {
         // Top section with user info and action buttons
         HStack(spacing: 12) {
@@ -112,7 +109,6 @@ struct FeedSessionCard: View {
             statusIconView
         }
     }
-    
     private var statusIconView: some View {
         ZStack {
             Circle().fill(statusColor).frame(width: 40, height: 40)
@@ -124,12 +120,11 @@ struct FeedSessionCard: View {
                 .font(.system(size: 16, weight: .black)).foregroundColor(.white)
         }
     }
-    
     private var sessionInfoSection: some View {
         // Session info section
         HStack {
-            Text(sessionStatusText).font(.system(size: 18, weight: .bold))
-                .foregroundColor(.white).shadow(color: statusGlow.opacity(0.5), radius: 4)
+            Text(sessionStatusText).font(.system(size: 18, weight: .bold)).foregroundColor(.white)
+                .shadow(color: statusGlow.opacity(0.5), radius: 4)
 
             if !session.wasSuccessful {
                 Text("• Lasted \(session.actualDuration) min").font(.system(size: 14))
@@ -140,14 +135,13 @@ struct FeedSessionCard: View {
         }
         .padding(.vertical, 6)
     }
-    
     private var contentSectionsView: some View {
         Group {
             if hasContent {
                 VStack(alignment: .leading, spacing: 8) {
                     if let title = session.sessionTitle, !title.isEmpty {
-                        Text(title).font(.system(size: 16, weight: .bold))
-                            .foregroundColor(.white).lineLimit(2)
+                        Text(title).font(.system(size: 16, weight: .bold)).foregroundColor(.white)
+                            .lineLimit(2)
                     }
 
                     if let notes = session.sessionNotes, !notes.isEmpty {
@@ -155,12 +149,10 @@ struct FeedSessionCard: View {
                             .multilineTextAlignment(.leading).lineLimit(3)
                     }
                 }
-                .padding(.vertical, 10).padding(.horizontal, 12)
-                .background(contentBackground)
+                .padding(.vertical, 10).padding(.horizontal, 12).background(contentBackground)
             }
         }
     }
-    
     private var contentBackground: some View {
         ZStack {
             // Glass effect background
@@ -168,15 +160,12 @@ struct FeedSessionCard: View {
 
             // Highlight on top edge
             RoundedRectangle(cornerRadius: 10).trim(from: 0, to: 0.5)
-                .fill(Color.white.opacity(0.08)).rotationEffect(.degrees(180))
-                .padding(1)
+                .fill(Color.white.opacity(0.08)).rotationEffect(.degrees(180)).padding(1)
 
             // Subtle border
-            RoundedRectangle(cornerRadius: 10)
-                .stroke(Color.white.opacity(0.15), lineWidth: 0.5)
+            RoundedRectangle(cornerRadius: 10).stroke(Color.white.opacity(0.15), lineWidth: 0.5)
         }
     }
-    
     private var commentSectionView: some View {
         Group {
             if hasComment || (viewModel.sessionComments[session.id.uuidString]?.count ?? 0) > 0 {
@@ -184,7 +173,6 @@ struct FeedSessionCard: View {
             }
         }
     }
-    
     private var groupParticipantsView: some View {
         Group {
             if hasGroupParticipants {
@@ -219,13 +207,11 @@ struct FeedSessionCard: View {
             }
         }
     }
-    
     private var actionButtonsView: some View {
         // Action buttons and likes section with improved styling
         VStack(spacing: 10) {
             // Like info section with enhanced styling
             likeInfoSection
-            
             Divider().background(Color.white.opacity(0.15)).padding(.vertical, 4)
 
             // Action buttons with enhanced styling
@@ -233,7 +219,6 @@ struct FeedSessionCard: View {
         }
         .padding(.top, 4)
     }
-    
     private var likeInfoSection: some View {
         Group {
             if likesCount > 0 {
@@ -247,8 +232,7 @@ struct FeedSessionCard: View {
                                 .foregroundColor(.white.opacity(0.8))
                         }
                         else {
-                            Text("\(likesCount) likes")
-                                .font(.system(size: 12, weight: .medium))
+                            Text("\(likesCount) likes").font(.system(size: 12, weight: .medium))
                                 .foregroundColor(.white.opacity(0.8))
                         }
                     }
@@ -258,19 +242,15 @@ struct FeedSessionCard: View {
             }
         }
     }
-    
     private var actionButtonsRow: some View {
         HStack(spacing: 20) {
             // Like button
             likeButton
-            
             // Comment button
             commentButton
-            
             Spacer()
         }
     }
-    
     private var likeButton: some View {
         Button(action: {
             // Toggle like state via ViewModel
@@ -291,7 +271,6 @@ struct FeedSessionCard: View {
         }
         .buttonStyle(PlainButtonStyle())
     }
-    
     private var commentButton: some View {
         Button(action: {
             print("Comment button pressed, current state: \(showCommentField)")
@@ -317,8 +296,7 @@ struct FeedSessionCard: View {
         }) {
             HStack(spacing: 8) {
                 Image(systemName: hasComment ? "text.bubble.fill" : "text.bubble")
-                    .font(.system(size: 16, weight: .semibold))
-                    .foregroundColor(.white.opacity(0.9))
+                    .font(.system(size: 16, weight: .semibold)).foregroundColor(.white.opacity(0.9))
 
                 Text("Comment").font(.system(size: 14, weight: .medium))
                     .foregroundColor(.white.opacity(0.9))
@@ -326,7 +304,6 @@ struct FeedSessionCard: View {
         }
         .buttonStyle(PlainButtonStyle())
     }
-    
     private var commentFieldView: some View {
         Group {
             if showCommentField {
@@ -341,7 +318,6 @@ struct FeedSessionCard: View {
             }
         }
     }
-    
     private var cardBackground: some View {
         ZStack {
             // Base gradient background
@@ -449,7 +425,7 @@ struct FeedSessionCard: View {
     }
 
     // MARK: - Helper Methods
-    
+
     private func onAppearSetup() {
         // Update like state when the view appears
         updateLikeState()
@@ -461,7 +437,6 @@ struct FeedSessionCard: View {
 
         setupKeyboardNotifications()
     }
-    
     private func setupKeyboardNotifications() {
         // Set up keyboard notifications
         NotificationCenter.default.addObserver(
@@ -469,9 +444,9 @@ struct FeedSessionCard: View {
             object: nil,
             queue: .main
         ) { notification in
-            if let keyboardFrame = notification.userInfo?[
-                UIResponder.keyboardFrameEndUserInfoKey
-            ] as? CGRect {
+            if let keyboardFrame = notification.userInfo?[UIResponder.keyboardFrameEndUserInfoKey]
+                as? CGRect
+            {
                 keyboardHeight = keyboardFrame.height
             }
         }

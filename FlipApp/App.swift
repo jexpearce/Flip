@@ -1,10 +1,10 @@
 import BackgroundTasks
+import CoreMotion
+import FirebaseAuth
 import FirebaseCore
 import FirebaseMessaging
 import SwiftUI
 import UserNotifications
-import CoreMotion
-import FirebaseAuth
 
 @main struct FlipApp: App {
     @UIApplicationDelegateAdaptor(FlipAppDelegate.self) var delegate
@@ -22,18 +22,21 @@ import FirebaseAuth
         Messaging.messaging().isAutoInitEnabled = true
 
         // Add auth state listener
-        Auth.auth().addStateDidChangeListener { auth, user in
-            if user != nil {
-                let defaults = UserDefaults.standard
-                let hasCompletedPermissions = defaults.bool(forKey: "hasCompletedPermissionFlow")
-                if !hasCompletedPermissions {
-                    NotificationCenter.default.post(
-                        name: NSNotification.Name("ShowPermissionsFlow"),
-                        object: nil
+        Auth.auth()
+            .addStateDidChangeListener { auth, user in
+                if user != nil {
+                    let defaults = UserDefaults.standard
+                    let hasCompletedPermissions = defaults.bool(
+                        forKey: "hasCompletedPermissionFlow"
                     )
+                    if !hasCompletedPermissions {
+                        NotificationCenter.default.post(
+                            name: NSNotification.Name("ShowPermissionsFlow"),
+                            object: nil
+                        )
+                    }
                 }
             }
-        }
 
         // Register tasks first, before scheduling anything
         BGTaskScheduler.shared.register(
@@ -53,17 +56,12 @@ import FirebaseAuth
 
         if isFirstLaunch {
             print("🔑 Fresh install detected - forcing sign out")
-            
             // Force Firebase sign out
             try? Auth.auth().signOut()
-            
             // Clear ALL keychain credentials to ensure complete logout
             let secItemClasses = [
-                kSecClassGenericPassword,
-                kSecClassInternetPassword,
-                kSecClassCertificate,
-                kSecClassKey,
-                kSecClassIdentity
+                kSecClassGenericPassword, kSecClassInternetPassword, kSecClassCertificate,
+                kSecClassKey, kSecClassIdentity,
             ]
             for secItemClass in secItemClasses {
                 let query = [kSecClass as String: secItemClass]
@@ -78,26 +76,28 @@ import FirebaseAuth
             defaults.set(false, forKey: "hasCompletedPermissionFlow")
             defaults.set(true, forKey: "hasLaunchedBefore")
             showPermissionsFlow = true
-        } else if isResettingPermissions {
+        }
+        else if isResettingPermissions {
             print("🔄 PERMISSION RESET REQUESTED - enabling permission flow")
             defaults.set(false, forKey: "hasCompletedPermissionFlow")
-            defaults.set(false, forKey: "isResettingPermissions") // Reset the flag
+            defaults.set(false, forKey: "isResettingPermissions")  // Reset the flag
             showPermissionsFlow = true
-        } else if isPotentialFirstTimeUser && !hasCompletedPermissions {
+        }
+        else if isPotentialFirstTimeUser && !hasCompletedPermissions {
             print("👤 FIRST TIME USER DETECTED - enabling permission flow")
             showPermissionsFlow = true
-        } else if !hasCompletedPermissions {
+        }
+        else if !hasCompletedPermissions {
             // Double-check permissions status to determine if flow is needed
             let permManager = PermissionManager.shared
-            
             // Get current status
             let motionAuthStatus = CMMotionActivityManager.authorizationStatus()
             let motionGranted = (motionAuthStatus == .authorized)
-            
             if !motionGranted {
                 print("🚨 REQUIRED PERMISSION MISSING - enabling permission flow")
                 showPermissionsFlow = true
-            } else {
+            }
+            else {
                 print("✅ All required permissions already granted")
                 defaults.set(true, forKey: "hasCompletedPermissionFlow")
             }

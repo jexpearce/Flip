@@ -14,7 +14,6 @@ struct InitialView: View {
     @State private var readyToProceed = false
     @State private var animateBackground = false
     @State private var animateContent = false
-    
     // Gradient animation
     @State private var gradientStart = UnitPoint(x: 0, y: 0)
     @State private var gradientEnd = UnitPoint(x: 1, y: 1)
@@ -48,7 +47,6 @@ struct InitialView: View {
         }
 
         var isRequired: Bool { return self == .motion }
-        
         var color: Color {
             switch self {
             case .location: return Theme.lightTealBlue
@@ -65,16 +63,16 @@ struct InitialView: View {
                 // Main gradient background
                 LinearGradient(
                     colors: [
-                        Theme.deepMidnightPurple,
-                        Theme.mediumMidnightPurple,
-                        Theme.darkPurpleBlue
+                        Theme.deepMidnightPurple, Theme.mediumMidnightPurple, Theme.darkPurpleBlue,
                     ],
                     startPoint: gradientStart,
                     endPoint: gradientEnd
                 )
                 .edgesIgnoringSafeArea(.all)
                 .onAppear {
-                    withAnimation(Animation.easeInOut(duration: 8).repeatForever(autoreverses: true)) {
+                    withAnimation(
+                        Animation.easeInOut(duration: 8).repeatForever(autoreverses: true)
+                    ) {
                         gradientStart = UnitPoint(x: 1, y: 0)
                         gradientEnd = UnitPoint(x: 0, y: 1)
                     }
@@ -85,46 +83,39 @@ struct InitialView: View {
                     .fill(
                         RadialGradient(
                             gradient: Gradient(colors: [
-                                Theme.softViolet.opacity(0.3),
-                                Theme.softViolet.opacity(0)
+                                Theme.softViolet.opacity(0.3), Theme.softViolet.opacity(0),
                             ]),
                             center: .center,
                             startRadius: 50,
                             endRadius: 300
                         )
                     )
-                    .frame(width: 400, height: 400)
-                    .offset(x: 100, y: -200)
-                    .blur(radius: 60)
-                    .scaleEffect(circle1Scale)
-                    .opacity(circle1Opacity)
+                    .frame(width: 400, height: 400).offset(x: 100, y: -200).blur(radius: 60)
+                    .scaleEffect(circle1Scale).opacity(circle1Opacity)
 
                 // Animated circle 2
                 Circle()
                     .fill(
                         RadialGradient(
                             gradient: Gradient(colors: [
-                                Theme.lightTealBlue.opacity(0.25),
-                                Theme.lightTealBlue.opacity(0)
+                                Theme.lightTealBlue.opacity(0.25), Theme.lightTealBlue.opacity(0),
                             ]),
                             center: .center,
                             startRadius: 50,
                             endRadius: 250
                         )
                     )
-                    .frame(width: 350, height: 350)
-                    .offset(x: -120, y: 300)
-                    .blur(radius: 50)
-                    .scaleEffect(circle2Scale)
-                    .opacity(circle2Opacity)
+                    .frame(width: 350, height: 350).offset(x: -120, y: 300).blur(radius: 50)
+                    .scaleEffect(circle2Scale).opacity(circle2Opacity)
             }
             .onAppear {
                 withAnimation(Animation.easeInOut(duration: 7).repeatForever(autoreverses: true)) {
                     circle1Scale = 1.2
                     circle1Opacity = 0.3
                 }
-                
-                withAnimation(Animation.easeInOut(duration: 5).repeatForever(autoreverses: true).delay(1)) {
+                withAnimation(
+                    Animation.easeInOut(duration: 5).repeatForever(autoreverses: true).delay(1)
+                ) {
                     circle2Scale = 1.15
                     circle2Opacity = 0.25
                 }
@@ -137,15 +128,11 @@ struct InitialView: View {
                     VStack(spacing: 5) {
                         // Logo
                         ZStack {
-                            Circle()
-                                .fill(Theme.silveryGradient)
-                                .frame(width: 80, height: 80)
+                            Circle().fill(Theme.silveryGradient).frame(width: 80, height: 80)
                                 .shadow(color: Theme.softViolet.opacity(0.5), radius: 20)
                                 .opacity(animateContent ? 1 : 0)
                                 .scaleEffect(animateContent ? 1 : 0.8)
-                            
-                            Image(systemName: "hourglass")
-                                .font(.system(size: 40))
+                            Image(systemName: "hourglass").font(.system(size: 40))
                                 .foregroundStyle(
                                     LinearGradient(
                                         colors: [.white, .white.opacity(0.7)],
@@ -158,36 +145,29 @@ struct InitialView: View {
                                 .scaleEffect(animateContent ? 1 : 0.8)
                         }
                         .padding(.top, 20)
-                        
                         // Title with animated reveal
-                        Text("FLIP")
-                            .font(.system(size: 48, weight: .black))
-                            .tracking(16)
+                        Text("FLIP").font(.system(size: 48, weight: .black)).tracking(16)
                             .foregroundColor(.white)
                             .shadow(color: Theme.softViolet.opacity(0.8), radius: 10)
-                            .opacity(animateContent ? 1 : 0)
-                            .offset(y: animateContent ? 0 : 30)
-                                                }
+                            .opacity(animateContent ? 1 : 0).offset(y: animateContent ? 0 : 30)
+                    }
 
                     // Permission checklist card
                     VStack(spacing: 20) {
                         // Header with animated reveal
-                        Text("SET UP PERMISSIONS")
-                            .font(.system(size: 16, weight: .black))
-                            .tracking(3)
-                            .foregroundColor(.white.opacity(0.9))
-                            .padding(.vertical, 10)
+                        Text("SET UP PERMISSIONS").font(.system(size: 16, weight: .black))
+                            .tracking(3).foregroundColor(.white.opacity(0.9)).padding(.vertical, 10)
                             .frame(maxWidth: .infinity)
                             .background(
-                                RoundedRectangle(cornerRadius: 12)
-                                    .fill(Theme.silveryGradient5)
+                                RoundedRectangle(cornerRadius: 12).fill(Theme.silveryGradient5)
                                     .opacity(0.3)
                             )
-                            .opacity(animateContent ? 1 : 0)
-                            .offset(y: animateContent ? 0 : 15)
+                            .opacity(animateContent ? 1 : 0).offset(y: animateContent ? 0 : 15)
 
                         // Permission items with staggered animation
-                        ForEach(Array(PermissionType.allCases.enumerated()), id: \.element) { index, permission in
+                        ForEach(Array(PermissionType.allCases.enumerated()), id: \.element) {
+                            index,
+                            permission in
                             permissionItem(
                                 permission: permission,
                                 isActive: activePermission == permission,
@@ -198,28 +178,22 @@ struct InitialView: View {
                                     requestPermission(permission)
                                 }
                             }
-                            .opacity(animateContent ? 1 : 0)
-                            .offset(y: animateContent ? 0 : 20)
+                            .opacity(animateContent ? 1 : 0).offset(y: animateContent ? 0 : 20)
                             .animation(
                                 Animation.spring(response: 0.6, dampingFraction: 0.7)
                                     .delay(Double(index) * 0.15 + 0.3),
                                 value: animateContent
                             )
                         }
-                        
                         // Privacy policy link with animated reveal
                         Button(action: { showPrivacyPolicy = true }) {
                             HStack(spacing: 8) {
-                                Image(systemName: "lock.shield")
-                                    .font(.system(size: 14))
+                                Image(systemName: "lock.shield").font(.system(size: 14))
                                     .foregroundColor(Theme.lightTealBlue)
-                                
-                                Text("Privacy Policy")
-                                    .font(.system(size: 14, weight: .medium))
+                                Text("Privacy Policy").font(.system(size: 14, weight: .medium))
                                     .foregroundColor(Theme.lightTealBlue)
                             }
-                            .padding(.vertical, 12)
-                            .padding(.horizontal, 20)
+                            .padding(.vertical, 12).padding(.horizontal, 20)
                             .background(
                                 RoundedRectangle(cornerRadius: 12)
                                     .fill(Theme.lightTealBlue.opacity(0.1))
@@ -229,11 +203,9 @@ struct InitialView: View {
                                     )
                             )
                         }
-                        .opacity(animateContent ? 1 : 0)
-                        .offset(y: animateContent ? 0 : 20)
+                        .opacity(animateContent ? 1 : 0).offset(y: animateContent ? 0 : 20)
                         .animation(
-                            Animation.spring(response: 0.6, dampingFraction: 0.7)
-                                .delay(0.8),
+                            Animation.spring(response: 0.6, dampingFraction: 0.7).delay(0.8),
                             value: animateContent
                         )
                     }
@@ -244,58 +216,49 @@ struct InitialView: View {
                                 .fill(
                                     LinearGradient(
                                         colors: [
-                                            Theme.mediumMidnightPurple,
-                                            Theme.deepMidnightPurple
+                                            Theme.mediumMidnightPurple, Theme.deepMidnightPurple,
                                         ],
                                         startPoint: .top,
                                         endPoint: .bottom
                                     )
                                 )
-                            
-                            RoundedRectangle(cornerRadius: 24)
-                                .fill(Color.white.opacity(0.05))
-                            
+                            RoundedRectangle(cornerRadius: 24).fill(Color.white.opacity(0.05))
                             RoundedRectangle(cornerRadius: 24)
                                 .stroke(Theme.silveryGradient2, lineWidth: 1.5)
                         }
                     )
-                    .shadow(color: Color.black.opacity(0.3), radius: 20)
-                    .padding(.horizontal, 20)
-                    .opacity(animateContent ? 1 : 0)
-                    .offset(y: animateContent ? 0 : 40)
+                    .shadow(color: Color.black.opacity(0.3), radius: 20).padding(.horizontal, 20)
+                    .opacity(animateContent ? 1 : 0).offset(y: animateContent ? 0 : 40)
                     .animation(
-                        Animation.spring(response: 0.7, dampingFraction: 0.7)
-                            .delay(0.1),
+                        Animation.spring(response: 0.7, dampingFraction: 0.7).delay(0.1),
                         value: animateContent
                     )
 
                     // Continue button with animated reveal
                     Button(action: {
                         print("Continue button tapped")
-                        
                         // Mark permissions as completed
                         UserDefaults.standard.set(true, forKey: "hasCompletedPermissionFlow")
-                        
                         // Proceed to main app
                         NotificationCenter.default.post(
                             name: NSNotification.Name("ProceedToMainApp"),
                             object: nil
                         )
                     }) {
-                        Text("CONTINUE")
-                            .font(.system(size: 20, weight: .black))
-                            .tracking(4)
-                            .foregroundColor(.white)
-                            .frame(maxWidth: .infinity)
+                        Text("CONTINUE").font(.system(size: 20, weight: .black)).tracking(4)
+                            .foregroundColor(.white).frame(maxWidth: .infinity)
                             .padding(.vertical, 20)
                             .background(
                                 ZStack {
                                     RoundedRectangle(cornerRadius: 16)
                                         .fill(
                                             LinearGradient(
-                                                colors: readyToProceed ?
-                                                    [Theme.softViolet, Theme.electricViolet] :
-                                                    [Theme.softViolet.opacity(0.5), Theme.electricViolet.opacity(0.5)],
+                                                colors: readyToProceed
+                                                    ? [Theme.softViolet, Theme.electricViolet]
+                                                    : [
+                                                        Theme.softViolet.opacity(0.5),
+                                                        Theme.electricViolet.opacity(0.5),
+                                                    ],
                                                 startPoint: .leading,
                                                 endPoint: .trailing
                                             )
@@ -308,16 +271,15 @@ struct InitialView: View {
                                         .stroke(Theme.silveryGradient, lineWidth: 1)
                                 }
                             )
-                            .shadow(color: Theme.softViolet.opacity(readyToProceed ? 0.5 : 0.2), radius: 10)
+                            .shadow(
+                                color: Theme.softViolet.opacity(readyToProceed ? 0.5 : 0.2),
+                                radius: 10
+                            )
                     }
-                    .opacity(animateContent ? 1 : 0)
-                    .scaleEffect(readyToProceed ? 1 : 0.97)
-                    .disabled(!readyToProceed)
-                    .padding(.horizontal, 20)
-                    .padding(.bottom, 50)
+                    .opacity(animateContent ? 1 : 0).scaleEffect(readyToProceed ? 1 : 0.97)
+                    .disabled(!readyToProceed).padding(.horizontal, 20).padding(.bottom, 50)
                     .animation(
-                        Animation.spring(response: 0.6, dampingFraction: 0.7)
-                            .delay(1.0),
+                        Animation.spring(response: 0.6, dampingFraction: 0.7).delay(1.0),
                         value: animateContent
                     )
                 }
@@ -338,12 +300,12 @@ struct InitialView: View {
                     onContinue: { permissionManager.requestMotionPermission() }
                 )
             }
-            
             if permissionManager.showMotionSettingsAlert {
                 SettingsAlertView(
                     isPresented: $permissionManager.showMotionSettingsAlert,
                     title: "Motion Permission Required",
-                    message: "Motion permission is required to use Flip. Please enable it in Settings to continue.",
+                    message:
+                        "Motion permission is required to use Flip. Please enable it in Settings to continue.",
                     settingsAction: { permissionManager.openMotionSettings() }
                 )
             }
@@ -364,28 +326,20 @@ struct InitialView: View {
         .onAppear {
             // Lock all other permission requests during this flow
             permissionManager.lockPermissions()
-            
             // Set flag that we're in the initial permission flow
             permissionManager.isInitialPermissionFlow = true
-            
             // Start animations
-            withAnimation(.easeOut(duration: 0.7)) {
-                animateContent = true
-            }
-            
+            withAnimation(.easeOut(duration: 0.7)) { animateContent = true }
             // Ensure no permissions are requested until we're ready
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) {
                 // Start with first permission that isn't granted
                 startFirstMissingPermission()
-            
                 // Add observers for permission changes
                 setupPermissionObservers()
-            
                 // Animate in checkmarks for already granted permissions
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
                     withAnimation(.easeIn(duration: 0.5)) { animateCheckmarks = true }
                 }
-            
                 // Check if we can proceed immediately
                 updateReadyToProceed()
             }
@@ -393,10 +347,8 @@ struct InitialView: View {
         .onDisappear {
             // Relinquish control over permission flow when done
             permissionManager.isInitialPermissionFlow = false
-            
             // Unlock permissions for the rest of the app
             permissionManager.unlockPermissions()
-            
             print("🏁 InitialView disappeared, permission flow completed")
         }
     }
@@ -418,20 +370,14 @@ struct InitialView: View {
                     .frame(width: 44, height: 44)
 
                 if isGranted {
-                    Circle()
-                        .fill(Theme.mutedGreen.opacity(0.8))
-                        .frame(width: 32, height: 32)
+                    Circle().fill(Theme.mutedGreen.opacity(0.8)).frame(width: 32, height: 32)
                         .scaleEffect(animateCheckmarks ? 1 : 0)
-                    
-                    Image(systemName: "checkmark")
-                        .font(.system(size: 16, weight: .bold))
-                        .foregroundColor(.white)
-                        .opacity(animateCheckmarks ? 1 : 0)
+                    Image(systemName: "checkmark").font(.system(size: 16, weight: .bold))
+                        .foregroundColor(.white).opacity(animateCheckmarks ? 1 : 0)
                         .scaleEffect(animateCheckmarks ? 1 : 0.5)
                 }
                 else {
-                    Image(systemName: permission.icon)
-                        .font(.system(size: 18))
+                    Image(systemName: permission.icon).font(.system(size: 18))
                         .foregroundColor(isActive ? permission.color : .white.opacity(0.7))
                 }
             }
@@ -442,27 +388,21 @@ struct InitialView: View {
             // Permission details
             VStack(alignment: .leading, spacing: 4) {
                 HStack {
-                    Text(permission.rawValue)
-                        .font(.system(size: 18, weight: .bold))
+                    Text(permission.rawValue).font(.system(size: 18, weight: .bold))
                         .foregroundColor(.white)
 
                     if permission.isRequired {
-                        Text("Required")
-                            .font(.system(size: 12, weight: .medium))
-                            .foregroundColor(.white.opacity(0.6))
-                            .padding(.horizontal, 8)
+                        Text("Required").font(.system(size: 12, weight: .medium))
+                            .foregroundColor(.white.opacity(0.6)).padding(.horizontal, 8)
                             .padding(.vertical, 3)
                             .background(
-                                RoundedRectangle(cornerRadius: 8)
-                                    .fill(Color.white.opacity(0.1))
+                                RoundedRectangle(cornerRadius: 8).fill(Color.white.opacity(0.1))
                             )
                     }
                 }
 
-                Text(permission.description)
-                    .font(.system(size: 14))
-                    .foregroundColor(.white.opacity(0.7))
-                    .lineLimit(2)
+                Text(permission.description).font(.system(size: 14))
+                    .foregroundColor(.white.opacity(0.7)).lineLimit(2)
                     .fixedSize(horizontal: false, vertical: true)
             }
 
@@ -470,48 +410,38 @@ struct InitialView: View {
 
             // Action indicator
             if isGranted {
-                Image(systemName: "checkmark.circle.fill")
-                    .font(.system(size: 24))
-                    .foregroundColor(Theme.mutedGreen)
-                    .opacity(animateCheckmarks ? 1 : 0)
+                Image(systemName: "checkmark.circle.fill").font(.system(size: 24))
+                    .foregroundColor(Theme.mutedGreen).opacity(animateCheckmarks ? 1 : 0)
                     .scaleEffect(animateCheckmarks ? 1 : 0.7)
-                    .animation(.spring(response: 0.4, dampingFraction: 0.7), value: animateCheckmarks)
-            } else {
-                Image(systemName: "chevron.right")
-                    .font(.system(size: 18))
-                    .foregroundColor(.white.opacity(0.5))
-                    .frame(width: 30)
+                    .animation(
+                        .spring(response: 0.4, dampingFraction: 0.7),
+                        value: animateCheckmarks
+                    )
+            }
+            else {
+                Image(systemName: "chevron.right").font(.system(size: 18))
+                    .foregroundColor(.white.opacity(0.5)).frame(width: 30)
             }
         }
-        .padding(.vertical, 16)
-        .padding(.horizontal, 18)
+        .padding(.vertical, 16).padding(.horizontal, 18)
         .background(
             ZStack {
                 // Background shape
                 RoundedRectangle(cornerRadius: 16)
-                    .fill(
-                        isActive
-                            ? permission.color.opacity(0.15)
-                            : Color.white.opacity(0.05)
-                    )
-                
+                    .fill(isActive ? permission.color.opacity(0.15) : Color.white.opacity(0.05))
                 // Border
                 RoundedRectangle(cornerRadius: 16)
                     .stroke(
                         isActive
                             ? LinearGradient(
                                 colors: [
-                                    permission.color.opacity(0.7),
-                                    permission.color.opacity(0.3)
+                                    permission.color.opacity(0.7), permission.color.opacity(0.3),
                                 ],
                                 startPoint: .topLeading,
                                 endPoint: .bottomTrailing
                             )
                             : LinearGradient(
-                                colors: [
-                                    Color.white.opacity(0.2),
-                                    Color.white.opacity(0.1)
-                                ],
+                                colors: [Color.white.opacity(0.2), Color.white.opacity(0.1)],
                                 startPoint: .topLeading,
                                 endPoint: .bottomTrailing
                             ),
@@ -544,13 +474,14 @@ struct InitialView: View {
 
         switch permission {
         case .location: showLocationPermission = true
-        case .motion: 
+        case .motion:
             // Check if motion permission was previously denied
             let motionAuthStatus = CMMotionActivityManager.authorizationStatus()
             if motionAuthStatus == .denied {
                 // Show settings alert instead of the custom alert
                 permissionManager.showMotionSettingsAlert = true
-            } else {
+            }
+            else {
                 showMotionPermission = true
             }
         case .notification: showNotificationPermission = true
@@ -589,19 +520,14 @@ struct InitialView: View {
     private func updateReadyToProceed() {
         // At minimum, we require motion permission since it's essential
         let requiredGranted = permissionManager.motionPermissionGranted
-        
         print("Motion permission granted: \(requiredGranted)")
-        
         // Check if all permissions are granted
         let allGranted = PermissionType.allCases.allSatisfy { isPermissionGranted($0) }
-        
         print("All permissions granted: \(allGranted)")
 
         // Can proceed if motion permission is granted
         readyToProceed = requiredGranted
-        
         print("Ready to proceed: \(readyToProceed)")
-        
         // If all permissions are granted, make the continue button more prominent
         if allGranted {
             // Make animation more noticeable for "all done" state
@@ -792,7 +718,6 @@ struct SettingsAlertView: View {
     let title: String
     let message: String
     let settingsAction: () -> Void
-    
     var body: some View {
         ZStack {
             // Dimmed background
@@ -800,56 +725,38 @@ struct SettingsAlertView: View {
                 .onTapGesture {
                     // Prevent dismissing by tapping outside
                 }
-            
             // Alert content
             VStack(spacing: 20) {
                 // Header with icon
                 ZStack {
                     Circle().fill(Theme.softViolet.opacity(0.2)).frame(width: 90, height: 90)
-                    
-                    Image(systemName: "gear")
-                        .font(.system(size: 32))
-                        .foregroundColor(.white)
+                    Image(systemName: "gear").font(.system(size: 32)).foregroundColor(.white)
                 }
-                
-                Text(title)
-                    .font(.system(size: 22, weight: .black))
-                    .tracking(4)
+                Text(title).font(.system(size: 22, weight: .black)).tracking(4)
                     .foregroundColor(.white)
-                
-                Text(message)
-                    .font(.system(size: 16))
-                    .foregroundColor(.white.opacity(0.8))
-                    .multilineTextAlignment(.center)
-                    .padding(.horizontal)
-                
+                Text(message).font(.system(size: 16)).foregroundColor(.white.opacity(0.8))
+                    .multilineTextAlignment(.center).padding(.horizontal)
                 // Buttons
                 HStack(spacing: 15) {
                     // Cancel button
                     Button(action: { isPresented = false }) {
-                        Text("Cancel")
-                            .font(.system(size: 16, weight: .medium))
-                            .foregroundColor(.white.opacity(0.7))
-                            .frame(width: 100, height: 48)
+                        Text("Cancel").font(.system(size: 16, weight: .medium))
+                            .foregroundColor(.white.opacity(0.7)).frame(width: 100, height: 48)
                             .background(
-                                RoundedRectangle(cornerRadius: 12)
-                                    .fill(Color.white.opacity(0.1))
+                                RoundedRectangle(cornerRadius: 12).fill(Color.white.opacity(0.1))
                                     .overlay(
                                         RoundedRectangle(cornerRadius: 12)
                                             .stroke(Color.white.opacity(0.2), lineWidth: 1)
                                     )
                             )
                     }
-                    
                     // Settings button
                     Button(action: {
                         isPresented = false
                         settingsAction()
                     }) {
-                        Text("Settings")
-                            .font(.system(size: 16, weight: .bold))
-                            .foregroundColor(.white)
-                            .frame(width: 160, height: 48)
+                        Text("Settings").font(.system(size: 16, weight: .bold))
+                            .foregroundColor(.white).frame(width: 160, height: 48)
                             .background(
                                 ZStack {
                                     RoundedRectangle(cornerRadius: 12)
@@ -860,10 +767,8 @@ struct SettingsAlertView: View {
                                                 endPoint: .trailing
                                             )
                                         )
-                                    
                                     RoundedRectangle(cornerRadius: 12)
                                         .fill(Color.white.opacity(0.1))
-                                    
                                     RoundedRectangle(cornerRadius: 12)
                                         .stroke(Color.white.opacity(0.3), lineWidth: 1)
                                 }
@@ -884,18 +789,13 @@ struct SettingsAlertView: View {
                                 endPoint: .bottom
                             )
                         )
-                    
-                    RoundedRectangle(cornerRadius: 25)
-                        .fill(Color.white.opacity(0.05))
-                    
+                    RoundedRectangle(cornerRadius: 25).fill(Color.white.opacity(0.05))
                     RoundedRectangle(cornerRadius: 25)
                         .stroke(Theme.silveryGradient3, lineWidth: 1.5)
                 }
             )
-            .frame(maxWidth: 350)
-            .shadow(color: Color.black.opacity(0.3), radius: 20)
-            .scaleEffect(isPresented ? 1 : 0.8)
-            .opacity(isPresented ? 1 : 0)
+            .frame(maxWidth: 350).shadow(color: Color.black.opacity(0.3), radius: 20)
+            .scaleEffect(isPresented ? 1 : 0.8).opacity(isPresented ? 1 : 0)
             .animation(.spring(response: 0.5, dampingFraction: 0.8), value: isPresented)
         }
     }

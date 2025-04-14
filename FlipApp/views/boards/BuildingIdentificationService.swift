@@ -82,21 +82,23 @@ class BuildingIdentificationService {
 
                 for placemark in allResults {
                     let name = self.getBuildingName(from: placemark).lowercased()
-                    let coordKey = "\(placemark.coordinate.latitude),\(placemark.coordinate.longitude)"
+                    let coordKey =
+                        "\(placemark.coordinate.latitude),\(placemark.coordinate.longitude)"
 
                     // Skip if name is empty or we've seen this name or exact coordinate before
-                    if !name.isEmpty && name != "unknown building" &&
-                       !seenNames.contains(name) && !seenCoordinates.contains(coordKey) {
+                    if !name.isEmpty && name != "unknown building" && !seenNames.contains(name)
+                        && !seenCoordinates.contains(coordKey)
+                    {
                         uniqueResults.append(placemark)
                         seenNames.insert(name)
                         seenCoordinates.insert(coordKey)
                     }
                 }
-                
                 print("🏢 Found \(uniqueResults.count) unique buildings near location")
 
                 // Before sorting, get session counts for each building
-                self.getSessionCountsForBuildings(placemarks: uniqueResults) { buildingsWithCounts in
+                self.getSessionCountsForBuildings(placemarks: uniqueResults) {
+                    buildingsWithCounts in
                     // Sort buildings by session count (most active first)
                     let sortedResults = buildingsWithCounts.sorted { building1, building2 in
                         let count1 = building1.1
@@ -113,7 +115,8 @@ class BuildingIdentificationService {
                                 longitude: building2.0.coordinate.longitude
                             )
 
-                            return location.distance(from: location1) < location.distance(from: location2)
+                            return location.distance(from: location1)
+                                < location.distance(from: location2)
                         }
 
                         return count1 > count2
@@ -121,16 +124,18 @@ class BuildingIdentificationService {
 
                     // Return just the placemarks, sorted by popularity
                     let finalPlacemarks = sortedResults.map { $0.0 }
-                    
                     // Debug output
                     for (i, placemark) in finalPlacemarks.prefix(3).enumerated() {
                         let buildingName = self.getBuildingName(from: placemark)
-                        let buildingId = String(format: "building-%.6f-%.6f",
-                                               placemark.coordinate.latitude,
-                                               placemark.coordinate.longitude)
-                        
+                        let buildingId = String(
+                            format: "building-%.6f-%.6f",
+                            placemark.coordinate.latitude,
+                            placemark.coordinate.longitude
+                        )
                         let sessionCount = buildingsWithCounts.first { $0.0 == placemark }?.1 ?? 0
-                        print("🏢 Building \(i+1): \(buildingName) - Sessions: \(sessionCount) - ID: \(buildingId)")
+                        print(
+                            "🏢 Building \(i+1): \(buildingName) - Sessions: \(sessionCount) - ID: \(buildingId)"
+                        )
                     }
 
                     // Limit to 5 results
@@ -163,82 +168,73 @@ class BuildingIdentificationService {
                 placemark.coordinate.latitude,
                 placemark.coordinate.longitude
             )
-            
             // Get the building location
             let buildingLocation = CLLocation(
                 latitude: placemark.coordinate.latitude,
                 longitude: placemark.coordinate.longitude
             )
-            
             // Search radius (in meters)
             let radius = 100.0
 
             // First try direct building ID query for sessions
-            db.collection("session_locations")
-                .whereField("buildingId", isEqualTo: buildingId)
+            db.collection("session_locations").whereField("buildingId", isEqualTo: buildingId)
                 .whereField("sessionEndTime", isGreaterThan: Timestamp(date: oneWeekAgo))
                 .getDocuments { snapshot, error in
                     if let error = error {
                         print("Error getting session counts by ID: \(error.localizedDescription)")
                         // Don't exit yet - we'll do a location-based query too
                     }
-                    
                     // Get count from this query
                     let idMatchCount = snapshot?.documents.count ?? 0
                     print("Found \(idMatchCount) sessions for building ID: \(buildingId)")
-                    
                     // Now do a location proximity query
                     // This will get sessions that are within the radius but may not have exact building ID
                     db.collection("session_locations")
                         .whereField("sessionEndTime", isGreaterThan: Timestamp(date: oneWeekAgo))
                         .getDocuments { snapshot, error in
                             defer { dispatchGroup.leave() }
-                            
                             if let error = error {
-                                print("Error getting sessions for location query: \(error.localizedDescription)")
+                                print(
+                                    "Error getting sessions for location query: \(error.localizedDescription)"
+                                )
                                 buildingsWithCounts.append((placemark, idMatchCount))
                                 return
                             }
-                            
                             // Count sessions that have coordinates within our radius
                             var proximityCount = 0
-                            
                             for document in snapshot?.documents ?? [] {
                                 // Skip if this document already matched the exact building ID
                                 if document.data()["buildingId"] as? String == buildingId {
                                     continue
                                 }
-                                
                                 // Check if coordinates are within our radius
                                 if let geoPoint = document.data()["location"] as? GeoPoint {
                                     let sessionLocation = CLLocation(
                                         latitude: geoPoint.latitude,
                                         longitude: geoPoint.longitude
                                     )
-                                    
                                     let distance = buildingLocation.distance(from: sessionLocation)
-                                    if distance <= radius {
-                                        proximityCount += 1
-                                    }
+                                    if distance <= radius { proximityCount += 1 }
                                 }
-                                
                                 // Also check buildingLatitude/buildingLongitude fields
                                 if let lat = document.data()["buildingLatitude"] as? Double,
-                                   let lon = document.data()["buildingLongitude"] as? Double {
-                                    
-                                    let storedBuildingLocation = CLLocation(latitude: lat, longitude: lon)
-                                    let distance = buildingLocation.distance(from: storedBuildingLocation)
-                                    
-                                    if distance <= radius {
-                                        proximityCount += 1
-                                    }
+                                    let lon = document.data()["buildingLongitude"] as? Double
+                                {
+                                    let storedBuildingLocation = CLLocation(
+                                        latitude: lat,
+                                        longitude: lon
+                                    )
+                                    let distance = buildingLocation.distance(
+                                        from: storedBuildingLocation
+                                    )
+                                    if distance <= radius { proximityCount += 1 }
                                 }
                             }
-                            
                             // Combine counts (direct ID matches + proximity matches)
                             let totalCount = idMatchCount + proximityCount
-                            print("Total sessions for \(self.getBuildingName(from: placemark)): \(totalCount)")
-                            
+                            print(
+                                "Total sessions for \(self.getBuildingName(from: placemark)): \(totalCount)"
+                            )
                             buildingsWithCounts.append((placemark, totalCount))
                         }
                 }

@@ -254,10 +254,8 @@ struct UserProfileView: View {
             do {
                 // Load sessions data
                 await weeklyViewModel.loadSessions(for: user.id)
-                
                 // Load user's score
                 loadUserScore()
-                
                 // Ensure we're on the main thread for UI updates
                 await MainActor.run {
                     withAnimation(.spring()) {
@@ -265,7 +263,8 @@ struct UserProfileView: View {
                         showStats = true
                     }
                 }
-            } catch {
+            }
+            catch {
                 print("Error loading profile data: \(error)")
                 // Even if there's an error, we should show the profile
                 await MainActor.run {

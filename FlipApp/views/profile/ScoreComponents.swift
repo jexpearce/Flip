@@ -1,7 +1,6 @@
 import Foundation
 import SwiftUI
 
-
 // ENHANCED: Updated with more vibrant colors and indicator for streaks
 struct RankCircle: View {
     let score: Double

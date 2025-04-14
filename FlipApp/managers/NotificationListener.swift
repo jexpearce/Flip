@@ -75,10 +75,13 @@ class NotificationListener {
                         print("Notification permission granted")
                     }
                     else if let error = error {
-                        print("Error requesting notification permission: \(error.localizedDescription)")
+                        print(
+                            "Error requesting notification permission: \(error.localizedDescription)"
+                        )
                     }
                 }
-        } else {
+        }
+        else {
             print("⏸️ Notification permission request deferred - permission flow in progress")
         }
 
@@ -221,8 +224,7 @@ class NotificationListener {
 
         // Use a more specific query that excludes session_failure notifications
         db.collection("users").document(currentUserId).collection("notifications")
-            .whereField("read", isEqualTo: false)
-            .whereField("type", notIn: ["session_failure"])  // Exclude session failure notifications
+            .whereField("read", isEqualTo: false).whereField("type", notIn: ["session_failure"])  // Exclude session failure notifications
             .getDocuments { snapshot, error in
                 if let error = error {
                     print("Error getting unread notifications: \(error.localizedDescription)")

@@ -241,43 +241,37 @@ class AppManager: NSObject, ObservableObject {
             // For new sessions, set the full duration
             remainingSeconds = selectedMinutes * 60
             remainingPauses = maxPauses  // Reset pauses for new sessions
-            
+
             // IMMEDIATELY increment the leaderboard when session starts
             if let building = RegionalViewModel.shared.selectedBuilding {
-                print("🏢 Incrementing leaderboard for building: \(building.name) [ID: \(building.id)]")
-                
+                print(
+                    "🏢 Incrementing leaderboard for building: \(building.name) [ID: \(building.id)]"
+                )
                 // Create a session document immediately
                 let userId = Auth.auth().currentUser?.uid ?? ""
                 let username = FirebaseManager.shared.currentUser?.username ?? "User"
-                
                 let sessionData: [String: Any] = [
-                    "userId": userId,
-                    "username": username,
+                    "userId": userId, "username": username,
                     "location": GeoPoint(
                         latitude: building.coordinate.latitude,
                         longitude: building.coordinate.longitude
-                    ),
-                    "isCurrentlyFlipped": true,
-                    "lastFlipTime": Timestamp(date: Date()),
-                    "lastFlipWasSuccessful": true,
-                    "sessionDuration": selectedMinutes,
+                    ), "isCurrentlyFlipped": true, "lastFlipTime": Timestamp(date: Date()),
+                    "lastFlipWasSuccessful": true, "sessionDuration": selectedMinutes,
                     "actualDuration": 0,  // Will be updated when session ends
                     "sessionStartTime": Timestamp(date: Date()),
-                    "sessionEndTime": Timestamp(date: Date()),
-                    "includeInLeaderboards": true,  // Always include for now
-                    "buildingId": building.id,
-                    "buildingName": building.name,
+                    "sessionEndTime": Timestamp(date: Date()), "includeInLeaderboards": true,  // Always include for now
+                    "buildingId": building.id, "buildingName": building.name,
                     "buildingLatitude": building.coordinate.latitude,
-                    "buildingLongitude": building.coordinate.longitude
+                    "buildingLongitude": building.coordinate.longitude,
                 ]
-                
                 // Save to Firestore
                 FirebaseManager.shared.db.collection("session_locations")
                     .document("\(userId)_\(Int(Date().timeIntervalSince1970))")
                     .setData(sessionData) { error in
                         if let error = error {
                             print("❌ Error saving session start: \(error.localizedDescription)")
-                        } else {
+                        }
+                        else {
                             print("✅ Successfully saved session start to leaderboard")
                         }
                     }
@@ -2019,7 +2013,6 @@ class AppManager: NSObject, ObservableObject {
             print("⚠️ No valid location available for session")
             return
         }
-        
         let location = LocationHandler.shared.lastLocation
 
         // Get current user ID and username
@@ -2031,7 +2024,8 @@ class AppManager: NSObject, ObservableObject {
 
         if let building = currentBuilding {
             print("📍 Found building for session: \(building.name) [ID: \(building.id)]")
-        } else {
+        }
+        else {
             print("⚠️ No building selected for this session")
         }
 
@@ -2040,7 +2034,9 @@ class AppManager: NSObject, ObservableObject {
         let actualDuration = max(1, elapsedSeconds / 60)  // Ensure at least 1 minute
 
         // Debug logs for duration calculation
-        print("🕙 Duration calculation: selectedMinutes=\(selectedMinutes), remainingSeconds=\(remainingSeconds)")
+        print(
+            "🕙 Duration calculation: selectedMinutes=\(selectedMinutes), remainingSeconds=\(remainingSeconds)"
+        )
         print("🕙 Elapsed seconds: \(elapsedSeconds), actual duration in minutes: \(actualDuration)")
 
         // Check if leaderboard consent has been given
@@ -2049,21 +2045,17 @@ class AppManager: NSObject, ObservableObject {
 
         // Create common location data with more accurate duration info
         var locationData: [String: Any] = [
-            "userId": userId,
-            "username": username,
+            "userId": userId, "username": username,
             "currentLocation": GeoPoint(
                 latitude: location.coordinate.latitude,
                 longitude: location.coordinate.longitude
-            ),
-            "isCurrentlyFlipped": currentState == .tracking && isFaceDown,
+            ), "isCurrentlyFlipped": currentState == .tracking && isFaceDown,
             "lastFlipTime": Timestamp(date: Date()),
-            "lastFlipWasSuccessful": currentState != .failed,
-            "sessionDuration": selectedMinutes,
+            "lastFlipWasSuccessful": currentState != .failed, "sessionDuration": selectedMinutes,
             "actualDuration": actualDuration,
             "sessionStartTime": Timestamp(date: Date().addingTimeInterval(-Double(elapsedSeconds))),
-            "sessionEndTime": Timestamp(date: Date()),
-            "locationUpdatedAt": Timestamp(date: Date()),
-            "includeInLeaderboards": hasConsent
+            "sessionEndTime": Timestamp(date: Date()), "locationUpdatedAt": Timestamp(date: Date()),
+            "includeInLeaderboards": hasConsent,
         ]
 
         // Add building information if available - use standardized building ID
@@ -2074,13 +2066,13 @@ class AppManager: NSObject, ObservableObject {
                 building.coordinate.latitude,
                 building.coordinate.longitude
             )
-            
             locationData["buildingId"] = standardizedBuildingId
             locationData["buildingName"] = building.name
             locationData["buildingLatitude"] = building.coordinate.latitude
             locationData["buildingLongitude"] = building.coordinate.longitude
-            
-            print("🏢 Adding building data to session: ID=\(standardizedBuildingId), Name=\(building.name)")
+            print(
+                "🏢 Adding building data to session: ID=\(standardizedBuildingId), Name=\(building.name)"
+            )
         }
 
         // Update location data for current session
@@ -2088,7 +2080,8 @@ class AppManager: NSObject, ObservableObject {
             .setData(locationData, merge: true) { error in
                 if let error = error {
                     print("❌ Error updating location data: \(error.localizedDescription)")
-                } else {
+                }
+                else {
                     print("✅ Updated location data with duration: \(actualDuration) minutes")
                 }
             }
@@ -2096,7 +2089,6 @@ class AppManager: NSObject, ObservableObject {
         // Only save completed session data if session completed or failed and not already saved
         if (currentState == .completed || currentState == .failed) && !locationSessionSaved {
             locationSessionSaved = true
-            
             // Create completed session data
             let completedSession = CompletedSession(
                 userId: userId,
@@ -2112,12 +2104,13 @@ class AppManager: NSObject, ObservableObject {
 
             // Use FirebaseManager to save
             FirebaseManager.shared.saveSessionLocation(session: completedSession)
-            
             // Force a leaderboard refresh after a short delay
             if let building = currentBuilding, hasConsent {
                 DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
                     print("🔄 Forced leaderboard refresh after session completion")
-                    RegionalViewModel.shared.leaderboardViewModel.loadBuildingLeaderboard(building: building)
+                    RegionalViewModel.shared.leaderboardViewModel.loadBuildingLeaderboard(
+                        building: building
+                    )
                 }
             }
         }

@@ -160,7 +160,6 @@ struct Theme {
         startPoint: .top,
         endPoint: .bottom
     )
-    
 
     static let nonSuccessGradient = LinearGradient(
         colors: [

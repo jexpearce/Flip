@@ -183,7 +183,9 @@ struct FriendsView: View {
                                                 friend: friend.user,
                                                 liveSession: friend.sessionData
                                             )
-                                            .id("\(friend.id)-\(friend.sessionData?.id ?? "no-session")")  // Improved ID for better state management
+                                            .id(
+                                                "\(friend.id)-\(friend.sessionData?.id ?? "no-session")"
+                                            )  // Improved ID for better state management
                                         }
                                         .buttonStyle(PlainButtonStyle())
                                         .disabled(isNavigationBlocked)
@@ -199,9 +201,7 @@ struct FriendsView: View {
             }
             .background(Theme.mainGradient.edgesIgnoringSafeArea(.all))
             .sheet(isPresented: $showingSearch) { FriendsSearchView() }
-            .refreshable {
-                await refreshData()
-            }
+            .refreshable { await refreshData() }
             .alert(isPresented: $showAlert) {
                 Alert(
                     title: Text("Join Session"),
@@ -209,11 +209,7 @@ struct FriendsView: View {
                     dismissButton: .default(Text("OK"))
                 )
             }
-            .onAppear {
-                Task {
-                    await refreshData()
-                }
-            }
+            .onAppear { Task { await refreshData() } }
             .onChange(of: liveSessionManager.activeFriendSessions) { _ in
                 viewModel.objectWillChange.send()
             }
@@ -293,13 +289,9 @@ struct FriendsView: View {
         async let friendsRefresh = viewModel.loadFriends()
         async let leaderboardRefresh = leaderboardViewModel.loadLeaderboard()
         async let sessionsRefresh = liveSessionManager.listenForFriendSessions()
-        
         // Wait for all refreshes to complete
         _ = await [friendsRefresh, leaderboardRefresh, sessionsRefresh]
-        
         // Force a view refresh
-        await MainActor.run {
-            viewModel.objectWillChange.send()
-        }
+        await MainActor.run { viewModel.objectWillChange.send() }
     }
 }

@@ -377,12 +377,10 @@ struct RegionalView: View {
         .onAppear {
             checkLocationPermission()
             viewModel.loadCurrentBuilding()
-            
             // Check if we need to show leaderboard consent
             if !leaderboardConsentManager.hasGivenConsent {
                 // Mark that the user has seen this tab
                 leaderboardConsentManager.markRegionalTabSeen()
-                
                 // Check if we have location permission first
                 let authStatus = locationPermissionManager.authorizationStatus
                 if authStatus == .authorizedWhenInUse || authStatus == .authorizedAlways {
@@ -392,7 +390,6 @@ struct RegionalView: View {
                     }
                 }
             }
-            
             // Initialize all leaderboards when the view appears
             switch currentLeaderboard {
             case .regionalWeekly: regionalWeeklyViewModel.loadRegionalWeeklyLeaderboard()
@@ -421,7 +418,6 @@ struct RegionalView: View {
                 if showLeaderboardConsent {
                     LeaderboardConsentAlert(isPresented: $showLeaderboardConsent)
                 }
-                
                 // Add map privacy alert
                 if mapConsentManager.showMapPrivacyAlert {
                     MapPrivacyAlert(
@@ -430,9 +426,7 @@ struct RegionalView: View {
                             mapConsentManager.acceptMapPrivacy()
                             showMap = true
                         },
-                        onReject: {
-                            mapConsentManager.rejectMapPrivacy()
-                        }
+                        onReject: { mapConsentManager.rejectMapPrivacy() }
                     )
                 }
             }
@@ -516,8 +510,8 @@ class RegionalViewModel: NSObject, ObservableObject, CLLocationManagerDelegate {
         // CRITICAL: Only request if permission flow is complete
         let authStatus = locationManager.authorizationStatus
         if !PermissionManager.shared.isPermissionLocked() && authStatus == .notDetermined {
-                locationManager.requestWhenInUseAuthorization()
-            }
+            locationManager.requestWhenInUseAuthorization()
+        }
 
         // Listen for location updates from LocationHandler
         NotificationCenter.default.addObserver(
@@ -534,9 +528,9 @@ class RegionalViewModel: NSObject, ObservableObject, CLLocationManagerDelegate {
 
     @MainActor func refreshCurrentBuilding() {
         if PermissionManager.shared.isPermissionLocked() {
-                print("⏸️ RegionalView: Deferring building refresh until InitialView completes")
-                return
-            }
+            print("⏸️ RegionalView: Deferring building refresh until InitialView completes")
+            return
+        }
         isRefreshing = true
 
         // Request a high accuracy location update
@@ -567,19 +561,20 @@ class RegionalViewModel: NSObject, ObservableObject, CLLocationManagerDelegate {
                     "User has moved \(Int(distance))m from current building, checking for new buildings..."
                 )
                 // Instead of showing building selection, automatically find and select the new building
-                BuildingIdentificationService.shared.identifyNearbyBuildings(at: location) { [weak self] buildings, error in
+                BuildingIdentificationService.shared.identifyNearbyBuildings(at: location) {
+                    [weak self] buildings, error in
                     guard let self = self else { return }
-                    
                     if let error = error {
                         print("Error identifying buildings: \(error.localizedDescription)")
                         self.isRefreshing = false
                         return
                     }
-                    
                     DispatchQueue.main.async {
                         if let buildings = buildings, !buildings.isEmpty {
                             // Automatically select the first building (which is already sorted by session count and distance)
-                            let buildingName = BuildingIdentificationService.shared.getBuildingName(from: buildings[0])
+                            let buildingName = BuildingIdentificationService.shared.getBuildingName(
+                                from: buildings[0]
+                            )
                             let buildingInfo = BuildingInfo(
                                 id: "",  // The BuildingInfo init will standardize this
                                 name: buildingName,
@@ -622,7 +617,6 @@ class RegionalViewModel: NSObject, ObservableObject, CLLocationManagerDelegate {
     @MainActor func loadNearbyUsers() {
         // Ensure the user has completed at least one session before loading the leaderboard
         guard let userId = Auth.auth().currentUser?.uid else { return }
-        
         // Check if user has consented to leaderboards
         guard canLoadLeaderboardData() else {
             print("User has not consented to leaderboards. Skipping leaderboard loading.")
@@ -654,12 +648,11 @@ class RegionalViewModel: NSObject, ObservableObject, CLLocationManagerDelegate {
             }
     }
 
-
     @MainActor func startBuildingIdentification() {
         if PermissionManager.shared.isPermissionLocked() {
-                print("⏸️ RegionalView: Deferring building identification until InitialView completes")
-                return
-            }
+            print("⏸️ RegionalView: Deferring building identification until InitialView completes")
+            return
+        }
         // Request high-accuracy location for building identification
         locationManager.desiredAccuracy = kCLLocationAccuracyBest
         locationManager.requestLocation()
@@ -696,18 +689,20 @@ class RegionalViewModel: NSObject, ObservableObject, CLLocationManagerDelegate {
             DispatchQueue.main.async {
                 if let buildings = buildings, !buildings.isEmpty {
                     self.suggestedBuildings = buildings
-                    
                     // If no building is selected, automatically select the first building
                     // This is independent of leaderboard consent or session completion
                     if self.selectedBuilding == nil {
-                        let buildingName = BuildingIdentificationService.shared.getBuildingName(from: buildings[0])
+                        let buildingName = BuildingIdentificationService.shared.getBuildingName(
+                            from: buildings[0]
+                        )
                         let buildingInfo = BuildingInfo(
                             id: "",  // The BuildingInfo init will standardize this
                             name: buildingName,
                             coordinate: buildings[0].coordinate
                         )
                         self.selectBuilding(buildingInfo)
-                    } else {
+                    }
+                    else {
                         self.showBuildingSelection = true
                     }
                 }
@@ -726,19 +721,19 @@ class RegionalViewModel: NSObject, ObservableObject, CLLocationManagerDelegate {
             name: building.name,
             coordinate: building.coordinate
         )
-        
         self.selectedBuilding = standardizedBuilding
 
         // For debugging - print exact coordinate values and building ID
         print("🏢 Selected building: \(standardizedBuilding.name)")
-        print("🌐 Coordinates: \(standardizedBuilding.coordinate.latitude), \(standardizedBuilding.coordinate.longitude)")
+        print(
+            "🌐 Coordinates: \(standardizedBuilding.coordinate.latitude), \(standardizedBuilding.coordinate.longitude)"
+        )
         print("🆔 Building ID: \(standardizedBuilding.id)")
 
         // Save the selected building to Firestore regardless of leaderboard consent
         if let userId = Auth.auth().currentUser?.uid {
             let buildingData: [String: Any] = [
-                "id": standardizedBuilding.id,
-                "name": standardizedBuilding.name,
+                "id": standardizedBuilding.id, "name": standardizedBuilding.name,
                 "latitude": standardizedBuilding.coordinate.latitude,
                 "longitude": standardizedBuilding.coordinate.longitude,
                 "lastUpdated": FieldValue.serverTimestamp(),
@@ -748,25 +743,31 @@ class RegionalViewModel: NSObject, ObservableObject, CLLocationManagerDelegate {
                 .document("currentBuilding")
                 .setData(buildingData) { [weak self] error in
                     guard let self = self else { return }
-                    
                     if let error = error {
                         print("Error saving building info: \(error.localizedDescription)")
-                    } else {
-                        print("Building info saved successfully with ID: \(standardizedBuilding.id)")
+                    }
+                    else {
+                        print(
+                            "Building info saved successfully with ID: \(standardizedBuilding.id)"
+                        )
 
                         // Only load leaderboard if user has given consent
                         let hasConsent = LeaderboardConsentManager.shared.canAddToLeaderboard()
                         if hasConsent {
                             DispatchQueue.main.async {
                                 self.loadNearbyUsers()
-                                
                                 // Add a short additional delay and force a fresh leaderboard load
                                 DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
-                                    self.leaderboardViewModel.loadBuildingLeaderboard(building: standardizedBuilding)
+                                    self.leaderboardViewModel.loadBuildingLeaderboard(
+                                        building: standardizedBuilding
+                                    )
                                 }
                             }
-                        } else {
-                            print("⚠️ User hasn't given leaderboard consent yet, not loading leaderboard")
+                        }
+                        else {
+                            print(
+                                "⚠️ User hasn't given leaderboard consent yet, not loading leaderboard"
+                            )
                         }
                     }
                 }
@@ -797,9 +798,7 @@ class RegionalViewModel: NSObject, ObservableObject, CLLocationManagerDelegate {
                 }
                 else {
                     // No building set yet, try to identify and select one automatically
-                    DispatchQueue.main.async { 
-                        self?.startBuildingIdentification()
-                    }
+                    DispatchQueue.main.async { self?.startBuildingIdentification() }
                 }
             }
     }

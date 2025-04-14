@@ -37,11 +37,13 @@ import SwiftUI
     func startLocationUpdates() {
         // Check if permissions are locked and we're not in a session
         let appManager = AppManager.shared
-        let isInSession = appManager.currentState == .tracking || appManager.currentState == .countdown
-        
+        let isInSession =
+            appManager.currentState == .tracking || appManager.currentState == .countdown
         // Only respect permission lock if not in an active session
         if !isInSession && PermissionManager.shared.isPermissionLocked() {
-            print("⏳ Permission locked, deferring location updates until permission flow is complete")
+            print(
+                "⏳ Permission locked, deferring location updates until permission flow is complete"
+            )
             return
         }
 

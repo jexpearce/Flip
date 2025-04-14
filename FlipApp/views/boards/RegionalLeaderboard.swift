@@ -756,7 +756,6 @@ class RegionalLeaderboardViewModel: ObservableObject {
                 self.fetchBuildingTopSessions(building: building, friendIds: friendIds)
             }
     }
-    
     // Remove the redundant implementation and keep the full implementation below
     // Replace the fetchBuildingTopSessions in RegionalLeaderboardViewModel with this version
     // This version uses a vicinity-based approach rather than exact building ID matching
@@ -768,7 +767,6 @@ class RegionalLeaderboardViewModel: ObservableObject {
 
         // Set building name for display
         self.locationName = building.name
-        
         // Debug output to confirm building details
         print("🏢 Building leaderboard search: \(building.name) [\(building.id)]")
         print("🌐 Coordinates: \(building.coordinate.latitude), \(building.coordinate.longitude)")
@@ -778,7 +776,10 @@ class RegionalLeaderboardViewModel: ObservableObject {
         // Calculate the current week's start date (Monday)
         let calendar = Calendar.current
         let currentDate = Date()
-        var components = calendar.dateComponents([.yearForWeekOfYear, .weekOfYear], from: currentDate)
+        var components = calendar.dateComponents(
+            [.yearForWeekOfYear, .weekOfYear],
+            from: currentDate
+        )
         components.weekday = 2  // Monday
         components.hour = 0
         components.minute = 0
@@ -796,65 +797,55 @@ class RegionalLeaderboardViewModel: ObservableObject {
             latitude: building.coordinate.latitude,
             longitude: building.coordinate.longitude
         )
-        
         // Define radius for vicinity search (100 meters)
         let searchRadius = 100.0
-        
         print("🔍 Searching for sessions within \(searchRadius)m of building: \(building.name)")
 
         // First get all successful sessions from this week
-        db.collection("session_locations")
-            .whereField("lastFlipWasSuccessful", isEqualTo: true)
+        db.collection("session_locations").whereField("lastFlipWasSuccessful", isEqualTo: true)
             .whereField("includeInLeaderboards", isEqualTo: true)
             .getDocuments { [weak self] snapshot, error in
                 guard let self = self else { return }
-                
                 if let error = error {
                     print("Error fetching sessions: \(error.localizedDescription)")
                     self.isLoading = false
                     return
                 }
-                
                 guard let documents = snapshot?.documents else {
                     self.isLoading = false
                     return
                 }
-                
                 print("📊 Initial query found \(documents.count) total successful sessions")
-                
                 // Filter sessions by date and consent
                 let filteredDocuments = documents.filter { document in
                     let data = document.data()
-                    
                     // 1. Check if user consented to leaderboards
                     if let includeInLeaderboards = data["includeInLeaderboards"] as? Bool,
-                       !includeInLeaderboards {
+                        !includeInLeaderboards
+                    {
                         return false
                     }
-                    
                     // 2. Check if session is from this week
                     if let startTime = data["sessionStartTime"] as? Timestamp,
-                       startTime.dateValue() >= weekStart {
+                        startTime.dateValue() >= weekStart
+                    {
                         return true
                     }
-                    
                     if let endTime = data["sessionEndTime"] as? Timestamp,
-                       endTime.dateValue() >= weekStart {
+                        endTime.dateValue() >= weekStart
+                    {
                         return true
                     }
-                    
                     return false
                 }
-                
-                print("📅 After filtering by consent and date: \(filteredDocuments.count) sessions this week")
-                
+                print(
+                    "📅 After filtering by consent and date: \(filteredDocuments.count) sessions this week"
+                )
                 // Process each filtered document to find those for our building
                 var buildingDocuments = [QueryDocumentSnapshot]()
-                
                 for document in filteredDocuments {
                     let data = document.data()
                     var isForThisBuilding = false
-                    
                     // APPROACH 1: Check exact building ID match
                     if let buildingId = data["buildingId"] as? String {
                         if buildingId == building.id {
@@ -863,14 +854,12 @@ class RegionalLeaderboardViewModel: ObservableObject {
                             continue
                         }
                     }
-                    
                     // APPROACH 2: Check by location proximity
                     if let geoPoint = data["location"] as? GeoPoint {
                         let sessionLocation = CLLocation(
                             latitude: geoPoint.latitude,
                             longitude: geoPoint.longitude
                         )
-                        
                         let distance = sessionLocation.distance(from: buildingLocation)
                         if distance <= searchRadius {
                             print("🔍 Found session within \(Int(distance))m of building")
@@ -878,36 +867,30 @@ class RegionalLeaderboardViewModel: ObservableObject {
                             continue
                         }
                     }
-                    
                     // APPROACH 3: Check by building coordinates
                     if let buildingLat = data["buildingLatitude"] as? Double,
-                       let buildingLong = data["buildingLongitude"] as? Double {
-                        
+                        let buildingLong = data["buildingLongitude"] as? Double
+                    {
                         let sessionBuildingLocation = CLLocation(
                             latitude: buildingLat,
                             longitude: buildingLong
                         )
-                        
                         let distance = sessionBuildingLocation.distance(from: buildingLocation)
                         if distance <= searchRadius {
-                            print("🔍 Found session with building coordinates within \(Int(distance))m")
+                            print(
+                                "🔍 Found session with building coordinates within \(Int(distance))m"
+                            )
                             buildingDocuments.append(document)
                         }
                     }
                 }
-                
                 print("🏢 Final result: \(buildingDocuments.count) sessions for this building")
-                
                 // Count sessions per user
-                var userSessionCounts: [String: (
-                    userId: String,
-                    username: String,
-                    sessionCount: Int,
-                    distance: Double,
-                    isFriend: Bool,
-                    isCurrentUser: Bool
-                )] = [:]
-                
+                var userSessionCounts:
+                    [String: (
+                        userId: String, username: String, sessionCount: Int, distance: Double,
+                        isFriend: Bool, isCurrentUser: Bool
+                    )] = [:]
                 var userIdsToFetch: Set<String> = []
 
                 for document in buildingDocuments {
@@ -915,15 +898,12 @@ class RegionalLeaderboardViewModel: ObservableObject {
 
                     // Extract basic session info
                     guard let userId = data["userId"] as? String else { continue }
-                    
                     print("📝 Found session for user: \(userId)")
 
                     // Add this user ID to the list we need to fetch
                     userIdsToFetch.insert(userId)
-                    
                     // Default distance to 0
                     var distance: Double = 0
-                    
                     // Try to calculate accurate distance if location data available
                     if let geoPoint = data["location"] as? GeoPoint {
                         let sessionLocation = CLLocation(
@@ -936,19 +916,17 @@ class RegionalLeaderboardViewModel: ObservableObject {
                     // Update user's session count
                     if let existingData = userSessionCounts[userId] {
                         userSessionCounts[userId] = (
-                            userId: userId,
-                            username: existingData.username,
+                            userId: userId, username: existingData.username,
                             sessionCount: existingData.sessionCount + 1,
                             distance: min(existingData.distance, distance),
                             isFriend: existingData.isFriend,
                             isCurrentUser: existingData.isCurrentUser
                         )
-                    } else {
+                    }
+                    else {
                         userSessionCounts[userId] = (
-                            userId: userId,
-                            username: data["username"] as? String ?? "User",
-                            sessionCount: 1,
-                            distance: distance,
+                            userId: userId, username: data["username"] as? String ?? "User",
+                            sessionCount: 1, distance: distance,
                             isFriend: friendIds.contains(userId),
                             isCurrentUser: userId == currentUserId
                         )
@@ -1009,7 +987,6 @@ class RegionalLeaderboardViewModel: ObservableObject {
                 }
             }
     }
-
 
     private func fetchUserScoresAndStreaks(
         _ userIds: [String],
