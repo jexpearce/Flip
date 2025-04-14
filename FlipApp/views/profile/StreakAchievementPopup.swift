@@ -1,5 +1,4 @@
 import FirebaseAuth
-import Foundation
 import SwiftUI
 
 struct StreakAchievementAlert: View {

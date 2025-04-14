@@ -1,7 +1,7 @@
-import CoreLocation  // Add this import for CLLocationCoordinate2D
+import CoreLocation
 import FirebaseAuth
 import FirebaseFirestore
-import FirebaseStorage
+import SwiftUI
 
 class FirebaseManager: ObservableObject {
     static let shared = FirebaseManager()

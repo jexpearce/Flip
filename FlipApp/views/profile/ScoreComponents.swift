@@ -1,4 +1,3 @@
-import Foundation
 import SwiftUI
 
 // ENHANCED: Updated with more vibrant colors and indicator for streaks

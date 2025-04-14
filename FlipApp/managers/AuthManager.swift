@@ -2,7 +2,6 @@ import AuthenticationServices
 import CryptoKit
 import Firebase
 import FirebaseAuth
-import FirebaseFirestore
 import GoogleSignIn
 import SwiftUI
 

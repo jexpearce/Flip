@@ -1,5 +1,3 @@
-import CoreLocation
-import Foundation
 import SwiftUI
 
 struct LocationPermissionAlert: View {

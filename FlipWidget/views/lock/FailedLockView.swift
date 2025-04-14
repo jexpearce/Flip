@@ -1,6 +1,4 @@
-import ActivityKit
 import SwiftUI
-import WidgetKit
 
 struct FailedLockView: View {
     private let gradientBackground = LinearGradient(

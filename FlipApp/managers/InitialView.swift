@@ -1,7 +1,5 @@
-import CoreLocation
 import CoreMotion
 import SwiftUI
-import UserNotifications
 
 struct InitialView: View {
     @ObservedObject private var permissionManager = PermissionManager.shared

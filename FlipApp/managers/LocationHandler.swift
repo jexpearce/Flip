@@ -1,4 +1,3 @@
-import ActivityKit
 import CoreLocation
 import CoreMotion
 import SwiftUI

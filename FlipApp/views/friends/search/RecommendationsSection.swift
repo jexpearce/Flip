@@ -1,13 +1,3 @@
-//
-//  RecommendationsSection.swift
-//  Flip
-//
-//  Created by James Pearce on 4/14/25.
-//
-
-import FirebaseAuth
-import FirebaseFirestore
-import Foundation
 import SwiftUI
 
 struct RecommendationsSection: View {

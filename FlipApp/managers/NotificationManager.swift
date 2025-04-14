@@ -1,8 +1,4 @@
-import ActivityKit
-import BackgroundTasks
-import CoreMotion
 import SwiftUI
-import UserNotifications
 
 class NotificationManager {
     static let shared = NotificationManager()

@@ -4,7 +4,6 @@ import CoreMotion
 import FirebaseAuth
 import FirebaseFirestore
 import SwiftUI
-import UserNotifications
 
 class AppManager: NSObject, ObservableObject {
     static var backgroundRefreshIdentifier = "com.jexpearce.flip.refresh"

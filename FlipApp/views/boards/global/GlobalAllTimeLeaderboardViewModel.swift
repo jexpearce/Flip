@@ -1,5 +1,3 @@
-import CoreLocation
-import FirebaseAuth
 import FirebaseFirestore
 import SwiftUI
 

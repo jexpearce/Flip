@@ -1,6 +1,3 @@
-import FirebaseAuth
-import FirebaseFirestore
-import Foundation
 import SwiftUI
 
 struct EnhancedStatBox: View {

@@ -1,10 +1,8 @@
 import FirebaseAuth
 import FirebaseFirestore
 import FirebaseStorage
-import Foundation
 import PhotosUI
 import SwiftUI
-import UIKit
 
 class ProfileImageManager: NSObject, ObservableObject {
     @Published var selectedImage: UIImage?

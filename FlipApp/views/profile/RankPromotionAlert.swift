@@ -1,5 +1,3 @@
-import FirebaseAuth
-import Foundation
 import SwiftUI
 
 struct RankPromotionAlert: View {

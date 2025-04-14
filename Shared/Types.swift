@@ -1,5 +1,3 @@
-import Foundation
-
 enum FlipState: String, CaseIterable {
     case initial
     case countdown

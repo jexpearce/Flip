@@ -1,7 +1,6 @@
 import CoreLocation
 import FirebaseAuth
 import FirebaseFirestore
-import Foundation
 import MapKit
 import SwiftUI
 

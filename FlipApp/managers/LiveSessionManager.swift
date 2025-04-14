@@ -1,7 +1,6 @@
 import FirebaseAuth
 import FirebaseCore
 import FirebaseFirestore
-import Foundation
 import SwiftUI
 
 class LiveSessionManager: ObservableObject {

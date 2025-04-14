@@ -1,6 +1,5 @@
 import FirebaseAuth
 import FirebaseFirestore
-import Foundation
 import SwiftUI
 
 class FriendManager: ObservableObject {

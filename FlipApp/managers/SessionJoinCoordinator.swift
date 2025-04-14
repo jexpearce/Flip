@@ -1,4 +1,3 @@
-import Foundation
 import SwiftUI
 
 // This class coordinates joining live sessions between different parts of the app

@@ -1,7 +1,5 @@
-import ActivityKit
 import AppIntents
 import SwiftUI
-import UserNotifications
 
 @available(iOS 16.1, *) struct PauseIntent: LiveActivityIntent {
     static var title: LocalizedStringResource = "Pause Session"

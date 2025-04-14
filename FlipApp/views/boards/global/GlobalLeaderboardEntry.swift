@@ -1,8 +1,3 @@
-import CoreLocation
-import FirebaseAuth
-import FirebaseFirestore
-import SwiftUI
-
 struct GlobalLeaderboardEntry {
     let id: String
     let userId: String

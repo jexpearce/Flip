@@ -1,6 +1,3 @@
-import FirebaseAuth
-import FirebaseCore
-import Foundation
 import SwiftUI
 
 struct EnhancedFriendCard: View {

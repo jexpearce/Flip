@@ -1,5 +1,4 @@
 import FirebaseFirestore
-import Foundation
 import SwiftUI
 
 struct FirstTimeLeaderboard: Identifiable {

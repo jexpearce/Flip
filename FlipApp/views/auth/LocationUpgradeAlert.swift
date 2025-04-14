@@ -1,4 +1,3 @@
-import Foundation
 import SwiftUI
 
 // One-time alert to upgrade location permission

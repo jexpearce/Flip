@@ -5,7 +5,6 @@
 //  Created by Jex Pearce on 2/28/25.
 //
 
-import Foundation
 import SwiftUI
 
 struct JoinedSessionIndicator: View {

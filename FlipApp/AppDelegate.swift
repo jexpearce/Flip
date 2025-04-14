@@ -1,11 +1,9 @@
-import AuthenticationServices
 import FirebaseAuth
 import FirebaseCore
 import FirebaseFirestore
 import FirebaseMessaging
 import GoogleSignIn
 import UIKit
-import UserNotifications
 
 class FlipAppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCenterDelegate,
     MessagingDelegate

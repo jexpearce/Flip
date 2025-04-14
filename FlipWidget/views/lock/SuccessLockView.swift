@@ -1,7 +1,4 @@
-import ActivityKit
-import Foundation
 import SwiftUI
-import WidgetKit
 
 struct SuccessLockView: View {
     private let gradientBackground = LinearGradient(

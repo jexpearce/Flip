@@ -1,7 +1,7 @@
 import CoreLocation
-import FirebaseAuth
-import FirebaseFirestore
-import MapKit
+//import FirebaseAuth
+//import FirebaseFirestore
+//import MapKit
 import SwiftUI
 
 struct RegionalView: View {

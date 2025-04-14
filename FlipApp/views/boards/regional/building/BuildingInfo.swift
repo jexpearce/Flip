@@ -1,5 +1,4 @@
 import CoreLocation
-import Foundation
 
 // Building info model
 struct BuildingInfo: Identifiable, Equatable {

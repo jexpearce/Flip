@@ -1,12 +1,3 @@
-//
-//  EmptyFeedView.swift
-//  Flip
-//
-//  Created by James Pearce on 4/14/25.
-//
-
-import FirebaseAuth
-import FirebaseFirestore
 import SwiftUI
 
 struct EmptyFeedView: View {

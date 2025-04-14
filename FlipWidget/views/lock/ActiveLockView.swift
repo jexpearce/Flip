@@ -1,5 +1,3 @@
-// ActiveLockView.swift
-import ActivityKit
 import SwiftUI
 import WidgetKit
 

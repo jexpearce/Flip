@@ -1,9 +1,4 @@
-import FirebaseAuth
 import FirebaseFirestore
-//
-//  MapView.swift
-//  FlipApp
-import Foundation
 import MapKit
 import SwiftUI
 

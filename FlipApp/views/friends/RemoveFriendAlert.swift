@@ -1,11 +1,3 @@
-//
-//  RemoveFriendAlert.swift
-//  FlipApp
-//
-//  Created by Jex Pearce on 2/26/25.
-//
-
-import Foundation
 import SwiftUI
 
 struct RemoveFriendAlert: View {

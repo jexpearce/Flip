@@ -1,6 +1,4 @@
-import CoreLocation
 import FirebaseAuth
-import FirebaseFirestore
 import SwiftUI
 
 struct RegionalAllTimeLeaderboard: View {

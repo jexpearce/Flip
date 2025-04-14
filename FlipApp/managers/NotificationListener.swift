@@ -1,7 +1,6 @@
 import FirebaseAuth
 import FirebaseFirestore
 import Foundation
-import UserNotifications
 
 class NotificationListener {
     static let shared = NotificationListener()

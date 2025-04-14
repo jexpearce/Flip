@@ -1,6 +1,5 @@
 import CoreLocation
 import FirebaseFirestore
-import Foundation
 import MapKit
 
 class BuildingIdentificationService {

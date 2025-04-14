@@ -1,5 +1,4 @@
 import CoreLocation
-import Foundation
 import SwiftUI
 
 struct CustomLocationCreationView: View {

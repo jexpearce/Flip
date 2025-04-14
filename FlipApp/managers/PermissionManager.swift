@@ -2,7 +2,6 @@ import ActivityKit
 import CoreLocation
 import CoreMotion
 import SwiftUI
-import UserNotifications
 
 class PermissionManager: NSObject, ObservableObject {
     static let shared = PermissionManager()

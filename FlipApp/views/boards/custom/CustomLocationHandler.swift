@@ -1,7 +1,6 @@
 import CoreLocation
 import FirebaseAuth
 import FirebaseFirestore
-import Foundation
 
 class CustomLocationHandler {
     static let shared = CustomLocationHandler()

@@ -1,5 +1,3 @@
-import FirebaseAuth
-import FirebaseFirestore
 import SwiftUI
 
 struct RegionalPrivacySection: View {

@@ -1,11 +1,3 @@
-//
-//  RulesButton.swift
-//  FlipApp
-//
-//  Created by Jex Pearce on 2/24/25.
-//
-
-import Foundation
 import SwiftUI
 
 struct RulesButtonView: View {

@@ -4,7 +4,6 @@ import FirebaseAuth
 import FirebaseCore
 import FirebaseMessaging
 import SwiftUI
-import UserNotifications
 
 @main struct FlipApp: App {
     @UIApplicationDelegateAdaptor(FlipAppDelegate.self) var delegate

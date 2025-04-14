@@ -1,6 +1,5 @@
 import FirebaseAuth
 import FirebaseFirestore
-import Foundation
 import SwiftUI
 
 struct UserProfileView: View {

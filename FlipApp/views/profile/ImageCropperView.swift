@@ -1,5 +1,4 @@
 import SwiftUI
-import UIKit
 
 struct ImprovedProfileCropperView: View {
     @Binding var image: UIImage?
