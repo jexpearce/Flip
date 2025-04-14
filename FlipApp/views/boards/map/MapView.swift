@@ -52,7 +52,6 @@ struct MapView: View {
     @State private var mapStyle: MapStyleType = .standard
     @EnvironmentObject var viewRouter: ViewRouter
     @StateObject private var locationPermissionManager = LocationPermissionManager.shared
-    @StateObject private var mapConsentManager = MapConsentManager.shared
     @Environment(\.presentationMode) var presentationMode
 
     var body: some View {

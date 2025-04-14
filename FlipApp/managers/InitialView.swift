@@ -12,7 +12,6 @@ struct InitialView: View {
     @State private var showPrivacyPolicy = false
     @State private var animateCheckmarks = false
     @State private var readyToProceed = false
-    @State private var animateBackground = false
     @State private var animateContent = false
     // Gradient animation
     @State private var gradientStart = UnitPoint(x: 0, y: 0)

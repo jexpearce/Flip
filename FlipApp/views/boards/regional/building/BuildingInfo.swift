@@ -34,18 +34,4 @@ struct BuildingInfo: Identifiable, Equatable {
         let distance = lhsLocation.distance(from: rhsLocation)
         return distance <= 10.0
     }
-    // Helper method to check if a coordinate is near this building
-    func isNearby(coordinate otherCoordinate: CLLocationCoordinate2D, withinMeters: Double = 100.0)
-        -> Bool
-    {
-        let buildingLocation = CLLocation(
-            latitude: self.coordinate.latitude,
-            longitude: self.coordinate.longitude
-        )
-        let otherLocation = CLLocation(
-            latitude: otherCoordinate.latitude,
-            longitude: otherCoordinate.longitude
-        )
-        return buildingLocation.distance(from: otherLocation) <= withinMeters
-    }
 }

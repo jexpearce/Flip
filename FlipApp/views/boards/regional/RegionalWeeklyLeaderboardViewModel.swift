@@ -10,7 +10,6 @@ class RegionalWeeklyLeaderboardViewModel: ObservableObject {
     private let regionRadiusInMiles: Double = 15.0  // ~15 mile radius
 
     private let db = Firestore.firestore()
-    var userCache: [String: UserCacheItem] = [:]
 
     func loadRegionalWeeklyLeaderboard() {
         isLoading = true
@@ -143,10 +142,7 @@ class RegionalWeeklyLeaderboardViewModel: ObservableObject {
     ) {
         // No data found - update UI now
         if userData.isEmpty {
-            DispatchQueue.main.async {
-                self.leaderboardEntries = []
-                self.isLoading = false
-            }
+            completion([])
             return
         }
 
@@ -184,10 +180,7 @@ class RegionalWeeklyLeaderboardViewModel: ObservableObject {
                 // Sort by minutes
                 entries.sort { $0.minutes > $1.minutes }
 
-                DispatchQueue.main.async {
-                    self.leaderboardEntries = entries
-                    self.isLoading = false
-                }
+                completion(entries)
             }
         }
     }
