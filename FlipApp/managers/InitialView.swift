@@ -139,13 +139,13 @@ struct InitialView: View {
                         ZStack {
                             Circle()
                                 .fill(Theme.silveryGradient)
-                                .frame(width: 120, height: 120)
+                                .frame(width: 80, height: 80)
                                 .shadow(color: Theme.softViolet.opacity(0.5), radius: 20)
                                 .opacity(animateContent ? 1 : 0)
                                 .scaleEffect(animateContent ? 1 : 0.8)
                             
                             Image(systemName: "hourglass")
-                                .font(.system(size: 50))
+                                .font(.system(size: 40))
                                 .foregroundStyle(
                                     LinearGradient(
                                         colors: [.white, .white.opacity(0.7)],
@@ -157,7 +157,7 @@ struct InitialView: View {
                                 .opacity(animateContent ? 1 : 0)
                                 .scaleEffect(animateContent ? 1 : 0.8)
                         }
-                        .padding(.top, 60)
+                        .padding(.top, 20)
                         
                         // Title with animated reveal
                         Text("FLIP")
@@ -167,16 +167,7 @@ struct InitialView: View {
                             .shadow(color: Theme.softViolet.opacity(0.8), radius: 10)
                             .opacity(animateContent ? 1 : 0)
                             .offset(y: animateContent ? 0 : 30)
-                            
-                        Text("WELCOME SETUP")
-                            .font(.system(size: 18, weight: .bold))
-                            .tracking(5)
-                            .foregroundColor(.white.opacity(0.8))
-                            .padding(.top, 5)
-                            .opacity(animateContent ? 1 : 0)
-                            .offset(y: animateContent ? 0 : 20)
-                    }
-                    .padding(.bottom, 30)
+                                                }
 
                     // Permission checklist card
                     VStack(spacing: 20) {
@@ -323,7 +314,6 @@ struct InitialView: View {
                     .scaleEffect(readyToProceed ? 1 : 0.97)
                     .disabled(!readyToProceed)
                     .padding(.horizontal, 20)
-                    .padding(.top, 20)
                     .padding(.bottom, 50)
                     .animation(
                         Animation.spring(response: 0.6, dampingFraction: 0.7)
