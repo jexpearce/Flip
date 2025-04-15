@@ -11,6 +11,7 @@ struct UserProfileView: View {
     @State private var showAddFriendConfirmation = false
     @State private var showFriendsList = false
     @State private var friendRequestSent = false
+    @State private var showBlockUserAlert = false
     @StateObject private var weeklyViewModel = WeeklySessionListViewModel()
     @StateObject private var friendManager = FriendManager()
     @StateObject private var searchManager = SearchManager()
@@ -113,6 +114,23 @@ struct UserProfileView: View {
                                 hasSentFriendRequest: hasSentFriendRequest
                             )
                             .padding(.horizontal)
+                            // Block user button
+                            Button(action: { showBlockUserAlert = true }) {
+                                HStack {
+                                    Image(systemName: "slash.circle").font(.system(size: 16))
+                                    Text("Block User").font(.system(size: 16, weight: .medium))
+                                }
+                                .foregroundColor(.red).padding(.vertical, 8)
+                                .padding(.horizontal, 16)
+                                .background(
+                                    RoundedRectangle(cornerRadius: 8).fill(Color.red.opacity(0.1))
+                                )
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 8)
+                                        .stroke(Color.red.opacity(0.3), lineWidth: 1)
+                                )
+                            }
+                            .padding(.top, 8)
                         }
 
                         // Friends count button - leads to friends list
@@ -172,6 +190,17 @@ struct UserProfileView: View {
                     cancelFriendRequest: cancelFriendRequest,
                     presentationMode: presentationMode
                 )
+                // Block user alert
+                .alert(isPresented: $showBlockUserAlert) {
+                    Alert(
+                        title: Text("Block User"),
+                        message: Text(
+                            "Are you sure you want to block \(user.username)? This will remove them from your friends list and prevent them from interacting with you."
+                        ),
+                        primaryButton: .destructive(Text("Block")) { blockUser() },
+                        secondaryButton: .cancel()
+                    )
+                }
             }
         }
         .navigationBarTitleDisplayMode(.inline)
@@ -318,5 +347,50 @@ struct UserProfileView: View {
         // Remove from sender's sent requests
         db.collection("users").document(currentUserId)
             .updateData(["sentRequests": FieldValue.arrayRemove([userId])])
+    }
+
+    // Function to block a user
+    private func blockUser() {
+        guard let currentUserId = Auth.auth().currentUser?.uid else { return }
+        // Get current user document
+        FirebaseManager.shared.db.collection("users").document(currentUserId)
+            .getDocument { document, error in
+                if let error = error {
+                    print("Error getting current user document: \(error.localizedDescription)")
+                    return
+                }
+                guard let document = document, document.exists,
+                    var userData = try? document.data(as: FirebaseManager.FlipUser.self)
+                else {
+                    print("Failed to parse current user data")
+                    return
+                }
+                // Add user to blocked list if not already blocked
+                if !userData.blockedUsers.contains(user.id) {
+                    userData.blockedUsers.append(user.id)
+                    // Remove from friends list if they're a friend
+                    if userData.friends.contains(user.id) {
+                        userData.friends.removeAll { $0 == user.id }
+                    }
+                    // Remove from friend requests if they sent one
+                    if userData.friendRequests.contains(user.id) {
+                        userData.friendRequests.removeAll { $0 == user.id }
+                    }
+                    // Remove from sent requests if we sent one
+                    if userData.sentRequests.contains(user.id) {
+                        userData.sentRequests.removeAll { $0 == user.id }
+                    }
+                    // Update the document
+                    do {
+                        try FirebaseManager.shared.db.collection("users").document(currentUserId)
+                            .setData(from: userData)
+                        // Update local user object
+                        DispatchQueue.main.async { FirebaseManager.shared.currentUser = userData }
+                        // Dismiss the profile view
+                        presentationMode.wrappedValue.dismiss()
+                    }
+                    catch { print("Error updating user document: \(error.localizedDescription)") }
+                }
+            }
     }
 }

@@ -134,7 +134,7 @@ class AuthManager: NSObject, ObservableObject {
                                 "id": user.uid, "username": username, "email": email,
                                 "totalFocusTime": 0, "totalSessions": 0, "longestSession": 0,
                                 "friends": [], "friendRequests": [], "sentRequests": [],
-                                "createdAt": FieldValue.serverTimestamp(),
+                                "blockedUsers": [], "createdAt": FieldValue.serverTimestamp(),
                             ]
 
                             db.collection("users").document(user.uid)
@@ -165,7 +165,8 @@ class AuthManager: NSObject, ObservableObject {
                                                 friends: [],
                                                 friendRequests: [],
                                                 sentRequests: [],
-                                                profileImageURL: nil
+                                                profileImageURL: nil,
+                                                blockedUsers: []
                                             )
                                             FirebaseManager.shared.currentUser = flipUser
                                         }
@@ -251,7 +252,8 @@ class AuthManager: NSObject, ObservableObject {
                     let longestSession = userData["longestSession"] as? Int,
                     let friends = userData["friends"] as? [String],
                     let friendRequests = userData["friendRequests"] as? [String],
-                    let sentRequests = userData["sentRequests"] as? [String]
+                    let sentRequests = userData["sentRequests"] as? [String],
+                    let blockedUsers = userData["blockedUsers"] as? [String]
                 {
 
                     let profileImageURL = userData["profileImageURL"] as? String
@@ -265,7 +267,8 @@ class AuthManager: NSObject, ObservableObject {
                         friends: friends,
                         friendRequests: friendRequests,
                         sentRequests: sentRequests,
-                        profileImageURL: profileImageURL
+                        profileImageURL: profileImageURL,
+                        blockedUsers: blockedUsers
                     )
 
                     // Store user in Firebase Manager
@@ -420,7 +423,7 @@ extension AuthManager {
         let userData: [String: Any] = [
             "id": user.uid, "username": user.displayName ?? "User\(Int.random(in: 1000...9999))",
             "email": user.email ?? "", "totalFocusTime": 0, "totalSessions": 0, "longestSession": 0,
-            "friends": [], "friendRequests": [], "sentRequests": [],
+            "friends": [], "friendRequests": [], "sentRequests": [], "blockedUsers": [],
             "createdAt": FieldValue.serverTimestamp(),
         ]
 
@@ -571,7 +574,8 @@ extension AuthManager: ASAuthorizationControllerDelegate,
                     self.createAppleUserDocument(
                         user: user,
                         displayName: displayName,
-                        email: email ?? user.email ?? ""
+                        email: email ?? user.email ?? "",
+                        blockedUsers: []
                     ) {
                         self.loadUserData(userId: user.uid) {
                             UserSettingsManager.shared.onUserSignIn()
@@ -621,13 +625,15 @@ extension AuthManager: ASAuthorizationControllerDelegate,
         user: User,
         displayName: String,
         email: String,
+        blockedUsers: [String],
         completion: @escaping () -> Void
     ) {
         let db = Firestore.firestore()
         let userData: [String: Any] = [
             "id": user.uid, "username": displayName, "email": email, "totalFocusTime": 0,
             "totalSessions": 0, "longestSession": 0, "friends": [], "friendRequests": [],
-            "sentRequests": [], "createdAt": FieldValue.serverTimestamp(),
+            "sentRequests": [], "blockedUsers": blockedUsers,
+            "createdAt": FieldValue.serverTimestamp(),
         ]
         db.collection("users").document(user.uid)
             .setData(userData) { error in

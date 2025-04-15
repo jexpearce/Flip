@@ -7,6 +7,7 @@ struct SettingsView: View {
     @State private var showPrivacyPolicy = false
     @State private var showPermissionResetAlert = false
     @State private var animateSettings = false
+    @State private var showBlockedUsers = false
 
     // Colors from the app's theme
     private let cyanBlueAccent = Theme.lightTealBlue
@@ -107,6 +108,31 @@ struct SettingsView: View {
                                 Divider().background(Color.white.opacity(0.2)).padding(.vertical, 5)
 
                                 RegionalPrivacySection(viewModel: viewModel)
+
+                                // Blocked Users Button
+                                Button(action: { showBlockedUsers = true }) {
+                                    HStack {
+                                        Image(systemName: "person.crop.circle.badge.xmark")
+                                            .font(.system(size: 18))
+                                            .foregroundColor(.red.opacity(0.8))
+
+                                        Text("Blocked Users")
+                                            .font(.system(size: 16, weight: .semibold))
+                                            .foregroundColor(.white)
+
+                                        Spacer()
+
+                                        Image(systemName: "chevron.right")
+                                            .font(.system(size: 14))
+                                            .foregroundColor(.white.opacity(0.5))
+                                    }
+                                    .padding()
+                                    .background(
+                                        RoundedRectangle(cornerRadius: 12)
+                                            .fill(Color.white.opacity(0.05))
+                                    )
+                                }
+                                .buttonStyle(PlainButtonStyle())
 
                                 // Privacy Information
                                 VStack(alignment: .leading, spacing: 10) {
@@ -296,6 +322,9 @@ struct SettingsView: View {
                     },
                     secondaryButton: .cancel()
                 )
+            }
+            .sheet(isPresented: $showBlockedUsers) {
+                BlockedUsersView()
             }
             .onAppear {
                 withAnimation(.spring(response: 0.6, dampingFraction: 0.7)) {

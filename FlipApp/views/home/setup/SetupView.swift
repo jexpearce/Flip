@@ -486,15 +486,15 @@ struct SetupView: View {
     }
 }
 
-// Full LocationSelectorPopup implementation
-
 struct LocationSelectorPopup: View {
     let buildingName: String  // Keep for compatibility
     @Binding var isPresented: Bool
     let onChangeLocation: () -> Void  // Keep for compatibility
+    @ObservedObject private var mapConsentManager = MapConsentManager.shared
 
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
+            // Building information section
             HStack {
                 VStack(alignment: .leading, spacing: 2) {
                     Text("CURRENT LOCATION").font(.system(size: 12, weight: .bold)).tracking(1)
@@ -531,6 +531,79 @@ struct LocationSelectorPopup: View {
                             .background(Circle().fill(Color.white.opacity(0.1)))
                     }
                 }
+            }
+            
+            // Only show map toggle if user has accepted map privacy
+            if mapConsentManager.hasAcceptedMapPrivacy {
+                // Subtle divider
+                Divider().background(Color.white.opacity(0.15)).padding(.vertical, 4)
+                
+                // Map posting toggle
+                HStack(alignment: .top, spacing: 10) {
+                    // Map icon
+                    ZStack {
+                        Circle()
+                            .fill(mapConsentManager.postToMap ? Theme.yellow.opacity(0.2) : Color.white.opacity(0.08))
+                            .frame(width: 28, height: 28)
+                        
+                        Image(systemName: "mappin.and.ellipse")
+                            .font(.system(size: 14))
+                            .foregroundColor(mapConsentManager.postToMap ? Theme.yellow : .white.opacity(0.7))
+                    }
+                    .overlay(
+                        Circle()
+                            .stroke(mapConsentManager.hasExpired ? Theme.yellow : Color.clear, lineWidth: 2)
+                            .scaleEffect(mapConsentManager.hasExpired ? 1.2 : 1.0)
+                            .opacity(mapConsentManager.hasExpired ? 0.6 : 0)
+                            .animation(
+                                Animation.easeInOut(duration: 1.5)
+                                    .repeatForever(autoreverses: true),
+                                value: mapConsentManager.hasExpired
+                            )
+                    )
+                    
+                    // Text and toggle
+                    VStack(alignment: .leading, spacing: 2) {
+                        HStack {
+                            Text("POST TO MAP")
+                                .font(.system(size: 12, weight: .bold))
+                                .tracking(1)
+                                .foregroundColor(mapConsentManager.postToMap ? Theme.yellow : .white.opacity(0.8))
+                            
+                            Spacer()
+                            
+                            // Toggle switch
+                            Toggle("", isOn: Binding(
+                                get: { mapConsentManager.postToMap },
+                                set: { mapConsentManager.togglePostToMap($0) }
+                            ))
+                            .labelsHidden()
+                            .toggleStyle(SwitchToggleStyle(tint: Theme.yellow))
+                            .scaleEffect(0.8)
+                        }
+                        
+                        // Status text - shows expiry or prompt to enable
+                        Text(mapConsentManager.postToMap
+                             ? "Auto-expires in \(mapConsentManager.formattedExpiryTime())"
+                             : "Enable to share sessions on map")
+                            .font(.system(size: 10))
+                            .foregroundColor(.white.opacity(0.5))
+                    }
+                }
+                .padding(8)
+                .background(
+                    RoundedRectangle(cornerRadius: 10)
+                        .fill(Color.white.opacity(0.05))
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 10)
+                                .stroke(
+                                    mapConsentManager.postToMap ?
+                                        Theme.yellow.opacity(0.3) : Color.white.opacity(0.1),
+                                    lineWidth: 1
+                                )
+                        )
+                )
+                .animation(.easeInOut(duration: 0.2), value: mapConsentManager.postToMap)
             }
         }
         .padding(.horizontal, 16).padding(.vertical, 12)

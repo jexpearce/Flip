@@ -126,4 +126,66 @@ class FriendManager: ObservableObject {
         // Update local state
         DispatchQueue.main.async { self.friends.removeAll { $0.id == friendId } }
     }
+
+    func blockUser(userId: String, completion: @escaping (Bool) -> Void) {
+        guard let currentUserId = Auth.auth().currentUser?.uid else {
+            completion(false)
+            return
+        }
+
+        let db = firebaseManager.db
+        let batch = db.batch()
+        
+        // Add to current user's blocked list
+        let currentUserRef = db.collection("users").document(currentUserId)
+        batch.updateData([
+            "blockedUsers": FieldValue.arrayUnion([userId])
+        ], forDocument: currentUserRef)
+        
+        // Remove from friends list if they were friends
+        batch.updateData([
+            "friends": FieldValue.arrayRemove([userId])
+        ], forDocument: currentUserRef)
+        
+        // Remove current user from blocked user's friends list
+        let blockedUserRef = db.collection("users").document(userId)
+        batch.updateData([
+            "friends": FieldValue.arrayRemove([currentUserId])
+        ], forDocument: blockedUserRef)
+        
+        batch.commit { error in
+            if let error = error {
+                print("Error blocking user: \(error.localizedDescription)")
+                completion(false)
+            } else {
+                // Refresh friends list
+                self.loadFriends()
+                completion(true)
+            }
+        }
+    }
+    
+    func unblockUser(userId: String, completion: @escaping (Bool) -> Void) {
+        guard let currentUserId = Auth.auth().currentUser?.uid else {
+            completion(false)
+            return
+        }
+        
+        let db = firebaseManager.db
+        db.collection("users").document(currentUserId).updateData([
+            "blockedUsers": FieldValue.arrayRemove([userId])
+        ]) { error in
+            if let error = error {
+                print("Error unblocking user: \(error.localizedDescription)")
+                completion(false)
+            } else {
+                completion(true)
+            }
+        }
+    }
+    
+    func isUserBlocked(userId: String) -> Bool {
+        guard let currentUser = firebaseManager.currentUser else { return false }
+        return currentUser.blockedUsers.contains(userId)
+    }
 }

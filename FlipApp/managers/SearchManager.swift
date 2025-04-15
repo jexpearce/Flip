@@ -105,7 +105,12 @@ class SearchManager: ObservableObject {
                         documents.compactMap { document in
                             try? document.data(as: FirebaseManager.FlipUser.self)
                         }
-                        .filter { $0.id != Auth.auth().currentUser?.uid }
+                        .filter { user in
+                            // Filter out current user and blocked users
+                            guard let currentUser = self.currentUserData else { return false }
+                            return user.id != Auth.auth().currentUser?.uid && 
+                                   !currentUser.blockedUsers.contains(user.id)
+                        }
                 }
 
                 // Now handle fuzzy search for users with mutual friends

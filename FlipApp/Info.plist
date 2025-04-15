@@ -12,18 +12,7 @@
 		<string>com.jexpearce.flip.refresh</string>
 	</array>
 	<key>CFBundleDocumentTypes</key>
-	<array>
-		<dict>
-			<key>CFBundleTypeName</key>
-			<string>MKDirectionsRequest</string>
-			<key>LSItemContentTypes</key>
-			<array>
-				<string>com.apple.maps.directionsrequest</string>
-			</array>
-            <key>LSHandlerRank</key>
-            <string>Alternate</string>
-		</dict>
-	</array>
+	<array/>
 	<key>CFBundleURLTypes</key>
 	<array>
 		<dict>
@@ -40,16 +29,10 @@
 	</array>
 	<key>FirebaseAppDelegateProxyEnabled</key>
 	<false/>
-    <key>LSSupportsOpeningDocumentsInPlace</key>
-    <false/>
 	<key>GIDClientID</key>
 	<string>195757800963-kn8fbl6m67j3jeucclq16q30ta1h66tc.apps.googleusercontent.com</string>
 	<key>MKDirectionsApplicationSupportedModes</key>
-	<array>
-		<string>MKDirectionsModeOther</string>
-	</array>
-    <key>NSLocationWhenInUseUsageDescription</key>
-        <string>Flip uses location for Regional and Building Leaderboards, letting you compete in places like libraries and cafés. It also powers FlipMaps, showing friends in productivity sessions. You have full control over privacy, with options to opt out or stay anonymous.</string>
+	<array/>
 	<key>NSLiveActivitiesUsageDescription</key>
 	<string>Used to show current timer status on lock screen. Allows you to pause, resume, see the pause duration left etc.</string>
 	<key>UIBackgroundModes</key>

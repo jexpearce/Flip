@@ -20,9 +20,32 @@ class FirebaseManager: ObservableObject {
         var friendRequests: [String]  // New: incoming friend requests
         var sentRequests: [String]  // New: outgoing friend requests
         var profileImageURL: String?  // New: URL to profile image
-
+        var blockedUsers: [String]  // New: list of blocked user IDs
     }
 
+    func updateExistingUsersWithBlockedUsers(completion: @escaping (Error?) -> Void) {
+        db.collection("users")
+            .getDocuments { (snapshot, error) in
+                if let error = error {
+                    completion(error)
+                    return
+                }
+                let batch = self.db.batch()
+                var count = 0
+                for document in snapshot?.documents ?? [] {
+                    if document.data()["blockedUsers"] == nil {
+                        batch.updateData(["blockedUsers": []], forDocument: document.reference)
+                        count += 1
+                    }
+                }
+                if count > 0 {
+                    batch.commit { error in completion(error) }
+                }
+                else {
+                    completion(nil)
+                }
+            }
+    }
 }
 extension FirebaseManager {
     // Function to create a test session to ensure the collection exists
@@ -98,7 +121,8 @@ extension FirebaseManager {
                                 friends: self.currentUser?.friends ?? [],
                                 friendRequests: self.currentUser?.friendRequests ?? [],
                                 sentRequests: self.currentUser?.sentRequests ?? [],
-                                profileImageURL: self.currentUser?.profileImageURL
+                                profileImageURL: self.currentUser?.profileImageURL,
+                                blockedUsers: self.currentUser?.blockedUsers ?? []
                             )
 
                             // Update the current user
@@ -138,7 +162,8 @@ extension FirebaseManager {
                                                 friends: currentUser.friends,
                                                 friendRequests: currentUser.friendRequests,
                                                 sentRequests: currentUser.sentRequests,
-                                                profileImageURL: currentUser.profileImageURL
+                                                profileImageURL: currentUser.profileImageURL,
+                                                blockedUsers: currentUser.blockedUsers
                                             )
 
                                             DispatchQueue.main.async {
@@ -299,10 +324,13 @@ extension FirebaseManager {
             }
     }
     func saveSessionLocation(session: CompletedSession) {
+        // First check if user has consented to map sharing AND manually enabled posting
+        let shouldPostToMap = MapConsentManager.shared.shouldPostToMap()
+        // Create a session ID
         let sessionId = "\(session.userId)_\(Int(Date().timeIntervalSince1970))"
 
-        // Check if user has consented to leaderboards
-        let hasConsent = LeaderboardConsentManager.shared.canAddToLeaderboard()
+        // Check if user has consented to leaderboards (for leaderboard functionality)
+        let hasLeaderboardConsent = LeaderboardConsentManager.shared.canAddToLeaderboard()
         // Use consistent format for actual duration
         let validActualDuration = max(1, session.actualDuration)  // Ensure at least 1 minute is recorded
 
@@ -320,7 +348,8 @@ extension FirebaseManager {
             "actualDuration": validActualDuration,
             "sessionStartTime": Timestamp(date: session.startTime),
             "sessionEndTime": Timestamp(date: sessionEndTime),
-            "createdAt": FieldValue.serverTimestamp(), "includeInLeaderboards": hasConsent,
+            "createdAt": FieldValue.serverTimestamp(),
+            "includeInLeaderboards": hasLeaderboardConsent,
         ]
 
         // Add building information if available - IMPORTANT: Use standardized building ID
@@ -343,7 +372,27 @@ extension FirebaseManager {
             print("⚠️ No building information available for this session")
         }
 
-        // Save to Firestore
+        // Check if this session should be saved to the map
+        if !shouldPostToMap {
+            print("🚫 Session not saved to map - user has not enabled 'Post to Map' feature")
+            // Still save to leaderboards if user has given leaderboard consent
+            if hasLeaderboardConsent {
+                // Save only to leaderboards collection, not to session_locations
+                db.collection("leaderboard_sessions").document(sessionId)
+                    .setData(sessionData) { error in
+                        if let error = error {
+                            print("❌ Error saving to leaderboard: \(error.localizedDescription)")
+                        }
+                        else {
+                            print("✅ Session saved to leaderboards only (not to map)")
+                        }
+                    }
+            }
+            return
+        }
+
+        // If we reach here, user has explicitly enabled map posting
+        // Save to Firestore session_locations (which powers the map)
         db.collection("session_locations").document(sessionId)
             .setData(sessionData) { [weak self] error in
                 if let error = error {
@@ -351,7 +400,7 @@ extension FirebaseManager {
                 }
                 else {
                     print(
-                        "✅ SESSION SAVED SUCCESSFULLY: \(sessionId) with duration \(validActualDuration) minutes"
+                        "✅ SESSION SAVED TO MAP: \(sessionId) with duration \(validActualDuration) minutes"
                     )
                     // Debug output to verify data was saved correctly
                     print(
@@ -362,7 +411,7 @@ extension FirebaseManager {
                     self?.pruneOldSessions(forUserId: session.userId)
 
                     // Force refresh building leaderboard if building info exists and consent is given
-                    if let building = session.building, hasConsent {
+                    if let building = session.building, hasLeaderboardConsent {
                         print("🔄 Triggering leaderboard refresh for building: \(building.name)")
                         // Add a short delay to ensure Firestore has time to process the write
                         DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {

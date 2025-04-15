@@ -7,16 +7,27 @@ class MapConsentManager: ObservableObject {
 
     @Published var hasAcceptedMapPrivacy = false
     @Published var showMapPrivacyAlert = false
+    // New properties for manual check-in
+    @Published var postToMap: Bool = false
+    @Published var postToMapExpiryTime: Date? = nil
+    @Published var hasExpired: Bool = false  // New property to track expiry state
 
     private let userDefaults = UserDefaults.standard
     private let mapConsentKey = "hasAcceptedMapPrivacy"
+    private let postToMapKey = "postToMapEnabled"
+    private let postToMapExpiryKey = "postToMapExpiry"
     private let db = Firestore.firestore()
     private var pendingCompletion: ((Bool) -> Void)?
+    private var expiryTimer: Timer?
 
     init() {
         // Check if user has already accepted in UserDefaults
         hasAcceptedMapPrivacy = userDefaults.bool(forKey: mapConsentKey)
 
+        // Load post to map setting
+        loadPostToMapSetting()
+        // Start expiry timer
+        startExpiryTimer()
         // For existing users, also check Firestore (in case UserDefaults was reset)
         if !hasAcceptedMapPrivacy, let userId = Auth.auth().currentUser?.uid {
             db.collection("users").document(userId).collection("settings").document("mapPrivacy")
@@ -34,6 +45,60 @@ class MapConsentManager: ObservableObject {
         }
     }
 
+    private func loadPostToMapSetting() {
+        // Load settings from UserDefaults
+        if let expiryTimeInterval = userDefaults.object(forKey: postToMapExpiryKey) as? TimeInterval
+        {
+            let expiryTime = Date(timeIntervalSince1970: expiryTimeInterval)
+            // Only set as true if expiry time is in the future
+            if expiryTime > Date() {
+                postToMap = userDefaults.bool(forKey: postToMapKey)
+                postToMapExpiryTime = expiryTime
+                print("Loaded post to map setting: enabled until \(expiryTime)")
+            }
+            else {
+                // If expired, ensure it's off
+                postToMap = false
+                postToMapExpiryTime = nil
+                // Clear from UserDefaults
+                userDefaults.removeObject(forKey: postToMapKey)
+                userDefaults.removeObject(forKey: postToMapExpiryKey)
+                print("Post to map setting expired")
+            }
+        }
+        else {
+            postToMap = false
+            postToMapExpiryTime = nil
+        }
+    }
+    private func startExpiryTimer() {
+        // Check expiry every minute
+        expiryTimer?.invalidate()
+        expiryTimer = Timer.scheduledTimer(withTimeInterval: 60, repeats: true) { [weak self] _ in
+            self?.checkExpiry()
+        }
+    }
+    private func checkExpiry() {
+        guard let expiryTime = postToMapExpiryTime else { return }
+        if Date() > expiryTime {
+            DispatchQueue.main.async {
+                print("Map posting permission expired")
+                self.postToMap = false
+                self.postToMapExpiryTime = nil
+                self.hasExpired = true  // Set expired state
+
+                // Also clear from UserDefaults
+                self.userDefaults.removeObject(forKey: self.postToMapKey)
+                self.userDefaults.removeObject(forKey: self.postToMapExpiryKey)
+                // Update Firestore
+                if let userId = Auth.auth().currentUser?.uid {
+                    self.db.collection("users").document(userId).collection("settings")
+                        .document("mapPrivacy")
+                        .updateData(["postToMap": false, "postToMapExpiry": FieldValue.delete()])
+                }
+            }
+        }
+    }
     func checkAndRequestConsent(completion: @escaping (Bool) -> Void) {
         print("Checking map consent: hasAcceptedMapPrivacy = \(hasAcceptedMapPrivacy)")
 
@@ -86,6 +151,58 @@ class MapConsentManager: ObservableObject {
             pendingCompletion = nil
         }
     }
+
+    // Toggle the post to map setting
+    func togglePostToMap(_ enabled: Bool) {
+        postToMap = enabled
+        hasExpired = false  // Reset expired state when toggling
+
+        if enabled {
+            // Set expiry time to 12 hours from now
+            let expiryTime = Date().addingTimeInterval(12 * 60 * 60)
+            postToMapExpiryTime = expiryTime
+            // Save to UserDefaults
+            userDefaults.set(true, forKey: postToMapKey)
+            userDefaults.set(expiryTime.timeIntervalSince1970, forKey: postToMapExpiryKey)
+            print("Enabled post to map until \(expiryTime)")
+        }
+        else {
+            // Clear expiry time and settings
+            postToMapExpiryTime = nil
+            userDefaults.removeObject(forKey: postToMapKey)
+            userDefaults.removeObject(forKey: postToMapExpiryKey)
+            print("Disabled post to map")
+        }
+        // Sync to Firestore for persistence across devices
+        if let userId = Auth.auth().currentUser?.uid {
+            var updateData: [String: Any] = ["postToMap": postToMap]
+            if let expiryTime = postToMapExpiryTime {
+                updateData["postToMapExpiry"] = Timestamp(date: expiryTime)
+            }
+            else {
+                updateData["postToMapExpiry"] = FieldValue.delete()
+            }
+            db.collection("users").document(userId).collection("settings").document("mapPrivacy")
+                .setData(updateData, merge: true)
+        }
+    }
+    // Check if we should post to map (both consent and toggle are true)
+    func shouldPostToMap() -> Bool { return hasAcceptedMapPrivacy && postToMap }
+    // Format remaining time until expiry
+    func formattedExpiryTime() -> String {
+        guard let expiryTime = postToMapExpiryTime else { return "Not enabled" }
+        let remainingTime = expiryTime.timeIntervalSince(Date())
+        if remainingTime <= 0 { return "Expired" }
+        let hours = Int(remainingTime) / 3600
+        let minutes = (Int(remainingTime) % 3600) / 60
+        if hours > 0 {
+            return "\(hours)h \(minutes)m"
+        }
+        else {
+            return "\(minutes)m"
+        }
+    }
+    deinit { expiryTimer?.invalidate() }
 }
 struct MapPrivacyAlert: View {
     @Binding var isPresented: Bool
@@ -271,7 +388,8 @@ struct MapPrivacyAlert: View {
                 .frame(width: 24, alignment: .center)
 
             Text(text).font(.system(size: 15)).foregroundColor(.white)
-                .multilineTextAlignment(.leading)
+                .multilineTextAlignment(.leading).fixedSize(horizontal: false, vertical: true)
+                .frame(maxWidth: .infinity, alignment: .leading)
         }
     }
 }

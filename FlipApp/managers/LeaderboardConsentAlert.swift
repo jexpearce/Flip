@@ -48,7 +48,7 @@ struct LeaderboardConsentAlert: View {
                     .padding(.top, 10)
                     // Description text
                     Text(
-                        "FLIP lets you compete with others on regional, building, and global leaderboards! Your session counts and focus time will appear on leaderboards with your username."
+                        "FLIP lets you compete with others on regional, building, and global leaderboards! Your session counts and focus time will be uploaded to our servers and displayed on leaderboards with your username."
                     )
                     .font(.system(size: 16)).foregroundColor(.white.opacity(0.9))
                     .multilineTextAlignment(.center).padding(.horizontal, 20)

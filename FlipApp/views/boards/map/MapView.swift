@@ -18,7 +18,9 @@ class ScoreViewModel: ObservableObject {
         longestSession: 0,
         friends: [],
         friendRequests: [],
-        sentRequests: []
+        sentRequests: [],
+        profileImageURL: nil,
+        blockedUsers: []
     )
 
     private let db = Firestore.firestore()
@@ -47,6 +49,7 @@ struct MapView: View {
     @State private var mapStyle: MapStyleType = .standard
     @EnvironmentObject var viewRouter: ViewRouter
     @StateObject private var locationPermissionManager = LocationPermissionManager.shared
+    @StateObject private var mapConsentManager = MapConsentManager.shared
     @Environment(\.presentationMode) var presentationMode
 
     var body: some View {
@@ -83,127 +86,206 @@ struct MapView: View {
                                 .foregroundColor(.white)
                         }
                     }
-                    .padding(.leading, 20).padding(.top, 50)
+                    .padding(.leading, 20)
 
                     Spacer()
 
-                    // Original map settings button - keep this from your existing code
+                    Text("FRIENDS MAP").font(.system(size: 18, weight: .bold)).tracking(2)
+                        .foregroundColor(.white)
+
+                    Spacer()
+
+                    // Settings button
                     Button(action: { showPrivacySettings = true }) {
                         Image(systemName: "gear").font(.system(size: 20, weight: .bold))
                             .foregroundColor(.white).frame(width: 44, height: 44)
                             .background(
                                 ZStack {
                                     Circle().fill(Theme.mutedPurple.opacity(0.8))
-
                                     Circle().stroke(Color.white.opacity(0.2), lineWidth: 1)
                                 }
                             )
                             .shadow(color: Color.black.opacity(0.3), radius: 4)
                     }
-                    .padding(.trailing, 20).padding(.top, 50)
+                    .padding(.trailing, 20)
                 }
-
-                Text("FRIENDS MAP").font(.system(size: 16, weight: .black)).tracking(5)
-                    .foregroundColor(.white).shadow(color: Color.black.opacity(0.5), radius: 2)
-                    .padding(.top, -5).padding(.bottom, 10)
-                    .background(
-                        Rectangle()
-                            .fill(
-                                LinearGradient(
-                                    gradient: Gradient(colors: [
-                                        Theme.mutedPurple.opacity(0.8),
-                                        Theme.mutedPurple.opacity(0),
-                                    ]),
-                                    startPoint: .top,
-                                    endPoint: .bottom
-                                )
+                .padding(.top, 60)
+                .background(
+                    Rectangle()
+                        .fill(
+                            LinearGradient(
+                                gradient: Gradient(colors: [
+                                    Theme.mutedPurple, Theme.mutedPurple.opacity(0),
+                                ]),
+                                startPoint: .top,
+                                endPoint: .bottom
                             )
-                            .frame(height: 140).edgesIgnoringSafeArea(.top)
-                    )
+                        )
+                        .frame(height: 100).edgesIgnoringSafeArea(.top)
+                )
 
                 Spacer()
 
-                // Map controls
-                HStack {
-                    Spacer()
-
-                    VStack(spacing: 15) {
-                        // Refresh button
-                        Button(action: viewModel.refreshLocations) {
-                            Image(systemName: "arrow.clockwise")
-                                .font(.system(size: 18, weight: .bold)).foregroundColor(.white)
-                                .frame(width: 44, height: 44)
-                                .background(
-                                    ZStack {
-                                        Circle()
-                                            .fill(
-                                                LinearGradient(
-                                                    colors: [Theme.darkRed, Theme.darkerRed],
-                                                    startPoint: .top,
-                                                    endPoint: .bottom
-                                                )
-                                            )
-                                            .opacity(0.9)
-
-                                        Circle().fill(Color.white.opacity(0.1))
-
-                                        Circle().stroke(Color.white.opacity(0.3), lineWidth: 1)
-                                    }
+                // Map controls and toggle at the bottom
+                VStack(spacing: 15) {
+                    // Map posting toggle
+                    if mapConsentManager.hasAcceptedMapPrivacy {
+                        HStack(alignment: .top, spacing: 10) {
+                            // Map icon
+                            ZStack {
+                                Circle()
+                                    .fill(
+                                        mapConsentManager.postToMap
+                                            ? Theme.yellow.opacity(0.2) : Color.white.opacity(0.08)
+                                    )
+                                    .frame(width: 28, height: 28)
+                                Image(systemName: "mappin.and.ellipse").font(.system(size: 14))
+                                    .foregroundColor(
+                                        mapConsentManager.postToMap
+                                            ? Theme.yellow : .white.opacity(0.7)
+                                    )
+                            }
+                            .overlay(
+                                Circle()
+                                    .stroke(
+                                        mapConsentManager.hasExpired ? Theme.yellow : Color.clear,
+                                        lineWidth: 2
+                                    )
+                                    .scaleEffect(mapConsentManager.hasExpired ? 1.2 : 1.0)
+                                    .opacity(mapConsentManager.hasExpired ? 0.6 : 0)
+                                    .animation(
+                                        Animation.easeInOut(duration: 1.5)
+                                            .repeatForever(autoreverses: true),
+                                        value: mapConsentManager.hasExpired
+                                    )
+                            )
+                            // Text and toggle
+                            VStack(alignment: .leading, spacing: 2) {
+                                HStack {
+                                    Text("POST TO MAP").font(.system(size: 12, weight: .bold))
+                                        .tracking(1)
+                                        .foregroundColor(
+                                            mapConsentManager.postToMap
+                                                ? Theme.yellow : .white.opacity(0.8)
+                                        )
+                                    Spacer()
+                                    // Toggle switch
+                                    Toggle(
+                                        "",
+                                        isOn: Binding(
+                                            get: { mapConsentManager.postToMap },
+                                            set: { mapConsentManager.togglePostToMap($0) }
+                                        )
+                                    )
+                                    .labelsHidden()
+                                    .toggleStyle(SwitchToggleStyle(tint: Theme.yellow))
+                                    .scaleEffect(0.8)
+                                }
+                                // Status text - shows expiry or prompt to enable
+                                Text(
+                                    mapConsentManager.postToMap
+                                        ? "Auto-expires in \(mapConsentManager.formattedExpiryTime())"
+                                        : "Enable to share sessions on map"
                                 )
-                                .shadow(color: Color.black.opacity(0.3), radius: 4)
+                                .font(.system(size: 10)).foregroundColor(.white.opacity(0.5))
+                            }
                         }
-
-                        // Locate me button
-                        Button(action: viewModel.centerOnUser) {
-                            Image(systemName: "location").font(.system(size: 18, weight: .bold))
-                                .foregroundColor(.white).frame(width: 44, height: 44)
-                                .background(
-                                    ZStack {
-                                        Circle()
-                                            .fill(
-                                                LinearGradient(
-                                                    colors: [Theme.darkRed, Theme.darkerRed],
-                                                    startPoint: .top,
-                                                    endPoint: .bottom
-                                                )
-                                            )
-                                            .opacity(0.9)
-
-                                        Circle().fill(Color.white.opacity(0.1))
-
-                                        Circle().stroke(Color.white.opacity(0.3), lineWidth: 1)
-                                    }
+                        .padding(8)
+                        .background(
+                            RoundedRectangle(cornerRadius: 12).fill(Color.black.opacity(0.3))
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 12)
+                                        .stroke(Color.white.opacity(0.2), lineWidth: 1)
                                 )
-                                .shadow(color: Color.black.opacity(0.3), radius: 4)
-                        }
-
-                        // Map style toggle
-                        Button(action: { mapStyle = mapStyle == .standard ? .hybrid : .standard }) {
-                            Image(systemName: mapStyle == .standard ? "globe" : "map")
-                                .font(.system(size: 18, weight: .bold)).foregroundColor(.white)
-                                .frame(width: 44, height: 44)
-                                .background(
-                                    ZStack {
-                                        Circle()
-                                            .fill(
-                                                LinearGradient(
-                                                    colors: [Theme.darkRed, Theme.darkerRed],
-                                                    startPoint: .top,
-                                                    endPoint: .bottom
-                                                )
-                                            )
-                                            .opacity(0.9)
-
-                                        Circle().fill(Color.white.opacity(0.1))
-
-                                        Circle().stroke(Color.white.opacity(0.3), lineWidth: 1)
-                                    }
-                                )
-                                .shadow(color: Color.black.opacity(0.3), radius: 4)
-                        }
+                        )
+                        .padding(.horizontal)
                     }
-                    .padding(.trailing).padding(.bottom, 30)
+
+                    // Map controls
+                    HStack {
+                        Spacer()
+
+                        VStack(spacing: 15) {
+                            // Refresh button
+                            Button(action: viewModel.refreshLocations) {
+                                Image(systemName: "arrow.clockwise")
+                                    .font(.system(size: 18, weight: .bold)).foregroundColor(.white)
+                                    .frame(width: 44, height: 44)
+                                    .background(
+                                        ZStack {
+                                            Circle()
+                                                .fill(
+                                                    LinearGradient(
+                                                        colors: [Theme.darkRed, Theme.darkerRed],
+                                                        startPoint: .top,
+                                                        endPoint: .bottom
+                                                    )
+                                                )
+                                                .opacity(0.9)
+
+                                            Circle().fill(Color.white.opacity(0.1))
+
+                                            Circle().stroke(Color.white.opacity(0.3), lineWidth: 1)
+                                        }
+                                    )
+                                    .shadow(color: Color.black.opacity(0.3), radius: 4)
+                            }
+
+                            // Locate me button
+                            Button(action: viewModel.centerOnUser) {
+                                Image(systemName: "location").font(.system(size: 18, weight: .bold))
+                                    .foregroundColor(.white).frame(width: 44, height: 44)
+                                    .background(
+                                        ZStack {
+                                            Circle()
+                                                .fill(
+                                                    LinearGradient(
+                                                        colors: [Theme.darkRed, Theme.darkerRed],
+                                                        startPoint: .top,
+                                                        endPoint: .bottom
+                                                    )
+                                                )
+                                                .opacity(0.9)
+
+                                            Circle().fill(Color.white.opacity(0.1))
+
+                                            Circle().stroke(Color.white.opacity(0.3), lineWidth: 1)
+                                        }
+                                    )
+                                    .shadow(color: Color.black.opacity(0.3), radius: 4)
+                            }
+
+                            // Map style toggle
+                            Button(action: {
+                                mapStyle = mapStyle == .standard ? .hybrid : .standard
+                            }) {
+                                Image(systemName: mapStyle == .standard ? "globe" : "map")
+                                    .font(.system(size: 18, weight: .bold)).foregroundColor(.white)
+                                    .frame(width: 44, height: 44)
+                                    .background(
+                                        ZStack {
+                                            Circle()
+                                                .fill(
+                                                    LinearGradient(
+                                                        colors: [Theme.darkRed, Theme.darkerRed],
+                                                        startPoint: .top,
+                                                        endPoint: .bottom
+                                                    )
+                                                )
+                                                .opacity(0.9)
+
+                                            Circle().fill(Color.white.opacity(0.1))
+
+                                            Circle().stroke(Color.white.opacity(0.3), lineWidth: 1)
+                                        }
+                                    )
+                                    .shadow(color: Color.black.opacity(0.3), radius: 4)
+                            }
+                        }
+                        .padding(.trailing).padding(.bottom, 30)
+                    }
                 }
+                .padding(.bottom, 20)
             }
 
             // Friend preview popup when a friend is selected
@@ -712,127 +794,173 @@ struct MapPrivacySettingsView: View {
     @Environment(\.presentationMode) var presentationMode
     @StateObject private var viewModel = MapPrivacyViewModel()
     @State private var animateSettings = false
-
+    @State private var showFriendSelector = false
     var body: some View {
         NavigationView {
             ZStack {
                 // Background
                 Theme.mainGradient.edgesIgnoringSafeArea(.all)
+                if showFriendSelector {
+                    // Show friend selector overlay
+                    FriendSelectorView(viewModel: viewModel, isPresented: $showFriendSelector)
+                        .transition(.opacity.combined(with: .scale(scale: 0.95))).zIndex(2)
+                }
+                else {
+                    // Main Settings Content
+                    ScrollView {
+                        VStack(spacing: 30) {
+                            // Privacy Settings
+                            VStack(spacing: 15) {
+                                Text("LOCATION VISIBILITY").font(.system(size: 16, weight: .black))
+                                    .tracking(4).foregroundColor(.white)
+                                    .shadow(color: Theme.lightTealBlue.opacity(0.5), radius: 6)
+                                    .frame(maxWidth: .infinity, alignment: .leading)
 
-                VStack(spacing: 30) {
-                    // Privacy Settings
-                    VStack(spacing: 15) {
-                        Text("LOCATION VISIBILITY").font(.system(size: 16, weight: .black))
-                            .tracking(4).foregroundColor(.white)
-                            .shadow(color: Theme.lightTealBlue.opacity(0.5), radius: 6)
-                            .frame(maxWidth: .infinity, alignment: .leading)
+                                // Radio buttons for privacy settings
+                                VStack(spacing: 10) {
+                                    privacyOption(
+                                        title: "Everyone",
+                                        description: "All users can see where your past flips were",
+                                        isSelected: viewModel.visibilityLevel == .everyone
+                                    ) { viewModel.updateVisibilityLevel(.everyone) }
 
-                        // Radio buttons for privacy settings
-                        VStack(spacing: 10) {
-                            privacyOption(
-                                title: "Everyone",
-                                description: "All users can see where your past flips were",
-                                isSelected: viewModel.visibilityLevel == .everyone
-                            ) { viewModel.updateVisibilityLevel(.everyone) }
+                                    privacyOption(
+                                        title: "Friends Only",
+                                        description: "Only friends can see your past & live flips",
+                                        isSelected: viewModel.visibilityLevel == .friendsOnly
+                                    ) { viewModel.updateVisibilityLevel(.friendsOnly) }
+                                    // New option: Only These Friends
+                                    privacyOption(
+                                        title: "Only These Friends",
+                                        description:
+                                            "Select specific friends who can see your flips",
+                                        isSelected: viewModel.visibilityLevel == .selectiveFriends,
+                                        showChevron: true,
+                                        friendCount: viewModel.selectedFriends.count
+                                    ) {
+                                        viewModel.updateVisibilityLevel(.selectiveFriends)
+                                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                                            withAnimation { showFriendSelector = true }
+                                        }
+                                    }
+                                    // New option: All Friends Except
+                                    privacyOption(
+                                        title: "All Friends Except",
+                                        description:
+                                            "Block specific friends from seeing your flips",
+                                        isSelected: viewModel.visibilityLevel == .allExcept,
+                                        showChevron: true,
+                                        friendCount: viewModel.excludedFriends.count
+                                    ) {
+                                        viewModel.updateVisibilityLevel(.allExcept)
+                                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                                            withAnimation { showFriendSelector = true }
+                                        }
+                                    }
 
-                            privacyOption(
-                                title: "Friends Only",
-                                description: "Only friends can see your past & live flips",
-                                isSelected: viewModel.visibilityLevel == .friendsOnly
-                            ) { viewModel.updateVisibilityLevel(.friendsOnly) }
-
-                            privacyOption(
-                                title: "Nobody",
-                                description: "Your flips are hidden from everyone",
-                                isSelected: viewModel.visibilityLevel == .nobody
-                            ) { viewModel.updateVisibilityLevel(.nobody) }
-                        }
-                        .padding(.horizontal, 5)
-                    }
-                    .padding()
-                    .background(
-                        ZStack {
-                            RoundedRectangle(cornerRadius: 15).fill(Theme.buttonGradient)
-                                .opacity(0.1)
-
-                            RoundedRectangle(cornerRadius: 15).fill(Color.white.opacity(0.05))
-
-                            RoundedRectangle(cornerRadius: 15)
-                                .stroke(Theme.silveryGradient2, lineWidth: 1)
-                        }
-                    )
-                    .offset(x: animateSettings ? 0 : -300)
-
-                    // Display Options
-                    VStack(spacing: 15) {
-                        Text("SESSION HISTORY").font(.system(size: 16, weight: .black)).tracking(4)
-                            .foregroundColor(.white)
-                            .shadow(color: Theme.lightTealBlue.opacity(0.5), radius: 6)
-                            .frame(maxWidth: .infinity, alignment: .leading)
-
-                        // Toggle for showing session history
-                        Toggle("Show Past Sessions on Map", isOn: $viewModel.showSessionHistory)
-                            .foregroundColor(.white)
-                            .toggleStyle(SwitchToggleStyle(tint: Theme.lightTealBlue)).padding()
+                                    privacyOption(
+                                        title: "Nobody",
+                                        description: "Your flips are hidden from everyone",
+                                        isSelected: viewModel.visibilityLevel == .nobody
+                                    ) { viewModel.updateVisibilityLevel(.nobody) }
+                                }
+                                .padding(.horizontal, 5)
+                            }
+                            .padding()
                             .background(
                                 ZStack {
-                                    RoundedRectangle(cornerRadius: 12)
+                                    RoundedRectangle(cornerRadius: 15).fill(Theme.buttonGradient)
+                                        .opacity(0.1)
+
+                                    RoundedRectangle(cornerRadius: 15)
                                         .fill(Color.white.opacity(0.05))
 
-                                    RoundedRectangle(cornerRadius: 12)
+                                    RoundedRectangle(cornerRadius: 15)
+                                        .stroke(Theme.silveryGradient2, lineWidth: 1)
+                                }
+                            )
+                            .offset(x: animateSettings ? 0 : -300)
+
+                            // Display Options
+                            VStack(spacing: 15) {
+                                Text("SESSION HISTORY").font(.system(size: 16, weight: .black))
+                                    .tracking(4).foregroundColor(.white)
+                                    .shadow(color: Theme.lightTealBlue.opacity(0.5), radius: 6)
+                                    .frame(maxWidth: .infinity, alignment: .leading)
+
+                                // Toggle for showing session history
+                                Toggle(
+                                    "Show Past Sessions on Map",
+                                    isOn: $viewModel.showSessionHistory
+                                )
+                                .foregroundColor(.white)
+                                .toggleStyle(SwitchToggleStyle(tint: Theme.lightTealBlue)).padding()
+                                .background(
+                                    ZStack {
+                                        RoundedRectangle(cornerRadius: 12)
+                                            .fill(Color.white.opacity(0.05))
+
+                                        RoundedRectangle(cornerRadius: 12)
+                                            .stroke(Color.white.opacity(0.2), lineWidth: 1)
+                                    }
+                                )
+                                .onChange(of: viewModel.showSessionHistory) { _ in
+                                    viewModel.saveSettings()
+                                }
+
+                                // Info text
+                                Text(
+                                    "When enabled, the map will show the locations of your past focus sessions. If disabled, only your live sessions will appear to others."
+                                )
+                                .font(.system(size: 14)).foregroundColor(.white.opacity(0.7))
+                                .padding(.top, 5)
+                            }
+                            .padding()
+                            .background(
+                                ZStack {
+                                    RoundedRectangle(cornerRadius: 15).fill(Theme.buttonGradient)
+                                        .opacity(0.1)
+
+                                    RoundedRectangle(cornerRadius: 15)
+                                        .fill(Color.white.opacity(0.05))
+
+                                    RoundedRectangle(cornerRadius: 15)
+                                        .stroke(Theme.silveryGradient2, lineWidth: 1)
+                                }
+                            )
+                            .offset(x: animateSettings ? 0 : 300)
+
+                            Spacer(minLength: 30)
+
+                            // Privacy Info
+                            VStack(spacing: 12) {
+                                Image(systemName: "lock.shield.fill")
+                                    .foregroundColor(.white.opacity(0.6)).font(.system(size: 32))
+
+                                Text("Your privacy is important")
+                                    .font(.system(size: 18, weight: .bold)).foregroundColor(.white)
+
+                                Text(
+                                    "Location is only tracked during active focus sessions and your data is never shared with third parties."
+                                )
+                                .font(.system(size: 14)).foregroundColor(.white.opacity(0.7))
+                                .multilineTextAlignment(.center).padding(.horizontal)
+                            }
+                            .padding()
+                            .background(
+                                ZStack {
+                                    RoundedRectangle(cornerRadius: 15)
+                                        .fill(Color.white.opacity(0.05))
+
+                                    RoundedRectangle(cornerRadius: 15)
                                         .stroke(Color.white.opacity(0.2), lineWidth: 1)
                                 }
                             )
-
-                        // Info text
-                        Text(
-                            "When enabled, the map will show the locations of your past focus sessions. If disabled, only your live sessions will appear to others."
-                        )
-                        .font(.system(size: 14)).foregroundColor(.white.opacity(0.7))
-                        .padding(.top, 5)
-                    }
-                    .padding()
-                    .background(
-                        ZStack {
-                            RoundedRectangle(cornerRadius: 15).fill(Theme.buttonGradient)
-                                .opacity(0.1)
-
-                            RoundedRectangle(cornerRadius: 15).fill(Color.white.opacity(0.05))
-
-                            RoundedRectangle(cornerRadius: 15)
-                                .stroke(Theme.silveryGradient2, lineWidth: 1)
+                            .padding(.bottom).opacity(animateSettings ? 1 : 0)
                         }
-                    )
-                    .offset(x: animateSettings ? 0 : 300)
-
-                    Spacer()
-
-                    // Privacy Info
-                    VStack(spacing: 12) {
-                        Image(systemName: "lock.shield.fill").foregroundColor(.white.opacity(0.6))
-                            .font(.system(size: 32))
-
-                        Text("Your privacy is important").font(.system(size: 18, weight: .bold))
-                            .foregroundColor(.white)
-
-                        Text(
-                            "Location is only tracked during active focus sessions and your data is never shared with third parties."
-                        )
-                        .font(.system(size: 14)).foregroundColor(.white.opacity(0.7))
-                        .multilineTextAlignment(.center).padding(.horizontal)
+                        .padding(.horizontal).padding(.top, 30)
                     }
-                    .padding()
-                    .background(
-                        ZStack {
-                            RoundedRectangle(cornerRadius: 15).fill(Color.white.opacity(0.05))
-
-                            RoundedRectangle(cornerRadius: 15)
-                                .stroke(Color.white.opacity(0.2), lineWidth: 1)
-                        }
-                    )
-                    .padding(.bottom).opacity(animateSettings ? 1 : 0)
                 }
-                .padding(.horizontal).padding(.top, 30)
             }
             .navigationBarTitle("Map Privacy", displayMode: .inline)
             .toolbar {
@@ -853,6 +981,8 @@ struct MapPrivacySettingsView: View {
         title: String,
         description: String,
         isSelected: Bool,
+        showChevron: Bool = false,
+        friendCount: Int = 0,
         action: @escaping () -> Void
     ) -> some View {
         Button(action: action) {
@@ -869,12 +999,22 @@ struct MapPrivacySettingsView: View {
 
                 // Text
                 VStack(alignment: .leading, spacing: 2) {
-                    Text(title).font(.system(size: 16, weight: .bold)).foregroundColor(.white)
+                    HStack {
+                        Text(title).font(.system(size: 16, weight: .bold)).foregroundColor(.white)
+                        if showChevron && isSelected && friendCount > 0 {
+                            Text("(\(friendCount))").font(.system(size: 12))
+                                .foregroundColor(.white.opacity(0.7))
+                        }
+                    }
 
                     Text(description).font(.system(size: 14)).foregroundColor(.white.opacity(0.7))
                 }
 
                 Spacer()
+                if showChevron && isSelected {
+                    Image(systemName: "chevron.right").font(.system(size: 14, weight: .semibold))
+                        .foregroundColor(.white.opacity(0.6))
+                }
             }
             .padding(.vertical, 10).padding(.horizontal)
             .background(
@@ -888,6 +1028,184 @@ struct MapPrivacySettingsView: View {
                     }
                 }
             )
+        }
+    }
+}
+
+struct FriendSelectorView: View {
+    @ObservedObject var viewModel: MapPrivacyViewModel
+    @Binding var isPresented: Bool
+    @State private var searchText: String = ""
+    private var isSelectiveMode: Bool { return viewModel.visibilityLevel == .selectiveFriends }
+    private var modeTitle: String { return isSelectiveMode ? "SELECT FRIENDS" : "EXCLUDE FRIENDS" }
+    private var modeDescription: String {
+        return isSelectiveMode
+            ? "Choose friends who can see your locations"
+            : "Choose friends who cannot see your locations"
+    }
+    private var filteredFriends: [FirebaseManager.FlipUser] {
+        if searchText.isEmpty {
+            return viewModel.allFriends
+        }
+        else {
+            return viewModel.allFriends.filter {
+                $0.username.lowercased().contains(searchText.lowercased())
+            }
+        }
+    }
+    var body: some View {
+        ZStack {
+            // Background overlay
+            Color.black.opacity(0.7).edgesIgnoringSafeArea(.all)
+                .onTapGesture { withAnimation { isPresented = false } }
+            // Friend selector panel
+            VStack(spacing: 0) {
+                // Header
+                VStack(spacing: 10) {
+                    // Title and close button
+                    HStack {
+                        Text(modeTitle).font(.system(size: 20, weight: .black)).tracking(3)
+                            .foregroundColor(.white)
+                        Spacer()
+                        Button(action: { withAnimation { isPresented = false } }) {
+                            Image(systemName: "xmark.circle.fill").font(.system(size: 22))
+                                .foregroundColor(.white.opacity(0.7))
+                        }
+                    }
+                    // Description
+                    Text(modeDescription).font(.system(size: 14))
+                        .foregroundColor(.white.opacity(0.7))
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                    // Search bar
+                    HStack {
+                        Image(systemName: "magnifyingglass").foregroundColor(.white.opacity(0.6))
+                        TextField("Search friends", text: $searchText).foregroundColor(.white)
+                            .accentColor(Theme.lightTealBlue)
+                        if !searchText.isEmpty {
+                            Button(action: { searchText = "" }) {
+                                Image(systemName: "xmark.circle.fill")
+                                    .foregroundColor(.white.opacity(0.6))
+                            }
+                        }
+                    }
+                    .padding(10)
+                    .background(RoundedRectangle(cornerRadius: 10).fill(Color.white.opacity(0.1)))
+                }
+                .padding().background(Theme.deepPurple)
+                // Friend list
+                if viewModel.isLoadingFriends {
+                    Spacer()
+                    ProgressView().progressViewStyle(CircularProgressViewStyle(tint: .white))
+                        .scaleEffect(1.5)
+                    Text("Loading friends...").font(.system(size: 16))
+                        .foregroundColor(.white.opacity(0.7)).padding()
+                    Spacer()
+                }
+                else if viewModel.allFriends.isEmpty {
+                    Spacer()
+                    Image(systemName: "person.2.slash").font(.system(size: 40))
+                        .foregroundColor(.white.opacity(0.5)).padding()
+                    Text("No friends found").font(.system(size: 18, weight: .semibold))
+                        .foregroundColor(.white)
+                    Text("Add friends to customize your privacy settings").font(.system(size: 14))
+                        .foregroundColor(.white.opacity(0.7)).multilineTextAlignment(.center)
+                        .padding()
+                    Spacer()
+                }
+                else {
+                    ScrollView {
+                        LazyVStack(spacing: 0) {
+                            ForEach(filteredFriends, id: \.id) { friend in
+                                FriendSelectorRow(
+                                    friend: friend,
+                                    isSelected: viewModel.isFriendSelected(friend.id),
+                                    onToggle: { viewModel.toggleFriendSelection(friend.id) }
+                                )
+                                Divider().background(Color.white.opacity(0.1)).padding(.leading, 70)
+                            }
+                        }
+                        .padding(.bottom, 20)
+                    }
+                }
+                // Save button
+                Button(action: {
+                    viewModel.saveSettings()
+                    withAnimation { isPresented = false }
+                }) {
+                    Text("SAVE").font(.system(size: 16, weight: .bold)).foregroundColor(.white)
+                        .frame(maxWidth: .infinity).padding(.vertical, 16)
+                        .background(
+                            ZStack {
+                                RoundedRectangle(cornerRadius: 10).fill(Theme.lightTealBlue)
+                                RoundedRectangle(cornerRadius: 10).fill(Color.white.opacity(0.1))
+                                RoundedRectangle(cornerRadius: 10)
+                                    .stroke(Color.white.opacity(0.3), lineWidth: 1)
+                            }
+                        )
+                }
+                .padding()
+                .background(
+                    Rectangle()
+                        .fill(
+                            LinearGradient(
+                                gradient: Gradient(colors: [
+                                    Theme.deepPurple.opacity(0), Theme.deepPurple,
+                                ]),
+                                startPoint: .top,
+                                endPoint: .bottom
+                            )
+                        )
+                        .frame(height: 80)
+                )
+            }
+            .background(Theme.deepPurple).cornerRadius(20)
+            .frame(
+                width: UIScreen.main.bounds.width * 0.9,
+                height: UIScreen.main.bounds.height * 0.7
+            )
+        }
+    }
+}
+
+struct FriendSelectorRow: View {
+    let friend: FirebaseManager.FlipUser
+    let isSelected: Bool
+    let onToggle: () -> Void
+    var body: some View {
+        Button(action: onToggle) {
+            HStack(spacing: 15) {
+                // Profile image
+                ProfilePictureWithStreak(
+                    imageURL: friend.profileImageURL,
+                    username: friend.username,
+                    size: 50,
+                    streakStatus: .none  // We're not showing streak here
+                )
+                // Username and focus stats
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(friend.username).font(.system(size: 16, weight: .bold))
+                        .foregroundColor(.white)
+                    Text("\(friend.totalSessions) sessions · \(friend.totalFocusTime) min")
+                        .font(.system(size: 12)).foregroundColor(.white.opacity(0.7))
+                }
+                Spacer()
+                // Checkbox
+                ZStack {
+                    RoundedRectangle(cornerRadius: 5)
+                        .stroke(
+                            isSelected ? Theme.lightTealBlue : Color.white.opacity(0.3),
+                            lineWidth: 2
+                        )
+                        .frame(width: 24, height: 24)
+                    if isSelected {
+                        RoundedRectangle(cornerRadius: 4).fill(Theme.lightTealBlue)
+                            .frame(width: 20, height: 20)
+                        Image(systemName: "checkmark").font(.system(size: 14, weight: .bold))
+                            .foregroundColor(.white)
+                    }
+                }
+            }
+            .padding(.vertical, 12).padding(.horizontal, 16)
         }
     }
 }

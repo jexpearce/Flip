@@ -7,19 +7,22 @@ struct EnhancedFriendCard: View {
     @State private var timer: Timer? = nil
     @StateObject private var sessionTimer = LiveSessionTimer()
     @State private var streakStatus: StreakStatus = .none
+    @State private var showBlockAlert = false
+    @StateObject private var friendManager = FriendManager()
 
     // LiveSessionData if the friend is in an active session
     let liveSession: LiveSessionManager.LiveSessionData?
 
     // Computed properties for live sessions
     private var isLive: Bool { return liveSession != nil }
-
     private var isFull: Bool { return liveSession?.isFull ?? false }
-
     private var canJoin: Bool {
         return false  // Disabled joining by setting canJoin to always return false
         // Original code: return liveSession?.canJoin ?? false
     }
+    
+    private let orangeAccent = Theme.orange
+    private let orangeGlow = Theme.orange.opacity(0.5)
 
     // Computed real-time elapsed time string
     private var formattedElapsedTime: String {
@@ -46,7 +49,7 @@ struct EnhancedFriendCard: View {
             HStack {
                 // LEFT SIDE: Profile picture with Live indicator if active
                 ZStack(alignment: .topTrailing) {
-                    // NEW: Profile picture with streak status
+                    // Profile picture with streak status
                     ProfilePictureWithStreak(
                         imageURL: friend.profileImageURL,
                         username: friend.username,
@@ -57,6 +60,13 @@ struct EnhancedFriendCard: View {
                         color: isLive ? Color.green.opacity(0.6) : Theme.lightTealBlue.opacity(0.4),
                         radius: 8
                     )
+                    .contextMenu {
+                        Button(action: {
+                            showBlockAlert = true
+                        }) {
+                            Label("Block User", systemImage: "exclamationmark.shield")
+                        }
+                    }
 
                     // Live indicator badge with animation
                     if isLive {
@@ -98,7 +108,7 @@ struct EnhancedFriendCard: View {
                         }
                     }
                     else if streakStatus != .none {
-                        // NEW: Show streak status when not live
+                        // Show streak status when not live
                         HStack(spacing: 6) {
                             Image(systemName: "flame.fill").font(.system(size: 14, weight: .bold))
                                 .foregroundColor(streakStatus == .redFlame ? .red : .orange)
@@ -271,11 +281,33 @@ struct EnhancedFriendCard: View {
         .shadow(color: getCardShadowColor(), radius: 4, x: 0, y: 2)
         .scaleEffect(isPressed ? 0.98 : 1.0)
         .animation(.spring(response: 0.3, dampingFraction: 0.6), value: isPressed)
+        .onLongPressGesture {
+            // Tactile feedback
+            let generator = UIImpactFeedbackGenerator(style: .medium)
+            generator.impactOccurred()
+            
+            // Show block alert
+            showBlockAlert = true
+        }
+        .alert("Block \(friend.username)", isPresented: $showBlockAlert) {
+            Button("Cancel", role: .cancel) { }
+            Button("Block", role: .destructive) {
+                friendManager.blockUser(userId: friend.id) { success in
+                    if success {
+                        // Optionally show a success message or handle UI updates
+                        let generator = UINotificationFeedbackGenerator()
+                        generator.notificationOccurred(.success)
+                    }
+                }
+            }
+        } message: {
+            Text("Are you sure you want to block \(friend.username)? This will remove them from your friends list and prevent them from interacting with you.")
+        }
         .onAppear {
             // Update the session timer with this card's session data
             if let session = liveSession { sessionTimer.updateSession(session: session) }
 
-            // NEW: Load streak status from Firestore
+            // Load streak status from Firestore
             loadStreakStatus()
         }
         .onDisappear { stopTimer() }
@@ -290,7 +322,7 @@ struct EnhancedFriendCard: View {
         }
     }
 
-    // NEW: Helper to load streak status for the friend
+    // Helper to load streak status for the friend
     private func loadStreakStatus() {
         FirebaseManager.shared.db.collection("users").document(friend.id).collection("streak")
             .document("current")
@@ -298,13 +330,12 @@ struct EnhancedFriendCard: View {
                 if let data = snapshot?.data(), let statusString = data["streakStatus"] as? String,
                     let status = StreakStatus(rawValue: statusString)
                 {
-
                     DispatchQueue.main.async { self.streakStatus = status }
                 }
             }
     }
 
-    // NEW: Helper to get dynamic card border gradient based on state
+    // Helper to get dynamic card border gradient based on state
     private func getCardBorderGradient() -> LinearGradient {
         if isLive && !isFull {
             // Live session border
@@ -320,7 +351,7 @@ struct EnhancedFriendCard: View {
         }
     }
 
-    // NEW: Helper to get dynamic card shadow color based on state
+    // Helper to get dynamic card shadow color based on state
     private func getCardShadowColor() -> Color {
         if isLive && !isFull {
             return Color.green.opacity(0.3)

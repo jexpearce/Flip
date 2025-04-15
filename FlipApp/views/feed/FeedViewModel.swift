@@ -161,7 +161,8 @@ class FeedViewModel: ObservableObject {
                                     friends: userData.friends,
                                     friendRequests: userData.friendRequests,
                                     sentRequests: userData.sentRequests,
-                                    profileImageURL: userData.profileImageURL
+                                    profileImageURL: userData.profileImageURL,
+                                    blockedUsers: userData.blockedUsers
                                 )
 
                                 DispatchQueue.main.async { self?.users[userId] = fixedUser }
@@ -178,7 +179,8 @@ class FeedViewModel: ObservableObject {
                                 longestSession: 0,
                                 friends: [],
                                 friendRequests: [],
-                                sentRequests: []
+                                sentRequests: [],
+                                blockedUsers: []
                             )
 
                             DispatchQueue.main.async { self?.users[userId] = fallbackUser }
@@ -427,7 +429,7 @@ class FeedViewModel: ObservableObject {
                             userId: userId,
                             username: username,
                             comment: comment,
-                            timestamp: timestamp.dateValue()
+                            timestamp: timestamp.dateValue(),
                         )
                     }
 

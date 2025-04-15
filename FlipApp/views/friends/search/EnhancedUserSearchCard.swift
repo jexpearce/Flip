@@ -3,7 +3,7 @@ import SwiftUI
 struct EnhancedUserSearchCard: View {
     let user: FirebaseManager.FlipUser
     let requestStatus: RequestStatus
-    let mutualCount: Int  // New parameter for mutual friends count
+    let mutualCount: Int
     let onSendRequest: () -> Void
     let onCancelRequest: () -> Void
     let onViewProfile: () -> Void
@@ -11,12 +11,13 @@ struct EnhancedUserSearchCard: View {
     @State private var isAddPressed = false
     @State private var isCancelPressed = false
     @State private var isCardPressed = false
+    @State private var showBlockAlert = false
+    @StateObject private var friendManager = FriendManager()
 
     private let orangeAccent = Theme.orange
     private let orangeGlow = Theme.orange.opacity(0.5)
     private let purpleAccent = Theme.purple
-    private let goldAccent = Theme.yellow  // Gold color for mutual friends
-
+    private let goldAccent = Theme.yellow
     var body: some View {
         Button(action: {
             // Only navigate to profile on card tap, not button taps
@@ -217,6 +218,20 @@ struct EnhancedUserSearchCard: View {
             .animation(.spring(response: 0.3, dampingFraction: 0.6), value: isCardPressed)
             .padding(.horizontal)
         }
-        .buttonStyle(PlainButtonStyle())
+        .buttonStyle(PlainButtonStyle()).onLongPressGesture { showBlockAlert = true }
+        .alert("Block User", isPresented: $showBlockAlert) {
+            Button("Cancel", role: .cancel) {}
+            Button("Block", role: .destructive) {
+                friendManager.blockUser(userId: user.id) { success in
+                    if success {
+                        // Optionally show a success message or handle UI updates
+                    }
+                }
+            }
+        } message: {
+            Text(
+                "Are you sure you want to block \(user.username)? This will remove them from your friends list and prevent them from interacting with you."
+            )
+        }
     }
 }
