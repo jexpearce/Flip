@@ -122,10 +122,6 @@ class MapPrivacyViewModel: ObservableObject {
         }
         return false
     }
-    func toggleShowSessionHistory() {
-        showSessionHistory.toggle()
-        saveSettings()
-    }
 
     func saveSettings() {
         guard let userId = Auth.auth().currentUser?.uid else { return }

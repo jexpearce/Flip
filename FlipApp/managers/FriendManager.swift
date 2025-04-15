@@ -161,25 +161,4 @@ class FriendManager: ObservableObject {
             }
         }
     }
-    func unblockUser(userId: String, completion: @escaping (Bool) -> Void) {
-        guard let currentUserId = Auth.auth().currentUser?.uid else {
-            completion(false)
-            return
-        }
-        let db = firebaseManager.db
-        db.collection("users").document(currentUserId)
-            .updateData(["blockedUsers": FieldValue.arrayRemove([userId])]) { error in
-                if let error = error {
-                    print("Error unblocking user: \(error.localizedDescription)")
-                    completion(false)
-                }
-                else {
-                    completion(true)
-                }
-            }
-    }
-    func isUserBlocked(userId: String) -> Bool {
-        guard let currentUser = firebaseManager.currentUser else { return false }
-        return currentUser.blockedUsers.contains(userId)
-    }
 }

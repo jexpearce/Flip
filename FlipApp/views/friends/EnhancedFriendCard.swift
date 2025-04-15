@@ -20,8 +20,6 @@ struct EnhancedFriendCard: View {
         return false  // Disabled joining by setting canJoin to always return false
         // Original code: return liveSession?.canJoin ?? false
     }
-    private let orangeAccent = Theme.orange
-    private let orangeGlow = Theme.orange.opacity(0.5)
 
     // Computed real-time elapsed time string
     private var formattedElapsedTime: String {
