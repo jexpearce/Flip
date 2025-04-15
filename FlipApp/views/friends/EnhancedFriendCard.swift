@@ -20,7 +20,6 @@ struct EnhancedFriendCard: View {
         return false  // Disabled joining by setting canJoin to always return false
         // Original code: return liveSession?.canJoin ?? false
     }
-    
     private let orangeAccent = Theme.orange
     private let orangeGlow = Theme.orange.opacity(0.5)
 
@@ -61,9 +60,7 @@ struct EnhancedFriendCard: View {
                         radius: 8
                     )
                     .contextMenu {
-                        Button(action: {
-                            showBlockAlert = true
-                        }) {
+                        Button(action: { showBlockAlert = true }) {
                             Label("Block User", systemImage: "exclamationmark.shield")
                         }
                     }
@@ -285,12 +282,11 @@ struct EnhancedFriendCard: View {
             // Tactile feedback
             let generator = UIImpactFeedbackGenerator(style: .medium)
             generator.impactOccurred()
-            
             // Show block alert
             showBlockAlert = true
         }
         .alert("Block \(friend.username)", isPresented: $showBlockAlert) {
-            Button("Cancel", role: .cancel) { }
+            Button("Cancel", role: .cancel) {}
             Button("Block", role: .destructive) {
                 friendManager.blockUser(userId: friend.id) { success in
                     if success {
@@ -301,7 +297,9 @@ struct EnhancedFriendCard: View {
                 }
             }
         } message: {
-            Text("Are you sure you want to block \(friend.username)? This will remove them from your friends list and prevent them from interacting with you.")
+            Text(
+                "Are you sure you want to block \(friend.username)? This will remove them from your friends list and prevent them from interacting with you."
+            )
         }
         .onAppear {
             // Update the session timer with this card's session data

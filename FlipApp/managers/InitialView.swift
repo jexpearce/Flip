@@ -619,8 +619,8 @@ struct EnhancedLocationPermissionAlert: View {
                             DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) { onContinue() }
                         }
                     }) {
-                        Text("Continue").font(.system(size: 16, weight: .bold)).foregroundColor(.white)
-                            .frame(width: 160, height: 48)
+                        Text("Continue").font(.system(size: 16, weight: .bold))
+                            .foregroundColor(.white).frame(width: 160, height: 48)
                             .background(
                                 ZStack {
                                     RoundedRectangle(cornerRadius: 12)

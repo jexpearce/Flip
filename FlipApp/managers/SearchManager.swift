@@ -108,8 +108,8 @@ class SearchManager: ObservableObject {
                         .filter { user in
                             // Filter out current user and blocked users
                             guard let currentUser = self.currentUserData else { return false }
-                            return user.id != Auth.auth().currentUser?.uid && 
-                                   !currentUser.blockedUsers.contains(user.id)
+                            return user.id != Auth.auth().currentUser?.uid
+                                && !currentUser.blockedUsers.contains(user.id)
                         }
                 }
 

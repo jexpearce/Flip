@@ -20,8 +20,11 @@ import SwiftUI
         // Initialize blockedUsers field for all existing users
         FirebaseManager.shared.updateExistingUsersWithBlockedUsers { error in
             if let error = error {
-                print("❌ Error updating existing users with blockedUsers field: \(error.localizedDescription)")
-            } else {
+                print(
+                    "❌ Error updating existing users with blockedUsers field: \(error.localizedDescription)"
+                )
+            }
+            else {
                 print("✅ Successfully checked/updated existing users for blockedUsers field")
             }
         }

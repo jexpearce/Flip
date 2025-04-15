@@ -122,8 +122,7 @@ struct SettingsView: View {
 
                                         Spacer()
 
-                                        Image(systemName: "chevron.right")
-                                            .font(.system(size: 14))
+                                        Image(systemName: "chevron.right").font(.system(size: 14))
                                             .foregroundColor(.white.opacity(0.5))
                                     }
                                     .padding()
@@ -323,9 +322,7 @@ struct SettingsView: View {
                     secondaryButton: .cancel()
                 )
             }
-            .sheet(isPresented: $showBlockedUsers) {
-                BlockedUsersView()
-            }
+            .sheet(isPresented: $showBlockedUsers) { BlockedUsersView() }
             .onAppear {
                 withAnimation(.spring(response: 0.6, dampingFraction: 0.7)) {
                     animateSettings = true
