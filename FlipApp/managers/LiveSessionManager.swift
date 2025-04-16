@@ -631,15 +631,49 @@ class LiveSessionManager: ObservableObject {
     func getSessionDetails(sessionId: String, completion: @escaping (LiveSessionData?) -> Void) {
         db.collection("live_sessions").document(sessionId)
             .getDocument { document, error in
+                if let error = error {
+                    print("Error fetching session details: \(error.localizedDescription)")
+                    completion(nil)
+                    return
+                }
+                
                 if let document = document, document.exists {
                     if let sessionData = self.parseLiveSessionDocument(document) {
+                        // Check if the session is valid (has actually started)
+                        let data = document.data() ?? [:]
+                        
+                        // Check for "isComplete" field that indicates session ended
+                        if let isComplete = data["isComplete"] as? Bool, isComplete {
+                            print("Session \(sessionId) is marked as complete, cannot join")
+                            completion(nil)
+                            return
+                        }
+                        
+                        // Calculate if session has naturally ended based on duration
+                        let sessionEndTime = sessionData.startTime.addingTimeInterval(
+                            TimeInterval(sessionData.targetDuration * 60)
+                        )
+                        let isSessionEnded = Date() > sessionEndTime
+                        
+                        // Check how old the last update is
+                        let isSessionStale = Date().timeIntervalSince(sessionData.lastUpdateTime) > 60 // Over 1 minute
+                        
+                        // Check if session ended or is stale
+                        if isSessionEnded || isSessionStale || sessionData.remainingSeconds <= 0 {
+                            print("Session \(sessionId) is no longer active: ended=\(isSessionEnded), stale=\(isSessionStale), remaining=\(sessionData.remainingSeconds)")
+                            completion(nil)
+                            return
+                        }
+                        
                         DispatchQueue.main.async { completion(sessionData) }
                     }
                     else {
+                        print("Failed to parse session data for \(sessionId)")
                         completion(nil)
                     }
                 }
                 else {
+                    print("Session document doesn't exist: \(sessionId)")
                     completion(nil)
                 }
             }
