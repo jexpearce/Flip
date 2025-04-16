@@ -17,8 +17,7 @@ struct EnhancedFriendCard: View {
     private var isLive: Bool { return liveSession != nil }
     private var isFull: Bool { return liveSession?.isFull ?? false }
     private var canJoin: Bool {
-        return false  // Disabled joining by setting canJoin to always return false
-        // Original code: return liveSession?.canJoin ?? false
+        return liveSession?.canJoin ?? false
     }
 
     // Computed real-time elapsed time string
@@ -164,12 +163,41 @@ struct EnhancedFriendCard: View {
                 if isLive {
                     // Show join button or full indicator
                     if canJoin {
-                        // We'll render this from the parent view - but this will be unreachable now
-                        Spacer().frame(width: 90, height: 36)
+                        Button(action: {
+                            // Show simple join confirmation alert
+                            let generator = UIImpactFeedbackGenerator(style: .medium)
+                            generator.impactOccurred()
+                            
+                            // Use the session ID and creator's name for confirmation
+                            if let session = liveSession {
+                                SessionJoinCoordinator.shared.pendingSessionId = session.id
+                                SessionJoinCoordinator.shared.pendingSessionName = session.starterUsername
+                                SessionJoinCoordinator.shared.pendingTimestamp = Date()
+                                SessionJoinCoordinator.shared.shouldJoinSession = true
+                                
+                                // Post notification to show confirmation dialog
+                                NotificationCenter.default.post(
+                                    name: Notification.Name("ShowLiveSessionJoinConfirmation"),
+                                    object: nil
+                                )
+                            }
+                        }) {
+                            Text("JOIN").font(.system(size: 14, weight: .bold)).tracking(1)
+                                .foregroundColor(.white).padding(.vertical, 8).padding(.horizontal, 16)
+                                .background(
+                                    ZStack {
+                                        RoundedRectangle(cornerRadius: 10).fill(Color.green.opacity(0.3))
+                                        
+                                        RoundedRectangle(cornerRadius: 10)
+                                            .stroke(Color.green.opacity(0.6), lineWidth: 1)
+                                    }
+                                )
+                        }
+                        .buttonStyle(PlainButtonStyle())
                     }
                     else {
-                        // Modified to always show disabled state instead of FULL
-                        Text("DISABLED").font(.system(size: 14, weight: .bold)).tracking(1)
+                        // Show FULL indicator when session can't be joined
+                        Text(isFull ? "FULL" : "UNAVAILABLE").font(.system(size: 14, weight: .bold)).tracking(1)
                             .foregroundColor(.gray).padding(.vertical, 8).padding(.horizontal, 16)
                             .background(
                                 ZStack {

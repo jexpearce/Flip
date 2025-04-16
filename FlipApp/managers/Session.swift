@@ -1,6 +1,7 @@
+import FirebaseFirestore
 import Foundation
 
-struct Session: Codable, Identifiable {
+struct Session: Identifiable, Codable {
     let id: UUID
     let userId: String
     let username: String
@@ -33,13 +34,45 @@ struct Session: Codable, Identifiable {
     }
 
     // Helper struct for participant data
-    struct Participant: Codable, Identifiable {
-        let id: String
-        let username: String
+    struct Participant: Codable {
+        let userId: String
         let joinTime: Date
-        let wasSuccessful: Bool
-        let actualDuration: Int
     }
     static func == (lhs: Session, rhs: Session) -> Bool { return lhs.id == rhs.id }
+}
 
+extension Session {
+    // Convenience computed property to check if this was a joined live session
+    var isJoinedLiveSession: Bool {
+        return wasJoinedSession == true && liveSessionId != nil
+    }
+    
+    // Convenience property to check if this was a host session with participants
+    var isHostedSession: Bool {
+        return participants != nil && participants!.count > 1 && originalStarterId == userId
+    }
+    
+    // Get the icon name for this session
+    var iconName: String {
+        if isJoinedLiveSession {
+            return "person.2.fill"
+        } else if isHostedSession {
+            return "person.2.fill"
+        } else if wasSuccessful {
+            return "checkmark.circle.fill"
+        } else {
+            return "xmark.circle.fill"
+        }
+    }
+    
+    // Get the color for the session icon
+    var iconColor: String {
+        if isJoinedLiveSession || isHostedSession {
+            return "green"
+        } else if wasSuccessful {
+            return "blue"
+        } else {
+            return "red"
+        }
+    }
 }

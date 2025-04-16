@@ -390,7 +390,6 @@ class LiveSessionManager: ObservableObject {
                     return
                 }
 
-                // Proceed with joining (rest of the existing code...)
                 // Update session with new participant
                 var updatedParticipants = sessionData.participants
                 if !updatedParticipants.contains(userId) { updatedParticipants.append(userId) }
@@ -417,17 +416,29 @@ class LiveSessionManager: ObservableObject {
                             // Listen for updates to this session
                             self.listenToJoinedSession(sessionId: sessionId)
 
-                            // Get a fresh copy of the session data
+                            // Get a fresh copy of the session data with most current state
                             self.getSessionDetails(sessionId: sessionId) { updatedData in
                                 if let data = updatedData {
                                     // Pass current data to completion handler
                                     DispatchQueue.main.async {
                                         self.isJoiningSession = false
+                                        
+                                        // Store this session as our current joined session
+                                        self.currentJoinedSession = data
+                                        
+                                        // Notify any observers about the join
+                                        self.objectWillChange.send()
+                                        NotificationCenter.default.post(name: Notification.Name("LiveSessionJoined"), object: nil)
+                                        
                                         completion(true, data.remainingSeconds, data.targetDuration)
                                     }
                                 }
                                 else {
+                                    // Fall back to original data if we can't get updated info
                                     self.isJoiningSession = false
+                                    self.currentJoinedSession = sessionData
+                                    self.objectWillChange.send()
+                                    
                                     completion(
                                         true,
                                         sessionData.remainingSeconds,
@@ -505,6 +516,8 @@ class LiveSessionManager: ObservableObject {
     }
 
     func listenToJoinedSession(sessionId: String) {
+        print("Setting up listener for session: \(sessionId)")
+        
         // Remove any existing listener
         if let existingListener = sessionListeners[sessionId] {
             existingListener.remove()
@@ -514,21 +527,41 @@ class LiveSessionManager: ObservableObject {
         // Create new listener
         let listener = db.collection("live_sessions").document(sessionId)
             .addSnapshotListener { [weak self] document, error in
-                guard let document = document, document.exists,
-                    let sessionData = self?.parseLiveSessionDocument(document)
-                else {
-                    DispatchQueue.main.async { self?.currentJoinedSession = nil }
+                guard let self = self else {
+                    print("Self reference lost in session listener")
+                    return
+                }
+                
+                if let error = error {
+                    print("Error listening to session \(sessionId): \(error.localizedDescription)")
+                    DispatchQueue.main.async { self.currentJoinedSession = nil }
+                    return
+                }
+                
+                guard let document = document, document.exists else {
+                    print("Session document no longer exists: \(sessionId)")
+                    DispatchQueue.main.async { 
+                        self.currentJoinedSession = nil
+                        self.objectWillChange.send()
+                    }
+                    return
+                }
+                
+                guard let sessionData = self.parseLiveSessionDocument(document) else {
+                    print("Failed to parse session document for \(sessionId)")
+                    DispatchQueue.main.async { self.currentJoinedSession = nil }
                     return
                 }
 
                 DispatchQueue.main.async {
-                    self?.currentJoinedSession = sessionData
-                    self?.objectWillChange.send()
+                    self.currentJoinedSession = sessionData
+                    self.objectWillChange.send()
                 }
             }
 
         // Store the listener
         sessionListeners[sessionId] = listener
+        print("Successfully set up listener for session: \(sessionId)")
     }
 
     func updateParticipantStatus(sessionId: String, userId: String, status: ParticipantStatus) {
@@ -544,6 +577,8 @@ class LiveSessionManager: ObservableObject {
         // Update participant status first
         let status: ParticipantStatus = wasSuccessful ? .completed : .failed
         updateParticipantStatus(sessionId: sessionId, userId: userId, status: status)
+        
+        print("Setting participant \(userId) status to \(status.rawValue) for session \(sessionId)")
 
         // Check if all participants have completed/failed
         db.collection("live_sessions").document(sessionId)
@@ -562,9 +597,25 @@ class LiveSessionManager: ObservableObject {
 
                 // If everyone is done, clean up the session
                 if allCompleted {
+                    print("All participants have finished session \(sessionId), scheduling cleanup")
+                    
                     // Session is complete, can be removed after a delay to allow UI views to finish
                     DispatchQueue.main.asyncAfter(deadline: .now() + 10) {
-                        self?.db.collection("live_sessions").document(sessionId).delete()
+                        print("Removing completed session \(sessionId) from Firestore")
+                        self?.db.collection("live_sessions").document(sessionId).delete { error in
+                            if let error = error {
+                                print("Error deleting completed session: \(error.localizedDescription)")
+                            } else {
+                                print("Successfully deleted completed session \(sessionId)")
+                            }
+                        }
+                    }
+                } else {
+                    print("Some participants still active in session \(sessionId)")
+                    // Log who is still active
+                    for participantId in sessionData.participants {
+                        let status = sessionData.participantStatus[participantId]?.rawValue ?? "unknown"
+                        print("Participant \(participantId): \(status)")
                     }
                 }
             }
