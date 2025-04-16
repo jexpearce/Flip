@@ -260,10 +260,10 @@ struct AvailableSessionsView: View {
                                 selectedSession = session
                             }
                         )
-                        .frame(width: 280)
+                        .frame(width: min(UIScreen.main.bounds.width * 0.8, 280))
                     }
                 }
-                .padding(.horizontal, 20)
+                .padding(.horizontal, 12)
                 .padding(.vertical, 6)
             }
         }
