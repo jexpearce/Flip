@@ -196,8 +196,69 @@ class AppManager: NSObject, ObservableObject {
                     // Make sure we're properly setting LiveSessionManager's currentJoinedSession
                     LiveSessionManager.shared.listenToJoinedSession(sessionId: sessionId)
 
-                    // Save state to ensure persistence across app restarts
-                    self.saveSessionState()
+                    // IMPORTANT: Increment building leaderboard if location is enabled
+                    if let building = RegionalViewModel.shared.selectedBuilding {
+                        print(
+                            "🏢 Incrementing leaderboard for joined session in building: \(building.name) [ID: \(building.id)]"
+                        )
+                        
+                        // Get the current user ID
+                        if let userId = Auth.auth().currentUser?.uid {
+                            // Create a location record for this session
+                            let sessionLocationData: [String: Any] = [
+                                "userId": userId,
+                                "buildingId": building.id,
+                                "buildingName": building.name,
+                                "buildingLatitude": building.coordinate.latitude,
+                                "buildingLongitude": building.coordinate.longitude,
+                                "sessionStartTime": FieldValue.serverTimestamp(),
+                                "sessionEndTime": FieldValue.serverTimestamp(),
+                                "isJoinedSession": true,
+                                "originalStarterId": session.starterId,
+                                "liveSessionId": sessionId,
+                                "location": GeoPoint(
+                                    latitude: building.coordinate.latitude,
+                                    longitude: building.coordinate.longitude
+                                ),
+                            ]
+                            
+                            // Add to session_locations collection for leaderboard
+                            FirebaseManager.shared.db.collection("session_locations")
+                                .document()
+                                .setData(sessionLocationData) { error in
+                                    if let error = error {
+                                        print("Error recording session location: \(error.localizedDescription)")
+                                    } else {
+                                        print("Successfully recorded session location for leaderboard")
+                                    }
+                                }
+                        }
+                    }
+
+                    // Ensure navigation happens if needed
+                    if self.currentState != .countdown {
+                        // If we're not already in countdown, make sure we get there
+                        self.currentState = .initial
+                        
+                        // Immediately trigger the countdown - don't wait for navigation
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                            // Save state to ensure persistence across app restarts
+                            self.saveSessionState()
+                            
+                            // Start the countdown
+                            self.countdownSeconds = 5
+                            self.currentState = .countdown  // Set state after other values
+                            self.startCountdown(fromRestoration: false)
+                        }
+                    } else {
+                        // Save state to ensure persistence across app restarts
+                        self.saveSessionState()
+                        
+                        // Start the countdown
+                        self.countdownSeconds = 5
+                        self.currentState = .countdown  // Set state after other values
+                        self.startCountdown(fromRestoration: false)
+                    }
                 }
             }
             else {
@@ -207,22 +268,33 @@ class AppManager: NSObject, ObservableObject {
                     self.allowPauses = false
                     self.maxPauses = 0
                     self.remainingPauses = 0
-
-                    // Save state to ensure persistence
-                    self.saveSessionState()
+                    
+                    // Force navigation to home and start countdown
+                    if self.currentState != .countdown {
+                        self.currentState = .initial
+                        
+                        // Immediately trigger the countdown - don't wait for navigation
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                            // Start the countdown
+                            self.countdownSeconds = 5
+                            self.currentState = .countdown
+                            self.startCountdown(fromRestoration: false)
+                            
+                            // Save state to ensure persistence
+                            self.saveSessionState()
+                        }
+                    } else {
+                        // Start the countdown
+                        self.countdownSeconds = 5
+                        self.currentState = .countdown
+                        self.startCountdown(fromRestoration: false)
+                        
+                        // Save state to ensure persistence
+                        self.saveSessionState()
+                    }
                 }
             }
         }
-
-        // Save state to ensure persistence
-        saveSessionState()
-
-        // Now that all values are set, start the countdown properly
-        countdownSeconds = 5
-        currentState = .countdown  // Set state after other values
-
-        // IMPORTANT: Actually start the countdown timer
-        startCountdown(fromRestoration: false)
     }
 
     private func startTrackingSession(isNewSession: Bool = true) {

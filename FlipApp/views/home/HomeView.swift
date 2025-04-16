@@ -48,12 +48,21 @@ struct HomeView: View {
                 )
             }
         }
-        // Add the join session confirmation alert - properly attached to the ZStack
+        // Add the join session confirmation alert
         .onReceive(NotificationCenter.default.publisher(for: Notification.Name("ShowLiveSessionJoinConfirmation"))) { _ in
             if let joinInfo = sessionJoinCoordinator.getJoinSession() {
-                joinSessionId = joinInfo.id
-                joinSessionName = joinInfo.name
-                showJoinConfirmation = true
+                // Check if we're trying to join our own session
+                if joinInfo.id.contains(Auth.auth().currentUser?.uid ?? "") {
+                    print("Preventing join of your own session")
+                    sessionJoinCoordinator.clearPendingSession()
+                    // Show an error message to the user
+                    let generator = UINotificationFeedbackGenerator()
+                    generator.notificationOccurred(.error)
+                } else {
+                    joinSessionId = joinInfo.id
+                    joinSessionName = joinInfo.name
+                    showJoinConfirmation = true
+                }
             }
         }
         .alert("Join Live Session", isPresented: $showJoinConfirmation) {
@@ -71,8 +80,9 @@ struct HomeView: View {
                     if success {
                         print("Successfully joined session: \(joinSessionId) with \(remainingSeconds) seconds remaining")
                         
-                        // Initialize session with the joined session's settings
+                        // Initialize session with the joined session's settings and start immediately
                         DispatchQueue.main.async {
+                            // Directly join and start the live session
                             appManager.joinLiveSession(
                                 sessionId: joinSessionId,
                                 remainingSeconds: remainingSeconds,
@@ -86,6 +96,10 @@ struct HomeView: View {
                         // Show error
                         print("Failed to join session: \(joinSessionId)")
                         sessionJoinCoordinator.clearPendingSession()
+                        
+                        // Haptic feedback for error
+                        let generator = UINotificationFeedbackGenerator()
+                        generator.notificationOccurred(.error)
                     }
                 }
             }

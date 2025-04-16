@@ -379,6 +379,14 @@ class LiveSessionManager: ObservableObject {
                     completion(false, 0, 0)
                     return
                 }
+                
+                // Prevent joining your own session
+                if sessionData.starterId == userId {
+                    print("Cannot join your own session - you are the starter")
+                    self.isJoiningSession = false
+                    completion(false, 0, 0)
+                    return
+                }
 
                 // Check if session can be joined
                 if !sessionData.canJoin {

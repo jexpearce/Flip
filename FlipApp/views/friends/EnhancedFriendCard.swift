@@ -168,6 +168,15 @@ struct EnhancedFriendCard: View {
                             let generator = UIImpactFeedbackGenerator(style: .medium)
                             generator.impactOccurred()
                             
+                            // Prevent joining your own session
+                            if let session = liveSession, 
+                               session.starterId == Auth.auth().currentUser?.uid {
+                                print("Cannot join your own session")
+                                let errorGenerator = UINotificationFeedbackGenerator()
+                                errorGenerator.notificationOccurred(.error)
+                                return
+                            }
+                            
                             // Use the session ID and creator's name for confirmation
                             if let session = liveSession {
                                 SessionJoinCoordinator.shared.pendingSessionId = session.id
