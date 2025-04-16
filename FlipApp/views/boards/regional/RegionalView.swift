@@ -24,6 +24,11 @@ struct RegionalView: View {
     @StateObject private var globalAllTimeViewModel = GlobalAllTimeLeaderboardViewModel()
     @StateObject private var leaderboardConsentManager = LeaderboardConsentManager.shared
     @State private var showLeaderboardConsent = false
+    
+    // New state variables for session joining functionality
+    @State private var showAvailableSessionsSheet = false
+    @State private var pulsingCircle = false
+    @State private var selectedSession: LiveSessionManager.LiveSessionData? = nil
 
     // Red glow effect for accents
     private let redGlow = Theme.darkRed.opacity(0.5)
@@ -91,8 +96,8 @@ struct RegionalView: View {
                                 // Check location permissions before allowing building selection
                                 locationPermissionManager.checkRegionalAvailability {
                                     hasPermission in
-                                    if hasPermission { 
-                                        viewModel.startBuildingIdentification() 
+                                    if hasPermission {
+                                        viewModel.startBuildingIdentification()
                                     } else {
                                         // If location is disabled, show alert and redirect to setup
                                         if locationPermissionManager.authorizationStatus == .denied {
@@ -105,8 +110,8 @@ struct RegionalView: View {
                                 // Check location permissions before refreshing
                                 locationPermissionManager.checkRegionalAvailability {
                                     hasPermission in
-                                    if hasPermission { 
-                                        viewModel.refreshCurrentBuilding() 
+                                    if hasPermission {
+                                        viewModel.refreshCurrentBuilding()
                                     } else {
                                         // If location is disabled, show alert and redirect to setup
                                         if locationPermissionManager.authorizationStatus == .denied {
@@ -148,52 +153,6 @@ struct RegionalView: View {
                                             },
                                             alignment: .topTrailing
                                         )
-                                    
-                                    // Building Live Sessions Section
-                                    if !viewModel.buildingLiveSessions.isEmpty {
-                                        VStack(alignment: .leading, spacing: 16) {
-                                            // Section header 
-                                            HStack {
-                                                Text("LIVE IN THIS BUILDING")
-                                                    .font(.system(size: 14, weight: .bold))
-                                                    .foregroundColor(.white)
-                                                    .padding(.horizontal)
-                                                
-                                                Spacer()
-                                                
-                                                // Pulse indicator for live
-                                                Circle()
-                                                    .fill(Color.green)
-                                                    .frame(width: 6, height: 6)
-                                                    .opacity(viewModel.buildingLiveSessions.isEmpty ? 0 : 1)
-                                                    .animation(
-                                                        Animation.easeInOut(duration: 0.8)
-                                                            .repeatForever(autoreverses: true),
-                                                        value: viewModel.buildingLiveSessions.isEmpty ? 0 : 1
-                                                    )
-                                                    .padding(.trailing)
-                                            }
-                                            
-                                            // Live session cards
-                                            ScrollView(.horizontal, showsIndicators: false) {
-                                                HStack(spacing: 12) {
-                                                    ForEach(viewModel.buildingLiveSessions) { session in
-                                                        // Use LiveSessionCard for all building sessions
-                                                        LiveSessionCard(session: session, isFriend: false)
-                                                            .frame(width: 320)
-                                                    }
-                                                }
-                                                .padding(.horizontal)
-                                            }
-                                        }
-                                        .padding(.vertical, 16)
-                                        .background(
-                                            RoundedRectangle(cornerRadius: 16)
-                                                .fill(Color.black.opacity(0.1))
-                                        )
-                                        .padding(.horizontal)
-                                        .padding(.top, 20)
-                                    }
                                 }
                                 .transition(
                                     .asymmetric(
@@ -262,6 +221,114 @@ struct RegionalView: View {
                         .padding(.horizontal).animation(.easeInOut, value: currentLeaderboard)
 
                         Spacer(minLength: 20)  // Add minimum spacing
+
+                        // Session Join Button - Fixed at bottom with a glowing effect
+                        if !viewModel.buildingLiveSessions.isEmpty {
+                            VStack {
+                                Button(action: {
+                                    withAnimation {
+                                        showAvailableSessionsSheet = true
+                                    }
+                                }) {
+                                    HStack(spacing: 12) {
+                                        // Pulsing circle with person icon
+                                        ZStack {
+                                            Circle()
+                                                .fill(Theme.lightTealBlue.opacity(0.3))
+                                                .frame(width: 42, height: 42)
+                                                .scaleEffect(pulsingCircle ? 1.1 : 1.0)
+                                                .animation(
+                                                    Animation.easeInOut(duration: 1.5)
+                                                        .repeatForever(autoreverses: true),
+                                                    value: pulsingCircle
+                                                )
+                                            
+                                            Circle()
+                                                .fill(Color.clear)
+                                                .frame(width: 42, height: 42)
+                                                .overlay(
+                                                    Circle()
+                                                        .stroke(Theme.lightTealBlue.opacity(0.6), lineWidth: 1.5)
+                                                )
+                                            
+                                            Image(systemName: "person.2.fill")
+                                                .font(.system(size: 18, weight: .semibold))
+                                                .foregroundColor(.white)
+                                        }
+                                        
+                                        VStack(alignment: .leading, spacing: 2) {
+                                            Text("JOIN LIVE SESSIONS")
+                                                .font(.system(size: 16, weight: .bold))
+                                                .tracking(1)
+                                                .foregroundColor(.white)
+                                            
+                                            Text("\(viewModel.buildingLiveSessions.count) available")
+                                                .font(.system(size: 12))
+                                                .foregroundColor(.white.opacity(0.7))
+                                        }
+                                        
+                                        Spacer()
+                                        
+                                        // Badge with count
+                                        Text("\(viewModel.buildingLiveSessions.count)")
+                                            .font(.system(size: 14, weight: .bold))
+                                            .foregroundColor(.white)
+                                            .padding(.horizontal, 10)
+                                            .padding(.vertical, 6)
+                                            .background(
+                                                Capsule()
+                                                    .fill(Theme.lightTealBlue.opacity(0.3))
+                                                    .overlay(
+                                                        Capsule()
+                                                            .stroke(Theme.lightTealBlue.opacity(0.5), lineWidth: 1)
+                                                    )
+                                            )
+                                    }
+                                    .padding(.vertical, 12)
+                                    .padding(.horizontal, 16)
+                                    .background(
+                                        ZStack {
+                                            RoundedRectangle(cornerRadius: 16)
+                                                .fill(
+                                                    LinearGradient(
+                                                        colors: [
+                                                            Theme.darkBlue.opacity(0.8),
+                                                            Theme.deepMidnightPurple.opacity(0.8)
+                                                        ],
+                                                        startPoint: .topLeading,
+                                                        endPoint: .bottomTrailing
+                                                    )
+                                                )
+                                            
+                                            RoundedRectangle(cornerRadius: 16)
+                                                .fill(Color.white.opacity(0.05))
+                                            
+                                            RoundedRectangle(cornerRadius: 16)
+                                                .stroke(
+                                                    LinearGradient(
+                                                        colors: [
+                                                            Theme.lightTealBlue.opacity(0.6),
+                                                            Theme.lightTealBlue.opacity(0.2)
+                                                        ],
+                                                        startPoint: .topLeading,
+                                                        endPoint: .bottomTrailing
+                                                    ),
+                                                    lineWidth: 1
+                                                )
+                                        }
+                                    )
+                                    .shadow(color: Theme.lightTealBlue.opacity(0.3), radius: 8)
+                                }
+                                .padding(.horizontal, 20)
+                                .padding(.bottom, 20)
+                                .onAppear {
+                                    // Start the pulsing animation when the button appears
+                                    withAnimation {
+                                        pulsingCircle = true
+                                    }
+                                }
+                            }
+                        }
 
                         // Map Button - Fixed at bottom with a glowing effect
                         Button(action: {
@@ -367,6 +434,20 @@ struct RegionalView: View {
                 )
             }  // Add privacy settings sheet
             .sheet(isPresented: $showPrivacySettings) { RegionalPrivacySheet() }
+            .sheet(isPresented: $showAvailableSessionsSheet) {
+                AvailableSessionsView(buildingSessions: viewModel.buildingLiveSessions)
+            }
+            .fullScreenCover(item: $selectedSession) { session in
+                JoinSessionPopup(
+                    sessionId: session.id,
+                    starterUsername: session.starterUsername,
+                    isPresented: Binding(
+                        get: { self.selectedSession != nil },
+                        set: { if !$0 { self.selectedSession = nil } }
+                    )
+                )
+                .environmentObject(AppManager.shared)
+            }
         }
         .fullScreenCover(isPresented: $showMap) { MapView().environmentObject(viewRouter) }
         .onAppear {
@@ -391,7 +472,7 @@ struct RegionalView: View {
             case .regionalAllTime: regionalAllTimeViewModel.loadRegionalAllTimeLeaderboard()
             case .globalWeekly: globalWeeklyViewModel.loadGlobalWeeklyLeaderboard()
             case .globalAllTime: globalAllTimeViewModel.loadGlobalAllTimeLeaderboard()
-            default: 
+            default:
                 // For building, mark it as the building leaderboard type
                 viewModel.setLeaderboardType(true)
                 break
