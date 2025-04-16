@@ -1284,20 +1284,14 @@ class AppManager: NSObject, ObservableObject {
                         let startTime = (data["startTime"] as? Timestamp)?.dateValue() ?? Date()
                         let joinTime = joinTimesData[participantId]?.dateValue() ?? startTime
 
-                        let wasParticipantSuccessful =
-                            participantStatusData[participantId]
-                            == LiveSessionManager.ParticipantStatus.completed.rawValue
-
-                        // Calculate participant's actual duration based on join time
-                        let elapsedSecondsAtJoin = self.selectedMinutes * 60 - (targetDuration * 60)
-                        let participantTimeInSession =
-                            wasParticipantSuccessful
-                            ? (targetDuration * 60 - elapsedSecondsAtJoin) / 60 : actualDuration
-
+                        // Get the participant status
+                        let participantStatus = participantStatusData[participantId] ?? LiveSessionManager.ParticipantStatus.active.rawValue
+                        
                         // Create Session.Participant with the expected fields
                         let participant = Session.Participant(
                             userId: participantId,
-                            joinTime: joinTime
+                            joinTime: joinTime,
+                            status: participantStatus
                         )
 
                         sessionParticipants.append(participant)

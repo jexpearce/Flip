@@ -37,6 +37,7 @@ struct Session: Identifiable, Codable {
     struct Participant: Codable {
         let userId: String
         let joinTime: Date
+        let status: String? // "completed", "failed", "active"
     }
     static func == (lhs: Session, rhs: Session) -> Bool { return lhs.id == rhs.id }
 }

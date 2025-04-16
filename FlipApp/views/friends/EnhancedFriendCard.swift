@@ -1,4 +1,5 @@
 import SwiftUI
+import FirebaseAuth
 
 struct EnhancedFriendCard: View {
     let friend: FirebaseManager.FlipUser

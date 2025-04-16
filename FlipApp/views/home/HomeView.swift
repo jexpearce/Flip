@@ -1,4 +1,5 @@
 import SwiftUI
+import FirebaseAuth
 
 struct HomeView: View {
     @EnvironmentObject var appManager: AppManager
