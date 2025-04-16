@@ -243,9 +243,9 @@ class FeedViewModel: ObservableObject {
             // Include participants from group sessions
             if let participants = session.participants {
                 for participant in participants {
-                    userIds.insert(participant.id)
+                    userIds.insert(participant.userId)
                     dispatchGroup.enter()
-                    loadUserStreakStatus(userId: participant.id) { _ in dispatchGroup.leave() }
+                    loadUserStreakStatus(userId: participant.userId) { _ in dispatchGroup.leave() }
                 }
             }
         }
@@ -566,9 +566,9 @@ class FeedViewModel: ObservableObject {
             // Also include participants from group sessions
             if let participants = session.participants {
                 let filteredParticipants = participants.filter { participant in
-                    participant.id != Auth.auth().currentUser?.uid
+                    participant.userId != Auth.auth().currentUser?.uid
                 }
-                for participant in filteredParticipants { userIds.insert(participant.id) }
+                for participant in filteredParticipants { userIds.insert(participant.userId) }
             }
         }
 

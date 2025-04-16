@@ -188,13 +188,12 @@ struct FeedSessionCard: View {
                     // Horizontal scrolling participant badges
                     ScrollView(.horizontal, showsIndicators: false) {
                         HStack(spacing: 8) {
-                            ForEach(session.participants!) { participant in
+                            ForEach(session.participants ?? [], id: \.userId) { participant in
                                 NavigationLink(
-                                    destination: UserProfileLoader(userId: participant.id)
+                                    destination: UserProfileLoader(userId: participant.userId)
                                 ) {
                                     GroupParticipantBadge(
-                                        username: participant.username,
-                                        wasSuccessful: participant.wasSuccessful
+                                        username: viewModel.users[participant.userId]?.username ?? "User"
                                     )
                                 }
                                 .buttonStyle(PlainButtonStyle())
@@ -511,19 +510,14 @@ struct FeedSessionCard: View {
 // Enhanced individual participant badge
 struct GroupParticipantBadge: View {
     let username: String
-    let wasSuccessful: Bool
-
+    
     var body: some View {
         HStack(spacing: 6) {
             // Status indicator with improved styling
-            Image(systemName: wasSuccessful ? "checkmark.circle.fill" : "xmark.circle.fill")
+            Image(systemName: "person.circle.fill")
                 .font(.system(size: 12, weight: .semibold))
-                .foregroundColor(wasSuccessful ? Theme.mutedGreen : Theme.mutedRed)
-                .shadow(
-                    color: wasSuccessful
-                        ? Theme.mutedGreen.opacity(0.6) : Theme.mutedRed.opacity(0.6),
-                    radius: 4
-                )
+                .foregroundColor(Theme.mutedGreen)
+                .shadow(color: Theme.mutedGreen.opacity(0.6), radius: 4)
 
             Text(username).font(.system(size: 12, weight: .medium)).foregroundColor(.white)
                 .lineLimit(1)

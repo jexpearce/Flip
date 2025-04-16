@@ -1222,12 +1222,10 @@ class AppManager: NSObject, ObservableObject {
                             wasParticipantSuccessful
                             ? (targetDuration * 60 - elapsedSecondsAtJoin) / 60 : actualDuration
 
+                        // Create Session.Participant with the expected fields
                         let participant = Session.Participant(
-                            id: participantId,
-                            username: usernames[participantId] ?? "User",
-                            joinTime: joinTime,
-                            wasSuccessful: wasParticipantSuccessful,
-                            actualDuration: participantTimeInSession
+                            userId: participantId,
+                            joinTime: joinTime
                         )
 
                         sessionParticipants.append(participant)
@@ -1370,7 +1368,7 @@ class AppManager: NSObject, ObservableObject {
             }
 
             // 3. Double-check after a short delay to make sure nothing persisted
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+            let workItem = DispatchWorkItem {
                 Task {
                     if Activity<FlipActivityAttributes>.activities.count > 0 {
                         print(
@@ -1396,6 +1394,7 @@ class AppManager: NSObject, ObservableObject {
                     }
                 }
             }
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5, execute: workItem)
         }
     }
 

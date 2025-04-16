@@ -47,52 +47,51 @@ struct HomeView: View {
                     streakCount: sessionManager.streakCount
                 )
             }
-
-            // Add the join session confirmation alert
-            .onReceive(NotificationCenter.default.publisher(for: Notification.Name("ShowLiveSessionJoinConfirmation"))) { _ in
-                if let joinInfo = sessionJoinCoordinator.getJoinSession() {
-                    joinSessionId = joinInfo.id
-                    joinSessionName = joinInfo.name
-                    showJoinConfirmation = true
-                }
+        }
+        // Add the join session confirmation alert - properly attached to the ZStack
+        .onReceive(NotificationCenter.default.publisher(for: Notification.Name("ShowLiveSessionJoinConfirmation"))) { _ in
+            if let joinInfo = sessionJoinCoordinator.getJoinSession() {
+                joinSessionId = joinInfo.id
+                joinSessionName = joinInfo.name
+                showJoinConfirmation = true
             }
-            .alert("Join Live Session", isPresented: $showJoinConfirmation) {
-                Button("Cancel", role: .cancel) {
-                    sessionJoinCoordinator.clearPendingSession()
-                }
+        }
+        .alert("Join Live Session", isPresented: $showJoinConfirmation) {
+            Button("Cancel", role: .cancel) {
+                sessionJoinCoordinator.clearPendingSession()
+            }
+            
+            Button("Join Session") {
+                isJoining = true
                 
-                Button("Join Session") {
-                    isJoining = true
+                // Directly join the live session without navigating to any other screen
+                LiveSessionManager.shared.joinSession(sessionId: joinSessionId) { success, remainingSeconds, targetDuration in
+                    isJoining = false
                     
-                    // Directly join the live session without navigating to any other screen
-                    LiveSessionManager.shared.joinSession(sessionId: joinSessionId) { success, remainingSeconds, targetDuration in
-                        isJoining = false
+                    if success {
+                        print("Successfully joined session: \(joinSessionId) with \(remainingSeconds) seconds remaining")
                         
-                        if success {
-                            print("Successfully joined session: \(joinSessionId) with \(remainingSeconds) seconds remaining")
+                        // Initialize session with the joined session's settings
+                        DispatchQueue.main.async {
+                            appManager.joinLiveSession(
+                                sessionId: joinSessionId,
+                                remainingSeconds: remainingSeconds,
+                                totalDuration: targetDuration
+                            )
                             
-                            // Initialize session with the joined session's settings
-                            DispatchQueue.main.async {
-                                appManager.joinLiveSession(
-                                    sessionId: joinSessionId,
-                                    remainingSeconds: remainingSeconds,
-                                    totalDuration: targetDuration
-                                )
-                                
-                                // Clear the pending session after successful join
-                                sessionJoinCoordinator.clearPendingSession()
-                            }
-                        } else {
-                            // Show error
-                            print("Failed to join session: \(joinSessionId)")
+                            // Clear the pending session after successful join
                             sessionJoinCoordinator.clearPendingSession()
                         }
+                    } else {
+                        // Show error
+                        print("Failed to join session: \(joinSessionId)")
+                        sessionJoinCoordinator.clearPendingSession()
                     }
                 }
-                .disabled(isJoining)
-            } message: {
-                Text("Do you want to join \(joinSessionName)'s focus session?")
             }
+            .disabled(isJoining)
+        } message: {
+            Text("Do you want to join \(joinSessionName)'s focus session?")
         }
         .onAppear {
             // Check if there's a pending session join request
