@@ -12,7 +12,6 @@ struct SetupView: View {
     @State private var viewRouter = ViewRouter()
     @State private var showLocationSelector = false
     @State private var showRules = false
-    @State private var showLocationUpgradeAlert = false
 
     // Check if we're navigating back from a joined session view
     @State private var joinLiveSessionMode = false
@@ -350,20 +349,6 @@ struct SetupView: View {
                     onContinue: { permissionManager.requestNotificationPermission() }
                 )
             }
-            if showLocationUpgradeAlert {
-                LocationUpgradeAlert(isPresented: $showLocationUpgradeAlert)
-                    .onDisappear {
-                        // Mark as shown when dismissed
-                        permissionManager.hasShownLocationUpgradeAlert = true
-                    }
-            }
-            if showLocationUpgradeAlert {
-                LocationUpgradeAlert(isPresented: $showLocationUpgradeAlert)
-                    .onDisappear {
-                        // Mark as shown when dismissed
-                        permissionManager.hasShownLocationUpgradeAlert = true
-                    }
-            }
 
             // Motion Settings Alert - appears after motion permission is denied
             if permissionManager.showMotionSettingsAlert {
@@ -387,11 +372,6 @@ struct SetupView: View {
             }
             // Refresh permission status first to catch any changes made in Settings
             permissionManager.refreshPermissionStatus()
-            if permissionManager.locationAuthStatus == .denied
-                && !permissionManager.hasShownLocationUpgradeAlert
-            {
-                showLocationUpgradeAlert = true
-            }
 
             // Initialize selected pause duration from AppManager
             if appManager.pauseDuration > 0 {

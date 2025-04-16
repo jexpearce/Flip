@@ -215,17 +215,20 @@ class PermissionManager: NSObject, ObservableObject {
 
         isProcessingLocationPermission = true
 
-        // Show our custom alert first
-        print("Showing custom location alert")
-        showLocationAlert = true
-        print("Showing enhanced location alert")
-        NotificationCenter.default.post(
-            name: NSNotification.Name("ShowEnhancedLocationAlert"),
-            object: nil
-        )
-
-        // The system prompt will be triggered when the user taps Continue in the custom alert
-        // See requestLocationPermission() method
+        // Only show custom alert if status is notDetermined
+        if locationAuthStatus == .notDetermined {
+            // Show our custom alert first
+            print("Showing custom location alert")
+            showLocationAlert = true
+            print("Showing enhanced location alert")
+            NotificationCenter.default.post(
+                name: NSNotification.Name("ShowEnhancedLocationAlert"),
+                object: nil
+            )
+        } else {
+            // If denied, just proceed to motion flow
+            startMotionFlow()
+        }
     }
     func requestAllPermissions() {
         print("Starting permission flow sequence")
@@ -242,17 +245,19 @@ class PermissionManager: NSObject, ObservableObject {
     // Step 1b: Called when user taps Continue on location alert
     func requestLocationPermission() {
         print("User tapped Continue on location alert")
-        // Add a delay to make sure the custom alert is fully dismissed
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) { [weak self] in
-            guard let self = self else { return }
+        // Only request if status is notDetermined
+        if locationAuthStatus == .notDetermined {
+            // Add a delay to make sure the custom alert is fully dismissed
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) { [weak self] in
+                guard let self = self else { return }
 
-            print("Requesting system location permission after delay")
-            // Request the actual system permission
-            // The delegate will handle the next step after user responds
-            self.locationManager.requestWhenInUseAuthorization()
-
-            // The locationManagerDidChangeAuthorization delegate method will be called
-            // when the user responds to the system prompt, which will then call startMotionFlow()
+                print("Requesting system location permission after delay")
+                // Request the actual system permission
+                self.locationManager.requestWhenInUseAuthorization()
+            }
+        } else {
+            // If not notDetermined, proceed to motion flow
+            startMotionFlow()
         }
     }
 

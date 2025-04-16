@@ -27,5 +27,11 @@ class ViewRouter: ObservableObject {
         // Switch to regional tab (index 1)
         selectedTab = 1
     }
+    
+    // Add method to navigate to home
+    func navigateToHome() {
+        selectedTab = 2
+    }
+    
     deinit { NotificationCenter.default.removeObserver(self) }
 }

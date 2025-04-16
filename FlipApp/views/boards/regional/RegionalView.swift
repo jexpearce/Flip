@@ -91,14 +91,28 @@ struct RegionalView: View {
                                 // Check location permissions before allowing building selection
                                 locationPermissionManager.checkRegionalAvailability {
                                     hasPermission in
-                                    if hasPermission { viewModel.startBuildingIdentification() }
+                                    if hasPermission { 
+                                        viewModel.startBuildingIdentification() 
+                                    } else {
+                                        // If location is disabled, show alert and redirect to setup
+                                        if locationPermissionManager.authorizationStatus == .denied {
+                                            viewRouter.navigateToHome()
+                                        }
+                                    }
                                 }
                             },
                             refreshAction: {
                                 // Check location permissions before refreshing
                                 locationPermissionManager.checkRegionalAvailability {
                                     hasPermission in
-                                    if hasPermission { viewModel.refreshCurrentBuilding() }
+                                    if hasPermission { 
+                                        viewModel.refreshCurrentBuilding() 
+                                    } else {
+                                        // If location is disabled, show alert and redirect to setup
+                                        if locationPermissionManager.authorizationStatus == .denied {
+                                            viewRouter.navigateToHome()
+                                        }
+                                    }
                                 }
                             },
                             isRefreshing: $viewModel.isRefreshing
@@ -205,7 +219,16 @@ struct RegionalView: View {
                         // Map Button - Fixed at bottom with a glowing effect
                         Button(action: {
                             // Check for map consent and location permissions
-                            showMapView()
+                            locationPermissionManager.checkRegionalAvailability { hasPermission in
+                                if hasPermission {
+                                    showMapView()
+                                } else {
+                                    // If location is disabled, show alert and redirect to setup
+                                    if locationPermissionManager.authorizationStatus == .denied {
+                                        viewRouter.navigateToHome()
+                                    }
+                                }
+                            }
                         }) {
                             ZStack {
                                 // Button background
@@ -276,6 +299,15 @@ struct RegionalView: View {
                         }
                         .padding(.horizontal, 20).padding(.bottom, 30)  // Add animation to ensure smooth transition when leaderboard content changes
                         .animation(.easeInOut, value: currentLeaderboard)
+
+                        // Add alert for when location is disabled
+                        .alert("Location Access Required", isPresented: $locationPermissionManager.showLocationDisabledAlert) {
+                            Button("OK") {
+                                viewRouter.navigateToHome()
+                            }
+                        } message: {
+                            Text("Location access is required for this feature. Please enable location access in your device settings.")
+                        }
                     }
                     .padding(.bottom, 20)  // Add padding to ensure content is not cut off
                 }
@@ -314,19 +346,6 @@ struct RegionalView: View {
             case .globalAllTime: globalAllTimeViewModel.loadGlobalAllTimeLeaderboard()
             default: break
             }
-        }
-        // Show "Open Settings" alert when location permission is denied
-        .alert(isPresented: $locationPermissionManager.showSettingsAlert) {
-            Alert(
-                title: Text("Location Permission Required"),
-                message: Text(
-                    "Regional features need location access. Please go to Settings and enable location for Flip."
-                ),
-                primaryButton: .default(Text("Open Settings")) {
-                    LocationPermissionManager.shared.openSettings()
-                },
-                secondaryButton: .cancel()
-            )
         }
         .background(Theme.regionalGradient.edgesIgnoringSafeArea(.all))  // Load appropriate leaderboard data when switching tabs
         .overlay(
@@ -390,11 +409,14 @@ struct RegionalView: View {
         DispatchQueue.global(qos: .userInitiated)
             .async {
                 let status = CLLocationManager().authorizationStatus
-
-                // If we need to show UI, dispatch back to the main thread
-                if status == .denied || status == .restricted || status == .notDetermined {
+                
+                // Instead of showing another custom alert, just let the system
+                // handle it if needed, or do nothing and let InitialView handle it
+                if status == .notDetermined {
+                    // Option 1: Do nothing (let InitialView handle it)
+                    // Option 2: Just request system permission without custom UI
                     DispatchQueue.main.async {
-                        self.locationPermissionManager.requestPermissionWithCustomAlert()
+                        self.locationPermissionManager.requestSystemPermission()
                     }
                 }
             }

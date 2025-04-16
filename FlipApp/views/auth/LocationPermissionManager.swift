@@ -11,6 +11,7 @@ class LocationPermissionManager: NSObject, ObservableObject, CLLocationManagerDe
 
     // Track if we've already shown the alert to avoid repeated prompts
     private var hasShownCustomAlert = false
+    @Published var showLocationDisabledAlert = false
 
     override init() {
         super.init()

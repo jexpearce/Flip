@@ -68,6 +68,24 @@ struct MapView: View {
             }
             .mapStyle(mapStyle == .standard ? .standard : .hybrid).preferredColorScheme(.dark)  // Force dark mode for map
             .edgesIgnoringSafeArea(.all)
+            .onAppear {
+                // Check location permissions when view appears
+                locationPermissionManager.checkRegionalAvailability { hasPermission in
+                    if !hasPermission {
+                        // If location is disabled, dismiss the view
+                        presentationMode.wrappedValue.dismiss()
+                    }
+                }
+            }
+
+            // Add alert for when location is disabled
+            .alert("Location Access Required", isPresented: $locationPermissionManager.showLocationDisabledAlert) {
+                Button("OK") {
+                    presentationMode.wrappedValue.dismiss()
+                }
+            } message: {
+                Text("Location access is required for this feature. Please enable location access in your device settings.")
+            }
 
             // Back button overlay
             VStack {
@@ -305,13 +323,13 @@ struct MapView: View {
             }
 
             // Location permission alert overlay
-            if locationPermissionManager.showCustomAlert {
-                LocationPermissionAlert(
-                    isPresented: $locationPermissionManager.showCustomAlert,
-                    onContinue: { locationPermissionManager.requestSystemPermission() }
-                )
-                .zIndex(10)  // Ensure it's above other content
-            }
+//            if locationPermissionManager.showCustomAlert {
+//                LocationPermissionAlert(
+//                    isPresented: $locationPermissionManager.showCustomAlert,
+//                    onContinue: { locationPermissionManager.requestSystemPermission() }
+//                )
+//                .zIndex(10)  // Ensure it's above other content
+//            }
         }  // Move .sheet modifier outside of ZStack
         .sheet(isPresented: $showPrivacySettings) { MapPrivacySettingsView() }
         .onAppear {
