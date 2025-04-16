@@ -221,7 +221,10 @@ class AuthManager: NSObject, ObservableObject {
         UserSettingsManager.shared.onUserSignOut()
         // Add this line to reset the sign up success state
         self.signUpSuccess = false
-
+        
+        // Ensure we don't show permissions flow on logout by explicitly setting these flags
+        UserDefaults.standard.set(false, forKey: "isPotentialFirstTimeUser")
+        
         do {
             try Auth.auth().signOut()
             DispatchQueue.main.async { self.updateAuthState() }

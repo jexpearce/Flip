@@ -1511,6 +1511,9 @@ class AppManager: NSObject, ObservableObject {
         defaults.set(remainingPauses, forKey: "remainingPauses")
         defaults.set(isFaceDown, forKey: "isFaceDown")
         defaults.set(pauseDuration, forKey: "pauseDuration")
+        
+        // Save timestamp for session validity check
+        defaults.set(Date().timeIntervalSince1970, forKey: "lastSessionTimestamp")
 
         let isFirstLaunch = !defaults.bool(forKey: "hasLaunchedBefore")
         if isFirstLaunch {
@@ -1584,6 +1587,20 @@ class AppManager: NSObject, ObservableObject {
 
     private func restoreSessionState() {
         let defaults = UserDefaults.standard
+        
+        // Get the last time the session state was saved
+        let lastSessionTimestamp = defaults.double(forKey: "lastSessionTimestamp")
+        let currentTime = Date().timeIntervalSince1970
+        
+        // If the last session was more than 10 minutes ago, or there's no timestamp,
+        // consider it invalid and don't restore it
+        let sessionTimeout: TimeInterval = 10 * 60 // 10 minutes
+        if lastSessionTimestamp == 0 || (currentTime - lastSessionTimestamp > sessionTimeout) {
+            print("⚠️ Stale session detected - clearing state rather than restoring")
+            clearSessionState()
+            return
+        }
+        
         currentState =
             FlipState(rawValue: defaults.string(forKey: "currentState") ?? "") ?? .initial
 
@@ -1614,6 +1631,19 @@ class AppManager: NSObject, ObservableObject {
             currentState = .initial
             return
         }
+        
+        // Additional validity check: if the session is in tracking or countdown state
+        // but we've restarted the app, it's likely invalid
+        let isAppRelaunch = defaults.bool(forKey: "isAppRelaunch")
+        if (currentState == .tracking || currentState == .countdown) && isAppRelaunch {
+            print("⚠️ Invalid session state detected after app relaunch - clearing state")
+            clearSessionState()
+            currentState = .initial
+            return
+        }
+        
+        // Mark that the app has been launched, will be used on next launch
+        defaults.set(true, forKey: "isAppRelaunch")
 
         // Restore other state variables
         remainingSeconds = defaults.integer(forKey: "remainingSeconds")

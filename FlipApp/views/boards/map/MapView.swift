@@ -51,6 +51,14 @@ struct MapView: View {
     @StateObject private var locationPermissionManager = LocationPermissionManager.shared
     @StateObject private var mapConsentManager = MapConsentManager.shared
     @Environment(\.presentationMode) var presentationMode
+    @StateObject private var permissionManager = PermissionManager.shared
+    @State private var showLocationSettingsAlert = false
+    
+    // Helper to check if location permission is granted
+    private var hasLocationPermission: Bool {
+        permissionManager.locationAuthStatus == .authorizedWhenInUse || 
+        permissionManager.locationAuthStatus == .authorizedAlways
+    }
 
     var body: some View {
         ZStack {
@@ -66,25 +74,27 @@ struct MapView: View {
                         .onTapGesture { withAnimation(.spring()) { selectedFriend = friend } }
                 }
             }
-            .mapStyle(mapStyle == .standard ? .standard : .hybrid).preferredColorScheme(.dark)  // Force dark mode for map
+            .mapStyle(mapStyle == .standard ? .standard : .hybrid)
+            .preferredColorScheme(.dark)  // Force dark mode for map
             .edgesIgnoringSafeArea(.all)
             .onAppear {
                 // Check location permissions when view appears
-                locationPermissionManager.checkRegionalAvailability { hasPermission in
-                    if !hasPermission {
-                        // If location is disabled, dismiss the view
-                        presentationMode.wrappedValue.dismiss()
+                if !hasLocationPermission {
+                    // If location is disabled, dismiss the view
+                    presentationMode.wrappedValue.dismiss()
+                } else {
+                    // Only start tracking and refresh if we have permission
+                    viewModel.startLocationTracking()
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) { 
+                        viewModel.refreshLocations() 
                     }
                 }
             }
-
-            // Add alert for when location is disabled
-            .alert("Location Access Required", isPresented: $locationPermissionManager.showLocationDisabledAlert) {
-                Button("OK") {
+            .onReceive(NotificationCenter.default.publisher(for: Notification.Name("locationPermissionChanged"))) { _ in
+                // If location permission is revoked, dismiss the view
+                if !hasLocationPermission {
                     presentationMode.wrappedValue.dismiss()
                 }
-            } message: {
-                Text("Location access is required for this feature. Please enable location access in your device settings.")
             }
 
             // Back button overlay
@@ -323,23 +333,27 @@ struct MapView: View {
             }
 
             // Location permission alert overlay
-//            if locationPermissionManager.showCustomAlert {
-//                LocationPermissionAlert(
-//                    isPresented: $locationPermissionManager.showCustomAlert,
-//                    onContinue: { locationPermissionManager.requestSystemPermission() }
-//                )
-//                .zIndex(10)  // Ensure it's above other content
-//            }
+            if locationPermissionManager.showCustomAlert {
+                LocationPermissionAlert(
+                    isPresented: $locationPermissionManager.showCustomAlert,
+                    onContinue: { locationPermissionManager.requestSystemPermission() }
+                )
+                .zIndex(10)  // Ensure it's above other content
+            }
         }  // Move .sheet modifier outside of ZStack
         .sheet(isPresented: $showPrivacySettings) { MapPrivacySettingsView() }
-        .onAppear {
-            // Start tracking and refresh locations since consent is already handled
-            viewModel.startLocationTracking()
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) { viewModel.refreshLocations() }
-        }
-        .onDisappear {
-            viewModel.stopLocationTracking()
-            Task { @MainActor in LocationHandler.shared.completelyStopLocationUpdates() }
+        .alert("Location Access Required", isPresented: $showLocationSettingsAlert) {
+            Button("Open Settings") {
+                if let url = URL(string: UIApplication.openSettingsURLString) {
+                    UIApplication.shared.open(url)
+                    presentationMode.wrappedValue.dismiss()
+                }
+            }
+            Button("Go Back", role: .cancel) { 
+                presentationMode.wrappedValue.dismiss()
+            }
+        } message: {
+            Text("Location access is required to show and update your position on the map.")
         }
     }
 }

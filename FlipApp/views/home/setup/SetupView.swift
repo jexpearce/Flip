@@ -12,6 +12,7 @@ struct SetupView: View {
     @State private var viewRouter = ViewRouter()
     @State private var showLocationSelector = false
     @State private var showRules = false
+    @State private var showLocationSettingsAlert = false
 
     // Check if we're navigating back from a joined session view
     @State private var joinLiveSessionMode = false
@@ -28,20 +29,72 @@ struct SetupView: View {
                 VStack(spacing: 8) {
                     HStack {
                         // Location Button
-                        Button(action: {
-                            // Toggle the popup instead of just showing it
-                            showLocationSelector.toggle()
-                        }) {
+                        let locationButtonAction = {
+                            // Check location permission before showing the popup
+                            if permissionManager.locationAuthStatus == .authorizedWhenInUse || 
+                               permissionManager.locationAuthStatus == .authorizedAlways {
+                                // If this is the first tap and we don't have a building selected yet,
+                                // automatically find and select the nearest building
+                                if regionalViewModel.shouldPulseBuildingButton && regionalViewModel.selectedBuilding == nil {
+                                    regionalViewModel.selectNearestBuilding()
+                                } else {
+                                    // Otherwise toggle the popup
+                                    showLocationSelector.toggle()
+                                }
+                            } else {
+                                // Show location permission settings alert if denied
+                                showLocationSettingsAlert = true
+                            }
+                        }
+
+                        let hasLocationPermission = permissionManager.locationAuthStatus == .authorizedWhenInUse || 
+                                                   permissionManager.locationAuthStatus == .authorizedAlways
+                        let shouldPulseBuilding = regionalViewModel.shouldPulseBuildingButton
+
+                        Button(action: locationButtonAction) {
                             ZStack {
-                                Circle().fill(Theme.buttonGradient).frame(width: 35, height: 35)
-                                    .overlay(Circle().stroke(Theme.silveryGradient, lineWidth: 1))
-                                    .shadow(color: Theme.purpleShadow.opacity(0.3), radius: 4)
+                                // Conditionally render appropriate styling based on permission
+                                if hasLocationPermission {
+                                    Circle()
+                                        .fill(Theme.vibrantPurple)
+                                        .frame(width: 35, height: 35)
+                                        .overlay(
+                                            Circle()
+                                                .stroke(Color.white.opacity(0.6), lineWidth: 1)
+                                        )
+                                        .shadow(color: Theme.purpleShadow.opacity(0.3), radius: 4)
+                                        .overlay(
+                                            Circle()
+                                                .stroke(Theme.purpleShadow, lineWidth: 2)
+                                                .scaleEffect(shouldPulseBuilding ? 1.3 : 1.0)
+                                                .opacity(shouldPulseBuilding ? 0.6 : 0)
+                                                .animation(
+                                                    shouldPulseBuilding 
+                                                        ? Animation.easeInOut(duration: 1.2).repeatForever(autoreverses: true)
+                                                        : .default,
+                                                    value: shouldPulseBuilding
+                                                )
+                                        )
+                                } else {
+                                    Circle()
+                                        .fill(Color.gray.opacity(0.3))
+                                        .frame(width: 35, height: 35)
+                                        .overlay(
+                                            Circle()
+                                                .stroke(Color.gray.opacity(0.2), lineWidth: 1)
+                                        )
+                                }
 
                                 Image(systemName: "building.2")
-                                    .font(.system(size: 16, weight: .bold)).foregroundColor(.white)
+                                    .font(.system(size: 16, weight: .bold))
+                                    .foregroundColor(hasLocationPermission ? .white : .white.opacity(0.5))
                             }
                         }
                         .padding(.top, 5)
+                        // Listen for changes in location permission
+                        .onReceive(NotificationCenter.default.publisher(for: Notification.Name("locationPermissionChanged"))) { _ in
+                            handleLocationPermissionChange()
+                        }
 
                         Spacer()
 
@@ -90,113 +143,32 @@ struct SetupView: View {
                     .padding(.top, -5)
 
                     // Circular Time Picker
-                    CircularTime(selectedMinutes: $appManager.selectedMinutes).padding(.top, -15)  // Increase negative padding from -15 to -20
-                        .disabled(joinLiveSessionMode).opacity(joinLiveSessionMode ? 0.7 : 1)
-                        .frame(height: 280)  // Reduce from 290 to 280
+                    CircularTimeView(
+                        selectedMinutes: $appManager.selectedMinutes,
+                        isDisabled: joinLiveSessionMode,
+                        opacity: joinLiveSessionMode ? 0.7 : 1
+                    )
 
                     // Controls Section - Redesigned with horizontal layout
-                    VStack(spacing: 12) {  // Reduced spacing
-                        // Row 1: Allow Pause and # of Pauses in horizontal layout
-                        HStack(spacing: 12) {
-                            // 1. Allow Pause Toggle - Reduced width
-                            ControlButton(title: "ALLOW PAUSE") {
-                                Toggle("", isOn: $appManager.allowPauses)
-                                    .toggleStyle(ModernToggleStyle())
-                                    .disabled(joinLiveSessionMode)  // Disable in join mode
-                                    .onChange(of: appManager.allowPauses) {
-                                        if !appManager.allowPauses {
-                                            // Only show the warning if it hasn't been shown before
-                                            if !hasShownPauseWarning {
-                                                showPauseDisabledWarning = true
-                                                hasShownPauseWarning = true
-                                            }
-                                            appManager.maxPauses = 0
-                                            isInfinitePauses = false
-                                        }
-                                        else {
-                                            appManager.maxPauses = 3  // Default number of pauses
-                                        }
-                                    }
-                            }
-                            .frame(width: UIScreen.main.bounds.width * 0.43)
-
-                            // 2. Number of Pauses with Infinite option incorporated into the picker
-                            ControlButton(
-                                title: "# OF PAUSES",
-                                isDisabled: !appManager.allowPauses || joinLiveSessionMode
-                            ) {
-                                NumberPickerWithInfinity(
-                                    range: 1...5,
-                                    selection: $appManager.maxPauses,
-                                    isInfinite: $isInfinitePauses,
-                                    isDisabled: !appManager.allowPauses || joinLiveSessionMode
-                                )
-                                .onChange(of: isInfinitePauses) {
-                                    if isInfinitePauses {
-                                        // Set to a high number when infinite is selected
-                                        appManager.maxPauses = 999
-                                    }
-                                    else {
-                                        // Revert to default when turning off infinite
-                                        appManager.maxPauses = 3
-                                    }
-                                }
-                            }
-                            .frame(width: UIScreen.main.bounds.width * 0.43)
-                        }
-
-                        // 3. Pause Duration Selector
-                        ControlButton(
-                            title: "PAUSE DURATION",
-                            isDisabled: !appManager.allowPauses || joinLiveSessionMode,
-                            reducedHeight: true
-                        ) {
-                            ModernPickerStyle(
-                                options: pauseDurationLabels,
-                                selection: $selectedPauseDurationIndex,
-                                isDisabled: !appManager.allowPauses || joinLiveSessionMode
-                            )
-                            .onChange(of: selectedPauseDurationIndex) {
-                                appManager.pauseDuration =
-                                    pauseDurations[selectedPauseDurationIndex]
-                            }
-                        }
-                    }
-                    .padding(.horizontal, 20).padding(.top, 0)  // Reduced padding
-
-                    // Begin Button
-                    // Replace the inline BeginButton action with this handler:
-                    BeginButton(
-                        action: {
-                            // Check if we have proper permissions
-                            if permissionManager.motionPermissionGranted {
-                                // Check if we're in joining mode
-                                if !joinLiveSessionMode {
-                                    // Set the appropriate flag in AppManager based on permission status
-                                    appManager.usingLimitedLocationPermission =
-                                        permissionManager.hasLimitedLocationPermission
-                                        && !permissionManager.hasFullLocationPermission
-
-                                    // Start the countdown regardless of location permission type
-                                    appManager.startCountdown()
-                                }
-                            }
-                            else {
-                                // Show permission alert if motion permission is missing
-                                permissionManager.showPermissionRequiredAlert = true
-                            }
-                        },
-                        joinMode: joinLiveSessionMode
+                    ControlsSection(
+                        appManager: appManager,
+                        joinLiveSessionMode: joinLiveSessionMode,
+                        isInfinitePauses: $isInfinitePauses,
+                        selectedPauseDurationIndex: $selectedPauseDurationIndex,
+                        pauseDurations: pauseDurations,
+                        pauseDurationLabels: pauseDurationLabels,
+                        showPauseDisabledWarning: $showPauseDisabledWarning,
+                        hasShownPauseWarning: $hasShownPauseWarning
                     )
-                    .overlay(
-                        Group {
-                            if joinLiveSessionMode {
-                                Text("JOINING...").font(.system(size: 36, weight: .black))
-                                    .tracking(8).foregroundColor(.white)
-                                    .shadow(color: Color.green.opacity(0.6), radius: 8)
-                                    .opacity(showJoiningIndicator ? 1 : 0)
-                            }
-                        }
+                    .padding(.horizontal, 20)
+                    .padding(.top, 0)  // Reduced padding
+
+                    // Begin Button with Joining Overlay
+                    BeginButtonWithOverlay(
+                        appManager: appManager,
+                        permissionManager: permissionManager,
+                        joinLiveSessionMode: joinLiveSessionMode,
+                        showJoiningIndicator: showJoiningIndicator
                     )
                     .padding(.top, 5)
                 }
@@ -291,13 +263,13 @@ struct SetupView: View {
                                     .background(
                                         ZStack {
                                             RoundedRectangle(cornerRadius: 25)
-                                                .fill(Theme.yellowAccentGradient)
+                                                .fill(Theme.yellow.opacity(0.9))
 
                                             RoundedRectangle(cornerRadius: 25)
                                                 .fill(Color.white.opacity(0.1))
 
                                             RoundedRectangle(cornerRadius: 25)
-                                                .stroke(Theme.silveryGradient, lineWidth: 1)
+                                                .stroke(Color.white.opacity(0.6), lineWidth: 1)
                                         }
                                     )
                                     .shadow(color: Theme.yellowShadow, radius: 8)
@@ -312,7 +284,7 @@ struct SetupView: View {
                                 RoundedRectangle(cornerRadius: 20).fill(Color.black.opacity(0.3))
 
                                 RoundedRectangle(cornerRadius: 20)
-                                    .stroke(Theme.silveryGradient2, lineWidth: 1)
+                                    .stroke(Color.white.opacity(0.5), lineWidth: 1)
                             }
                         )
                         .shadow(color: Color.black.opacity(0.5), radius: 20)
@@ -463,6 +435,28 @@ struct SetupView: View {
             }
         }
         .environmentObject(viewRouter)
+        .alert("Location Access Required", isPresented: $showLocationSettingsAlert) {
+            Button("Open Settings") {
+                if let url = URL(string: UIApplication.openSettingsURLString) {
+                    UIApplication.shared.open(url)
+                }
+            }
+            Button("Cancel", role: .cancel) { }
+        } message: {
+            Text("Location access is required to identify and select nearby buildings.")
+        }
+    }
+
+    // Extract complex logic into helper functions
+    private func handleLocationPermissionChange() {
+        // Start pulsing if we got location permission
+        if permissionManager.locationAuthStatus == .authorizedWhenInUse || 
+           permissionManager.locationAuthStatus == .authorizedAlways {
+            // Don't pulse if the user already selected a building
+            if regionalViewModel.selectedBuilding == nil {
+                regionalViewModel.shouldPulseBuildingButton = true
+            }
+        }
     }
 }
 
@@ -602,7 +596,8 @@ struct LocationSelectorPopup: View {
 
                 RoundedRectangle(cornerRadius: 16).fill(Color.white.opacity(0.05))
 
-                RoundedRectangle(cornerRadius: 16).stroke(Theme.silveryGradient4, lineWidth: 1)
+                RoundedRectangle(cornerRadius: 16)
+                    .stroke(Color.white.opacity(0.4), lineWidth: 1)  // Use solid color instead of Theme.silveryGradient4
             }
         )
         .shadow(color: Color.black.opacity(0.15), radius: 4)
@@ -782,5 +777,143 @@ struct PermissionRequiredAlert: View {
         .padding(.horizontal, 20).padding(.vertical, 8)
         .background(RoundedRectangle(cornerRadius: 10).fill(Color.white.opacity(0.05)))
         .padding(.horizontal, 10)
+    }
+}
+
+// Define this new extracted view at bottom of the file
+struct CircularTimeView: View {
+    @Binding var selectedMinutes: Int
+    var isDisabled: Bool = false
+    var opacity: Double = 1.0
+    
+    var body: some View {
+        CircularTime(selectedMinutes: $selectedMinutes)
+            .padding(.top, -15)
+            .disabled(isDisabled)
+            .opacity(opacity)
+            .frame(height: 280)  // Reduce from 290 to 280
+    }
+}
+
+// Define this new extracted view at bottom of the file
+struct ControlsSection: View {
+    @ObservedObject var appManager: AppManager
+    let joinLiveSessionMode: Bool
+    @Binding var isInfinitePauses: Bool
+    @Binding var selectedPauseDurationIndex: Int
+    let pauseDurations: [Int]
+    let pauseDurationLabels: [String]
+    @Binding var showPauseDisabledWarning: Bool
+    @Binding var hasShownPauseWarning: Bool
+    
+    var body: some View {
+        VStack(spacing: 12) {  // Reduced spacing
+            // Row 1: Allow Pause and # of Pauses in horizontal layout
+            HStack(spacing: 12) {
+                // 1. Allow Pause Toggle - Reduced width
+                ControlButton(title: "ALLOW PAUSE") {
+                    Toggle("", isOn: $appManager.allowPauses)
+                        .toggleStyle(ModernToggleStyle())
+                        .disabled(joinLiveSessionMode)  // Disable in join mode
+                        .onChange(of: appManager.allowPauses) {
+                            if !appManager.allowPauses {
+                                // Only show the warning if it hasn't been shown before
+                                if !hasShownPauseWarning {
+                                    showPauseDisabledWarning = true
+                                    hasShownPauseWarning = true
+                                }
+                                appManager.maxPauses = 0
+                                isInfinitePauses = false
+                            }
+                            else {
+                                appManager.maxPauses = 3  // Default number of pauses
+                            }
+                        }
+                }
+                .frame(width: UIScreen.main.bounds.width * 0.43)
+
+                // 2. Number of Pauses with Infinite option incorporated into the picker
+                ControlButton(
+                    title: "# OF PAUSES",
+                    isDisabled: !appManager.allowPauses || joinLiveSessionMode
+                ) {
+                    NumberPickerWithInfinity(
+                        range: 1...5,
+                        selection: $appManager.maxPauses,
+                        isInfinite: $isInfinitePauses,
+                        isDisabled: !appManager.allowPauses || joinLiveSessionMode
+                    )
+                    .onChange(of: isInfinitePauses) {
+                        if isInfinitePauses {
+                            // Set to a high number when infinite is selected
+                            appManager.maxPauses = 999
+                        }
+                        else {
+                            // Revert to default when turning off infinite
+                            appManager.maxPauses = 3
+                        }
+                    }
+                }
+                .frame(width: UIScreen.main.bounds.width * 0.43)
+            }
+
+            // 3. Pause Duration Selector
+            ControlButton(
+                title: "PAUSE DURATION",
+                isDisabled: !appManager.allowPauses || joinLiveSessionMode,
+                reducedHeight: true
+            ) {
+                ModernPickerStyle(
+                    options: pauseDurationLabels,
+                    selection: $selectedPauseDurationIndex,
+                    isDisabled: !appManager.allowPauses || joinLiveSessionMode
+                )
+                .onChange(of: selectedPauseDurationIndex) {
+                    appManager.pauseDuration = pauseDurations[selectedPauseDurationIndex]
+                }
+            }
+        }
+    }
+}
+
+struct BeginButtonWithOverlay: View {
+    @ObservedObject var appManager: AppManager
+    @ObservedObject var permissionManager: PermissionManager
+    let joinLiveSessionMode: Bool
+    let showJoiningIndicator: Bool
+    
+    var body: some View {
+        BeginButton(
+            action: {
+                // Check if we have proper permissions
+                if permissionManager.motionPermissionGranted {
+                    // Check if we're in joining mode
+                    if !joinLiveSessionMode {
+                        // Set the appropriate flag in AppManager based on permission status
+                        appManager.usingLimitedLocationPermission =
+                            permissionManager.hasLimitedLocationPermission
+                            && !permissionManager.hasFullLocationPermission
+
+                        // Start the countdown regardless of location permission type
+                        appManager.startCountdown()
+                    }
+                }
+                else {
+                    // Show permission alert if motion permission is missing
+                    permissionManager.showPermissionRequiredAlert = true
+                }
+            },
+            joinMode: joinLiveSessionMode
+        )
+        .overlay(
+            Group {
+                if joinLiveSessionMode {
+                    Text("JOINING...").font(.system(size: 36, weight: .black))
+                        .tracking(8).foregroundColor(.white)
+                        .shadow(color: Color.green.opacity(0.6), radius: 8)
+                        .opacity(showJoiningIndicator ? 1 : 0)
+                }
+            }
+        )
     }
 }

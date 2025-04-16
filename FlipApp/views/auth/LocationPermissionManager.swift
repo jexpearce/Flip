@@ -12,6 +12,8 @@ class LocationPermissionManager: NSObject, ObservableObject, CLLocationManagerDe
     // Track if we've already shown the alert to avoid repeated prompts
     private var hasShownCustomAlert = false
     @Published var showLocationDisabledAlert = false
+    // Track if we're already in an active permission flow to avoid duplicates
+    private var isInPermissionFlow = false
 
     override init() {
         super.init()
@@ -20,9 +22,39 @@ class LocationPermissionManager: NSObject, ObservableObject, CLLocationManagerDe
 
         // Load hasShownCustomAlert from UserDefaults
         hasShownCustomAlert = UserDefaults.standard.bool(forKey: "hasShownLocationAlert")
+        
+        // Listen for permission flow start/end
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(permissionFlowStarted),
+            name: NSNotification.Name("ShowPermissionsFlow"),
+            object: nil
+        )
+        
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(permissionFlowEnded),
+            name: NSNotification.Name("ProceedToMainApp"),
+            object: nil
+        )
+    }
+    
+    @objc private func permissionFlowStarted() {
+        isInPermissionFlow = true
+    }
+    
+    @objc private func permissionFlowEnded() {
+        isInPermissionFlow = false
     }
 
     func requestPermissionWithCustomAlert() {
+        // Skip showing alert if we're already in the permission flow
+        // to prevent duplicate alerts
+        if isInPermissionFlow {
+            print("Already in permission flow, skipping duplicate alert")
+            return
+        }
+        
         // Check if we've already shown the alert and user denied
         if hasShownCustomAlert && authorizationStatus == .denied {
             // Show settings alert instead

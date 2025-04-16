@@ -14,12 +14,21 @@ class RegionalViewModel: NSObject, ObservableObject, CLLocationManagerDelegate {
     @Published var showBuildingSelection = false
     @Published var isRefreshing = false
     @Published var showCustomLocationCreation = false
+    @Published var shouldPulseBuildingButton = false
 
     private let locationManager = CLLocationManager()
 
     override init() {
         super.init()
         setupLocationManager()
+        
+        // Check if we should start pulsing the building button
+        if PermissionManager.shared.locationAuthStatus == .authorizedWhenInUse || 
+           PermissionManager.shared.locationAuthStatus == .authorizedAlways {
+            if selectedBuilding == nil {
+                shouldPulseBuildingButton = true
+            }
+        }
     }
 
     private func setupLocationManager() {
@@ -65,20 +74,14 @@ class RegionalViewModel: NSObject, ObservableObject, CLLocationManagerDelegate {
             return
         }
 
-        // If we have a selected building, check if user has moved far from it
+        // If we have a selected building, check if user has moved far from it using the new method
         if let building = selectedBuilding {
-            let buildingLocation = CLLocation(
-                latitude: building.coordinate.latitude,
-                longitude: building.coordinate.longitude
-            )
-
-            let distance = location.distance(from: buildingLocation)
-
-            // If user has moved more than threshold, suggest a building change
-            if distance > 100 {  // 100 meters away from current building
-                print(
-                    "User has moved \(Int(distance))m from current building, checking for new buildings..."
-                )
+            // Use the new method to determine if we should update the building
+            if BuildingIdentificationService.shared.shouldUpdateBuilding(
+                currentLocation: location,
+                currentBuilding: building
+            ) {
+                print("User has moved significantly from current building, checking for new buildings...")
                 // Instead of showing building selection, automatically find and select the new building
                 BuildingIdentificationService.shared.identifyNearbyBuildings(at: location) {
                     [weak self] buildings, error in
@@ -122,6 +125,19 @@ class RegionalViewModel: NSObject, ObservableObject, CLLocationManagerDelegate {
         guard let location = locations.last else { return }
         self.currentLocation = location
         print("Location update received in RegionalViewModel: \(location.coordinate)")
+        
+        // Check if we need to update the building based on the new location
+        if let building = selectedBuilding {
+            if BuildingIdentificationService.shared.shouldUpdateBuilding(
+                currentLocation: location,
+                currentBuilding: building
+            ) {
+                print("Location update shows significant movement - refreshing building")
+                Task { @MainActor in
+                    self.refreshCurrentBuilding()
+                }
+            }
+        }
     }
 
     func locationManager(_ manager: CLLocationManager, didFailWithError error: Error) {
@@ -299,6 +315,8 @@ class RegionalViewModel: NSObject, ObservableObject, CLLocationManagerDelegate {
         FirebaseManager.shared.db.collection("users").document(userId).collection("settings")
             .document("currentBuilding")
             .getDocument { [weak self] document, error in
+                guard let self = self else { return }
+                
                 if let data = document?.data(), let id = data["id"] as? String,
                     let name = data["name"] as? String, let latitude = data["latitude"] as? Double,
                     let longitude = data["longitude"] as? Double
@@ -310,14 +328,30 @@ class RegionalViewModel: NSObject, ObservableObject, CLLocationManagerDelegate {
                     let building = BuildingInfo(id: id, name: name, coordinate: coordinate)
 
                     DispatchQueue.main.async {
-                        self?.selectedBuilding = building
-                        // Only load leaderboard if user has completed sessions
-                        self?.loadNearbyUsers()
+                        self.selectedBuilding = building
+                        
+                        // Check if we should update the building based on current location
+                        let currentLocation = LocationHandler.shared.lastLocation
+                        if currentLocation.horizontalAccuracy > 0 {
+                            if BuildingIdentificationService.shared.shouldUpdateBuilding(
+                                currentLocation: currentLocation,
+                                currentBuilding: building
+                            ) {
+                                print("Current location differs significantly from saved building - refreshing")
+                                self.refreshCurrentBuilding()
+                            } else {
+                                // Only load leaderboard if user has completed sessions
+                                self.loadNearbyUsers()
+                            }
+                        } else {
+                            // If we don't have an accurate location yet, just load with the existing building
+                            self.loadNearbyUsers()
+                        }
                     }
                 }
                 else {
                     // No building set yet, try to identify and select one automatically
-                    DispatchQueue.main.async { self?.startBuildingIdentification() }
+                    DispatchQueue.main.async { self.startBuildingIdentification() }
                 }
             }
     }
@@ -347,6 +381,49 @@ class RegionalViewModel: NSObject, ObservableObject, CLLocationManagerDelegate {
             let rootViewController = windowScene.windows.first?.rootViewController
         {
             rootViewController.present(alert, animated: true)
+        }
+    }
+
+    @MainActor func selectNearestBuilding() {
+        // Only stop pulsing if we're successful
+        if selectedBuilding == nil {
+            isRefreshing = true
+            var location: CLLocation
+            
+            // Get the most accurate location available
+            let lastLocation = LocationHandler.shared.lastLocation
+            
+            if lastLocation.horizontalAccuracy > 0 {
+                location = lastLocation
+            } else if let managerLocation = currentLocation, managerLocation.horizontalAccuracy > 0 {
+                location = managerLocation
+            } else {
+                // If we don't have an accurate location, use a fallback
+                isRefreshing = false
+                return
+            }
+            
+            BuildingIdentificationService.shared.identifyNearbyBuildings(at: location) { [weak self] buildings, error in
+                guard let self = self else { return }
+                DispatchQueue.main.async {
+                    if let buildings = buildings, !buildings.isEmpty {
+                        // Automatically select the first building
+                        let buildingName = BuildingIdentificationService.shared.getBuildingName(from: buildings[0])
+                        let buildingInfo = BuildingInfo(
+                            id: "",  // The BuildingInfo init will standardize this
+                            name: buildingName,
+                            coordinate: buildings[0].coordinate
+                        )
+                        self.selectBuilding(buildingInfo)
+                        // Stop pulsing the button once we've selected a building
+                        self.shouldPulseBuildingButton = false
+                    }
+                    self.isRefreshing = false
+                }
+            }
+        } else {
+            // If we already have a building, just stop pulsing
+            shouldPulseBuildingButton = false
         }
     }
 }
