@@ -333,6 +333,7 @@ class LiveSessionManager: ObservableObject {
             lastUpdateTime: lastUpdateTimestamp.dateValue()
         )
     }
+    // In LiveSessionManager.swift, improve the joinSession method
     func joinSession(sessionId: String, completion: @escaping (Bool, Int, Int) -> Void) {
         // Ensure Firebase is initialized
         if FirebaseApp.app() == nil {
@@ -388,6 +389,14 @@ class LiveSessionManager: ObservableObject {
                     return
                 }
 
+                // FIX: Check if session is too old (last update more than 2 minutes ago)
+                if Date().timeIntervalSince(sessionData.lastUpdateTime) > 120 {
+                    print("Session is stale - last update was too long ago")
+                    self.isJoiningSession = false
+                    completion(false, 0, 0)
+                    return
+                }
+                
                 // Check if session can be joined
                 if !sessionData.canJoin {
                     print(
@@ -411,6 +420,7 @@ class LiveSessionManager: ObservableObject {
                     "lastUpdateTime": FieldValue.serverTimestamp(),
                 ]
 
+                // IMPROVED: Atomic transaction to update Firebase
                 self.db.collection("live_sessions").document(sessionId)
                     .updateData(updateData) { error in
                         if let error = error {
@@ -421,38 +431,25 @@ class LiveSessionManager: ObservableObject {
                         else {
                             print("Successfully joined session")
 
+                            // IMPROVEMENT: Set the current session immediately to prevent UI lag
+                            DispatchQueue.main.async {
+                                self.currentJoinedSession = sessionData
+                            }
+                            
                             // Listen for updates to this session
                             self.listenToJoinedSession(sessionId: sessionId)
 
-                            // Get a fresh copy of the session data with most current state
-                            self.getSessionDetails(sessionId: sessionId) { updatedData in
-                                if let data = updatedData {
-                                    // Pass current data to completion handler
-                                    DispatchQueue.main.async {
-                                        self.isJoiningSession = false
-                                        
-                                        // Store this session as our current joined session
-                                        self.currentJoinedSession = data
-                                        
-                                        // Notify any observers about the join
-                                        self.objectWillChange.send()
-                                        NotificationCenter.default.post(name: Notification.Name("LiveSessionJoined"), object: nil)
-                                        
-                                        completion(true, data.remainingSeconds, data.targetDuration)
-                                    }
-                                }
-                                else {
-                                    // Fall back to original data if we can't get updated info
-                                    self.isJoiningSession = false
-                                    self.currentJoinedSession = sessionData
-                                    self.objectWillChange.send()
-                                    
-                                    completion(
-                                        true,
-                                        sessionData.remainingSeconds,
-                                        sessionData.targetDuration
-                                    )
-                                }
+                            // SIMPLIFIED: Complete the join with the data we already have
+                            // This prevents an additional Firebase call that could fail
+                            DispatchQueue.main.async {
+                                self.isJoiningSession = false
+                                
+                                // Notify any observers about the join
+                                self.objectWillChange.send()
+                                NotificationCenter.default.post(name: Notification.Name("LiveSessionJoined"), object: nil)
+                                
+                                // Return success with the current session data we already have
+                                completion(true, sessionData.remainingSeconds, sessionData.targetDuration)
                             }
                         }
                     }

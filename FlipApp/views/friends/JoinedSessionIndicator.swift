@@ -13,21 +13,33 @@ struct JoinedSessionIndicator: View {
     @State private var isGlowing = false
     @State private var elapsedSeconds = 0
     @State private var timer: Timer?
+    @State private var lastUpdateTime = Date()
 
     private var joinedSession: LiveSessionManager.LiveSessionData? {
         return liveSessionManager.currentJoinedSession
     }
 
+    // IMPROVED: More reliable elapsed time calculation
     private var formattedElapsedTime: String {
-        guard let session = joinedSession else {
-            // Fallback to app manager's time if session data isn't available
+        // If app manager has accurate time, use it
+        if appManager.currentState == .tracking || appManager.currentState == .countdown {
             let minutes = appManager.selectedMinutes - (appManager.remainingSeconds / 60)
             let seconds = appManager.remainingSeconds % 60
             return String(format: "%d:%02d", minutes, 60 - seconds)
         }
+        
+        // Otherwise use session data if available
+        guard let session = joinedSession else {
+            return "0:00"
+        }
 
         let baseElapsed = session.elapsedSeconds
-        let adjustedElapsed = appManager.isPaused ? baseElapsed : baseElapsed + elapsedSeconds
+        
+        // Calculate time since last update
+        let timeSinceLast = Int(Date().timeIntervalSince(lastUpdateTime))
+        
+        // Add the timer elapsed seconds plus compensation for time since last update
+        let adjustedElapsed = session.isPaused ? baseElapsed : baseElapsed + elapsedSeconds + timeSinceLast
 
         let minutes = adjustedElapsed / 60
         let seconds = adjustedElapsed % 60
@@ -88,6 +100,7 @@ struct JoinedSessionIndicator: View {
             )
             .onAppear {
                 isGlowing = true
+                lastUpdateTime = Date()
                 startTimer()
             }
             .onDisappear { stopTimer() }
@@ -95,7 +108,12 @@ struct JoinedSessionIndicator: View {
                 // Reset the timer when pause state changes
                 stopTimer()
                 elapsedSeconds = 0
+                lastUpdateTime = Date()
                 if !appManager.isPaused { startTimer() }
+            }
+            .onReceive(NotificationCenter.default.publisher(for: Notification.Name("RefreshLiveSessions"))) { _ in
+                // Update last update time when we get fresh session data
+                lastUpdateTime = Date()
             }
         }
         else {

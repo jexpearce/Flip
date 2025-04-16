@@ -74,9 +74,38 @@ struct HomeView: View {
             Button("Join Session") {
                 isJoining = true
                 
-                // Directly join the live session without navigating to any other screen
-                LiveSessionManager.shared.joinSession(sessionId: joinSessionId) { success, remainingSeconds, targetDuration in
+                // Guard against joining your own session
+                guard !joinSessionId.contains(Auth.auth().currentUser?.uid ?? "") else {
+                    print("Preventing join of your own session")
+                    sessionJoinCoordinator.clearPendingSession()
                     isJoining = false
+                    return
+                }
+                
+                // IMPROVED: Use a timeout mechanism
+                let joinTask = DispatchWorkItem {
+                    // If we're still joining after 8 seconds, there's likely a problem
+                    if self.isJoining {
+                        self.isJoining = false
+                        sessionJoinCoordinator.clearPendingSession()
+                        
+                        // Haptic feedback for error
+                        let generator = UINotificationFeedbackGenerator()
+                        generator.notificationOccurred(.error)
+                        
+                        print("Join operation timed out after 8 seconds")
+                    }
+                }
+                
+                // Schedule timeout
+                DispatchQueue.main.asyncAfter(deadline: .now() + 8, execute: joinTask)
+                
+                // Directly join the live session
+                LiveSessionManager.shared.joinSession(sessionId: joinSessionId) { success, remainingSeconds, targetDuration in
+                    // Cancel the timeout
+                    joinTask.cancel()
+                    
+                    self.isJoining = false
                     
                     if success {
                         print("Successfully joined session: \(joinSessionId) with \(remainingSeconds) seconds remaining")
@@ -113,18 +142,40 @@ struct HomeView: View {
             if sessionJoinCoordinator.shouldJoinSession,
                 let sessionId = sessionJoinCoordinator.pendingSessionId
             {
+                // IMPROVED: Add validation check for own session
+                if sessionId.contains(Auth.auth().currentUser?.uid ?? "") {
+                    print("Preventing auto-join of own session")
+                    sessionJoinCoordinator.clearPendingSession()
+                    return
+                }
 
                 // Start the joining process
                 liveSessionManager.isJoiningSession = true
 
+                // Add timeout to prevent indefinite "joining" state
+                DispatchQueue.main.asyncAfter(deadline: .now() + 8) {
+                    if self.liveSessionManager.isJoiningSession == true {
+                        print("Auto-join timed out after 8 seconds")
+                        self.liveSessionManager.isJoiningSession = false
+                        sessionJoinCoordinator.clearPendingSession()
+                    }
+                }
+
                 // First get session details
                 liveSessionManager.getSessionDetails(sessionId: sessionId) { sessionData in
-                    if let _session = sessionData {
+                    if let session = sessionData {
+                        // Validate the session is not too old
+                        if Date().timeIntervalSince(session.lastUpdateTime) > 120 {
+                            print("Auto-join prevented - session is stale")
+                            DispatchQueue.main.async {
+                                sessionJoinCoordinator.clearPendingSession()
+                                liveSessionManager.isJoiningSession = false
+                            }
+                            return
+                        }
+                        
                         // Join the session
-                        liveSessionManager.joinSession(sessionId: sessionId) {
-                            success,
-                            remainingSeconds,
-                            totalDuration in
+                        liveSessionManager.joinSession(sessionId: sessionId) { success, remainingSeconds, totalDuration in
                             if success {
                                 // Actually join the live session with proper timing values
                                 DispatchQueue.main.async {

@@ -174,16 +174,19 @@ class AppManager: NSObject, ObservableObject {
             body: "Phone must be face down when timer reaches zero"
         )
     }
+    // In AppManager.swift, replace the joinLiveSession method with this improved version
     func joinLiveSession(sessionId: String, remainingSeconds: Int, totalDuration: Int) {
-        print(
-            "Joining live session: \(sessionId), remaining: \(remainingSeconds)s, duration: \(totalDuration)min"
-        )
+        print("Joining live session: \(sessionId), remaining: \(remainingSeconds)s, duration: \(totalDuration)min")
 
         // Initialize all values first BEFORE changing state
         self.liveSessionId = sessionId
         self.isJoinedSession = true
         self.selectedMinutes = totalDuration  // Use the correct total duration from the session
         self.remainingSeconds = remainingSeconds
+        
+        // CRITICAL: Ensure we reset any previous state
+        invalidateAllTimers()
+        sessionAlreadyRecorded = false
 
         // Get joined session data to properly set all parameters
         LiveSessionManager.shared.getSessionDetails(sessionId: sessionId) { sessionData in
@@ -206,11 +209,8 @@ class AppManager: NSObject, ObservableObject {
 
                     // IMPORTANT: Increment building leaderboard if location is enabled
                     if let building = RegionalViewModel.shared.selectedBuilding {
-                        print(
-                            "🏢 Incrementing leaderboard for joined session in building: \(building.name) [ID: \(building.id)]"
-                        )
+                        print("🏢 Incrementing leaderboard for joined session in building: \(building.name) [ID: \(building.id)]")
                         
-                        // Get the current user ID
                         if let userId = Auth.auth().currentUser?.uid {
                             // Create a location record for this session
                             let sessionLocationData: [String: Any] = [
@@ -243,33 +243,18 @@ class AppManager: NSObject, ObservableObject {
                         }
                     }
 
-                    // Ensure navigation happens if needed
-                    if self.currentState != .countdown {
-                        // If we're not already in countdown, make sure we get there
-                        self.currentState = .initial
-                        
-                        // Immediately trigger the countdown - don't wait for navigation
-                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-                            // Save state to ensure persistence across app restarts
-                            self.saveSessionState()
-                            
-                            // Start the countdown
-                            self.countdownSeconds = 5
-                            self.currentState = .countdown  // Set state after other values
-                            self.startCountdown(fromRestoration: false)
-                        }
-                    } else {
-                        // Save state to ensure persistence across app restarts
-                        self.saveSessionState()
-                        
-                        // Start the countdown
-                        self.countdownSeconds = 5
-                        self.currentState = .countdown  // Set state after other values
-                        self.startCountdown(fromRestoration: false)
-                    }
+                    // IMPROVED: Always immediately transition to countdown state regardless of current state
+                    // This fixes navigation issues and ensures consistent UI
+                    self.currentState = .countdown
+                    self.countdownSeconds = 5
+                    
+                    // Save state to ensure persistence across app restarts
+                    self.saveSessionState()
+                    
+                    // Start the countdown immediately without delay - critical fix!
+                    self.startCountdown(fromRestoration: false)
                 }
-            }
-            else {
+            } else {
                 // Safety fallback if we can't get session details
                 DispatchQueue.main.async {
                     // Default values if joined session data isn't available yet
@@ -277,29 +262,15 @@ class AppManager: NSObject, ObservableObject {
                     self.maxPauses = 0
                     self.remainingPauses = 0
                     
-                    // Force navigation to home and start countdown
-                    if self.currentState != .countdown {
-                        self.currentState = .initial
-                        
-                        // Immediately trigger the countdown - don't wait for navigation
-                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-                            // Start the countdown
-                            self.countdownSeconds = 5
-                            self.currentState = .countdown
-                            self.startCountdown(fromRestoration: false)
-                            
-                            // Save state to ensure persistence
-                            self.saveSessionState()
-                        }
-                    } else {
-                        // Start the countdown
-                        self.countdownSeconds = 5
-                        self.currentState = .countdown
-                        self.startCountdown(fromRestoration: false)
-                        
-                        // Save state to ensure persistence
-                        self.saveSessionState()
-                    }
+                    // Force navigation to countdown view and start immediately
+                    self.currentState = .countdown
+                    self.countdownSeconds = 5
+                    
+                    // Save state before starting countdown
+                    self.saveSessionState()
+                    
+                    // Start countdown without delay - critical fix!
+                    self.startCountdown(fromRestoration: false)
                 }
             }
         }

@@ -169,27 +169,47 @@ struct EnhancedFriendCard: View {
                             let generator = UIImpactFeedbackGenerator(style: .medium)
                             generator.impactOccurred()
                             
+                            // IMPROVED: More thorough validation before attempting to join
+                            
                             // Prevent joining your own session
-                            if let session = liveSession, 
-                               session.starterId == Auth.auth().currentUser?.uid {
+                            if let liveSession = liveSession, liveSession.starterId == Auth.auth().currentUser?.uid {
                                 print("Cannot join your own session")
                                 let errorGenerator = UINotificationFeedbackGenerator()
                                 errorGenerator.notificationOccurred(.error)
                                 return
                             }
                             
-                            // Use the session ID and creator's name for confirmation
-                            if let session = liveSession {
-                                SessionJoinCoordinator.shared.pendingSessionId = session.id
-                                SessionJoinCoordinator.shared.pendingSessionName = session.starterUsername
-                                SessionJoinCoordinator.shared.pendingTimestamp = Date()
-                                SessionJoinCoordinator.shared.shouldJoinSession = true
+                            // Check if session is stale (last update was too long ago)
+                            if let liveSession = liveSession, Date().timeIntervalSince(liveSession.lastUpdateTime) > 120 {
+                                print("Cannot join stale session - last update was too long ago")
+                                let errorGenerator = UINotificationFeedbackGenerator()
+                                errorGenerator.notificationOccurred(.error)
+                                return
+                            }
+                            
+                            // If first-time user, check if they've completed their first session
+                            FirebaseManager.shared.hasCompletedFirstSession { hasCompleted in
+                                if !hasCompleted {
+                                    // Show first session required alert
+                                    SessionJoinCoordinator.shared.showFirstSessionRequiredAlert = true
+                                    return
+                                }
                                 
-                                // Post notification to show confirmation dialog
-                                NotificationCenter.default.post(
-                                    name: Notification.Name("ShowLiveSessionJoinConfirmation"),
-                                    object: nil
-                                )
+                                DispatchQueue.main.async {
+                                    // If all validation passes, prepare to join session
+                                    if let liveSession = liveSession {
+                                        SessionJoinCoordinator.shared.pendingSessionId = liveSession.id
+                                        SessionJoinCoordinator.shared.pendingSessionName = liveSession.starterUsername
+                                        SessionJoinCoordinator.shared.pendingTimestamp = Date()
+                                        SessionJoinCoordinator.shared.shouldJoinSession = true
+                                        
+                                        // Post notification to show confirmation dialog
+                                        NotificationCenter.default.post(
+                                            name: Notification.Name("ShowLiveSessionJoinConfirmation"),
+                                            object: nil
+                                        )
+                                    }
+                                }
                             }
                         }) {
                             Text("JOIN").font(.system(size: 14, weight: .bold)).tracking(1)
