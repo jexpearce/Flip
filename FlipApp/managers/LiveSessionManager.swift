@@ -764,4 +764,116 @@ class LiveSessionManager: ObservableObject {
         for (_, listener) in sessionListeners { listener.remove() }
         sessionListeners.removeAll()
     }
+
+    // Method to get live sessions for a specific building
+    func getBuildingLiveSessions(buildingId: String, completion: @escaping ([LiveSessionData]) -> Void) {
+        // Prevent retrieving sessions if building ID is empty
+        guard !buildingId.isEmpty else {
+            completion([])
+            return
+        }
+        
+        // Get current user ID to filter out own sessions
+        let currentUserId = Auth.auth().currentUser?.uid
+        
+        // Query sessions by building ID
+        let query = db.collection("live_sessions")
+            .whereField("buildingId", isEqualTo: buildingId)
+            .whereField("status", isEqualTo: "active")
+        
+        query.getDocuments { [weak self] snapshot, error in
+            guard let self = self else {
+                completion([])
+                return
+            }
+            
+            if let error = error {
+                print("Error fetching building live sessions: \(error.localizedDescription)")
+                completion([])
+                return
+            }
+            
+            guard let documents = snapshot?.documents else {
+                completion([])
+                return
+            }
+            
+            // Parse the session documents
+            let sessions = documents.compactMap { document -> LiveSessionData? in
+                guard let session = self.parseLiveSessionDocument(document) else {
+                    return nil
+                }
+                
+                // Skip first-time users' sessions and own sessions
+                if session.starterId == currentUserId {
+                    return nil
+                }
+                
+                // Check if session can be joined
+                if !session.canJoin {
+                    return nil
+                }
+                
+                // Return valid session
+                return session
+            }
+            
+            print("Found \(sessions.count) live sessions in building \(buildingId)")
+            
+            // Sort by start time (most recent first)
+            let sortedSessions = sessions.sorted { $0.startTime > $1.startTime }
+            completion(sortedSessions)
+        }
+    }
+    
+    // Update session creation to include building information
+    func startSession(sessionId: String, appManager: AppManager, building: BuildingInfo?) {
+        guard let userId = Auth.auth().currentUser?.uid,
+            let username = FirebaseManager.shared.currentUser?.username
+        else { return }
+        
+        let now = Date()
+        
+        // Get values from AppManager
+        let targetDuration = appManager.selectedMinutes
+        let remainingSeconds = appManager.remainingSeconds > 0 ? appManager.remainingSeconds : targetDuration * 60
+        let isPaused = appManager.isPaused
+        let allowPauses = appManager.allowPauses
+        let maxPauses = appManager.maxPauses
+        
+        // Create base session data
+        var sessionData: [String: Any] = [
+            "starterId": userId,
+            "starterUsername": username,
+            "participants": [userId],
+            "startTime": Timestamp(date: now),
+            "targetDuration": targetDuration,
+            "remainingSeconds": remainingSeconds,
+            "isPaused": isPaused,
+            "allowPauses": allowPauses,
+            "maxPauses": maxPauses,
+            "joinTimes": [userId: Timestamp(date: now)],
+            "participantStatus": [userId: ParticipantStatus.active.rawValue],
+            "lastUpdateTime": Timestamp(date: now),
+            "status": "active"
+        ]
+        
+        // Add building information if available
+        if let building = building {
+            sessionData["buildingId"] = building.id
+            sessionData["buildingName"] = building.name
+            sessionData["buildingLatitude"] = building.coordinate.latitude
+            sessionData["buildingLongitude"] = building.coordinate.longitude
+        }
+        
+        // Create session in Firestore
+        db.collection("live_sessions").document(sessionId)
+            .setData(sessionData) { error in
+                if let error = error {
+                    print("Error creating live session with building info: \(error.localizedDescription)")
+                } else {
+                    print("Live session created successfully with building info")
+                }
+            }
+    }
 }

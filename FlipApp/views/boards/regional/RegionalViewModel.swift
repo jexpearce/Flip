@@ -15,6 +15,8 @@ class RegionalViewModel: NSObject, ObservableObject, CLLocationManagerDelegate {
     @Published var isRefreshing = false
     @Published var showCustomLocationCreation = false
     @Published var shouldPulseBuildingButton = false
+    @Published var buildingLiveSessions: [LiveSessionManager.LiveSessionData] = []
+    @Published var isBuildingLeaderboard: Bool = true
 
     private let locationManager = CLLocationManager()
 
@@ -296,6 +298,8 @@ class RegionalViewModel: NSObject, ObservableObject, CLLocationManagerDelegate {
                                     self.leaderboardViewModel.loadBuildingLeaderboard(
                                         building: standardizedBuilding
                                     )
+                                    // Load building live sessions
+                                    self.loadBuildingLiveSessions(building: standardizedBuilding)
                                 }
                             }
                         }
@@ -424,6 +428,52 @@ class RegionalViewModel: NSObject, ObservableObject, CLLocationManagerDelegate {
         } else {
             // If we already have a building, just stop pulsing
             shouldPulseBuildingButton = false
+        }
+    }
+
+    // Add method to load live sessions for the current building
+    func loadBuildingLiveSessions(building: BuildingInfo) {
+        guard LeaderboardConsentManager.shared.canAddToLeaderboard() else {
+            buildingLiveSessions = []
+            return
+        }
+        
+        LiveSessionManager.shared.getBuildingLiveSessions(buildingId: building.id) { [weak self] sessions in
+            guard let self = self else { return }
+            DispatchQueue.main.async {
+                self.buildingLiveSessions = sessions
+                self.objectWillChange.send()
+            }
+        }
+    }
+    
+    // Method to set the active leaderboard type
+    func setLeaderboardType(_ isBuilding: Bool) {
+        self.isBuildingLeaderboard = isBuilding
+        
+        // Clear building sessions when not viewing building leaderboard
+        if !isBuilding {
+            self.buildingLiveSessions = []
+        } else if let building = selectedBuilding {
+            // Reload building sessions when switching back to building leaderboard
+            self.loadBuildingLiveSessions(building: building)
+        }
+    }
+    
+    // Helper method to start a session with the current building information
+    func startSessionWithBuilding(sessionId: String, appManager: AppManager) {
+        if let building = selectedBuilding {
+            // Pass building info when starting a session
+            LiveSessionManager.shared.startSession(
+                sessionId: sessionId,
+                appManager: appManager,
+                building: building
+            )
+            print("Started session with building context: \(building.name) [\(building.id)]")
+        } else {
+            // No building selected, start without building context
+            LiveSessionManager.shared.broadcastSessionState(sessionId: sessionId, appManager: appManager)
+            print("Started session without building context")
         }
     }
 }

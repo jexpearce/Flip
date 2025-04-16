@@ -31,6 +31,12 @@ class AppManager: NSObject, ObservableObject {
     @Published var isPauseTimerActive = false  // Whether pause timer is active
     @Published var sessionAlreadyRecorded: Bool = false
     @Published var usingLimitedLocationPermission = false
+    
+    // Friend request properties for non-friend sessions
+    @Published var shouldShowFriendRequestForUserId: String?
+    @Published var shouldShowFriendRequestName: String?
+    @Published var showFriendRequestView = false
+    @Published var deferFriendRequestDisplay = false  // Flag to defer displaying friend request
 
     private var pauseEndTime: Date?
     private var sessionManager = SessionManager.shared
@@ -151,15 +157,14 @@ class AppManager: NSObject, ObservableObject {
 
         // Broadcast session state for live sessions
         if let sessionId = liveSessionId {
-            LiveSessionManager.shared.broadcastSessionState(sessionId: sessionId, appManager: self)
+            // Use RegionalViewModel to start session with building context
+            RegionalViewModel.shared.startSessionWithBuilding(sessionId: sessionId, appManager: self)
         }
         else if currentState == .countdown {
             // Generate a new session ID for new sessions
             liveSessionId = UUID().uuidString
-            LiveSessionManager.shared.broadcastSessionState(
-                sessionId: liveSessionId!,
-                appManager: self
-            )
+            // Use RegionalViewModel to start session with building context
+            RegionalViewModel.shared.startSessionWithBuilding(sessionId: liveSessionId!, appManager: self)
         }
     }
 
@@ -189,6 +194,9 @@ class AppManager: NSObject, ObservableObject {
                     self.maxPauses = session.maxPauses
                     self.remainingPauses = session.maxPauses
                     self.originalSessionStarter = session.starterId
+                    
+                    // Store the session starter's username for friend request
+                    self.shouldShowFriendRequestName = session.starterUsername
 
                     // Save the list of participants for display in completion screens
                     self.sessionParticipants = session.participants
@@ -1072,6 +1080,28 @@ class AppManager: NSObject, ObservableObject {
                 userId: userId,
                 status: .completed
             )
+            
+            // Check if session was with a non-friend and save id for friend request
+            if isJoinedSession, let starterId = originalSessionStarter, starterId != userId {
+                // Check if already friends
+                guard let currentUserId = Auth.auth().currentUser?.uid else { return }
+                
+                // Check if users are friends directly using Firebase
+                FirebaseManager.shared.db.collection("users").document(currentUserId).getDocument { document, error in
+                    if let document = document, let userData = try? document.data(as: FirebaseManager.FlipUser.self) {
+                        let isFriend = userData.friends.contains(starterId)
+                        
+                        if !isFriend {
+                            // Set flag to show friend request after session
+                            self.shouldShowFriendRequestForUserId = starterId
+                            // Note: shouldShowFriendRequestName is already set during joinLiveSession
+                            
+                            // Set the defer flag instead of showing immediately
+                            self.deferFriendRequestDisplay = true
+                        }
+                    }
+                }
+            }
         }
 
         // 3. Clean up session
@@ -1122,14 +1152,70 @@ class AppManager: NSObject, ObservableObject {
                 // Determine the appropriate completion view
                 self.determineCompletionView { state in
                     self.currentState = state
-                    // Reset join state after setting final state
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 1) { self.resetJoinState() }
+                    
+                    // Friend request will now be shown after Return Home button is pressed
+                    // We're just keeping the friend request information until then
+                    
+                    // Reset join state after setting final state (but keep friend request info)
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
+                        self.resetJoinState(keepFriendRequestInfo: true)
+                    }
                 }
             }
             else {
                 self.currentState = .completed  // or .failed depending on the method
             }
         }
+    }
+    
+    // Add a new method to handle showing the friend request after returning to home
+    func handleReturnHome() {
+        // Short delay before showing friend request
+        if deferFriendRequestDisplay && shouldShowFriendRequestForUserId != nil && shouldShowFriendRequestName != nil {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) {
+                self.showFriendRequestView = true
+                self.deferFriendRequestDisplay = false
+            }
+        } else {
+            // If there's no deferred friend request, just reset
+            resetJoinState(keepFriendRequestInfo: false)
+        }
+    }
+    
+    // Modified resetJoinState to optionally keep friend request info
+    func resetJoinState(keepFriendRequestInfo: Bool = false) {
+        print("Resetting join state")
+        isJoinedSession = false
+        liveSessionId = nil
+        
+        // Don't clear friend request info if specified
+        if !keepFriendRequestInfo {
+            shouldShowFriendRequestForUserId = nil
+            shouldShowFriendRequestName = nil
+        }
+        
+        originalSessionStarter = nil
+        sessionParticipants = []
+
+        // Clear any session-related data from UserDefaults to ensure it doesn't persist
+        let defaults = UserDefaults.standard
+        defaults.removeObject(forKey: "liveSessionId")
+        defaults.removeObject(forKey: "isJoinedSession")
+        defaults.removeObject(forKey: "originalSessionStarter")
+
+        // Also clean up any live session listeners
+        LiveSessionManager.shared.cleanupListeners()
+
+        // Explicitly tell LiveSessionManager to stop tracking this session
+        if let sessionId = liveSessionId {
+            LiveSessionManager.shared.stopTrackingSession(sessionId: sessionId)
+        }
+
+        // Save state to persist these changes
+        saveSessionState()
+
+        // Force update the UI
+        DispatchQueue.main.async { self.objectWillChange.send() }
     }
 
     func failSession() {
@@ -1978,34 +2064,6 @@ class AppManager: NSObject, ObservableObject {
 
         DispatchQueue.main.async { self.currentState = .initial }
     }
-    func resetJoinState() {
-        print("Resetting join state")
-        isJoinedSession = false
-        liveSessionId = nil
-        originalSessionStarter = nil
-        sessionParticipants = []
-
-        // Clear any session-related data from UserDefaults to ensure it doesn't persist
-        let defaults = UserDefaults.standard
-        defaults.removeObject(forKey: "liveSessionId")
-        defaults.removeObject(forKey: "isJoinedSession")
-        defaults.removeObject(forKey: "originalSessionStarter")
-
-        // Also clean up any live session listeners
-        LiveSessionManager.shared.cleanupListeners()
-
-        // Explicitly tell LiveSessionManager to stop tracking this session
-        if let sessionId = liveSessionId {
-            LiveSessionManager.shared.stopTrackingSession(sessionId: sessionId)
-        }
-
-        // Save state to persist these changes
-        saveSessionState()
-
-        // Force update the UI
-        DispatchQueue.main.async { self.objectWillChange.send() }
-    }
-
     private func notifyFriendsOfFailure() {
         // Check if notifications are enabled in user settings
         if !UserSettingsManager.shared.areFriendFailureNotificationsEnabled {

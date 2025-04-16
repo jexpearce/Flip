@@ -133,6 +133,7 @@ struct RegionalView: View {
                                                 Button(action: {
                                                     withAnimation(.easeInOut(duration: 0.3)) {
                                                         currentLeaderboard = .regionalWeekly
+                                                        viewModel.setLeaderboardType(false)
                                                     }
                                                 }) {
                                                     Image(systemName: "chevron.right")
@@ -147,6 +148,52 @@ struct RegionalView: View {
                                             },
                                             alignment: .topTrailing
                                         )
+                                    
+                                    // Building Live Sessions Section
+                                    if !viewModel.buildingLiveSessions.isEmpty {
+                                        VStack(alignment: .leading, spacing: 16) {
+                                            // Section header 
+                                            HStack {
+                                                Text("LIVE IN THIS BUILDING")
+                                                    .font(.system(size: 14, weight: .bold))
+                                                    .foregroundColor(.white)
+                                                    .padding(.horizontal)
+                                                
+                                                Spacer()
+                                                
+                                                // Pulse indicator for live
+                                                Circle()
+                                                    .fill(Color.green)
+                                                    .frame(width: 6, height: 6)
+                                                    .opacity(viewModel.buildingLiveSessions.isEmpty ? 0 : 1)
+                                                    .animation(
+                                                        Animation.easeInOut(duration: 0.8)
+                                                            .repeatForever(autoreverses: true),
+                                                        value: viewModel.buildingLiveSessions.isEmpty ? 0 : 1
+                                                    )
+                                                    .padding(.trailing)
+                                            }
+                                            
+                                            // Live session cards
+                                            ScrollView(.horizontal, showsIndicators: false) {
+                                                HStack(spacing: 12) {
+                                                    ForEach(viewModel.buildingLiveSessions) { session in
+                                                        // Use LiveSessionCard for all building sessions
+                                                        LiveSessionCard(session: session, isFriend: false)
+                                                            .frame(width: 320)
+                                                    }
+                                                }
+                                                .padding(.horizontal)
+                                            }
+                                        }
+                                        .padding(.vertical, 16)
+                                        .background(
+                                            RoundedRectangle(cornerRadius: 16)
+                                                .fill(Color.black.opacity(0.1))
+                                        )
+                                        .padding(.horizontal)
+                                        .padding(.top, 20)
+                                    }
                                 }
                                 .transition(
                                     .asymmetric(
@@ -344,7 +391,10 @@ struct RegionalView: View {
             case .regionalAllTime: regionalAllTimeViewModel.loadRegionalAllTimeLeaderboard()
             case .globalWeekly: globalWeeklyViewModel.loadGlobalWeeklyLeaderboard()
             case .globalAllTime: globalAllTimeViewModel.loadGlobalAllTimeLeaderboard()
-            default: break
+            default: 
+                // For building, mark it as the building leaderboard type
+                viewModel.setLeaderboardType(true)
+                break
             }
         }
         .background(Theme.regionalGradient.edgesIgnoringSafeArea(.all))  // Load appropriate leaderboard data when switching tabs

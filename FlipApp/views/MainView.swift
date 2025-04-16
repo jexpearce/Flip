@@ -118,6 +118,34 @@ struct MainView: View {
                             Spacer()
                         }
                     }
+                    
+                    // Add Friend Request overlay when a session with a non-friend completes
+                    if appManager.showFriendRequestView, 
+                       let userId = appManager.shouldShowFriendRequestForUserId,
+                       let username = appManager.shouldShowFriendRequestName {
+                        ZStack {
+                            // Semi-transparent background
+                            Color.black.opacity(0.65)
+                                .edgesIgnoringSafeArea(.all)
+                                .onTapGesture {
+                                    // Dismiss when tapping outside
+                                    appManager.showFriendRequestView = false
+                                    appManager.shouldShowFriendRequestForUserId = nil
+                                    appManager.shouldShowFriendRequestName = nil
+                                }
+                            
+                            // Friend request view
+                            FriendRequestView(
+                                username: username,
+                                userId: userId,
+                                isPresented: $appManager.showFriendRequestView
+                            )
+                            .padding(.horizontal, 20)
+                        }
+                        .zIndex(100) // Ensure it appears above everything
+                        .transition(.opacity)
+                        .animation(.easeInOut, value: appManager.showFriendRequestView)
+                    }
                 }
             )
             .toolbarBackground(Theme.deepMidnightPurple, for: .tabBar)
