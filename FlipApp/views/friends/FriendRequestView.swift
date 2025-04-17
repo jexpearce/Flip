@@ -10,24 +10,17 @@ struct FriendRequestView: View {
     @State private var user: FirebaseManager.FlipUser?
     @State private var isLoadingUser = false
     @StateObject private var searchManager = SearchManager()
-    
     var body: some View {
         VStack(spacing: 16) {
             // Header with nice session completion message
             VStack(spacing: 8) {
-                Text("Nice session with")
-                    .font(.system(size: 20, weight: .medium))
+                Text("Nice session with").font(.system(size: 20, weight: .medium))
                     .foregroundColor(.white)
-                
-                Text(username)
-                    .font(.system(size: 28, weight: .bold))
-                    .foregroundColor(.white)
+                Text(username).font(.system(size: 28, weight: .bold)).foregroundColor(.white)
                     .shadow(color: Theme.yellow.opacity(0.5), radius: 6)
             }
             .padding(.top, 12)
-            
             Spacer(minLength: 16)
-            
             // Buttons with nice styling
             VStack(spacing: 14) {
                 Button(action: {
@@ -35,37 +28,30 @@ struct FriendRequestView: View {
                     searchManager.sendFriendRequest(to: userId)
                     isAddingFriend = false
                     requestSucceeded = true
-                            
                     // Show success feedback
                     let generator = UINotificationFeedbackGenerator()
                     generator.notificationOccurred(.success)
-                            
                     // Dismiss after a brief delay
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
-                        isPresented = false
-                    }
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) { isPresented = false }
                 }) {
                     HStack(spacing: 12) {
                         if isAddingFriend {
                             ProgressView()
                                 .progressViewStyle(CircularProgressViewStyle(tint: .white))
                                 .scaleEffect(0.8)
-                        } else if requestSucceeded {
-                            Image(systemName: "checkmark.circle.fill")
-                                .foregroundColor(.white)
-                                .font(.system(size: 20))
-                        } else {
-                            Image(systemName: "person.badge.plus.fill")
-                                .foregroundColor(.white)
+                        }
+                        else if requestSucceeded {
+                            Image(systemName: "checkmark.circle.fill").foregroundColor(.white)
                                 .font(.system(size: 20))
                         }
-                        
+                        else {
+                            Image(systemName: "person.badge.plus.fill").foregroundColor(.white)
+                                .font(.system(size: 20))
+                        }
                         Text(requestSucceeded ? "Friend Request Sent" : "Add Friend")
-                            .font(.system(size: 16, weight: .semibold))
-                            .foregroundColor(.white)
+                            .font(.system(size: 16, weight: .semibold)).foregroundColor(.white)
                     }
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 14)
+                    .frame(maxWidth: .infinity).padding(.vertical, 14)
                     .background(
                         LinearGradient(
                             colors: [Theme.vibrantPurple, Theme.deepPurple],
@@ -77,7 +63,6 @@ struct FriendRequestView: View {
                     .shadow(color: Theme.vibrantPurple.opacity(0.4), radius: 6, x: 0, y: 2)
                 }
                 .disabled(isAddingFriend || requestSucceeded)
-                
                 Button(action: {
                     // Load user details if not already loaded
                     loadUserDetails {
@@ -90,18 +75,15 @@ struct FriendRequestView: View {
                             ProgressView()
                                 .progressViewStyle(CircularProgressViewStyle(tint: .white))
                                 .scaleEffect(0.8)
-                        } else {
-                            Image(systemName: "person.fill")
-                                .foregroundColor(.white)
+                        }
+                        else {
+                            Image(systemName: "person.fill").foregroundColor(.white)
                                 .font(.system(size: 20))
                         }
-                        
-                        Text("View Profile")
-                            .font(.system(size: 16, weight: .semibold))
+                        Text("View Profile").font(.system(size: 16, weight: .semibold))
                             .foregroundColor(.white)
                     }
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 14)
+                    .frame(maxWidth: .infinity).padding(.vertical, 14)
                     .background(
                         LinearGradient(
                             colors: [Theme.blue, Theme.blue800],
@@ -109,41 +91,29 @@ struct FriendRequestView: View {
                             endPoint: .trailing
                         )
                     )
-                    .cornerRadius(12)
-                    .shadow(color: Theme.blue.opacity(0.4), radius: 6, x: 0, y: 2)
+                    .cornerRadius(12).shadow(color: Theme.blue.opacity(0.4), radius: 6, x: 0, y: 2)
                 }
                 .disabled(isLoadingUser)
-                
-                Button(action: {
-                    isPresented = false
-                }) {
-                    Text("Maybe Later")
-                        .font(.system(size: 16, weight: .medium))
-                        .foregroundColor(Color.white.opacity(0.8))
-                        .padding(.vertical, 10)
+                Button(action: { isPresented = false }) {
+                    Text("Maybe Later").font(.system(size: 16, weight: .medium))
+                        .foregroundColor(Color.white.opacity(0.8)).padding(.vertical, 10)
                 }
             }
             .padding(.horizontal, 8)
-            
             Spacer(minLength: 20)
         }
-        .padding(20)
-        .frame(width: min(UIScreen.main.bounds.width - 60, 320))
+        .padding(20).frame(width: min(UIScreen.main.bounds.width - 60, 320))
         .background(
             ZStack {
                 // Gradient background with glass effect
                 RoundedRectangle(cornerRadius: 20)
                     .fill(
                         LinearGradient(
-                            colors: [
-                                Theme.darkBlue.opacity(0.9),
-                                Theme.deepPurple.opacity(0.9)
-                            ],
+                            colors: [Theme.darkBlue.opacity(0.9), Theme.deepPurple.opacity(0.9)],
                             startPoint: .topLeading,
                             endPoint: .bottomTrailing
                         )
                     )
-                
                 // Subtle border
                 RoundedRectangle(cornerRadius: 20)
                     .stroke(
@@ -162,40 +132,35 @@ struct FriendRequestView: View {
             if let userDetails = user {
                 NavigationView {
                     UserProfileView(user: userDetails)
-                        .navigationBarItems(leading: Button(action: {
-                            showProfile = false
-                        }) {
-                            Image(systemName: "xmark")
-                                .foregroundColor(.white)
-                                .padding(8)
-                                .background(Color.black.opacity(0.2))
-                                .clipShape(Circle())
-                        })
+                        .navigationBarItems(
+                            leading: Button(action: { showProfile = false }) {
+                                Image(systemName: "xmark").foregroundColor(.white).padding(8)
+                                    .background(Color.black.opacity(0.2)).clipShape(Circle())
+                            }
+                        )
                 }
                 .accentColor(.white)
             }
         }
     }
-    
     private func loadUserDetails(completion: @escaping () -> Void) {
         // Don't reload if we already have the user
         if user != nil {
             completion()
             return
         }
-        
         isLoadingUser = true
-        FirebaseManager.shared.db.collection("users").document(userId).getDocument { snapshot, error in
-            isLoadingUser = false
-            if let error = error {
-                print("Error loading user details: \(error.localizedDescription)")
-                return
+        FirebaseManager.shared.db.collection("users").document(userId)
+            .getDocument { snapshot, error in
+                isLoadingUser = false
+                if let error = error {
+                    print("Error loading user details: \(error.localizedDescription)")
+                    return
+                }
+                if let userData = try? snapshot?.data(as: FirebaseManager.FlipUser.self) {
+                    self.user = userData
+                    completion()
+                }
             }
-            
-            if let userData = try? snapshot?.data(as: FirebaseManager.FlipUser.self) {
-                self.user = userData
-                completion()
-            }
-        }
     }
-} 
+}

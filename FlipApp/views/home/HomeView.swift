@@ -1,5 +1,5 @@
-import SwiftUI
 import FirebaseAuth
+import SwiftUI
 
 struct HomeView: View {
     @EnvironmentObject var appManager: AppManager
@@ -11,18 +11,13 @@ struct HomeView: View {
     @State private var joinSessionName = ""
     @State private var joinSessionId = ""
     @State private var isJoining = false
-    
     // Add this method to your HomeView struct
     func showCustomJoinPopup() {
         // Get session info from coordinator
-        guard let joinSession = sessionJoinCoordinator.getJoinSession() else {
-            return
-        }
-        
+        guard let joinSession = sessionJoinCoordinator.getJoinSession() else { return }
         // Set the variables needed for the popup
         joinSessionId = joinSession.id
         joinSessionName = joinSession.name
-        
         // Show the popup
         showJoinConfirmation = true
     }
@@ -65,7 +60,11 @@ struct HomeView: View {
             }
         }
         // Add the join session confirmation alert
-        .onReceive(NotificationCenter.default.publisher(for: Notification.Name("ShowLiveSessionJoinConfirmation"))) { _ in
+        .onReceive(
+            NotificationCenter.default.publisher(
+                for: Notification.Name("ShowLiveSessionJoinConfirmation")
+            )
+        ) { _ in
             // Replace the existing code with this:
             showCustomJoinPopup()
         }
@@ -113,9 +112,11 @@ struct HomeView: View {
                             }
                             return
                         }
-                        
                         // Join the session
-                        liveSessionManager.joinSession(sessionId: sessionId) { success, remainingSeconds, totalDuration in
+                        liveSessionManager.joinSession(sessionId: sessionId) {
+                            success,
+                            remainingSeconds,
+                            totalDuration in
                             if success {
                                 // Actually join the live session with proper timing values
                                 DispatchQueue.main.async {

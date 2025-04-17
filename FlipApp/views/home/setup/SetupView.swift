@@ -31,70 +31,75 @@ struct SetupView: View {
                         // Location Button
                         let locationButtonAction = {
                             // Check location permission before showing the popup
-                            if permissionManager.locationAuthStatus == .authorizedWhenInUse || 
-                               permissionManager.locationAuthStatus == .authorizedAlways {
+                            if permissionManager.locationAuthStatus == .authorizedWhenInUse
+                                || permissionManager.locationAuthStatus == .authorizedAlways
+                            {
                                 // If this is the first tap and we don't have a building selected yet,
                                 // automatically find and select the nearest building
-                                if regionalViewModel.shouldPulseBuildingButton && regionalViewModel.selectedBuilding == nil {
+                                if regionalViewModel.shouldPulseBuildingButton
+                                    && regionalViewModel.selectedBuilding == nil
+                                {
                                     regionalViewModel.selectNearestBuilding()
-                                } else {
+                                }
+                                else {
                                     // Otherwise toggle the popup
                                     showLocationSelector.toggle()
                                 }
-                            } else {
+                            }
+                            else {
                                 // Show location permission settings alert if denied
                                 showLocationSettingsAlert = true
                             }
                         }
 
-                        let hasLocationPermission = permissionManager.locationAuthStatus == .authorizedWhenInUse || 
-                                                   permissionManager.locationAuthStatus == .authorizedAlways
+                        let hasLocationPermission =
+                            permissionManager.locationAuthStatus == .authorizedWhenInUse
+                            || permissionManager.locationAuthStatus == .authorizedAlways
                         let shouldPulseBuilding = regionalViewModel.shouldPulseBuildingButton
 
                         Button(action: locationButtonAction) {
                             ZStack {
                                 // Conditionally render appropriate styling based on permission
                                 if hasLocationPermission {
-                                    Circle()
-                                        .fill(Theme.vibrantPurple)
-                                        .frame(width: 35, height: 35)
+                                    Circle().fill(Theme.vibrantPurple).frame(width: 35, height: 35)
                                         .overlay(
-                                            Circle()
-                                                .stroke(Color.white.opacity(0.6), lineWidth: 1)
+                                            Circle().stroke(Color.white.opacity(0.6), lineWidth: 1)
                                         )
                                         .shadow(color: Theme.purpleShadow.opacity(0.3), radius: 4)
                                         .overlay(
-                                            Circle()
-                                                .stroke(Theme.purpleShadow, lineWidth: 2)
+                                            Circle().stroke(Theme.purpleShadow, lineWidth: 2)
                                                 .scaleEffect(shouldPulseBuilding ? 1.3 : 1.0)
                                                 .opacity(shouldPulseBuilding ? 0.6 : 0)
                                                 .animation(
-                                                    shouldPulseBuilding 
-                                                        ? Animation.easeInOut(duration: 1.2).repeatForever(autoreverses: true)
+                                                    shouldPulseBuilding
+                                                        ? Animation.easeInOut(duration: 1.2)
+                                                            .repeatForever(autoreverses: true)
                                                         : .default,
                                                     value: shouldPulseBuilding
                                                 )
                                         )
-                                } else {
-                                    Circle()
-                                        .fill(Color.gray.opacity(0.3))
+                                }
+                                else {
+                                    Circle().fill(Color.gray.opacity(0.3))
                                         .frame(width: 35, height: 35)
                                         .overlay(
-                                            Circle()
-                                                .stroke(Color.gray.opacity(0.2), lineWidth: 1)
+                                            Circle().stroke(Color.gray.opacity(0.2), lineWidth: 1)
                                         )
                                 }
 
                                 Image(systemName: "building.2")
                                     .font(.system(size: 16, weight: .bold))
-                                    .foregroundColor(hasLocationPermission ? .white : .white.opacity(0.5))
+                                    .foregroundColor(
+                                        hasLocationPermission ? .white : .white.opacity(0.5)
+                                    )
                             }
                         }
-                        .padding(.top, 5)
-                        // Listen for changes in location permission
-                        .onReceive(NotificationCenter.default.publisher(for: Notification.Name("locationPermissionChanged"))) { _ in
-                            handleLocationPermissionChange()
-                        }
+                        .padding(.top, 5)  // Listen for changes in location permission
+                        .onReceive(
+                            NotificationCenter.default.publisher(
+                                for: Notification.Name("locationPermissionChanged")
+                            )
+                        ) { _ in handleLocationPermissionChange() }
 
                         Spacer()
 
@@ -160,8 +165,7 @@ struct SetupView: View {
                         showPauseDisabledWarning: $showPauseDisabledWarning,
                         hasShownPauseWarning: $hasShownPauseWarning
                     )
-                    .padding(.horizontal, 20)
-                    .padding(.top, 0)  // Reduced padding
+                    .padding(.horizontal, 20).padding(.top, 0)  // Reduced padding
 
                     // Begin Button with Joining Overlay
                     BeginButtonWithOverlay(
@@ -441,7 +445,7 @@ struct SetupView: View {
                     UIApplication.shared.open(url)
                 }
             }
-            Button("Cancel", role: .cancel) { }
+            Button("Cancel", role: .cancel) {}
         } message: {
             Text("Location access is required to identify and select nearby buildings.")
         }
@@ -450,8 +454,9 @@ struct SetupView: View {
     // Extract complex logic into helper functions
     private func handleLocationPermissionChange() {
         // Start pulsing if we got location permission
-        if permissionManager.locationAuthStatus == .authorizedWhenInUse || 
-           permissionManager.locationAuthStatus == .authorizedAlways {
+        if permissionManager.locationAuthStatus == .authorizedWhenInUse
+            || permissionManager.locationAuthStatus == .authorizedAlways
+        {
             // Don't pulse if the user already selected a building
             if regionalViewModel.selectedBuilding == nil {
                 regionalViewModel.shouldPulseBuildingButton = true
@@ -596,8 +601,7 @@ struct LocationSelectorPopup: View {
 
                 RoundedRectangle(cornerRadius: 16).fill(Color.white.opacity(0.05))
 
-                RoundedRectangle(cornerRadius: 16)
-                    .stroke(Color.white.opacity(0.4), lineWidth: 1)  // Use solid color instead of Theme.silveryGradient4
+                RoundedRectangle(cornerRadius: 16).stroke(Color.white.opacity(0.4), lineWidth: 1)  // Use solid color instead of Theme.silveryGradient4
             }
         )
         .shadow(color: Color.black.opacity(0.15), radius: 4)
@@ -785,13 +789,9 @@ struct CircularTimeView: View {
     @Binding var selectedMinutes: Int
     var isDisabled: Bool = false
     var opacity: Double = 1.0
-    
     var body: some View {
-        CircularTime(selectedMinutes: $selectedMinutes)
-            .padding(.top, -15)
-            .disabled(isDisabled)
-            .opacity(opacity)
-            .frame(height: 280)  // Reduce from 290 to 280
+        CircularTime(selectedMinutes: $selectedMinutes).padding(.top, -15).disabled(isDisabled)
+            .opacity(opacity).frame(height: 280)  // Reduce from 290 to 280
     }
 }
 
@@ -805,15 +805,13 @@ struct ControlsSection: View {
     let pauseDurationLabels: [String]
     @Binding var showPauseDisabledWarning: Bool
     @Binding var hasShownPauseWarning: Bool
-    
     var body: some View {
         VStack(spacing: 12) {  // Reduced spacing
             // Row 1: Allow Pause and # of Pauses in horizontal layout
             HStack(spacing: 12) {
                 // 1. Allow Pause Toggle - Reduced width
                 ControlButton(title: "ALLOW PAUSE") {
-                    Toggle("", isOn: $appManager.allowPauses)
-                        .toggleStyle(ModernToggleStyle())
+                    Toggle("", isOn: $appManager.allowPauses).toggleStyle(ModernToggleStyle())
                         .disabled(joinLiveSessionMode)  // Disable in join mode
                         .onChange(of: appManager.allowPauses) {
                             if !appManager.allowPauses {
@@ -881,7 +879,6 @@ struct BeginButtonWithOverlay: View {
     @ObservedObject var permissionManager: PermissionManager
     let joinLiveSessionMode: Bool
     let showJoiningIndicator: Bool
-    
     var body: some View {
         BeginButton(
             action: {
@@ -908,9 +905,8 @@ struct BeginButtonWithOverlay: View {
         .overlay(
             Group {
                 if joinLiveSessionMode {
-                    Text("JOINING...").font(.system(size: 36, weight: .black))
-                        .tracking(8).foregroundColor(.white)
-                        .shadow(color: Color.green.opacity(0.6), radius: 8)
+                    Text("JOINING...").font(.system(size: 36, weight: .black)).tracking(8)
+                        .foregroundColor(.white).shadow(color: Color.green.opacity(0.6), radius: 8)
                         .opacity(showJoiningIndicator ? 1 : 0)
                 }
             }

@@ -4,32 +4,25 @@ import MapKit
 
 class BuildingIdentificationService {
     static let shared = BuildingIdentificationService()
-    
     // Maximum distance (in meters) to consider a building as "nearby"
     private let maxBuildingDistanceRadius: Double = 150.0
-    
     // Distance in meters that triggers a building update
     private let buildingUpdateDistance: Double = 100.0
-    
     // Check if user has moved far enough from current building to update
     func shouldUpdateBuilding(currentLocation: CLLocation, currentBuilding: BuildingInfo?) -> Bool {
         guard let building = currentBuilding else {
             // If no building is selected, we should definitely update
             return true
         }
-        
         // Calculate distance between current location and building
         let buildingLocation = CLLocation(
             latitude: building.coordinate.latitude,
             longitude: building.coordinate.longitude
         )
-        
         let distance = currentLocation.distance(from: buildingLocation)
-        
         // Return true if the user has moved more than the threshold distance
         return distance > buildingUpdateDistance
     }
-    
     func identifyNearbyBuildings(
         at location: CLLocation,
         completion: @escaping ([MKPlacemark]?, Error?) -> Void
@@ -124,88 +117,83 @@ class BuildingIdentificationService {
                             longitude: placemark.coordinate.longitude
                         )
                         let distance = location.distance(from: placemarkLocation)
-                        
                         if distance <= self.maxBuildingDistanceRadius {
                             uniqueResults.append(placemark)
                             seenNames.insert(name)
                             seenCoordinates.insert(coordKey)
                             print("🏢 Found building: \(name) at distance: \(Int(distance))m")
-                        } else {
-                            print("⚠️ Skipping distant building: \(name) at distance: \(Int(distance))m")
+                        }
+                        else {
+                            print(
+                                "⚠️ Skipping distant building: \(name) at distance: \(Int(distance))m"
+                            )
                         }
                     }
                 }
-                print("🏢 Found \(uniqueResults.count) unique buildings within \(self.maxBuildingDistanceRadius)m")
-                
+                print(
+                    "🏢 Found \(uniqueResults.count) unique buildings within \(self.maxBuildingDistanceRadius)m"
+                )
                 // If no buildings were found within our strict radius, try the main placemark as a fallback
                 if uniqueResults.isEmpty && !allResults.isEmpty {
-                    print("⚠️ No buildings found within strict radius, using main placemark as fallback")
+                    print(
+                        "⚠️ No buildings found within strict radius, using main placemark as fallback"
+                    )
                     uniqueResults = [allResults[0]]
                 }
 
                 // Before sorting, get session counts for each building
                 self.getSessionCountsForBuildings(placemarks: uniqueResults) {
                     buildingsWithCounts in
-                    
                     // First, classify buildings into proximity tiers
-                    let tierSize = self.maxBuildingDistanceRadius / 3 // Create 3 tiers of proximity
-                    
+                    let tierSize = self.maxBuildingDistanceRadius / 3  // Create 3 tiers of proximity
+
                     var tierBuildings: [[(MKPlacemark, Int, Double)]] = [[], [], []]
-                    
                     for building in buildingsWithCounts {
                         let buildingLocation = CLLocation(
                             latitude: building.0.coordinate.latitude,
                             longitude: building.0.coordinate.longitude
                         )
                         let distance = location.distance(from: buildingLocation)
-                        
                         if distance <= tierSize {
                             // Tier 1 - Very close (within 1/3 of max radius)
                             tierBuildings[0].append((building.0, building.1, distance))
-                        } else if distance <= tierSize * 2 {
+                        }
+                        else if distance <= tierSize * 2 {
                             // Tier 2 - Moderately close (within 2/3 of max radius)
                             tierBuildings[1].append((building.0, building.1, distance))
-                        } else {
+                        }
+                        else {
                             // Tier 3 - Farther but still within max radius
                             tierBuildings[2].append((building.0, building.1, distance))
                         }
                     }
-                    
                     // Within each tier, sort by session count first, then by distance
                     for i in 0..<tierBuildings.count {
-                        tierBuildings[i].sort { building1, building2 in
-                            let count1 = building1.1
-                            let count2 = building2.1
-                            
-                            // If session counts vary significantly (more than 5), prioritize count
-                            if abs(count1 - count2) > 5 {
-                                return count1 > count2
+                        tierBuildings[i]
+                            .sort { building1, building2 in
+                                let count1 = building1.1
+                                let count2 = building2.1
+                                // If session counts vary significantly (more than 5), prioritize count
+                                if abs(count1 - count2) > 5 { return count1 > count2 }
+                                // Otherwise, prioritize proximity
+                                return building1.2 < building2.2
                             }
-                            
-                            // Otherwise, prioritize proximity
-                            return building1.2 < building2.2
-                        }
                     }
-                    
                     // Combine tiers into a single sorted list, prioritizing closer tiers
                     let sortedBuildings = tierBuildings[0] + tierBuildings[1] + tierBuildings[2]
-                    
                     // Return just the placemarks, sorted by tier and then by our custom criteria
                     let finalPlacemarks = sortedBuildings.map { $0.0 }
-                    
                     // Debug output for the first few buildings
                     for (i, building) in sortedBuildings.prefix(3).enumerated() {
                         let placemark = building.0
                         let sessionCount = building.1
                         let distance = building.2
-                        
                         let buildingName = self.getBuildingName(from: placemark)
                         let buildingId = String(
                             format: "building-%.6f-%.6f",
                             placemark.coordinate.latitude,
                             placemark.coordinate.longitude
                         )
-                        
                         print(
                             "🏢 Building \(i+1): \(buildingName) - Distance: \(Int(distance))m - Sessions: \(sessionCount) - ID: \(buildingId)"
                         )

@@ -1,5 +1,5 @@
-import SwiftUI
 import FirebaseAuth
+import SwiftUI
 
 struct EnhancedFriendCard: View {
     let friend: FirebaseManager.FlipUser
@@ -20,7 +20,6 @@ struct EnhancedFriendCard: View {
     private var canJoin: Bool {
         // If there's a live session and it has proper values, check if joinable
         guard let session = liveSession else { return false }
-        
         // Make sure remaining seconds is actually populated (could be 0 if not set)
         // We need at least 1 minute to join, not 3 minutes (more permissive)
         return !session.isFull && session.remainingSeconds > 60
@@ -172,34 +171,36 @@ struct EnhancedFriendCard: View {
                             // Show simple join confirmation alert
                             let generator = UIImpactFeedbackGenerator(style: .medium)
                             generator.impactOccurred()
-                            
                             // Prevent joining your own session
-                            if let session = liveSession, session.starterId == Auth.auth().currentUser?.uid {
+                            if let session = liveSession,
+                                session.starterId == Auth.auth().currentUser?.uid
+                            {
                                 print("Cannot join your own session")
                                 let errorGenerator = UINotificationFeedbackGenerator()
                                 errorGenerator.notificationOccurred(.error)
                                 return
                             }
-                            
                             // If first-time user, check if they've completed their first session
                             FirebaseManager.shared.hasCompletedFirstSession { hasCompleted in
                                 if !hasCompleted {
                                     // Show first session required alert
-                                    SessionJoinCoordinator.shared.showFirstSessionRequiredAlert = true
+                                    SessionJoinCoordinator.shared.showFirstSessionRequiredAlert =
+                                        true
                                     return
                                 }
-                                
                                 DispatchQueue.main.async {
                                     // If all validation passes, prepare to join session
                                     if let session = liveSession {
                                         SessionJoinCoordinator.shared.pendingSessionId = session.id
-                                        SessionJoinCoordinator.shared.pendingSessionName = session.starterUsername
+                                        SessionJoinCoordinator.shared.pendingSessionName =
+                                            session.starterUsername
                                         SessionJoinCoordinator.shared.pendingTimestamp = Date()
                                         SessionJoinCoordinator.shared.shouldJoinSession = true
-                                        
                                         // Post notification to show confirmation dialog
                                         NotificationCenter.default.post(
-                                            name: Notification.Name("ShowLiveSessionJoinConfirmation"),
+                                            name: Notification.Name(
+                                                "ShowLiveSessionJoinConfirmation"
+                                            ),
                                             object: nil
                                         )
                                     }
@@ -207,11 +208,12 @@ struct EnhancedFriendCard: View {
                             }
                         }) {
                             Text("JOIN").font(.system(size: 14, weight: .bold)).tracking(1)
-                                .foregroundColor(.white).padding(.vertical, 8).padding(.horizontal, 16)
+                                .foregroundColor(.white).padding(.vertical, 8)
+                                .padding(.horizontal, 16)
                                 .background(
                                     ZStack {
-                                        RoundedRectangle(cornerRadius: 10).fill(Color.green.opacity(0.3))
-                                        
+                                        RoundedRectangle(cornerRadius: 10)
+                                            .fill(Color.green.opacity(0.3))
                                         RoundedRectangle(cornerRadius: 10)
                                             .stroke(Color.green.opacity(0.6), lineWidth: 1)
                                     }
@@ -221,7 +223,8 @@ struct EnhancedFriendCard: View {
                     }
                     else {
                         // Show FULL indicator when session can't be joined
-                        Text(isFull ? "FULL" : "< 1 MIN LEFT").font(.system(size: 14, weight: .bold)).tracking(1)
+                        Text(isFull ? "FULL" : "< 1 MIN LEFT")
+                            .font(.system(size: 14, weight: .bold)).tracking(1)
                             .foregroundColor(.gray).padding(.vertical, 8).padding(.horizontal, 16)
                             .background(
                                 ZStack {

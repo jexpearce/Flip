@@ -150,8 +150,7 @@ class LiveSessionManager: ObservableObject {
             "remainingSeconds": remainingSeconds, "isPaused": isPaused, "allowPauses": allowPauses,
             "maxPauses": maxPauses, "joinTimes": [starterId: Timestamp(date: now)],
             "participantStatus": [starterId: ParticipantStatus.active.rawValue],
-            "lastUpdateTime": Timestamp(date: now),
-            "pauseDuration": pauseDuration
+            "lastUpdateTime": Timestamp(date: now), "pauseDuration": pauseDuration,
         ]
 
         db.collection("live_sessions").document(sessionId)
@@ -348,7 +347,6 @@ class LiveSessionManager: ObservableObject {
             completion(false, 0, 0)
             return
         }
-            
         isJoiningSession = true
 
         // Get the session first with better error handling
@@ -379,13 +377,11 @@ class LiveSessionManager: ObservableObject {
                     completion(false, 0, 0)
                     return
                 }
-                
                 // CRITICAL FIX: Store the starter's username in AppManager
                 DispatchQueue.main.async {
                     AppManager.shared.shouldShowFriendRequestName = sessionData.starterUsername
                     AppManager.shared.originalSessionStarter = sessionData.starterId
                 }
-                
                 // Prevent joining your own session
                 if sessionData.starterId == userId {
                     print("Cannot join your own session - you are the starter")
@@ -404,7 +400,6 @@ class LiveSessionManager: ObservableObject {
                         }
                         return
                     }
-                    
                     // Continue with session joining process since user is allowed
 
                     // FIX: Check if session is too old (last update more than 2 minutes ago)
@@ -416,7 +411,6 @@ class LiveSessionManager: ObservableObject {
                         }
                         return
                     }
-                    
                     // Check if session can be joined
                     if !sessionData.canJoin {
                         print(
@@ -456,10 +450,7 @@ class LiveSessionManager: ObservableObject {
                                 print("Successfully joined session")
 
                                 // IMPROVEMENT: Set the current session immediately to prevent UI lag
-                                DispatchQueue.main.async {
-                                    self.currentJoinedSession = sessionData
-                                }
-                                
+                                DispatchQueue.main.async { self.currentJoinedSession = sessionData }
                                 // Listen for updates to this session
                                 self.listenToJoinedSession(sessionId: sessionId)
 
@@ -467,13 +458,18 @@ class LiveSessionManager: ObservableObject {
                                 // This prevents an additional Firebase call that could fail
                                 DispatchQueue.main.async {
                                     self.isJoiningSession = false
-                                    
                                     // Notify any observers about the join
                                     self.objectWillChange.send()
-                                    NotificationCenter.default.post(name: Notification.Name("LiveSessionJoined"), object: nil)
-                                    
+                                    NotificationCenter.default.post(
+                                        name: Notification.Name("LiveSessionJoined"),
+                                        object: nil
+                                    )
                                     // Return success with the current session data we already have
-                                    completion(true, sessionData.remainingSeconds, sessionData.targetDuration)
+                                    completion(
+                                        true,
+                                        sessionData.remainingSeconds,
+                                        sessionData.targetDuration
+                                    )
                                 }
                             }
                         }
@@ -547,7 +543,6 @@ class LiveSessionManager: ObservableObject {
 
     func listenToJoinedSession(sessionId: String) {
         print("Setting up listener for session: \(sessionId)")
-        
         // Remove any existing listener
         if let existingListener = sessionListeners[sessionId] {
             existingListener.remove()
@@ -561,22 +556,19 @@ class LiveSessionManager: ObservableObject {
                     print("Self reference lost in session listener")
                     return
                 }
-                
                 if let error = error {
                     print("Error listening to session \(sessionId): \(error.localizedDescription)")
                     DispatchQueue.main.async { self.currentJoinedSession = nil }
                     return
                 }
-                
                 guard let document = document, document.exists else {
                     print("Session document no longer exists: \(sessionId)")
-                    DispatchQueue.main.async { 
+                    DispatchQueue.main.async {
                         self.currentJoinedSession = nil
                         self.objectWillChange.send()
                     }
                     return
                 }
-                
                 guard let sessionData = self.parseLiveSessionDocument(document) else {
                     print("Failed to parse session document for \(sessionId)")
                     DispatchQueue.main.async { self.currentJoinedSession = nil }
@@ -607,7 +599,6 @@ class LiveSessionManager: ObservableObject {
         // Update participant status first
         let status: ParticipantStatus = wasSuccessful ? .completed : .failed
         updateParticipantStatus(sessionId: sessionId, userId: userId, status: status)
-        
         print("Setting participant \(userId) status to \(status.rawValue) for session \(sessionId)")
 
         // Check if all participants have completed/failed
@@ -628,23 +619,28 @@ class LiveSessionManager: ObservableObject {
                 // If everyone is done, clean up the session
                 if allCompleted {
                     print("All participants have finished session \(sessionId), scheduling cleanup")
-                    
                     // Session is complete, can be removed after a delay to allow UI views to finish
                     DispatchQueue.main.asyncAfter(deadline: .now() + 10) {
                         print("Removing completed session \(sessionId) from Firestore")
-                        self?.db.collection("live_sessions").document(sessionId).delete { error in
-                            if let error = error {
-                                print("Error deleting completed session: \(error.localizedDescription)")
-                            } else {
-                                print("Successfully deleted completed session \(sessionId)")
+                        self?.db.collection("live_sessions").document(sessionId)
+                            .delete { error in
+                                if let error = error {
+                                    print(
+                                        "Error deleting completed session: \(error.localizedDescription)"
+                                    )
+                                }
+                                else {
+                                    print("Successfully deleted completed session \(sessionId)")
+                                }
                             }
-                        }
                     }
-                } else {
+                }
+                else {
                     print("Some participants still active in session \(sessionId)")
                     // Log who is still active
                     for participantId in sessionData.participants {
-                        let status = sessionData.participantStatus[participantId]?.rawValue ?? "unknown"
+                        let status =
+                            sessionData.participantStatus[participantId]?.rawValue ?? "unknown"
                         print("Participant \(participantId): \(status)")
                     }
                 }
@@ -658,35 +654,33 @@ class LiveSessionManager: ObservableObject {
                     completion(nil)
                     return
                 }
-                
                 if let document = document, document.exists {
                     if let sessionData = self.parseLiveSessionDocument(document) {
                         // Check if the session is valid (has actually started)
                         let data = document.data() ?? [:]
-                        
                         // Check for "isComplete" field that indicates session ended
                         if let isComplete = data["isComplete"] as? Bool, isComplete {
                             print("Session \(sessionId) is marked as complete, cannot join")
                             completion(nil)
                             return
                         }
-                        
                         // Calculate if session has naturally ended based on duration
                         let sessionEndTime = sessionData.startTime.addingTimeInterval(
                             TimeInterval(sessionData.targetDuration * 60)
                         )
                         let isSessionEnded = Date() > sessionEndTime
-                        
                         // Check how old the last update is
-                        let isSessionStale = Date().timeIntervalSince(sessionData.lastUpdateTime) > 60 // Over 1 minute
-                        
+                        let isSessionStale =
+                            Date().timeIntervalSince(sessionData.lastUpdateTime) > 60  // Over 1 minute
+
                         // Check if session ended or is stale
                         if isSessionEnded || isSessionStale || sessionData.remainingSeconds <= 0 {
-                            print("Session \(sessionId) is no longer active: ended=\(isSessionEnded), stale=\(isSessionStale), remaining=\(sessionData.remainingSeconds)")
+                            print(
+                                "Session \(sessionId) is no longer active: ended=\(isSessionEnded), stale=\(isSessionStale), remaining=\(sessionData.remainingSeconds)"
+                            )
                             completion(nil)
                             return
                         }
-                        
                         DispatchQueue.main.async { completion(sessionData) }
                     }
                     else {
@@ -792,14 +786,10 @@ class LiveSessionManager: ObservableObject {
 
     func stopTrackingSession(sessionId: String) {
         print("Explicitly stopping tracking for session: \(sessionId)")
-        
         // Remove the session from active tracking
         activeFriendSessions.removeValue(forKey: sessionId)
-        
         // Reset current joined session if it matches
-        if currentJoinedSession?.id == sessionId {
-            currentJoinedSession = nil
-        }
+        if currentJoinedSession?.id == sessionId { currentJoinedSession = nil }
 
         // Remove any listeners for this session
         if let listener = sessionListeners[sessionId] {
@@ -824,13 +814,9 @@ class LiveSessionManager: ObservableObject {
 
     func cleanupListeners() {
         print("Cleaning up all live session listeners")
-        
         // Remove all session listeners
-        for (_, listener) in sessionListeners {
-            listener.remove()
-        }
+        for (_, listener) in sessionListeners { listener.remove() }
         sessionListeners.removeAll()
-        
         // Reset tracked sessions
         currentJoinedSession = nil
     }
@@ -840,138 +826,113 @@ class LiveSessionManager: ObservableObject {
             completion(false)
             return
         }
-        
         // Always allow if it's your own session
         if starterId == currentUserId {
             completion(true)
             return
         }
-        
         // Get session starter's settings to check if they've restricted sessions to friends
-        db.collection("user_settings").document(starterId).getDocument { document, error in
-            // Default to allowing if there's an error or settings don't exist
-            guard let data = document?.data() else {
-                completion(true)
-                return
-            }
-            
-            // Check if starter has restricted sessions to friends
-            let restrictedToFriends = data["restrictLiveSessionsToFriends"] as? Bool ?? false
-            
-            if restrictedToFriends {
-                // If restricted, check if current user is a friend of the starter
-                self.db.collection("users").document(starterId).getDocument { document, error in
-                    guard let userData = try? document?.data(as: FirebaseManager.FlipUser.self) else {
-                        completion(false)
-                        return
-                    }
-                    
-                    // Allow if current user is in the starter's friends list
-                    let isFriend = userData.friends.contains(currentUserId)
-                    completion(isFriend)
+        db.collection("user_settings").document(starterId)
+            .getDocument { document, error in
+                // Default to allowing if there's an error or settings don't exist
+                guard let data = document?.data() else {
+                    completion(true)
+                    return
                 }
-            } else {
-                // Not restricted, allow anyone to join
-                completion(true)
+                // Check if starter has restricted sessions to friends
+                let restrictedToFriends = data["restrictLiveSessionsToFriends"] as? Bool ?? false
+                if restrictedToFriends {
+                    // If restricted, check if current user is a friend of the starter
+                    self.db.collection("users").document(starterId)
+                        .getDocument { document, error in
+                            guard
+                                let userData = try? document?
+                                    .data(as: FirebaseManager.FlipUser.self)
+                            else {
+                                completion(false)
+                                return
+                            }
+                            // Allow if current user is in the starter's friends list
+                            let isFriend = userData.friends.contains(currentUserId)
+                            completion(isFriend)
+                        }
+                }
+                else {
+                    // Not restricted, allow anyone to join
+                    completion(true)
+                }
             }
-        }
     }
 
     // Method to get live sessions for a specific building
-    func getBuildingLiveSessions(buildingId: String, completion: @escaping ([LiveSessionData]) -> Void) {
+    func getBuildingLiveSessions(
+        buildingId: String,
+        completion: @escaping ([LiveSessionData]) -> Void
+    ) {
         // Prevent retrieving sessions if building ID is empty
         guard !buildingId.isEmpty else {
             completion([])
             return
         }
-        
         // Get current user ID to filter out own sessions
         let currentUserId = Auth.auth().currentUser?.uid
-        
         // Query sessions by building ID
-        let query = db.collection("live_sessions")
-            .whereField("buildingId", isEqualTo: buildingId)
+        let query = db.collection("live_sessions").whereField("buildingId", isEqualTo: buildingId)
             .whereField("status", isEqualTo: "active")
-        
         query.getDocuments { [weak self] snapshot, error in
             guard let self = self else {
                 completion([])
                 return
             }
-            
             if let error = error {
                 print("Error fetching building live sessions: \(error.localizedDescription)")
                 completion([])
                 return
             }
-            
             guard let documents = snapshot?.documents else {
                 completion([])
                 return
             }
-            
             // Parse the session documents
             let sessions = documents.compactMap { document -> LiveSessionData? in
-                guard let session = self.parseLiveSessionDocument(document) else {
-                    return nil
-                }
-                
+                guard let session = self.parseLiveSessionDocument(document) else { return nil }
                 // Skip first-time users' sessions and own sessions
-                if session.starterId == currentUserId {
-                    return nil
-                }
-                
+                if session.starterId == currentUserId { return nil }
                 // Check if session can be joined
-                if !session.canJoin {
-                    return nil
-                }
-                
+                if !session.canJoin { return nil }
                 // Return valid session
                 return session
             }
-            
             print("Found \(sessions.count) live sessions in building \(buildingId)")
-            
             // Sort by start time (most recent first)
             let sortedSessions = sessions.sorted { $0.startTime > $1.startTime }
             completion(sortedSessions)
         }
     }
-    
     // Update session creation to include building information
     func startSession(sessionId: String, appManager: AppManager, building: BuildingInfo?) {
         guard let userId = Auth.auth().currentUser?.uid,
             let username = FirebaseManager.shared.currentUser?.username
         else { return }
-        
         let now = Date()
-        
         // Get values from AppManager
         let targetDuration = appManager.selectedMinutes
-        let remainingSeconds = appManager.remainingSeconds > 0 ? appManager.remainingSeconds : targetDuration * 60
+        let remainingSeconds =
+            appManager.remainingSeconds > 0 ? appManager.remainingSeconds : targetDuration * 60
         let isPaused = appManager.isPaused
         let allowPauses = appManager.allowPauses
         let maxPauses = appManager.maxPauses
         let pauseDuration = appManager.pauseDuration
-        
         // Create base session data
         var sessionData: [String: Any] = [
-            "starterId": userId,
-            "starterUsername": username,
-            "participants": [userId],
-            "startTime": Timestamp(date: now),
-            "targetDuration": targetDuration,
-            "remainingSeconds": remainingSeconds,
-            "isPaused": isPaused,
-            "allowPauses": allowPauses,
-            "maxPauses": maxPauses,
-            "pauseDuration": pauseDuration,
+            "starterId": userId, "starterUsername": username, "participants": [userId],
+            "startTime": Timestamp(date: now), "targetDuration": targetDuration,
+            "remainingSeconds": remainingSeconds, "isPaused": isPaused, "allowPauses": allowPauses,
+            "maxPauses": maxPauses, "pauseDuration": pauseDuration,
             "joinTimes": [userId: Timestamp(date: now)],
             "participantStatus": [userId: ParticipantStatus.active.rawValue],
-            "lastUpdateTime": Timestamp(date: now),
-            "status": "active"
+            "lastUpdateTime": Timestamp(date: now), "status": "active",
         ]
-        
         // Add building information if available
         if let building = building {
             sessionData["buildingId"] = building.id
@@ -979,13 +940,15 @@ class LiveSessionManager: ObservableObject {
             sessionData["buildingLatitude"] = building.coordinate.latitude
             sessionData["buildingLongitude"] = building.coordinate.longitude
         }
-        
         // Create session in Firestore
         db.collection("live_sessions").document(sessionId)
             .setData(sessionData) { error in
                 if let error = error {
-                    print("Error creating live session with building info: \(error.localizedDescription)")
-                } else {
+                    print(
+                        "Error creating live session with building info: \(error.localizedDescription)"
+                    )
+                }
+                else {
                     print("Live session created successfully with building info")
                 }
             }

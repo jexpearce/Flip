@@ -22,7 +22,6 @@ class LocationPermissionManager: NSObject, ObservableObject, CLLocationManagerDe
 
         // Load hasShownCustomAlert from UserDefaults
         hasShownCustomAlert = UserDefaults.standard.bool(forKey: "hasShownLocationAlert")
-        
         // Listen for permission flow start/end
         NotificationCenter.default.addObserver(
             self,
@@ -30,7 +29,6 @@ class LocationPermissionManager: NSObject, ObservableObject, CLLocationManagerDe
             name: NSNotification.Name("ShowPermissionsFlow"),
             object: nil
         )
-        
         NotificationCenter.default.addObserver(
             self,
             selector: #selector(permissionFlowEnded),
@@ -38,14 +36,8 @@ class LocationPermissionManager: NSObject, ObservableObject, CLLocationManagerDe
             object: nil
         )
     }
-    
-    @objc private func permissionFlowStarted() {
-        isInPermissionFlow = true
-    }
-    
-    @objc private func permissionFlowEnded() {
-        isInPermissionFlow = false
-    }
+    @objc private func permissionFlowStarted() { isInPermissionFlow = true }
+    @objc private func permissionFlowEnded() { isInPermissionFlow = false }
 
     func requestPermissionWithCustomAlert() {
         // Skip showing alert if we're already in the permission flow
@@ -54,7 +46,6 @@ class LocationPermissionManager: NSObject, ObservableObject, CLLocationManagerDe
             print("Already in permission flow, skipping duplicate alert")
             return
         }
-        
         // Check if we've already shown the alert and user denied
         if hasShownCustomAlert && authorizationStatus == .denied {
             // Show settings alert instead
@@ -63,11 +54,11 @@ class LocationPermissionManager: NSObject, ObservableObject, CLLocationManagerDe
         }
 
         // Show our enhanced alert first (NotificationCenter will handle it)
-//        NotificationCenter.default.post(
-//            name: NSNotification.Name("ShowEnhancedLocationAlert"),
-//            object: nil
-//        )
-//        showCustomAlert = true
+        //        NotificationCenter.default.post(
+        //            name: NSNotification.Name("ShowEnhancedLocationAlert"),
+        //            object: nil
+        //        )
+        //        showCustomAlert = true
 
         // Mark that we've shown the alert
         hasShownCustomAlert = true

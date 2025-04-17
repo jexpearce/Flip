@@ -209,9 +209,8 @@ struct JoinedCompletionView: View {
                         appManager.handleReturnHome()
                         isButtonPressed = false
                         showSavingIndicator = false
-                        
                         // Call handleReturnHome to show friend request if needed
-                        
+
                     }
                 }) {
                     HStack {

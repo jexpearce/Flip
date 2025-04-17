@@ -1,5 +1,5 @@
-import SwiftUI
 import FirebaseAuth
+import SwiftUI
 
 class SessionJoinCoordinator: ObservableObject {
     // Singleton instance
@@ -11,7 +11,6 @@ class SessionJoinCoordinator: ObservableObject {
     @Published var shouldJoinSession = false
     @Published var pendingTimestamp: Date? = nil  // Track when the request was made for timeout
     @Published var showFirstSessionRequiredAlert = false
-    
     // Add error handling
     @Published var showJoinErrorAlert = false
     @Published var joinErrorMessage = ""
@@ -56,16 +55,12 @@ class SessionJoinCoordinator: ObservableObject {
         }
         return nil
     }
-    
     // Show error when join fails
     func showError(message: String) {
         joinErrorMessage = message
         showJoinErrorAlert = true
-        
         // Auto-dismiss after 3 seconds
-        DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
-            self.showJoinErrorAlert = false
-        }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 3) { self.showJoinErrorAlert = false }
     }
 
     // Start cleanup timer to prevent stale join requests
@@ -83,7 +78,6 @@ class SessionJoinCoordinator: ObservableObject {
         {
             print("Join session request timed out after \(joinTimeout) seconds")
             clearPendingSession()
-            
             // Show error alert
             showError(message: "Join request timed out. Please try again.")
         }

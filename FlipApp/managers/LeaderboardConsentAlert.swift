@@ -115,7 +115,6 @@ struct LeaderboardConsentAlert: View {
                                     }
                                 }
                                 .toggleStyle(SwitchToggleStyle(tint: Theme.darkRed))
-                                
                                 // NEW: Live session privacy toggle
                                 Toggle(isOn: $restrictLiveSessionsToFriends) {
                                     VStack(alignment: .leading, spacing: 2) {
@@ -128,7 +127,6 @@ struct LeaderboardConsentAlert: View {
                                     }
                                 }
                                 .toggleStyle(SwitchToggleStyle(tint: Theme.darkRed))
-                                
                                 // Display Mode Options (if not opted out)
                                 if !regionalOptOut {
                                     VStack(alignment: .leading, spacing: 10) {
@@ -204,7 +202,9 @@ struct LeaderboardConsentAlert: View {
                             userSettings.setRegionalOptOut(regionalOptOut)
                             userSettings.setRegionalDisplayMode(regionalDisplayMode)
                             // NEW: Save the live session privacy setting
-                            userSettings.setRestrictLiveSessionsToFriends(restrictLiveSessionsToFriends)
+                            userSettings.setRestrictLiveSessionsToFriends(
+                                restrictLiveSessionsToFriends
+                            )
                             // Grant consent
                             consentManager.setConsent(granted: true)
                             // Dismiss

@@ -198,9 +198,8 @@ struct MixedOutcomeView: View {
                         appManager.currentState = .initial
                         appManager.handleReturnHome()
                         isButtonPressed = false
-                        
                         // Call handleReturnHome to show friend request if needed
-                        
+
                     }
                 }) {
                     Text("RETURN HOME").font(.system(size: 18, weight: .black)).tracking(2)

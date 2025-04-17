@@ -186,29 +186,26 @@ struct FeedSessionCard: View {
                         .shadow(color: statusGlow.opacity(0.4), radius: 4)
 
                     // Add description text
-                    Text(groupSessionDescription)
-                        .font(.system(size: 11))
-                        .foregroundColor(.white.opacity(0.7))
-                        .padding(.bottom, 4)
+                    Text(groupSessionDescription).font(.system(size: 11))
+                        .foregroundColor(.white.opacity(0.7)).padding(.bottom, 4)
 
                     // Horizontal scrolling participant badges
                     ScrollView(.horizontal, showsIndicators: false) {
                         HStack(spacing: 8) {
                             // First show the current user (session owner)
-                            NavigationLink(
-                                destination: UserProfileLoader(userId: session.userId)
-                            ) {
+                            NavigationLink(destination: UserProfileLoader(userId: session.userId)) {
                                 GroupParticipantBadge(
                                     username: viewModel.users[session.userId]?.username ?? "You",
                                     status: session.wasSuccessful ? "completed" : "failed"
                                 )
                             }
                             .buttonStyle(PlainButtonStyle())
-                            
                             // Then show the session starter if different from current user
-                            if let originalStarterId = session.originalStarterId, session.userId != originalStarterId {
-                                let starterName = viewModel.users[originalStarterId]?.username ?? "Host"
-                                
+                            if let originalStarterId = session.originalStarterId,
+                                session.userId != originalStarterId
+                            {
+                                let starterName =
+                                    viewModel.users[originalStarterId]?.username ?? "Host"
                                 NavigationLink(
                                     destination: UserProfileLoader(userId: originalStarterId)
                                 ) {
@@ -219,16 +216,18 @@ struct FeedSessionCard: View {
                                 }
                                 .buttonStyle(PlainButtonStyle())
                             }
-                            
                             // Show all participants with status
                             ForEach(session.participants ?? [], id: \.userId) { participant in
                                 // Skip if this is already the main user or original starter displayed above
-                                if participant.userId != session.userId && participant.userId != session.originalStarterId {
+                                if participant.userId != session.userId
+                                    && participant.userId != session.originalStarterId
+                                {
                                     NavigationLink(
                                         destination: UserProfileLoader(userId: participant.userId)
                                     ) {
                                         GroupParticipantBadge(
-                                            username: viewModel.users[participant.userId]?.username ?? "User",
+                                            username: viewModel.users[participant.userId]?.username
+                                                ?? "User",
                                             status: participant.status
                                         )
                                     }
@@ -463,17 +462,18 @@ struct FeedSessionCard: View {
     // Group session title that shows who started it
     private var groupSessionTitle: String {
         let username = viewModel.users[session.userId]?.username ?? "User"
-        
         if let originalStarterId = session.originalStarterId {
             if originalStarterId == session.userId {
                 // This person started the session
                 return "GROUP SESSION STARTER"
-            } else {
+            }
+            else {
                 // This person joined someone else's session
                 let starterName = viewModel.users[originalStarterId]?.username ?? "User"
                 return "JOINED \(starterName.uppercased())'S SESSION"
             }
-        } else {
+        }
+        else {
             // Fallback if originalStarterId is not available
             return "GROUP SESSION"
         }
@@ -482,17 +482,18 @@ struct FeedSessionCard: View {
     // Group session description below the title
     private var groupSessionDescription: String {
         let username = viewModel.users[session.userId]?.username ?? "User"
-        
         if let originalStarterId = session.originalStarterId {
             if originalStarterId == session.userId {
                 // This person started the session
                 return "Started a group session"
-            } else {
+            }
+            else {
                 // This person joined someone else's session
                 let starterName = viewModel.users[originalStarterId]?.username ?? "Someone"
                 return "Joined \(starterName)'s session"
             }
-        } else {
+        }
+        else {
             // Fallback if originalStarterId is not available
             return "Participated in a group session"
         }
@@ -587,18 +588,14 @@ struct FeedSessionCard: View {
         // First check if the participant is in the participants array
         if let participants = session.participants {
             for participant in participants {
-                if participant.userId == userId {
-                    return participant.status
-                }
+                if participant.userId == userId { return participant.status }
             }
         }
-        
         // If this is the session creator but they're not in participants
         if userId == session.originalStarterId {
             // Assume active unless we know better
             return "active"
         }
-        
         // Default to nil if we can't determine status
         return nil
     }
@@ -606,14 +603,12 @@ struct FeedSessionCard: View {
 // Enhanced individual participant badge
 struct GroupParticipantBadge: View {
     let username: String
-    let status: String? // "completed", "failed", "active" or nil
-    
+    let status: String?  // "completed", "failed", "active" or nil
+
     var body: some View {
         HStack(spacing: 6) {
             // Status indicator with improved styling
-            statusIcon
-                .font(.system(size: 12, weight: .semibold))
-                .foregroundColor(statusColor)
+            statusIcon.font(.system(size: 12, weight: .semibold)).foregroundColor(statusColor)
                 .shadow(color: statusColor.opacity(0.6), radius: 4)
 
             Text(username).font(.system(size: 12, weight: .medium)).foregroundColor(.white)
@@ -635,39 +630,31 @@ struct GroupParticipantBadge: View {
         )
         .shadow(color: Color.black.opacity(0.15), radius: 4)
     }
-    
     // Determine the appropriate icon based on status
     private var statusIcon: Image {
         if let status = status {
             switch status {
-            case "completed":
-                return Image(systemName: "checkmark.circle.fill")
-            case "failed":
-                return Image(systemName: "xmark.circle.fill")
-            case "active":
-                return Image(systemName: "clock.fill")
-            default:
-                return Image(systemName: "person.circle.fill")
+            case "completed": return Image(systemName: "checkmark.circle.fill")
+            case "failed": return Image(systemName: "xmark.circle.fill")
+            case "active": return Image(systemName: "clock.fill")
+            default: return Image(systemName: "person.circle.fill")
             }
-        } else {
+        }
+        else {
             return Image(systemName: "person.circle.fill")
         }
     }
-    
     // Determine the appropriate color based on status
     private var statusColor: Color {
         if let status = status {
             switch status {
-            case "completed":
-                return Theme.mutedGreen
-            case "failed":
-                return Theme.mutedRed
-            case "active":
-                return Color.blue
-            default:
-                return Color.gray
+            case "completed": return Theme.mutedGreen
+            case "failed": return Theme.mutedRed
+            case "active": return Color.blue
+            default: return Color.gray
             }
-        } else {
+        }
+        else {
             return Color.gray
         }
     }

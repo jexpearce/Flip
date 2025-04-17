@@ -90,7 +90,6 @@ struct RegionalPrivacySheet: View {
                             )
                     )
                     .padding(.horizontal)
-                    
                     // NEW: Live Session Privacy Toggle
                     VStack(alignment: .leading, spacing: 10) {
                         HStack {
@@ -102,7 +101,9 @@ struct RegionalPrivacySheet: View {
                             Toggle("", isOn: $restrictLiveSessionsToFriends)
                                 .toggleStyle(SwitchToggleStyle(tint: redAccent))
                                 .onChange(of: restrictLiveSessionsToFriends) {
-                                    userSettings.setRestrictLiveSessionsToFriends(restrictLiveSessionsToFriends)
+                                    userSettings.setRestrictLiveSessionsToFriends(
+                                        restrictLiveSessionsToFriends
+                                    )
                                 }
                         }
 

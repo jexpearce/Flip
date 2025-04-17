@@ -23,13 +23,11 @@ class RegionalViewModel: NSObject, ObservableObject, CLLocationManagerDelegate {
     override init() {
         super.init()
         setupLocationManager()
-        
         // Check if we should start pulsing the building button
-        if PermissionManager.shared.locationAuthStatus == .authorizedWhenInUse || 
-           PermissionManager.shared.locationAuthStatus == .authorizedAlways {
-            if selectedBuilding == nil {
-                shouldPulseBuildingButton = true
-            }
+        if PermissionManager.shared.locationAuthStatus == .authorizedWhenInUse
+            || PermissionManager.shared.locationAuthStatus == .authorizedAlways
+        {
+            if selectedBuilding == nil { shouldPulseBuildingButton = true }
         }
     }
 
@@ -83,7 +81,9 @@ class RegionalViewModel: NSObject, ObservableObject, CLLocationManagerDelegate {
                 currentLocation: location,
                 currentBuilding: building
             ) {
-                print("User has moved significantly from current building, checking for new buildings...")
+                print(
+                    "User has moved significantly from current building, checking for new buildings..."
+                )
                 // Instead of showing building selection, automatically find and select the new building
                 BuildingIdentificationService.shared.identifyNearbyBuildings(at: location) {
                     [weak self] buildings, error in
@@ -127,7 +127,6 @@ class RegionalViewModel: NSObject, ObservableObject, CLLocationManagerDelegate {
         guard let location = locations.last else { return }
         self.currentLocation = location
         print("Location update received in RegionalViewModel: \(location.coordinate)")
-        
         // Check if we need to update the building based on the new location
         if let building = selectedBuilding {
             if BuildingIdentificationService.shared.shouldUpdateBuilding(
@@ -135,9 +134,7 @@ class RegionalViewModel: NSObject, ObservableObject, CLLocationManagerDelegate {
                 currentBuilding: building
             ) {
                 print("Location update shows significant movement - refreshing building")
-                Task { @MainActor in
-                    self.refreshCurrentBuilding()
-                }
+                Task { @MainActor in self.refreshCurrentBuilding() }
             }
         }
     }
@@ -320,7 +317,6 @@ class RegionalViewModel: NSObject, ObservableObject, CLLocationManagerDelegate {
             .document("currentBuilding")
             .getDocument { [weak self] document, error in
                 guard let self = self else { return }
-                
                 if let data = document?.data(), let id = data["id"] as? String,
                     let name = data["name"] as? String, let latitude = data["latitude"] as? Double,
                     let longitude = data["longitude"] as? Double
@@ -333,7 +329,6 @@ class RegionalViewModel: NSObject, ObservableObject, CLLocationManagerDelegate {
 
                     DispatchQueue.main.async {
                         self.selectedBuilding = building
-                        
                         // Check if we should update the building based on current location
                         let currentLocation = LocationHandler.shared.lastLocation
                         if currentLocation.horizontalAccuracy > 0 {
@@ -341,13 +336,17 @@ class RegionalViewModel: NSObject, ObservableObject, CLLocationManagerDelegate {
                                 currentLocation: currentLocation,
                                 currentBuilding: building
                             ) {
-                                print("Current location differs significantly from saved building - refreshing")
+                                print(
+                                    "Current location differs significantly from saved building - refreshing"
+                                )
                                 self.refreshCurrentBuilding()
-                            } else {
+                            }
+                            else {
                                 // Only load leaderboard if user has completed sessions
                                 self.loadNearbyUsers()
                             }
-                        } else {
+                        }
+                        else {
                             // If we don't have an accurate location yet, just load with the existing building
                             self.loadNearbyUsers()
                         }
@@ -393,26 +392,28 @@ class RegionalViewModel: NSObject, ObservableObject, CLLocationManagerDelegate {
         if selectedBuilding == nil {
             isRefreshing = true
             var location: CLLocation
-            
             // Get the most accurate location available
             let lastLocation = LocationHandler.shared.lastLocation
-            
             if lastLocation.horizontalAccuracy > 0 {
                 location = lastLocation
-            } else if let managerLocation = currentLocation, managerLocation.horizontalAccuracy > 0 {
+            }
+            else if let managerLocation = currentLocation, managerLocation.horizontalAccuracy > 0 {
                 location = managerLocation
-            } else {
+            }
+            else {
                 // If we don't have an accurate location, use a fallback
                 isRefreshing = false
                 return
             }
-            
-            BuildingIdentificationService.shared.identifyNearbyBuildings(at: location) { [weak self] buildings, error in
+            BuildingIdentificationService.shared.identifyNearbyBuildings(at: location) {
+                [weak self] buildings, error in
                 guard let self = self else { return }
                 DispatchQueue.main.async {
                     if let buildings = buildings, !buildings.isEmpty {
                         // Automatically select the first building
-                        let buildingName = BuildingIdentificationService.shared.getBuildingName(from: buildings[0])
+                        let buildingName = BuildingIdentificationService.shared.getBuildingName(
+                            from: buildings[0]
+                        )
                         let buildingInfo = BuildingInfo(
                             id: "",  // The BuildingInfo init will standardize this
                             name: buildingName,
@@ -425,7 +426,8 @@ class RegionalViewModel: NSObject, ObservableObject, CLLocationManagerDelegate {
                     self.isRefreshing = false
                 }
             }
-        } else {
+        }
+        else {
             // If we already have a building, just stop pulsing
             shouldPulseBuildingButton = false
         }
@@ -437,8 +439,8 @@ class RegionalViewModel: NSObject, ObservableObject, CLLocationManagerDelegate {
             buildingLiveSessions = []
             return
         }
-        
-        LiveSessionManager.shared.getBuildingLiveSessions(buildingId: building.id) { [weak self] sessions in
+        LiveSessionManager.shared.getBuildingLiveSessions(buildingId: building.id) {
+            [weak self] sessions in
             guard let self = self else { return }
             DispatchQueue.main.async {
                 self.buildingLiveSessions = sessions
@@ -446,20 +448,18 @@ class RegionalViewModel: NSObject, ObservableObject, CLLocationManagerDelegate {
             }
         }
     }
-    
     // Method to set the active leaderboard type
     func setLeaderboardType(_ isBuilding: Bool) {
         self.isBuildingLeaderboard = isBuilding
-        
         // Clear building sessions when not viewing building leaderboard
         if !isBuilding {
             self.buildingLiveSessions = []
-        } else if let building = selectedBuilding {
+        }
+        else if let building = selectedBuilding {
             // Reload building sessions when switching back to building leaderboard
             self.loadBuildingLiveSessions(building: building)
         }
     }
-    
     // Helper method to start a session with the current building information
     func startSessionWithBuilding(sessionId: String, appManager: AppManager) {
         if let building = selectedBuilding {
@@ -470,9 +470,13 @@ class RegionalViewModel: NSObject, ObservableObject, CLLocationManagerDelegate {
                 building: building
             )
             print("Started session with building context: \(building.name) [\(building.id)]")
-        } else {
+        }
+        else {
             // No building selected, start without building context
-            LiveSessionManager.shared.broadcastSessionState(sessionId: sessionId, appManager: appManager)
+            LiveSessionManager.shared.broadcastSessionState(
+                sessionId: sessionId,
+                appManager: appManager
+            )
             print("Started session without building context")
         }
     }

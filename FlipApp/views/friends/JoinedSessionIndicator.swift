@@ -27,19 +27,15 @@ struct JoinedSessionIndicator: View {
             let seconds = appManager.remainingSeconds % 60
             return String(format: "%d:%02d", minutes, 60 - seconds)
         }
-        
         // Otherwise use session data if available
-        guard let session = joinedSession else {
-            return "0:00"
-        }
+        guard let session = joinedSession else { return "0:00" }
 
         let baseElapsed = session.elapsedSeconds
-        
         // Calculate time since last update
         let timeSinceLast = Int(Date().timeIntervalSince(lastUpdateTime))
-        
         // Add the timer elapsed seconds plus compensation for time since last update
-        let adjustedElapsed = session.isPaused ? baseElapsed : baseElapsed + elapsedSeconds + timeSinceLast
+        let adjustedElapsed =
+            session.isPaused ? baseElapsed : baseElapsed + elapsedSeconds + timeSinceLast
 
         let minutes = adjustedElapsed / 60
         let seconds = adjustedElapsed % 60
@@ -111,7 +107,9 @@ struct JoinedSessionIndicator: View {
                 lastUpdateTime = Date()
                 if !appManager.isPaused { startTimer() }
             }
-            .onReceive(NotificationCenter.default.publisher(for: Notification.Name("RefreshLiveSessions"))) { _ in
+            .onReceive(
+                NotificationCenter.default.publisher(for: Notification.Name("RefreshLiveSessions"))
+            ) { _ in
                 // Update last update time when we get fresh session data
                 lastUpdateTime = Date()
             }

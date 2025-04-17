@@ -53,11 +53,10 @@ struct MapView: View {
     @Environment(\.presentationMode) var presentationMode
     @StateObject private var permissionManager = PermissionManager.shared
     @State private var showLocationSettingsAlert = false
-    
     // Helper to check if location permission is granted
     private var hasLocationPermission: Bool {
-        permissionManager.locationAuthStatus == .authorizedWhenInUse || 
-        permissionManager.locationAuthStatus == .authorizedAlways
+        permissionManager.locationAuthStatus == .authorizedWhenInUse
+            || permissionManager.locationAuthStatus == .authorizedAlways
     }
 
     var body: some View {
@@ -74,27 +73,29 @@ struct MapView: View {
                         .onTapGesture { withAnimation(.spring()) { selectedFriend = friend } }
                 }
             }
-            .mapStyle(mapStyle == .standard ? .standard : .hybrid)
-            .preferredColorScheme(.dark)  // Force dark mode for map
+            .mapStyle(mapStyle == .standard ? .standard : .hybrid).preferredColorScheme(.dark)  // Force dark mode for map
             .edgesIgnoringSafeArea(.all)
             .onAppear {
                 // Check location permissions when view appears
                 if !hasLocationPermission {
                     // If location is disabled, dismiss the view
                     presentationMode.wrappedValue.dismiss()
-                } else {
+                }
+                else {
                     // Only start tracking and refresh if we have permission
                     viewModel.startLocationTracking()
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) { 
-                        viewModel.refreshLocations() 
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                        viewModel.refreshLocations()
                     }
                 }
             }
-            .onReceive(NotificationCenter.default.publisher(for: Notification.Name("locationPermissionChanged"))) { _ in
+            .onReceive(
+                NotificationCenter.default.publisher(
+                    for: Notification.Name("locationPermissionChanged")
+                )
+            ) { _ in
                 // If location permission is revoked, dismiss the view
-                if !hasLocationPermission {
-                    presentationMode.wrappedValue.dismiss()
-                }
+                if !hasLocationPermission { presentationMode.wrappedValue.dismiss() }
             }
 
             // Back button overlay
@@ -349,9 +350,7 @@ struct MapView: View {
                     presentationMode.wrappedValue.dismiss()
                 }
             }
-            Button("Go Back", role: .cancel) { 
-                presentationMode.wrappedValue.dismiss()
-            }
+            Button("Go Back", role: .cancel) { presentationMode.wrappedValue.dismiss() }
         } message: {
             Text("Location access is required to show and update your position on the map.")
         }

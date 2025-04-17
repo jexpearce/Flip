@@ -15,7 +15,6 @@ class MapViewModel: NSObject, ObservableObject, CLLocationManagerDelegate {
 
     @Published var refreshInProgress = false
     private var lastRefreshTime = Date().timeIntervalSince1970 - 60
-    
     // property to track the last time we updated location in Firebase for map display every 5 min
     private var lastLocationUpdateForMap = Date().timeIntervalSince1970 - 300  // Initialize to trigger first update
 
@@ -556,15 +555,16 @@ class MapViewModel: NSObject, ObservableObject, CLLocationManagerDelegate {
         if isInRelevantState {
             // CHANGE: Only update Firebase every 5 minutes (300 seconds) for map display
             let currentTime = Date().timeIntervalSince1970
-            let shouldUpdateMap = currentTime - lastLocationUpdateForMap >= 300 // 5 minutes
-            
+            let shouldUpdateMap = currentTime - lastLocationUpdateForMap >= 300  // 5 minutes
+
             // Early return if not time to update map yet
             if !shouldUpdateMap {
                 // Still continue tracking internally but don't update Firebase
-                print("📍 Skipping Firebase location update - next update in \(Int(300 - (currentTime - lastLocationUpdateForMap))) seconds")
+                print(
+                    "📍 Skipping Firebase location update - next update in \(Int(300 - (currentTime - lastLocationUpdateForMap))) seconds"
+                )
                 return
             }
-            
             // Mark this time as the last update time for the map
             lastLocationUpdateForMap = currentTime
             print("📍 Updating location in Firebase for map display")

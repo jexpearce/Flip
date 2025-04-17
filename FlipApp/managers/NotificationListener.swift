@@ -66,23 +66,23 @@ class NotificationListener {
         }
 
         // Only request permission if not locked in permission flow
-//        if !PermissionManager.shared.isPermissionLocked() {
-//            // Request notification permission if needed
-//            UNUserNotificationCenter.current()
-//                .requestAuthorization(options: [.alert, .sound, .badge]) { granted, error in
-//                    if granted {
-//                        print("Notification permission granted")
-//                    }
-//                    else if let error = error {
-//                        print(
-//                            "Error requesting notification permission: \(error.localizedDescription)"
-//                        )
-//                    }
-//                }
-//        }
-//        else {
-//            print("⏸️ Notification permission request deferred - permission flow in progress")
-//        }
+        //        if !PermissionManager.shared.isPermissionLocked() {
+        //            // Request notification permission if needed
+        //            UNUserNotificationCenter.current()
+        //                .requestAuthorization(options: [.alert, .sound, .badge]) { granted, error in
+        //                    if granted {
+        //                        print("Notification permission granted")
+        //                    }
+        //                    else if let error = error {
+        //                        print(
+        //                            "Error requesting notification permission: \(error.localizedDescription)"
+        //                        )
+        //                    }
+        //                }
+        //        }
+        //        else {
+        //            print("⏸️ Notification permission request deferred - permission flow in progress")
+        //        }
 
         // Stop any existing listener
         stopListening()

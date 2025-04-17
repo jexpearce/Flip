@@ -24,7 +24,6 @@ struct RegionalView: View {
     @StateObject private var globalAllTimeViewModel = GlobalAllTimeLeaderboardViewModel()
     @StateObject private var leaderboardConsentManager = LeaderboardConsentManager.shared
     @State private var showLeaderboardConsent = false
-    
     // New state variables for session joining functionality
     @State private var showAvailableSessionsSheet = false
     @State private var pulsingCircle = false
@@ -98,9 +97,11 @@ struct RegionalView: View {
                                     hasPermission in
                                     if hasPermission {
                                         viewModel.startBuildingIdentification()
-                                    } else {
+                                    }
+                                    else {
                                         // If location is disabled, show alert and redirect to setup
-                                        if locationPermissionManager.authorizationStatus == .denied {
+                                        if locationPermissionManager.authorizationStatus == .denied
+                                        {
                                             viewRouter.navigateToHome()
                                         }
                                     }
@@ -112,9 +113,11 @@ struct RegionalView: View {
                                     hasPermission in
                                     if hasPermission {
                                         viewModel.refreshCurrentBuilding()
-                                    } else {
+                                    }
+                                    else {
                                         // If location is disabled, show alert and redirect to setup
-                                        if locationPermissionManager.authorizationStatus == .denied {
+                                        if locationPermissionManager.authorizationStatus == .denied
+                                        {
                                             viewRouter.navigateToHome()
                                         }
                                     }
@@ -226,15 +229,12 @@ struct RegionalView: View {
                         if !viewModel.buildingLiveSessions.isEmpty {
                             VStack {
                                 Button(action: {
-                                    withAnimation {
-                                        showAvailableSessionsSheet = true
-                                    }
+                                    withAnimation { showAvailableSessionsSheet = true }
                                 }) {
                                     HStack(spacing: 12) {
                                         // Pulsing circle with person icon
                                         ZStack {
-                                            Circle()
-                                                .fill(Theme.lightTealBlue.opacity(0.3))
+                                            Circle().fill(Theme.lightTealBlue.opacity(0.3))
                                                 .frame(width: 42, height: 42)
                                                 .scaleEffect(pulsingCircle ? 1.1 : 1.0)
                                                 .animation(
@@ -242,50 +242,46 @@ struct RegionalView: View {
                                                         .repeatForever(autoreverses: true),
                                                     value: pulsingCircle
                                                 )
-                                            
-                                            Circle()
-                                                .fill(Color.clear)
-                                                .frame(width: 42, height: 42)
+                                            Circle().fill(Color.clear).frame(width: 42, height: 42)
                                                 .overlay(
                                                     Circle()
-                                                        .stroke(Theme.lightTealBlue.opacity(0.6), lineWidth: 1.5)
+                                                        .stroke(
+                                                            Theme.lightTealBlue.opacity(0.6),
+                                                            lineWidth: 1.5
+                                                        )
                                                 )
-                                            
                                             Image(systemName: "person.2.fill")
                                                 .font(.system(size: 18, weight: .semibold))
                                                 .foregroundColor(.white)
                                         }
-                                        
                                         VStack(alignment: .leading, spacing: 2) {
                                             Text("JOIN LIVE SESSIONS")
-                                                .font(.system(size: 16, weight: .bold))
-                                                .tracking(1)
+                                                .font(.system(size: 16, weight: .bold)).tracking(1)
                                                 .foregroundColor(.white)
-                                            
-                                            Text("\(viewModel.buildingLiveSessions.count) available")
-                                                .font(.system(size: 12))
-                                                .foregroundColor(.white.opacity(0.7))
+                                            Text(
+                                                "\(viewModel.buildingLiveSessions.count) available"
+                                            )
+                                            .font(.system(size: 12))
+                                            .foregroundColor(.white.opacity(0.7))
                                         }
-                                        
                                         Spacer()
-                                        
                                         // Badge with count
                                         Text("\(viewModel.buildingLiveSessions.count)")
                                             .font(.system(size: 14, weight: .bold))
-                                            .foregroundColor(.white)
-                                            .padding(.horizontal, 10)
+                                            .foregroundColor(.white).padding(.horizontal, 10)
                                             .padding(.vertical, 6)
                                             .background(
-                                                Capsule()
-                                                    .fill(Theme.lightTealBlue.opacity(0.3))
+                                                Capsule().fill(Theme.lightTealBlue.opacity(0.3))
                                                     .overlay(
                                                         Capsule()
-                                                            .stroke(Theme.lightTealBlue.opacity(0.5), lineWidth: 1)
+                                                            .stroke(
+                                                                Theme.lightTealBlue.opacity(0.5),
+                                                                lineWidth: 1
+                                                            )
                                                     )
                                             )
                                     }
-                                    .padding(.vertical, 12)
-                                    .padding(.horizontal, 16)
+                                    .padding(.vertical, 12).padding(.horizontal, 16)
                                     .background(
                                         ZStack {
                                             RoundedRectangle(cornerRadius: 16)
@@ -293,22 +289,20 @@ struct RegionalView: View {
                                                     LinearGradient(
                                                         colors: [
                                                             Theme.darkBlue.opacity(0.8),
-                                                            Theme.deepMidnightPurple.opacity(0.8)
+                                                            Theme.deepMidnightPurple.opacity(0.8),
                                                         ],
                                                         startPoint: .topLeading,
                                                         endPoint: .bottomTrailing
                                                     )
                                                 )
-                                            
                                             RoundedRectangle(cornerRadius: 16)
                                                 .fill(Color.white.opacity(0.05))
-                                            
                                             RoundedRectangle(cornerRadius: 16)
                                                 .stroke(
                                                     LinearGradient(
                                                         colors: [
                                                             Theme.lightTealBlue.opacity(0.6),
-                                                            Theme.lightTealBlue.opacity(0.2)
+                                                            Theme.lightTealBlue.opacity(0.2),
                                                         ],
                                                         startPoint: .topLeading,
                                                         endPoint: .bottomTrailing
@@ -319,13 +313,10 @@ struct RegionalView: View {
                                     )
                                     .shadow(color: Theme.lightTealBlue.opacity(0.3), radius: 8)
                                 }
-                                .padding(.horizontal, 20)
-                                .padding(.bottom, 20)
+                                .padding(.horizontal, 20).padding(.bottom, 20)
                                 .onAppear {
                                     // Start the pulsing animation when the button appears
-                                    withAnimation {
-                                        pulsingCircle = true
-                                    }
+                                    withAnimation { pulsingCircle = true }
                                 }
                             }
                         }
@@ -336,7 +327,8 @@ struct RegionalView: View {
                             locationPermissionManager.checkRegionalAvailability { hasPermission in
                                 if hasPermission {
                                     showMapView()
-                                } else {
+                                }
+                                else {
                                     // If location is disabled, show alert and redirect to setup
                                     if locationPermissionManager.authorizationStatus == .denied {
                                         viewRouter.navigateToHome()
@@ -415,12 +407,15 @@ struct RegionalView: View {
                         .animation(.easeInOut, value: currentLeaderboard)
 
                         // Add alert for when location is disabled
-                        .alert("Location Access Required", isPresented: $locationPermissionManager.showLocationDisabledAlert) {
-                            Button("OK") {
-                                viewRouter.navigateToHome()
-                            }
+                        .alert(
+                            "Location Access Required",
+                            isPresented: $locationPermissionManager.showLocationDisabledAlert
+                        ) {
+                            Button("OK") { viewRouter.navigateToHome() }
                         } message: {
-                            Text("Location access is required for this feature. Please enable location access in your device settings.")
+                            Text(
+                                "Location access is required for this feature. Please enable location access in your device settings."
+                            )
                         }
                     }
                     .padding(.bottom, 20)  // Add padding to ensure content is not cut off
@@ -540,7 +535,6 @@ struct RegionalView: View {
         DispatchQueue.global(qos: .userInitiated)
             .async {
                 let status = CLLocationManager().authorizationStatus
-                
                 // Instead of showing another custom alert, just let the system
                 // handle it if needed, or do nothing and let InitialView handle it
                 if status == .notDetermined {

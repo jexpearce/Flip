@@ -225,7 +225,8 @@ class PermissionManager: NSObject, ObservableObject {
                 name: NSNotification.Name("ShowEnhancedLocationAlert"),
                 object: nil
             )
-        } else {
+        }
+        else {
             // If denied, just proceed to motion flow
             startMotionFlow()
         }
@@ -255,7 +256,8 @@ class PermissionManager: NSObject, ObservableObject {
                 // Request the actual system permission
                 self.locationManager.requestWhenInUseAuthorization()
             }
-        } else {
+        }
+        else {
             // If not notDetermined, proceed to motion flow
             startMotionFlow()
         }

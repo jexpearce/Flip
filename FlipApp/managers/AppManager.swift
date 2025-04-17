@@ -31,7 +31,6 @@ class AppManager: NSObject, ObservableObject {
     @Published var isPauseTimerActive = false  // Whether pause timer is active
     @Published var sessionAlreadyRecorded: Bool = false
     @Published var usingLimitedLocationPermission = false
-    
     // Friend request properties for non-friend sessions
     @Published var shouldShowFriendRequestForUserId: String?
     @Published var shouldShowFriendRequestName: String?
@@ -158,13 +157,19 @@ class AppManager: NSObject, ObservableObject {
         // Broadcast session state for live sessions
         if let sessionId = liveSessionId {
             // Use RegionalViewModel to start session with building context
-            RegionalViewModel.shared.startSessionWithBuilding(sessionId: sessionId, appManager: self)
+            RegionalViewModel.shared.startSessionWithBuilding(
+                sessionId: sessionId,
+                appManager: self
+            )
         }
         else if currentState == .countdown {
             // Generate a new session ID for new sessions
             liveSessionId = UUID().uuidString
             // Use RegionalViewModel to start session with building context
-            RegionalViewModel.shared.startSessionWithBuilding(sessionId: liveSessionId!, appManager: self)
+            RegionalViewModel.shared.startSessionWithBuilding(
+                sessionId: liveSessionId!,
+                appManager: self
+            )
         }
     }
 
@@ -177,18 +182,18 @@ class AppManager: NSObject, ObservableObject {
     // In AppManager.swift, replace the joinLiveSession method with this improved version
     // In AppManager.swift, replace the joinLiveSession method with this improved version
     func joinLiveSession(sessionId: String, remainingSeconds: Int, totalDuration: Int) {
-        print("Joining live session: \(sessionId), remaining: \(remainingSeconds)s, duration: \(totalDuration)min")
+        print(
+            "Joining live session: \(sessionId), remaining: \(remainingSeconds)s, duration: \(totalDuration)min"
+        )
 
         // Initialize all values first BEFORE changing state
         self.liveSessionId = sessionId
         self.isJoinedSession = true
-        
         // FIX: Use remaining time to calculate the correct session duration
         // This prevents the session from being set to the full duration instead of remaining time
         let remainingMinutes = Int(ceil(Double(remainingSeconds) / 60.0))
         self.selectedMinutes = remainingMinutes  // Set to remaining minutes, not total duration
         self.remainingSeconds = remainingSeconds
-        
         // CRITICAL: Ensure we reset any previous state
         invalidateAllTimers()
         sessionAlreadyRecorded = false
@@ -202,57 +207,61 @@ class AppManager: NSObject, ObservableObject {
                     self.maxPauses = session.maxPauses
                     self.remainingPauses = session.maxPauses
                     self.originalSessionStarter = session.starterId
-                    
                     // Store the session starter's username for friend request
                     self.shouldShowFriendRequestName = session.starterUsername
 
                     // Save the list of participants for display in completion screens
                     self.sessionParticipants = session.participants
-                    
                     LiveSessionManager.shared.db.collection("live_sessions").document(sessionId)
-                                        .getDocument { document, error in
-                                            if let data = document?.data(), let pauseDuration = data["pauseDuration"] as? Int {
-                                                DispatchQueue.main.async {
-                                                    self.pauseDuration = pauseDuration
-                                                    print("Set pause duration to \(pauseDuration) minutes from session")
-                                                }
-                                            }
-                                        }
+                        .getDocument { document, error in
+                            if let data = document?.data(),
+                                let pauseDuration = data["pauseDuration"] as? Int
+                            {
+                                DispatchQueue.main.async {
+                                    self.pauseDuration = pauseDuration
+                                    print(
+                                        "Set pause duration to \(pauseDuration) minutes from session"
+                                    )
+                                }
+                            }
+                        }
 
                     // Make sure we're properly setting LiveSessionManager's currentJoinedSession
                     LiveSessionManager.shared.listenToJoinedSession(sessionId: sessionId)
 
                     // IMPORTANT: Increment building leaderboard if location is enabled
                     if let building = RegionalViewModel.shared.selectedBuilding {
-                        print("🏢 Incrementing leaderboard for joined session in building: \(building.name) [ID: \(building.id)]")
-                        
+                        print(
+                            "🏢 Incrementing leaderboard for joined session in building: \(building.name) [ID: \(building.id)]"
+                        )
                         if let userId = Auth.auth().currentUser?.uid {
                             // Create a location record for this session
                             let sessionLocationData: [String: Any] = [
-                                "userId": userId,
-                                "buildingId": building.id,
+                                "userId": userId, "buildingId": building.id,
                                 "buildingName": building.name,
                                 "buildingLatitude": building.coordinate.latitude,
                                 "buildingLongitude": building.coordinate.longitude,
                                 "sessionStartTime": FieldValue.serverTimestamp(),
                                 "sessionEndTime": FieldValue.serverTimestamp(),
-                                "isJoinedSession": true,
-                                "originalStarterId": session.starterId,
+                                "isJoinedSession": true, "originalStarterId": session.starterId,
                                 "liveSessionId": sessionId,
                                 "location": GeoPoint(
                                     latitude: building.coordinate.latitude,
                                     longitude: building.coordinate.longitude
                                 ),
                             ]
-                            
                             // Add to session_locations collection for leaderboard
-                            FirebaseManager.shared.db.collection("session_locations")
-                                .document()
+                            FirebaseManager.shared.db.collection("session_locations").document()
                                 .setData(sessionLocationData) { error in
                                     if let error = error {
-                                        print("Error recording session location: \(error.localizedDescription)")
-                                    } else {
-                                        print("Successfully recorded session location for leaderboard")
+                                        print(
+                                            "Error recording session location: \(error.localizedDescription)"
+                                        )
+                                    }
+                                    else {
+                                        print(
+                                            "Successfully recorded session location for leaderboard"
+                                        )
                                     }
                                 }
                         }
@@ -262,28 +271,24 @@ class AppManager: NSObject, ObservableObject {
                     // This fixes navigation issues and ensures consistent UI
                     self.currentState = .countdown
                     self.countdownSeconds = 5
-                    
                     // Save state to ensure persistence across app restarts
                     self.saveSessionState()
-                    
                     // Start the countdown immediately without delay - critical fix!
                     self.startCountdown(fromRestoration: false)
                 }
-            } else {
+            }
+            else {
                 // Safety fallback if we can't get session details
                 DispatchQueue.main.async {
                     // Default values if joined session data isn't available yet
                     self.allowPauses = false
                     self.maxPauses = 0
                     self.remainingPauses = 0
-                    
                     // Force navigation to countdown view and start immediately
                     self.currentState = .countdown
                     self.countdownSeconds = 5
-                    
                     // Save state before starting countdown
                     self.saveSessionState()
-                    
                     // Start countdown without delay - critical fix!
                     self.startCountdown(fromRestoration: false)
                 }
@@ -1066,27 +1071,27 @@ class AppManager: NSObject, ObservableObject {
                 userId: userId,
                 status: .completed
             )
-            
             // Check if session was with a non-friend and save id for friend request
             if isJoinedSession, let starterId = originalSessionStarter, starterId != userId {
                 // Check if already friends
                 guard let currentUserId = Auth.auth().currentUser?.uid else { return }
-                
                 // Check if users are friends directly using Firebase
-                FirebaseManager.shared.db.collection("users").document(currentUserId).getDocument { document, error in
-                    if let document = document, let userData = try? document.data(as: FirebaseManager.FlipUser.self) {
-                        let isFriend = userData.friends.contains(starterId)
-                        
-                        if !isFriend {
-                            // Set flag to show friend request after session
-                            self.shouldShowFriendRequestForUserId = starterId
-                            // Note: shouldShowFriendRequestName is already set during joinLiveSession
-                            
-                            // Set the defer flag instead of showing immediately
-                            self.deferFriendRequestDisplay = true
+                FirebaseManager.shared.db.collection("users").document(currentUserId)
+                    .getDocument { document, error in
+                        if let document = document,
+                            let userData = try? document.data(as: FirebaseManager.FlipUser.self)
+                        {
+                            let isFriend = userData.friends.contains(starterId)
+                            if !isFriend {
+                                // Set flag to show friend request after session
+                                self.shouldShowFriendRequestForUserId = starterId
+                                // Note: shouldShowFriendRequestName is already set during joinLiveSession
+
+                                // Set the defer flag instead of showing immediately
+                                self.deferFriendRequestDisplay = true
+                            }
                         }
                     }
-                }
             }
         }
 
@@ -1138,10 +1143,9 @@ class AppManager: NSObject, ObservableObject {
                 // Determine the appropriate completion view
                 self.determineCompletionView { state in
                     self.currentState = state
-                    
                     // Friend request will now be shown after Return Home button is pressed
                     // We're just keeping the friend request information until then
-                    
+
                     // Reset join state after setting final state (but keep friend request info)
                     DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
                         self.resetJoinState(keepFriendRequestInfo: true)
@@ -1153,16 +1157,18 @@ class AppManager: NSObject, ObservableObject {
             }
         }
     }
-    
     // Add a new method to handle showing the friend request after returning to home
     func handleReturnHome() {
         // Short delay before showing friend request
-        if deferFriendRequestDisplay && shouldShowFriendRequestForUserId != nil && shouldShowFriendRequestName != nil {
+        if deferFriendRequestDisplay && shouldShowFriendRequestForUserId != nil
+            && shouldShowFriendRequestName != nil
+        {
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) {
                 self.showFriendRequestView = true
                 self.deferFriendRequestDisplay = false
             }
-        } else {
+        }
+        else {
             // If there's no deferred friend request, just reset
             resetJoinState(keepFriendRequestInfo: false)
         }
@@ -1170,26 +1176,21 @@ class AppManager: NSObject, ObservableObject {
 
     func resetJoinState(keepFriendRequestInfo: Bool = false) {
         print("Resetting join state")
-        
         // Clean up any live session listeners FIRST
         LiveSessionManager.shared.cleanupListeners()
-        
         // IMPORTANT: Explicitly tell LiveSessionManager to stop tracking this session
         if let sessionId = liveSessionId {
             LiveSessionManager.shared.stopTrackingSession(sessionId: sessionId)
         }
-        
         // Reset all session-related state variables
         isJoinedSession = false
         liveSessionId = nil
-        
         // Don't clear friend request info if specified
         if !keepFriendRequestInfo {
             shouldShowFriendRequestForUserId = nil
             shouldShowFriendRequestName = nil
             deferFriendRequestDisplay = false
         }
-        
         originalSessionStarter = nil
         sessionParticipants = []
 
@@ -1198,7 +1199,6 @@ class AppManager: NSObject, ObservableObject {
         defaults.removeObject(forKey: "liveSessionId")
         defaults.removeObject(forKey: "isJoinedSession")
         defaults.removeObject(forKey: "originalSessionStarter")
-        
         // Also remove any potentially conflicting session state
         defaults.removeObject(forKey: "sessionParticipants")
 
@@ -1244,13 +1244,13 @@ class AppManager: NSObject, ObservableObject {
 
         // Update live session status if part of a multi-user session
         if let sessionId = liveSessionId {
-                guard let userId = Auth.auth().currentUser?.uid else { return }
-                LiveSessionManager.shared.updateParticipantStatus(
-                    sessionId: sessionId,
-                    userId: userId,
-                    status: .failed
-                )
-            }
+            guard let userId = Auth.auth().currentUser?.uid else { return }
+            LiveSessionManager.shared.updateParticipantStatus(
+                sessionId: sessionId,
+                userId: userId,
+                status: .failed
+            )
+        }
 
         endSession()
         notifyFailure()
@@ -1284,26 +1284,24 @@ class AppManager: NSObject, ObservableObject {
 
         // Update UI state - check participant outcomes for joined sessions
         DispatchQueue.main.async { [self] in
-                if isJoinedSession {
-                    // Determine the appropriate completion view
-                    determineCompletionView { state in
-                        self.currentState = state
-                        
-                        // IMPORTANT: Only reset join state if we're showing a terminal state
-                        // If we're showing the .othersActive state, we need to keep the join info
-                        if state != .othersActive {
-                            DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
-                                self.resetJoinState()
-                            }
+            if isJoinedSession {
+                // Determine the appropriate completion view
+                determineCompletionView { state in
+                    self.currentState = state
+                    // IMPORTANT: Only reset join state if we're showing a terminal state
+                    // If we're showing the .othersActive state, we need to keep the join info
+                    if state != .othersActive {
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
+                            self.resetJoinState()
                         }
                     }
                 }
+            }
             else {
                 self.currentState = .failed  // or .failed depending on the method
             }
         }
     }
-    
     private func recordMultiUserSession(wasSuccessful: Bool) {
         guard let sessionId = liveSessionId, let userId = Auth.auth().currentUser?.uid,
             let username = FirebaseManager.shared.currentUser?.username
@@ -1369,8 +1367,9 @@ class AppManager: NSObject, ObservableObject {
                         let joinTime = joinTimesData[participantId]?.dateValue() ?? startTime
 
                         // Get the participant status
-                        let participantStatus = participantStatusData[participantId] ?? LiveSessionManager.ParticipantStatus.active.rawValue
-                        
+                        let participantStatus =
+                            participantStatusData[participantId]
+                            ?? LiveSessionManager.ParticipantStatus.active.rawValue
                         // Create Session.Participant with the expected fields
                         let participant = Session.Participant(
                             userId: participantId,
@@ -1660,7 +1659,6 @@ class AppManager: NSObject, ObservableObject {
         defaults.set(remainingPauses, forKey: "remainingPauses")
         defaults.set(isFaceDown, forKey: "isFaceDown")
         defaults.set(pauseDuration, forKey: "pauseDuration")
-        
         // Save timestamp for session validity check
         defaults.set(Date().timeIntervalSince1970, forKey: "lastSessionTimestamp")
 
@@ -1736,20 +1734,17 @@ class AppManager: NSObject, ObservableObject {
 
     private func restoreSessionState() {
         let defaults = UserDefaults.standard
-        
         // Get the last time the session state was saved
         let lastSessionTimestamp = defaults.double(forKey: "lastSessionTimestamp")
         let currentTime = Date().timeIntervalSince1970
-        
         // If the last session was more than 10 minutes ago, or there's no timestamp,
         // consider it invalid and don't restore it
-        let sessionTimeout: TimeInterval = 10 * 60 // 10 minutes
+        let sessionTimeout: TimeInterval = 10 * 60  // 10 minutes
         if lastSessionTimestamp == 0 || (currentTime - lastSessionTimestamp > sessionTimeout) {
             print("⚠️ Stale session detected - clearing state rather than restoring")
             clearSessionState()
             return
         }
-        
         currentState =
             FlipState(rawValue: defaults.string(forKey: "currentState") ?? "") ?? .initial
 
@@ -1780,7 +1775,6 @@ class AppManager: NSObject, ObservableObject {
             currentState = .initial
             return
         }
-        
         // Additional validity check: if the session is in tracking or countdown state
         // but we've restarted the app, it's likely invalid
         let isAppRelaunch = defaults.bool(forKey: "isAppRelaunch")
@@ -1790,7 +1784,6 @@ class AppManager: NSObject, ObservableObject {
             currentState = .initial
             return
         }
-        
         // Mark that the app has been launched, will be used on next launch
         defaults.set(true, forKey: "isAppRelaunch")
 

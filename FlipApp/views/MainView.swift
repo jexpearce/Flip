@@ -11,13 +11,11 @@ struct MainView: View {
     @StateObject private var permissionManager = PermissionManager.shared
     @State private var checkPermissionsOnAppear = true
     @State private var showLocationSettingsAlert = false
-    
     // Helper to check if location permission is granted
     private var hasLocationPermission: Bool {
-        permissionManager.locationAuthStatus == .authorizedWhenInUse || 
-        permissionManager.locationAuthStatus == .authorizedAlways
+        permissionManager.locationAuthStatus == .authorizedWhenInUse
+            || permissionManager.locationAuthStatus == .authorizedAlways
     }
-    
     var body: some View {
         if authManager.isAuthenticated {
             TabView(selection: $viewRouter.selectedTab) {
@@ -44,32 +42,22 @@ struct MainView: View {
                                     }
                                 }
                             )
-                    } else {
+                    }
+                    else {
                         // Show placeholder with location permission required message
                         VStack(spacing: 20) {
-                            Image(systemName: "location.slash.fill")
-                                .font(.system(size: 40))
+                            Image(systemName: "location.slash.fill").font(.system(size: 40))
                                 .foregroundColor(.white.opacity(0.5))
-                            
-                            Text("Location Access Required")
-                                .font(.headline)
-                                .foregroundColor(.white)
-                            
+                            Text("Location Access Required").font(.headline).foregroundColor(.white)
                             Text("This feature requires location permission to work")
-                                .font(.subheadline)
-                                .foregroundColor(.white.opacity(0.7))
-                                .multilineTextAlignment(.center)
-                                .padding(.horizontal, 40)
-                            
-                            Button(action: {
-                                showLocationSettingsAlert = true
-                            }) {
-                                Text("Enable Location")
-                                    .fontWeight(.bold)
-                                    .foregroundColor(.white)
-                                    .padding(.vertical, 10)
-                                    .padding(.horizontal, 16)
-                                    .background(RoundedRectangle(cornerRadius: 8).fill(Theme.tealyGradient))
+                                .font(.subheadline).foregroundColor(.white.opacity(0.7))
+                                .multilineTextAlignment(.center).padding(.horizontal, 40)
+                            Button(action: { showLocationSettingsAlert = true }) {
+                                Text("Enable Location").fontWeight(.bold).foregroundColor(.white)
+                                    .padding(.vertical, 10).padding(.horizontal, 16)
+                                    .background(
+                                        RoundedRectangle(cornerRadius: 8).fill(Theme.tealyGradient)
+                                    )
                             }
                             .padding(.top, 10)
                         }
@@ -77,14 +65,13 @@ struct MainView: View {
                         .background(Theme.mainGradient)
                     }
                 }
-                .tabItem { 
+                .tabItem {
                     // Gray out the regional tab item when location is disabled
                     Label("Regional", systemImage: "location.fill")
                         .environment(\.symbolVariants, hasLocationPermission ? .fill : .none)
                         .foregroundColor(hasLocationPermission ? nil : .gray)
                 }
-                .disabled(!hasLocationPermission)
-                .tag(1)
+                .disabled(!hasLocationPermission).tag(1)
 
                 // Center tab (Home)
                 HomeView().background(Theme.mainGradient)
@@ -118,22 +105,20 @@ struct MainView: View {
                             Spacer()
                         }
                     }
-                    
                     // Add Friend Request overlay when a session with a non-friend completes
-                    if appManager.showFriendRequestView, 
-                       let userId = appManager.shouldShowFriendRequestForUserId,
-                       let username = appManager.shouldShowFriendRequestName {
+                    if appManager.showFriendRequestView,
+                        let userId = appManager.shouldShowFriendRequestForUserId,
+                        let username = appManager.shouldShowFriendRequestName
+                    {
                         ZStack {
                             // Semi-transparent background
-                            Color.black.opacity(0.65)
-                                .edgesIgnoringSafeArea(.all)
+                            Color.black.opacity(0.65).edgesIgnoringSafeArea(.all)
                                 .onTapGesture {
                                     // Dismiss when tapping outside
                                     appManager.showFriendRequestView = false
                                     appManager.shouldShowFriendRequestForUserId = nil
                                     appManager.shouldShowFriendRequestName = nil
                                 }
-                            
                             // Friend request view
                             FriendRequestView(
                                 username: username,
@@ -142,7 +127,7 @@ struct MainView: View {
                             )
                             .padding(.horizontal, 20)
                         }
-                        .zIndex(100) // Ensure it appears above everything
+                        .zIndex(100)  // Ensure it appears above everything
                         .transition(.opacity)
                         .animation(.easeInOut, value: appManager.showFriendRequestView)
                     }
@@ -180,10 +165,14 @@ struct MainView: View {
                 }
             }
             // Listen for changes in location permission
-            .onReceive(NotificationCenter.default.publisher(for: Notification.Name("locationPermissionChanged"))) { _ in
+            .onReceive(
+                NotificationCenter.default.publisher(
+                    for: Notification.Name("locationPermissionChanged")
+                )
+            ) { _ in
                 // If location permission is revoked and we're on the regional tab, navigate back to home
                 if !hasLocationPermission && viewRouter.selectedTab == 1 {
-                    viewRouter.selectedTab = 2 // Switch to home tab
+                    viewRouter.selectedTab = 2  // Switch to home tab
                 }
             }
             .environmentObject(viewRouter)  // Add the permission manager as an environment object
@@ -194,9 +183,11 @@ struct MainView: View {
                         UIApplication.shared.open(url)
                     }
                 }
-                Button("Cancel", role: .cancel) { }
+                Button("Cancel", role: .cancel) {}
             } message: {
-                Text("Location access is required to identify your current building and enable regional features.")
+                Text(
+                    "Location access is required to identify your current building and enable regional features."
+                )
             }
         }
         else {

@@ -210,9 +210,8 @@ struct CompletionView: View {
                         isButtonPressed = false
                         appManager.sessionAlreadyRecorded = false  // Reset for next session
                         showSavingIndicator = false
-                        
                         // Call handleReturnHome to show friend request if needed
-                        
+
                     }
                 }) {
                     HStack {
