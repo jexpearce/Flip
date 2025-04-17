@@ -391,70 +391,90 @@ class LiveSessionManager: ObservableObject {
                     return
                 }
 
-                // FIX: Check if session is too old (last update more than 2 minutes ago)
-                if Date().timeIntervalSince(sessionData.lastUpdateTime) > 120 {
-                    print("Session is stale - last update was too long ago")
-                    self.isJoiningSession = false
-                    completion(false, 0, 0)
-                    return
-                }
-                
-                // Check if session can be joined
-                if !sessionData.canJoin {
-                    print(
-                        "Session cannot be joined: full=\(sessionData.isFull), time_remaining=\(sessionData.remainingSeconds)"
-                    )
-                    self.isJoiningSession = false
-                    completion(false, 0, 0)
-                    return
-                }
-
-                // Update session with new participant
-                var updatedParticipants = sessionData.participants
-                if !updatedParticipants.contains(userId) { updatedParticipants.append(userId) }
-
-                let now = Date()
-
-                let updateData: [String: Any] = [
-                    "participants": updatedParticipants,
-                    "joinTimes.\(userId)": Timestamp(date: now),
-                    "participantStatus.\(userId)": ParticipantStatus.active.rawValue,
-                    "lastUpdateTime": FieldValue.serverTimestamp(),
-                ]
-
-                // IMPROVED: Atomic transaction to update Firebase
-                self.db.collection("live_sessions").document(sessionId)
-                    .updateData(updateData) { error in
-                        if let error = error {
-                            print("Error joining session: \(error.localizedDescription)")
+                // NEW: Check if session is restricted to friends only
+                self.checkFriendRestriction(starterId: sessionData.starterId) { isAllowed in
+                    if !isAllowed {
+                        print("Session is restricted to friends only and user is not a friend")
+                        DispatchQueue.main.async {
                             self.isJoiningSession = false
                             completion(false, 0, 0)
                         }
-                        else {
-                            print("Successfully joined session")
+                        return
+                    }
+                    
+                    // Continue with session joining process since user is allowed
 
-                            // IMPROVEMENT: Set the current session immediately to prevent UI lag
-                            DispatchQueue.main.async {
-                                self.currentJoinedSession = sessionData
+                    // FIX: Check if session is too old (last update more than 2 minutes ago)
+                    if Date().timeIntervalSince(sessionData.lastUpdateTime) > 120 {
+                        print("Session is stale - last update was too long ago")
+                        DispatchQueue.main.async {
+                            self.isJoiningSession = false
+                            completion(false, 0, 0)
+                        }
+                        return
+                    }
+                    
+                    // Check if session can be joined
+                    if !sessionData.canJoin {
+                        print(
+                            "Session cannot be joined: full=\(sessionData.isFull), time_remaining=\(sessionData.remainingSeconds)"
+                        )
+                        DispatchQueue.main.async {
+                            self.isJoiningSession = false
+                            completion(false, 0, 0)
+                        }
+                        return
+                    }
+
+                    // Update session with new participant
+                    var updatedParticipants = sessionData.participants
+                    if !updatedParticipants.contains(userId) { updatedParticipants.append(userId) }
+
+                    let now = Date()
+
+                    let updateData: [String: Any] = [
+                        "participants": updatedParticipants,
+                        "joinTimes.\(userId)": Timestamp(date: now),
+                        "participantStatus.\(userId)": ParticipantStatus.active.rawValue,
+                        "lastUpdateTime": FieldValue.serverTimestamp(),
+                    ]
+
+                    // IMPROVED: Atomic transaction to update Firebase
+                    self.db.collection("live_sessions").document(sessionId)
+                        .updateData(updateData) { error in
+                            if let error = error {
+                                print("Error joining session: \(error.localizedDescription)")
+                                DispatchQueue.main.async {
+                                    self.isJoiningSession = false
+                                    completion(false, 0, 0)
+                                }
                             }
-                            
-                            // Listen for updates to this session
-                            self.listenToJoinedSession(sessionId: sessionId)
+                            else {
+                                print("Successfully joined session")
 
-                            // SIMPLIFIED: Complete the join with the data we already have
-                            // This prevents an additional Firebase call that could fail
-                            DispatchQueue.main.async {
-                                self.isJoiningSession = false
+                                // IMPROVEMENT: Set the current session immediately to prevent UI lag
+                                DispatchQueue.main.async {
+                                    self.currentJoinedSession = sessionData
+                                }
                                 
-                                // Notify any observers about the join
-                                self.objectWillChange.send()
-                                NotificationCenter.default.post(name: Notification.Name("LiveSessionJoined"), object: nil)
-                                
-                                // Return success with the current session data we already have
-                                completion(true, sessionData.remainingSeconds, sessionData.targetDuration)
+                                // Listen for updates to this session
+                                self.listenToJoinedSession(sessionId: sessionId)
+
+                                // SIMPLIFIED: Complete the join with the data we already have
+                                // This prevents an additional Firebase call that could fail
+                                DispatchQueue.main.async {
+                                    self.isJoiningSession = false
+                                    
+                                    // Notify any observers about the join
+                                    self.objectWillChange.send()
+                                    NotificationCenter.default.post(name: Notification.Name("LiveSessionJoined"), object: nil)
+                                    
+                                    // Return success with the current session data we already have
+                                    completion(true, sessionData.remainingSeconds, sessionData.targetDuration)
+                                }
                             }
                         }
-                    }
+                }
             }
     }
     private var cleanupTimer: Timer?
@@ -810,6 +830,48 @@ class LiveSessionManager: ObservableObject {
         
         // Reset tracked sessions
         currentJoinedSession = nil
+    }
+    // NEW: Check if user is allowed to join a session based on friend restrictions
+    private func checkFriendRestriction(starterId: String, completion: @escaping (Bool) -> Void) {
+        guard let currentUserId = Auth.auth().currentUser?.uid else {
+            completion(false)
+            return
+        }
+        
+        // Always allow if it's your own session
+        if starterId == currentUserId {
+            completion(true)
+            return
+        }
+        
+        // Get session starter's settings to check if they've restricted sessions to friends
+        db.collection("user_settings").document(starterId).getDocument { document, error in
+            // Default to allowing if there's an error or settings don't exist
+            guard let data = document?.data() else {
+                completion(true)
+                return
+            }
+            
+            // Check if starter has restricted sessions to friends
+            let restrictedToFriends = data["restrictLiveSessionsToFriends"] as? Bool ?? false
+            
+            if restrictedToFriends {
+                // If restricted, check if current user is a friend of the starter
+                self.db.collection("users").document(starterId).getDocument { document, error in
+                    guard let userData = try? document?.data(as: FirebaseManager.FlipUser.self) else {
+                        completion(false)
+                        return
+                    }
+                    
+                    // Allow if current user is in the starter's friends list
+                    let isFriend = userData.friends.contains(currentUserId)
+                    completion(isFriend)
+                }
+            } else {
+                // Not restricted, allow anyone to join
+                completion(true)
+            }
+        }
     }
 
     // Method to get live sessions for a specific building

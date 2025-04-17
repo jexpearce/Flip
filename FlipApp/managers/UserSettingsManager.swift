@@ -15,6 +15,8 @@ class UserSettingsManager: ObservableObject {
     @Published private(set) var commentNotifications: Bool = true
     @Published private(set) var visibilityLevel: String = "friendsOnly"
     @Published private(set) var showSessionHistory: Bool = true
+    // Add this new property for live session privacy
+    @Published private(set) var restrictLiveSessionsToFriends: Bool = false
 
     private let db = Firestore.firestore()
     private var userSettingsCache: [String: Any]?
@@ -55,6 +57,8 @@ class UserSettingsManager: ObservableObject {
                         self.commentNotifications = data["commentNotifications"] as? Bool ?? true
                         self.visibilityLevel = data["visibilityLevel"] as? String ?? "friendsOnly"
                         self.showSessionHistory = data["showSessionHistory"] as? Bool ?? true
+                        // Add this line to load the restrict live sessions setting
+                        self.restrictLiveSessionsToFriends = data["restrictLiveSessionsToFriends"] as? Bool ?? false
                     }
                 }
                 else {
@@ -64,6 +68,7 @@ class UserSettingsManager: ObservableObject {
                         "showSessionHistory": true,
                         "regionalDisplayMode": RegionalDisplayMode.normal.rawValue,
                         "regionalOptOut": false,
+                        "restrictLiveSessionsToFriends": false, // Add default value
                     ]
 
                     // Set default values for @Published properties
@@ -73,12 +78,31 @@ class UserSettingsManager: ObservableObject {
                     self.commentNotifications = true
                     self.visibilityLevel = "friendsOnly"
                     self.showSessionHistory = true
+                    self.restrictLiveSessionsToFriends = false // Set default value
 
                     // Create the settings document with defaults
                     self.saveSettingsToFirestore(settings: self.userSettingsCache!)
                 }
             }
     }
+
+    // Add this new method to set the restriction
+    func setRestrictLiveSessionsToFriends(_ restrict: Bool) {
+        guard var settings = userSettingsCache else {
+            userSettingsCache = [
+                "friendFailureNotifications": true, "visibilityLevel": "friendsOnly",
+                "showSessionHistory": true, "regionalDisplayMode": RegionalDisplayMode.normal.rawValue,
+                "regionalOptOut": false, "restrictLiveSessionsToFriends": restrict,
+            ]
+            saveSettingsToFirestore(settings: userSettingsCache!)
+            return
+        }
+        
+        settings["restrictLiveSessionsToFriends"] = restrict
+        userSettingsCache = settings
+        saveSettingsToFirestore(settings: settings)
+    }
+
 
     // Called when user signs in
     func onUserSignIn() { setupSettingsListener() }

@@ -8,6 +8,7 @@ struct AvailableSessionsView: View {
     @State private var selectedSession: LiveSessionManager.LiveSessionData? = nil
     @State private var pulsingEffect = false
     @State private var friendFiltered = false
+    @ObservedObject private var userSettings = UserSettingsManager.shared
     
     // Helper computed properties
     private var friendSessions: [LiveSessionManager.LiveSessionData] {
@@ -23,6 +24,11 @@ struct AvailableSessionsView: View {
     private var otherSessions: [LiveSessionManager.LiveSessionData] {
         guard let currentUserId = Auth.auth().currentUser?.uid else { return [] }
         
+        // If user has restricted sessions to friends only, return empty array
+        if userSettings.restrictLiveSessionsToFriends {
+            return []
+        }
+        
         return buildingSessions.filter { session in
             // Check if this session starter is not a friend and not the current user
             let isFriend = FirebaseManager.shared.currentUser?.friends.contains(session.starterId) ?? false
@@ -32,183 +38,209 @@ struct AvailableSessionsView: View {
     
     var body: some View {
         NavigationView {
-            ZStack {
-                // Background with subtle animations
-                Theme.regionalGradient.edgesIgnoringSafeArea(.all)
-                
-                // Decorative background elements
+            GeometryReader { geometry in
                 ZStack {
-                    // Pulsing circle
-                    Circle()
-                        .fill(RadialGradient(
-                            colors: [Theme.lightTealBlue.opacity(0.1), Color.clear],
-                            center: .center,
-                            startRadius: 0,
-                            endRadius: 250
-                        ))
-                        .frame(width: 500, height: 500)
-                        .offset(x: 150, y: -250)
-                        .scaleEffect(pulsingEffect ? 1.1 : 1.0)
-                        .blur(radius: 40)
-                        .animation(
-                            Animation.easeInOut(duration: 3).repeatForever(autoreverses: true),
-                            value: pulsingEffect
-                        )
+                    // Background with subtle animations
+                    Theme.regionalGradient.edgesIgnoringSafeArea(.all)
                     
-                    // Bottom glow
-                    Circle()
-                        .fill(RadialGradient(
-                            colors: [Theme.lightTealBlue.opacity(0.1), Color.clear],
-                            center: .center,
-                            startRadius: 0,
-                            endRadius: 200
-                        ))
-                        .frame(width: 400, height: 400)
-                        .offset(x: -150, y: 300)
-                        .blur(radius: 40)
-                }
-                
-                // Main content
-                VStack(spacing: 0) {
-                    // Header with filter
-                    HStack {
-                        Button(action: {
-                            withAnimation {
-                                friendFiltered.toggle()
-                            }
-                        }) {
-                            HStack(spacing: 6) {
-                                Text(friendFiltered ? "Showing Friends" : "All Sessions")
-                                    .font(.system(size: 14, weight: .semibold))
-                                    .foregroundColor(friendFiltered ? Theme.lightTealBlue : .white)
-                                
-                                Image(systemName: "chevron.down")
-                                    .font(.system(size: 12))
-                                    .foregroundColor(friendFiltered ? Theme.lightTealBlue : .white.opacity(0.7))
-                            }
-                            .padding(.horizontal, 12)
-                            .padding(.vertical, 6)
-                            .background(
-                                RoundedRectangle(cornerRadius: 10)
-                                    .fill(Color.white.opacity(0.1))
-                                    .overlay(
-                                        RoundedRectangle(cornerRadius: 10)
-                                            .stroke(
-                                                friendFiltered ? Theme.lightTealBlue.opacity(0.5) : Color.white.opacity(0.3),
-                                                lineWidth: 1
-                                            )
-                                    )
+                    // Decorative background elements
+                    ZStack {
+                        // Pulsing circle
+                        Circle()
+                            .fill(RadialGradient(
+                                colors: [Theme.lightTealBlue.opacity(0.1), Color.clear],
+                                center: .center,
+                                startRadius: 0,
+                                endRadius: 250
+                            ))
+                            .frame(width: 500, height: 500)
+                            .offset(x: 150, y: -250)
+                            .scaleEffect(pulsingEffect ? 1.1 : 1.0)
+                            .blur(radius: 40)
+                            .animation(
+                                Animation.easeInOut(duration: 3).repeatForever(autoreverses: true),
+                                value: pulsingEffect
                             )
-                        }
                         
-                        Spacer()
-                        
-                        Button(action: {
-                            presentationMode.wrappedValue.dismiss()
-                        }) {
-                            Image(systemName: "xmark")
-                                .font(.system(size: 14, weight: .bold))
-                                .foregroundColor(.white.opacity(0.7))
-                                .padding(8)
-                                .background(Circle().fill(Color.white.opacity(0.1)))
-                        }
+                        // Bottom glow
+                        Circle()
+                            .fill(RadialGradient(
+                                colors: [Theme.lightTealBlue.opacity(0.1), Color.clear],
+                                center: .center,
+                                startRadius: 0,
+                                endRadius: 200
+                            ))
+                            .frame(width: 400, height: 400)
+                            .offset(x: -150, y: 300)
+                            .blur(radius: 40)
                     }
-                    .padding(.horizontal, 20)
-                    .padding(.top, 16)
-                    .padding(.bottom, 12)
                     
-                    // Title with count
-                    HStack {
-                        VStack(alignment: .leading, spacing: 2) {
-                            Text("AVAILABLE SESSIONS")
-                                .font(.system(size: 22, weight: .black))
-                                .tracking(2)
-                                .foregroundColor(.white)
-                            
-                            Text("Join a live session in this building")
-                                .font(.system(size: 14))
-                                .foregroundColor(.white.opacity(0.7))
-                        }
-                        
-                        Spacer()
-                        
-                        // Only show count badge if we have sessions
-                        if (friendFiltered ? friendSessions.count : (friendSessions.count + otherSessions.count)) > 0 {
-                            Text("\(friendFiltered ? friendSessions.count : (friendSessions.count + otherSessions.count))")
-                                .font(.system(size: 16, weight: .bold))
-                                .foregroundColor(.white)
-                                .frame(width: 36, height: 36)
+                    // Main content
+                    VStack(spacing: 0) {
+                        // Header with filter
+                        HStack {
+                            Button(action: {
+                                withAnimation {
+                                    friendFiltered.toggle()
+                                }
+                            }) {
+                                HStack(spacing: 6) {
+                                    Text(friendFiltered ? "Showing Friends" : "All Sessions")
+                                        .font(.system(size: 14, weight: .semibold))
+                                        .foregroundColor(friendFiltered ? Theme.lightTealBlue : .white)
+                                    
+                                    Image(systemName: "chevron.down")
+                                        .font(.system(size: 12))
+                                        .foregroundColor(friendFiltered ? Theme.lightTealBlue : .white.opacity(0.7))
+                                }
+                                .padding(.horizontal, 12)
+                                .padding(.vertical, 6)
                                 .background(
-                                    Circle()
-                                        .fill(Theme.lightTealBlue.opacity(0.3))
+                                    RoundedRectangle(cornerRadius: 10)
+                                        .fill(Color.white.opacity(0.1))
                                         .overlay(
-                                            Circle()
-                                                .stroke(Theme.lightTealBlue.opacity(0.5), lineWidth: 1)
+                                            RoundedRectangle(cornerRadius: 10)
+                                                .stroke(
+                                                    friendFiltered ? Theme.lightTealBlue.opacity(0.5) : Color.white.opacity(0.3),
+                                                    lineWidth: 1
+                                                )
                                         )
                                 )
-                        }
-                    }
-                    .padding(.horizontal, 20)
-                    .padding(.bottom, 20)
-                    
-                    // Session lists
-                    ScrollView {
-                        VStack(spacing: 25) {
-                            // Friend sessions section
-                            if !friendSessions.isEmpty {
-                                sessionSection(
-                                    title: "FRIEND SESSIONS",
-                                    iconName: "person.2.fill",
-                                    iconColor: Color.green,
-                                    sessions: friendSessions,
-                                    isFriendSection: true
-                                )
                             }
                             
-                            // Other sessions section (only show if not filtered)
-                            if !otherSessions.isEmpty && !friendFiltered {
-                                sessionSection(
-                                    title: "OTHER PEOPLE NEARBY",
-                                    iconName: "building.2.fill",
-                                    iconColor: Theme.lightTealBlue,
-                                    sessions: otherSessions,
-                                    isFriendSection: false
-                                )
-                            }
+                            Spacer()
                             
-                            // Empty state
-                            if (friendFiltered ? friendSessions.isEmpty : (friendSessions.isEmpty && otherSessions.isEmpty)) {
-                                VStack(spacing: 15) {
-                                    Image(systemName: "person.3.sequence.fill")
-                                        .font(.system(size: 40))
-                                        .foregroundColor(.white.opacity(0.5))
-                                        .padding(.bottom, 10)
-                                    
-                                    Text(friendFiltered ? "No Friend Sessions Available" : "No Sessions Available")
-                                        .font(.system(size: 18, weight: .bold))
-                                        .foregroundColor(.white)
-                                    
-                                    Text(friendFiltered ?
-                                         "None of your friends are currently in a session that can be joined" :
-                                         "There are no sessions available to join at this time")
-                                        .font(.system(size: 15))
-                                        .foregroundColor(.white.opacity(0.7))
-                                        .multilineTextAlignment(.center)
-                                        .padding(.horizontal, 30)
-                                }
-                                .frame(maxWidth: .infinity)
-                                .padding(.vertical, 60)
+                            Button(action: {
+                                presentationMode.wrappedValue.dismiss()
+                            }) {
+                                Image(systemName: "xmark")
+                                    .font(.system(size: 14, weight: .bold))
+                                    .foregroundColor(.white.opacity(0.7))
+                                    .padding(8)
+                                    .background(Circle().fill(Color.white.opacity(0.1)))
                             }
                         }
+                        .padding(.horizontal, 20)
+                        .padding(.top, 16)
+                        .padding(.bottom, 12)
+                        
+                        // Title with count
+                        HStack {
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text("AVAILABLE SESSIONS")
+                                    .font(.system(size: 22, weight: .black))
+                                    .tracking(2)
+                                    .foregroundColor(.white)
+                                
+                                Text("Join a live session in this building")
+                                    .font(.system(size: 14))
+                                    .foregroundColor(.white.opacity(0.7))
+                            }
+                            
+                            Spacer()
+                            
+                            // Only show count badge if we have sessions
+                            if (friendFiltered ? friendSessions.count : (friendSessions.count + otherSessions.count)) > 0 {
+                                Text("\(friendFiltered ? friendSessions.count : (friendSessions.count + otherSessions.count))")
+                                    .font(.system(size: 16, weight: .bold))
+                                    .foregroundColor(.white)
+                                    .frame(width: 36, height: 36)
+                                    .background(
+                                        Circle()
+                                            .fill(Theme.lightTealBlue.opacity(0.3))
+                                            .overlay(
+                                                Circle()
+                                                    .stroke(Theme.lightTealBlue.opacity(0.5), lineWidth: 1)
+                                            )
+                                    )
+                            }
+                        }
+                        .padding(.horizontal, 20)
                         .padding(.bottom, 20)
+                        
+                        // Session lists
+                        ScrollView {
+                            VStack(spacing: 25) {
+                                // Friend sessions section
+                                if !friendSessions.isEmpty {
+                                    sessionSection(
+                                        geometry: geometry,
+                                        title: "FRIEND SESSIONS",
+                                        iconName: "person.2.fill",
+                                        iconColor: Color.green,
+                                        sessions: friendSessions,
+                                        isFriendSection: true
+                                    )
+                                }
+                                
+                                // Other sessions section (only show if not filtered and not restricted)
+                                if !otherSessions.isEmpty && !friendFiltered {
+                                    sessionSection(
+                                        geometry: geometry,
+                                        title: "OTHER PEOPLE NEARBY",
+                                        iconName: "building.2.fill",
+                                        iconColor: Theme.lightTealBlue,
+                                        sessions: otherSessions,
+                                        isFriendSection: false
+                                    )
+                                }
+                                
+                                // Settings info if sessions are restricted
+                                if userSettings.restrictLiveSessionsToFriends && !friendFiltered {
+                                    VStack(spacing: 10) {
+                                        Image(systemName: "lock.shield.fill")
+                                            .font(.system(size: 28))
+                                            .foregroundColor(.white.opacity(0.6))
+                                            .padding(.bottom, 5)
+                                        
+                                        Text("Non-Friend Sessions Hidden")
+                                            .font(.system(size: 16, weight: .bold))
+                                            .foregroundColor(.white)
+                                        
+                                        Text("You've chosen to only see sessions from friends. You can change this in Regional Privacy Settings.")
+                                            .font(.system(size: 14))
+                                            .foregroundColor(.white.opacity(0.7))
+                                            .multilineTextAlignment(.center)
+                                            .padding(.horizontal, 30)
+                                    }
+                                    .padding(.vertical, 40)
+                                    .frame(maxWidth: .infinity)
+                                }
+                                
+                                // Empty state
+                                if (friendFiltered ? friendSessions.isEmpty : (friendSessions.isEmpty && otherSessions.isEmpty)) {
+                                    VStack(spacing: 15) {
+                                        Image(systemName: "person.3.sequence.fill")
+                                            .font(.system(size: 40))
+                                            .foregroundColor(.white.opacity(0.5))
+                                            .padding(.bottom, 10)
+                                        
+                                        Text(friendFiltered ? "No Friend Sessions Available" : "No Sessions Available")
+                                            .font(.system(size: 18, weight: .bold))
+                                            .foregroundColor(.white)
+                                        
+                                        Text(friendFiltered ?
+                                             "None of your friends are currently in a session that can be joined" :
+                                             "There are no sessions available to join at this time")
+                                            .font(.system(size: 15))
+                                            .foregroundColor(.white.opacity(0.7))
+                                            .multilineTextAlignment(.center)
+                                            .padding(.horizontal, 30)
+                                    }
+                                    .frame(maxWidth: .infinity)
+                                    .padding(.vertical, 60)
+                                }
+                            }
+                            .padding(.bottom, 20)
+                        }
                     }
                 }
-            }
-            .navigationBarHidden(true)
-            .onAppear {
-                // Start background animations
-                withAnimation {
-                    pulsingEffect = true
+                .navigationBarHidden(true)
+                .onAppear {
+                    // Start background animations
+                    withAnimation {
+                        pulsingEffect = true
+                    }
                 }
             }
         }
@@ -226,8 +258,15 @@ struct AvailableSessionsView: View {
         }
     }
     
-    // Helper function to create a session section
-    private func sessionSection(title: String, iconName: String, iconColor: Color, sessions: [LiveSessionManager.LiveSessionData], isFriendSection: Bool) -> some View {
+    // Helper function to create a session section with proper width constraints
+    private func sessionSection(
+        geometry: GeometryProxy,
+        title: String,
+        iconName: String,
+        iconColor: Color,
+        sessions: [LiveSessionManager.LiveSessionData],
+        isFriendSection: Bool
+    ) -> some View {
         VStack(alignment: .leading, spacing: 12) {
             // Section header
             HStack(spacing: 8) {
@@ -248,7 +287,7 @@ struct AvailableSessionsView: View {
             }
             .padding(.horizontal, 20)
             
-            // Session cards in horizontal scroll
+            // Session cards in horizontal scroll with proper width calculation
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: 16) {
                     ForEach(sessions) { session in
@@ -260,10 +299,10 @@ struct AvailableSessionsView: View {
                                 selectedSession = session
                             }
                         )
-                        .frame(width: min(UIScreen.main.bounds.width * 0.8, 280))
+                        .frame(width: min(geometry.size.width * 0.8, 280))
                     }
                 }
-                .padding(.horizontal, 12)
+                .padding(.horizontal, 20)
                 .padding(.vertical, 6)
             }
         }

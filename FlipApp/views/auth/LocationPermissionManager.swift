@@ -63,11 +63,11 @@ class LocationPermissionManager: NSObject, ObservableObject, CLLocationManagerDe
         }
 
         // Show our enhanced alert first (NotificationCenter will handle it)
-        NotificationCenter.default.post(
-            name: NSNotification.Name("ShowEnhancedLocationAlert"),
-            object: nil
-        )
-        showCustomAlert = true
+//        NotificationCenter.default.post(
+//            name: NSNotification.Name("ShowEnhancedLocationAlert"),
+//            object: nil
+//        )
+//        showCustomAlert = true
 
         // Mark that we've shown the alert
         hasShownCustomAlert = true

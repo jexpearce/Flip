@@ -22,6 +22,7 @@ struct RegionalPrivacySheet: View {
     @ObservedObject private var userSettings = UserSettingsManager.shared
     @State private var regionalDisplayMode: RegionalDisplayMode
     @State private var regionalOptOut: Bool
+    @State private var restrictLiveSessionsToFriends: Bool
 
     private let redAccent = Theme.mutedRed
 
@@ -30,6 +31,7 @@ struct RegionalPrivacySheet: View {
         let settings = UserSettingsManager.shared
         _regionalDisplayMode = State(initialValue: settings.regionalDisplayMode)
         _regionalOptOut = State(initialValue: settings.regionalOptOut)
+        _restrictLiveSessionsToFriends = State(initialValue: settings.restrictLiveSessionsToFriends)
     }
 
     var body: some View {
@@ -76,6 +78,38 @@ struct RegionalPrivacySheet: View {
                             regionalOptOut
                                 ? "Your sessions are not shown on regional leaderboards"
                                 : "Your sessions are visible on regional leaderboards"
+                        )
+                        .font(.system(size: 14)).foregroundColor(.white.opacity(0.7))
+                    }
+                    .padding()
+                    .background(
+                        RoundedRectangle(cornerRadius: 16).fill(Color.white.opacity(0.08))
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 16)
+                                    .stroke(Color.white.opacity(0.2), lineWidth: 1)
+                            )
+                    )
+                    .padding(.horizontal)
+                    
+                    // NEW: Live Session Privacy Toggle
+                    VStack(alignment: .leading, spacing: 10) {
+                        HStack {
+                            Text("Live Session Privacy").font(.system(size: 18, weight: .bold))
+                                .foregroundColor(.white)
+
+                            Spacer()
+
+                            Toggle("", isOn: $restrictLiveSessionsToFriends)
+                                .toggleStyle(SwitchToggleStyle(tint: redAccent))
+                                .onChange(of: restrictLiveSessionsToFriends) {
+                                    userSettings.setRestrictLiveSessionsToFriends(restrictLiveSessionsToFriends)
+                                }
+                        }
+
+                        Text(
+                            restrictLiveSessionsToFriends
+                                ? "Only friends can join your live sessions"
+                                : "Anyone in your building can join your live sessions"
                         )
                         .font(.system(size: 14)).foregroundColor(.white.opacity(0.7))
                     }

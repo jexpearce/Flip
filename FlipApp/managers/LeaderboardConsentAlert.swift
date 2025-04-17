@@ -8,6 +8,8 @@ struct LeaderboardConsentAlert: View {
     @State private var regionalOptOut: Bool = false
     @State private var regionalDisplayMode: RegionalDisplayMode = .normal
     @State private var showAdvancedSettings: Bool = false
+    // New option for live session privacy
+    @State private var restrictLiveSessionsToFriends: Bool = false
     // Animation state
     @State private var animateContent = false
     var body: some View {
@@ -71,6 +73,11 @@ struct LeaderboardConsentAlert: View {
                             description: "Compete with users worldwide based on focus time"
                         )
                         featureRow(
+                            icon: "person.2.fill",
+                            title: "Live Session Joining",
+                            description: "Join ongoing sessions with others in your building"
+                        )
+                        featureRow(
                             icon: "lock.shield.fill",
                             title: "Privacy Controls",
                             description: "Opt out or appear anonymously at any time"
@@ -108,6 +115,20 @@ struct LeaderboardConsentAlert: View {
                                     }
                                 }
                                 .toggleStyle(SwitchToggleStyle(tint: Theme.darkRed))
+                                
+                                // NEW: Live session privacy toggle
+                                Toggle(isOn: $restrictLiveSessionsToFriends) {
+                                    VStack(alignment: .leading, spacing: 2) {
+                                        Text("Friends-only live sessions")
+                                            .font(.system(size: 15, weight: .semibold))
+                                            .foregroundColor(.white)
+                                        Text("Only allow your friends to join your live sessions")
+                                            .font(.system(size: 13))
+                                            .foregroundColor(.white.opacity(0.7))
+                                    }
+                                }
+                                .toggleStyle(SwitchToggleStyle(tint: Theme.darkRed))
+                                
                                 // Display Mode Options (if not opted out)
                                 if !regionalOptOut {
                                     VStack(alignment: .leading, spacing: 10) {
@@ -182,6 +203,8 @@ struct LeaderboardConsentAlert: View {
                             // Apply settings
                             userSettings.setRegionalOptOut(regionalOptOut)
                             userSettings.setRegionalDisplayMode(regionalDisplayMode)
+                            // NEW: Save the live session privacy setting
+                            userSettings.setRestrictLiveSessionsToFriends(restrictLiveSessionsToFriends)
                             // Grant consent
                             consentManager.setConsent(granted: true)
                             // Dismiss
@@ -254,6 +277,7 @@ struct LeaderboardConsentAlert: View {
             // Initialize with current settings
             regionalOptOut = userSettings.regionalOptOut
             regionalDisplayMode = userSettings.regionalDisplayMode
+            restrictLiveSessionsToFriends = userSettings.restrictLiveSessionsToFriends
         }
     }
     private func featureRow(icon: String, title: String, description: String) -> some View {
@@ -273,5 +297,5 @@ struct LeaderboardConsentAlert: View {
     }
 }
 
-// Helper extension for ScrollView max height
+// Helper extension for ScrollView
 extension View { func maxHeight(_ height: CGFloat) -> some View { self.frame(maxHeight: height) } }

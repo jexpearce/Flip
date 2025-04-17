@@ -15,6 +15,9 @@ class MapViewModel: NSObject, ObservableObject, CLLocationManagerDelegate {
 
     @Published var refreshInProgress = false
     private var lastRefreshTime = Date().timeIntervalSince1970 - 60
+    
+    // CHANGE: Add property to track the last time we updated location in Firebase for map display
+    private var lastLocationUpdateForMap = Date().timeIntervalSince1970 - 300  // Initialize to trigger first update
 
     private let db = Firestore.firestore()
     private let locationManager = CLLocationManager()
@@ -41,7 +44,8 @@ class MapViewModel: NSObject, ObservableObject, CLLocationManagerDelegate {
             locationManager.startUpdatingLocation()
 
             // Setup refresh timer
-            locationUpdateTimer = Timer.scheduledTimer(withTimeInterval: 60, repeats: true) {
+            // CHANGE: Increase refresh interval to 5 minutes (300 seconds)
+            locationUpdateTimer = Timer.scheduledTimer(withTimeInterval: 300, repeats: true) {
                 [weak self] _ in self?.refreshLocations()
             }
 
@@ -394,9 +398,7 @@ class MapViewModel: NSObject, ObservableObject, CLLocationManagerDelegate {
         print("Location manager failed with error: \(error.localizedDescription)")
     }
 
-    // In MapViewModel.swift - modify the processHistoricalDocument function:
     // Replace the processHistoricalDocument function in MapViewModel with this fixed version
-
     private func processHistoricalDocument(
         _ document: QueryDocumentSnapshot,
         userId: String,
@@ -553,6 +555,21 @@ class MapViewModel: NSObject, ObservableObject, CLLocationManagerDelegate {
 
         // ONLY update location in Firebase if in an active session
         if isInRelevantState {
+            // CHANGE: Only update Firebase every 5 minutes (300 seconds) for map display
+            let currentTime = Date().timeIntervalSince1970
+            let shouldUpdateMap = currentTime - lastLocationUpdateForMap >= 300 // 5 minutes
+            
+            // Early return if not time to update map yet
+            if !shouldUpdateMap {
+                // Still continue tracking internally but don't update Firebase
+                print("📍 Skipping Firebase location update - next update in \(Int(300 - (currentTime - lastLocationUpdateForMap))) seconds")
+                return
+            }
+            
+            // Mark this time as the last update time for the map
+            lastLocationUpdateForMap = currentTime
+            print("📍 Updating location in Firebase for map display")
+
             // Get username from FirebaseManager
             let username = FirebaseManager.shared.currentUser?.username ?? "User"
 
@@ -583,6 +600,9 @@ class MapViewModel: NSObject, ObservableObject, CLLocationManagerDelegate {
                 .setData(locationData, merge: true) { error in
                     if let error = error {
                         print("Error updating location: \(error.localizedDescription)")
+                    }
+                    else {
+                        print("Location successfully updated in Firebase for map display")
                     }
                 }
         }
