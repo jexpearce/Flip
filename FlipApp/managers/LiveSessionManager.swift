@@ -142,6 +142,7 @@ class LiveSessionManager: ObservableObject {
         maxPauses: Int
     ) {
         let now = Date()
+        let pauseDuration = AppManager.shared.pauseDuration
 
         let sessionData: [String: Any] = [
             "starterId": starterId, "starterUsername": starterUsername, "participants": [starterId],
@@ -150,6 +151,7 @@ class LiveSessionManager: ObservableObject {
             "maxPauses": maxPauses, "joinTimes": [starterId: Timestamp(date: now)],
             "participantStatus": [starterId: ParticipantStatus.active.rawValue],
             "lastUpdateTime": Timestamp(date: now),
+            "pauseDuration": pauseDuration
         ]
 
         db.collection("live_sessions").document(sessionId)
@@ -766,9 +768,15 @@ class LiveSessionManager: ObservableObject {
     }
 
     func stopTrackingSession(sessionId: String) {
+        print("Explicitly stopping tracking for session: \(sessionId)")
+        
         // Remove the session from active tracking
         activeFriendSessions.removeValue(forKey: sessionId)
-        currentJoinedSession = nil
+        
+        // Reset current joined session if it matches
+        if currentJoinedSession?.id == sessionId {
+            currentJoinedSession = nil
+        }
 
         // Remove any listeners for this session
         if let listener = sessionListeners[sessionId] {
@@ -792,8 +800,16 @@ class LiveSessionManager: ObservableObject {
     }
 
     func cleanupListeners() {
-        for (_, listener) in sessionListeners { listener.remove() }
+        print("Cleaning up all live session listeners")
+        
+        // Remove all session listeners
+        for (_, listener) in sessionListeners {
+            listener.remove()
+        }
         sessionListeners.removeAll()
+        
+        // Reset tracked sessions
+        currentJoinedSession = nil
     }
 
     // Method to get live sessions for a specific building
@@ -871,6 +887,7 @@ class LiveSessionManager: ObservableObject {
         let isPaused = appManager.isPaused
         let allowPauses = appManager.allowPauses
         let maxPauses = appManager.maxPauses
+        let pauseDuration = appManager.pauseDuration
         
         // Create base session data
         var sessionData: [String: Any] = [
@@ -883,6 +900,7 @@ class LiveSessionManager: ObservableObject {
             "isPaused": isPaused,
             "allowPauses": allowPauses,
             "maxPauses": maxPauses,
+            "pauseDuration": pauseDuration,
             "joinTimes": [userId: Timestamp(date: now)],
             "participantStatus": [userId: ParticipantStatus.active.rawValue],
             "lastUpdateTime": Timestamp(date: now),

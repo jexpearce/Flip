@@ -175,13 +175,18 @@ class AppManager: NSObject, ObservableObject {
         )
     }
     // In AppManager.swift, replace the joinLiveSession method with this improved version
+    // In AppManager.swift, replace the joinLiveSession method with this improved version
     func joinLiveSession(sessionId: String, remainingSeconds: Int, totalDuration: Int) {
         print("Joining live session: \(sessionId), remaining: \(remainingSeconds)s, duration: \(totalDuration)min")
 
         // Initialize all values first BEFORE changing state
         self.liveSessionId = sessionId
         self.isJoinedSession = true
-        self.selectedMinutes = totalDuration  // Use the correct total duration from the session
+        
+        // FIX: Use remaining time to calculate the correct session duration
+        // This prevents the session from being set to the full duration instead of remaining time
+        let remainingMinutes = Int(ceil(Double(remainingSeconds) / 60.0))
+        self.selectedMinutes = remainingMinutes  // Set selected minutes to remaining time
         self.remainingSeconds = remainingSeconds
         
         // CRITICAL: Ensure we reset any previous state
@@ -203,6 +208,16 @@ class AppManager: NSObject, ObservableObject {
 
                     // Save the list of participants for display in completion screens
                     self.sessionParticipants = session.participants
+                    
+                    LiveSessionManager.shared.db.collection("live_sessions").document(sessionId)
+                                        .getDocument { document, error in
+                                            if let data = document?.data(), let pauseDuration = data["pauseDuration"] as? Int {
+                                                DispatchQueue.main.async {
+                                                    self.pauseDuration = pauseDuration
+                                                    print("Set pause duration to \(pauseDuration) minutes from session")
+                                                }
+                                            }
+                                        }
 
                     // Make sure we're properly setting LiveSessionManager's currentJoinedSession
                     LiveSessionManager.shared.listenToJoinedSession(sessionId: sessionId)
@@ -1152,10 +1167,19 @@ class AppManager: NSObject, ObservableObject {
             resetJoinState(keepFriendRequestInfo: false)
         }
     }
-    
-    // Modified resetJoinState to optionally keep friend request info
+
     func resetJoinState(keepFriendRequestInfo: Bool = false) {
         print("Resetting join state")
+        
+        // Clean up any live session listeners FIRST
+        LiveSessionManager.shared.cleanupListeners()
+        
+        // IMPORTANT: Explicitly tell LiveSessionManager to stop tracking this session
+        if let sessionId = liveSessionId {
+            LiveSessionManager.shared.stopTrackingSession(sessionId: sessionId)
+        }
+        
+        // Reset all session-related state variables
         isJoinedSession = false
         liveSessionId = nil
         
@@ -1163,24 +1187,20 @@ class AppManager: NSObject, ObservableObject {
         if !keepFriendRequestInfo {
             shouldShowFriendRequestForUserId = nil
             shouldShowFriendRequestName = nil
+            deferFriendRequestDisplay = false
         }
         
         originalSessionStarter = nil
         sessionParticipants = []
 
-        // Clear any session-related data from UserDefaults to ensure it doesn't persist
+        // IMPORTANT: Clear any session-related data from UserDefaults to ensure it doesn't persist
         let defaults = UserDefaults.standard
         defaults.removeObject(forKey: "liveSessionId")
         defaults.removeObject(forKey: "isJoinedSession")
         defaults.removeObject(forKey: "originalSessionStarter")
-
-        // Also clean up any live session listeners
-        LiveSessionManager.shared.cleanupListeners()
-
-        // Explicitly tell LiveSessionManager to stop tracking this session
-        if let sessionId = liveSessionId {
-            LiveSessionManager.shared.stopTrackingSession(sessionId: sessionId)
-        }
+        
+        // Also remove any potentially conflicting session state
+        defaults.removeObject(forKey: "sessionParticipants")
 
         // Save state to persist these changes
         saveSessionState()
@@ -1224,13 +1244,13 @@ class AppManager: NSObject, ObservableObject {
 
         // Update live session status if part of a multi-user session
         if let sessionId = liveSessionId {
-            guard let userId = Auth.auth().currentUser?.uid else { return }
-            LiveSessionManager.shared.updateParticipantStatus(
-                sessionId: sessionId,
-                userId: userId,
-                status: .failed
-            )
-        }
+                guard let userId = Auth.auth().currentUser?.uid else { return }
+                LiveSessionManager.shared.updateParticipantStatus(
+                    sessionId: sessionId,
+                    userId: userId,
+                    status: .failed
+                )
+            }
 
         endSession()
         notifyFailure()
@@ -1264,19 +1284,26 @@ class AppManager: NSObject, ObservableObject {
 
         // Update UI state - check participant outcomes for joined sessions
         DispatchQueue.main.async { [self] in
-            if isJoinedSession {
-                // Determine the appropriate completion view
-                determineCompletionView { state in
-                    self.currentState = state
-                    // Reset join state after setting final state
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 1) { self.resetJoinState() }
+                if isJoinedSession {
+                    // Determine the appropriate completion view
+                    determineCompletionView { state in
+                        self.currentState = state
+                        
+                        // IMPORTANT: Only reset join state if we're showing a terminal state
+                        // If we're showing the .othersActive state, we need to keep the join info
+                        if state != .othersActive {
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
+                                self.resetJoinState()
+                            }
+                        }
+                    }
                 }
-            }
             else {
                 self.currentState = .failed  // or .failed depending on the method
             }
         }
     }
+    
     private func recordMultiUserSession(wasSuccessful: Bool) {
         guard let sessionId = liveSessionId, let userId = Auth.auth().currentUser?.uid,
             let username = FirebaseManager.shared.currentUser?.username

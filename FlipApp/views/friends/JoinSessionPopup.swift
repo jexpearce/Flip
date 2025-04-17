@@ -21,6 +21,9 @@ struct JoinSessionPopup: View {
     @State private var pulseOpacity = 0.0
     @State private var buttonScale = 1.0
     @State private var animateGradient = false
+    @State private var allowsPauses: Bool = false
+    @State private var pauseCount: Int = 0
+    @State private var pauseDuration: Int = 0
     
     struct ParticipantInfo: Identifiable {
         let id: String
@@ -109,6 +112,40 @@ struct JoinSessionPopup: View {
                             .font(.system(size: 18, weight: .medium))
                             .foregroundColor(Theme.yellow)
                             .padding(.top, 5)
+                        
+                        VStack(spacing: 4) {
+                            Divider()
+                                .background(Color.white.opacity(0.2))
+                                .padding(.vertical, 6)
+                            
+                            if allowsPauses {
+                                HStack(spacing: 6) {
+                                    Image(systemName: "pause.circle.fill")
+                                        .font(.system(size: 14))
+                                        .foregroundColor(Color.white.opacity(0.9))
+                                    
+                                    if pauseCount > 10 {
+                                        Text("Unlimited pauses, \(pauseDuration)min each")
+                                            .font(.system(size: 14))
+                                            .foregroundColor(Color.white.opacity(0.9))
+                                    } else {
+                                        Text("\(pauseCount) pauses allowed, \(pauseDuration)min each")
+                                            .font(.system(size: 14))
+                                            .foregroundColor(Color.white.opacity(0.9))
+                                    }
+                                }
+                            } else {
+                                HStack(spacing: 6) {
+                                    Image(systemName: "pause.slash")
+                                        .font(.system(size: 14))
+                                        .foregroundColor(Color.white.opacity(0.9))
+                                    
+                                    Text("No pauses allowed")
+                                        .font(.system(size: 14))
+                                        .foregroundColor(Color.white.opacity(0.9))
+                                }
+                            }
+                        }
                     }
                 }
                 .padding(.top, 30)
@@ -317,8 +354,14 @@ struct JoinSessionPopup: View {
                                 let generator = UINotificationFeedbackGenerator()
                                 generator.notificationOccurred(.success)
                                 
-                                // Initialize session with the joined session's settings and start immediately
-                                DispatchQueue.main.async {
+                                // IMPORTANT FIX: First close the popup before modifying app state
+                                // This prevents navigation issues where popup dismissal conflicts with state changes
+                                withAnimation {
+                                    isPresented = false
+                                }
+                                
+                                // THEN initialize session with a slight delay to ensure UI transitions properly
+                                DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
                                     // Directly join and start the live session
                                     appManager.joinLiveSession(
                                         sessionId: sessionId,
@@ -326,11 +369,8 @@ struct JoinSessionPopup: View {
                                         totalDuration: totalDuration
                                     )
                                     
-                                    // Close popup and clear session
-                                    withAnimation {
-                                        isPresented = false
-                                        SessionJoinCoordinator.shared.clearPendingSession()
-                                    }
+                                    // Clear coordinator state
+                                    SessionJoinCoordinator.shared.clearPendingSession()
                                 }
                             } else {
                                 // Show error
@@ -563,15 +603,33 @@ struct JoinSessionPopup: View {
                         return p1.username < p2.username
                     }
                     
-                    // Store session duration
+                    // Store session duration and pause settings
                     self.targetDuration = session.targetDuration
+                    
+                    // Store pause settings
+                    self.allowsPauses = session.allowPauses
+                    self.pauseCount = session.maxPauses
+                    
+                    // Additional Firebase query to get pause duration
+                    if session.allowPauses {
+                        LiveSessionManager.shared.db.collection("live_sessions").document(sessionId)
+                            .getDocument { document, error in
+                                if let data = document?.data(), let pauseDuration = data["pauseDuration"] as? Int {
+                                    self.pauseDuration = pauseDuration
+                                } else {
+                                    // Default pause duration if not found
+                                    self.pauseDuration = 5
+                                }
+                                self.isLoading = false
+                            }
+                    } else {
+                        self.isLoading = false
+                    }
                     
                     // Show participants section if there are multiple participants
                     if participantList.count > 1 {
                         self.showParticipants = true
                     }
-                    
-                    self.isLoading = false
                 }
             } else {
                 // Session not found or error loading
