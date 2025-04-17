@@ -186,7 +186,7 @@ class AppManager: NSObject, ObservableObject {
         // FIX: Use remaining time to calculate the correct session duration
         // This prevents the session from being set to the full duration instead of remaining time
         let remainingMinutes = Int(ceil(Double(remainingSeconds) / 60.0))
-        self.selectedMinutes = remainingMinutes  // Set selected minutes to remaining time
+        self.selectedMinutes = remainingMinutes  // Set to remaining minutes, not total duration
         self.remainingSeconds = remainingSeconds
         
         // CRITICAL: Ensure we reset any previous state

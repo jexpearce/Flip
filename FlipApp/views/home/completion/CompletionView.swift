@@ -206,12 +206,13 @@ struct CompletionView: View {
                     // Add a small delay to show "Saving..." effect
                     DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) {
                         appManager.currentState = .initial
+                        appManager.handleReturnHome()
                         isButtonPressed = false
                         appManager.sessionAlreadyRecorded = false  // Reset for next session
                         showSavingIndicator = false
                         
                         // Call handleReturnHome to show friend request if needed
-                        appManager.handleReturnHome()
+                        
                     }
                 }) {
                     HStack {

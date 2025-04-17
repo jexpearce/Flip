@@ -16,7 +16,7 @@ class MapViewModel: NSObject, ObservableObject, CLLocationManagerDelegate {
     @Published var refreshInProgress = false
     private var lastRefreshTime = Date().timeIntervalSince1970 - 60
     
-    // CHANGE: Add property to track the last time we updated location in Firebase for map display
+    // property to track the last time we updated location in Firebase for map display every 5 min
     private var lastLocationUpdateForMap = Date().timeIntervalSince1970 - 300  // Initialize to trigger first update
 
     private let db = Firestore.firestore()
@@ -43,8 +43,7 @@ class MapViewModel: NSObject, ObservableObject, CLLocationManagerDelegate {
             locationManager.distanceFilter = 50
             locationManager.startUpdatingLocation()
 
-            // Setup refresh timer
-            // CHANGE: Increase refresh interval to 5 minutes (300 seconds)
+            // Setup refresh timer interval to 5 minutes (300 seconds)
             locationUpdateTimer = Timer.scheduledTimer(withTimeInterval: 300, repeats: true) {
                 [weak self] _ in self?.refreshLocations()
             }

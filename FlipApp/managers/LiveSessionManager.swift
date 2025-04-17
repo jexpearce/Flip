@@ -343,21 +343,18 @@ class LiveSessionManager: ObservableObject {
             FirebaseApp.configure()
         }
 
-        guard let userId = Auth.auth().currentUser?.uid,
-            let username = FirebaseManager.shared.currentUser?.username
-        else {
+        guard let userId = Auth.auth().currentUser?.uid else {
             print("User not authenticated, cannot join session")
             completion(false, 0, 0)
             return
         }
-
+            
         isJoiningSession = true
 
         // Get the session first with better error handling
         db.collection("live_sessions").document(sessionId)
             .getDocument { [weak self] document, error in
                 guard let self = self else {
-                    print("Self reference lost")
                     completion(false, 0, 0)
                     return
                 }
@@ -381,6 +378,12 @@ class LiveSessionManager: ObservableObject {
                     self.isJoiningSession = false
                     completion(false, 0, 0)
                     return
+                }
+                
+                // CRITICAL FIX: Store the starter's username in AppManager
+                DispatchQueue.main.async {
+                    AppManager.shared.shouldShowFriendRequestName = sessionData.starterUsername
+                    AppManager.shared.originalSessionStarter = sessionData.starterId
                 }
                 
                 // Prevent joining your own session

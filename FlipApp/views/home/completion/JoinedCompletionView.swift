@@ -206,11 +206,12 @@ struct JoinedCompletionView: View {
                         appManager.sessionParticipants = []
 
                         appManager.currentState = .initial
+                        appManager.handleReturnHome()
                         isButtonPressed = false
                         showSavingIndicator = false
                         
                         // Call handleReturnHome to show friend request if needed
-                        appManager.handleReturnHome()
+                        
                     }
                 }) {
                     HStack {

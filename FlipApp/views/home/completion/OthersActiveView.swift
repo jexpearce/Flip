@@ -198,12 +198,13 @@ struct OthersActiveView: View {
                         appManager.liveSessionId = nil  // IMPORTANT: Clear session ID
                         appManager.originalSessionStarter = nil
                         appManager.sessionParticipants = []
+                        appManager.handleReturnHome()
                         isButtonPressed = false
                         showSavingIndicator = false
                         appManager.sessionAlreadyRecorded = false  // Reset for next session
                         
                         // Call handleReturnHome to show friend request if needed
-                        appManager.handleReturnHome()
+                        
                     }
                 }) {
                     HStack {
