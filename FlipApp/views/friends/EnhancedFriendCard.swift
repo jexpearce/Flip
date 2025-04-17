@@ -18,7 +18,12 @@ struct EnhancedFriendCard: View {
     private var isLive: Bool { return liveSession != nil }
     private var isFull: Bool { return liveSession?.isFull ?? false }
     private var canJoin: Bool {
-        return liveSession?.canJoin ?? false
+        // If there's a live session and it has proper values, check if joinable
+        guard let session = liveSession else { return false }
+        
+        // Make sure remaining seconds is actually populated (could be 0 if not set)
+        // We need at least 1 minute to join, not 3 minutes (more permissive)
+        return !session.isFull && session.remainingSeconds > 60
     }
 
     // Computed real-time elapsed time string
@@ -162,26 +167,15 @@ struct EnhancedFriendCard: View {
 
                 // RIGHT SIDE: Join button or stats with enhanced styling
                 if isLive {
-                    // Show join button or full indicator
                     if canJoin {
                         Button(action: {
                             // Show simple join confirmation alert
                             let generator = UIImpactFeedbackGenerator(style: .medium)
                             generator.impactOccurred()
                             
-                            // IMPROVED: More thorough validation before attempting to join
-                            
                             // Prevent joining your own session
-                            if let liveSession = liveSession, liveSession.starterId == Auth.auth().currentUser?.uid {
+                            if let session = liveSession, session.starterId == Auth.auth().currentUser?.uid {
                                 print("Cannot join your own session")
-                                let errorGenerator = UINotificationFeedbackGenerator()
-                                errorGenerator.notificationOccurred(.error)
-                                return
-                            }
-                            
-                            // Check if session is stale (last update was too long ago)
-                            if let liveSession = liveSession, Date().timeIntervalSince(liveSession.lastUpdateTime) > 120 {
-                                print("Cannot join stale session - last update was too long ago")
                                 let errorGenerator = UINotificationFeedbackGenerator()
                                 errorGenerator.notificationOccurred(.error)
                                 return
@@ -197,9 +191,9 @@ struct EnhancedFriendCard: View {
                                 
                                 DispatchQueue.main.async {
                                     // If all validation passes, prepare to join session
-                                    if let liveSession = liveSession {
-                                        SessionJoinCoordinator.shared.pendingSessionId = liveSession.id
-                                        SessionJoinCoordinator.shared.pendingSessionName = liveSession.starterUsername
+                                    if let session = liveSession {
+                                        SessionJoinCoordinator.shared.pendingSessionId = session.id
+                                        SessionJoinCoordinator.shared.pendingSessionName = session.starterUsername
                                         SessionJoinCoordinator.shared.pendingTimestamp = Date()
                                         SessionJoinCoordinator.shared.shouldJoinSession = true
                                         
@@ -227,7 +221,7 @@ struct EnhancedFriendCard: View {
                     }
                     else {
                         // Show FULL indicator when session can't be joined
-                        Text(isFull ? "FULL" : "UNAVAILABLE").font(.system(size: 14, weight: .bold)).tracking(1)
+                        Text(isFull ? "FULL" : "< 1 MIN LEFT").font(.system(size: 14, weight: .bold)).tracking(1)
                             .foregroundColor(.gray).padding(.vertical, 8).padding(.horizontal, 16)
                             .background(
                                 ZStack {
@@ -240,7 +234,7 @@ struct EnhancedFriendCard: View {
                     }
                 }
                 else {
-                    // Normal state: Show focus time with enhanced styling
+                    // Show stats when no live session
                     VStack(alignment: .trailing, spacing: 5) {
                         Text("\(friend.totalFocusTime) min").font(.system(size: 18, weight: .bold))
                             .foregroundColor(.white)
