@@ -32,7 +32,7 @@ struct HelpSupportView: View {
                         .foregroundColor(.white)
 
                     Text(
-                        "Any questions? Found a bug? Just want to say hi? Send an email to jex@jajajeev.com or hit me up on instagram at @jexpearce"
+                        "Any questions? Found a bug? Just want to say hi? Send an email to jex@jajajeev.com or hit me up on instagram at @jexpearce . If you have lost your password, email me and I can sort it out, a password recovery system will be implemented soon."
                     )
                     .font(.system(size: 18)).foregroundColor(.white.opacity(0.9))
                     .multilineTextAlignment(.center).padding(.horizontal, 25)

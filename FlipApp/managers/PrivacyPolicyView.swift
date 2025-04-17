@@ -44,7 +44,7 @@ struct PrivacyPolicyView: View {
                             emoji: "3️⃣",
                             title: "Location Tracking (Optional)",
                             content:
-                                "Location tracking is not required to use Flip, but enabling it enhances core features, allowing sessions to run while your screen is off, and primarily allowing additional features:\n✅ Regional & Building-Specific Leaderboards – Compete with others in the same location (e.g., libraries, cafés).\n✅ FlipMaps – See friends' live Flip sessions and their last 3 historical sessions.\nWithout location tracking, Flip works normally, but you won't have access to leaderboards or FlipMaps. Location is sparingly triggered, putting battery health as the first priority."
+                                "Location tracking is not required to use Flip, but enabling it enhances core features, allowing sessions to run while your screen is off, and primarily allowing additional features:\n✅ Regional & Building-Specific Leaderboards – Compete with others in the same location (e.g., libraries, cafés).\n✅ FlipMaps – See friends' live Flip sessions and their last 3 historical sessions.\nWithout location tracking, Flip works normally, but you won't have access to leaderboards or FlipMaps. Location is sparingly triggered, once every 5 minutes, putting battery health as the first priority."
                         )
 
                         policySection(
@@ -58,7 +58,7 @@ struct PrivacyPolicyView: View {
                             emoji: "5️⃣",
                             title: "Leaderboards & Privacy Controls",
                             content:
-                                "Building-Specific Leaderboards – Tracks weekly session counts for individual buildings.\nRegional & Global Leaderboards – Compete based on total weekly session time. The Regional specific leaderboard contains your entire total weekly time, not the sessions you have only done in that area. It moves you to the new regional leaderboard only when you have done your first session there. Global Leaderboards do not use location. \nAnonymity & Opt-Out – Users can remain anonymous or disable leaderboard visibility entirely.\n\n🏆 Leaderboard Resets:\nWeekly Leaderboards reset every Monday at 3 AM.\nAll-Time"
+                                "Building-Specific Leaderboards – Tracks weekly session counts for individual buildings. You now also have the option to join non-friends in their sessions when they are in the same building as you, promoting productive socialization. Users have full control over this, and can disable this to set it to only friends being able to join your live sessions. \nRegional & Global Leaderboards – Compete based on total weekly session time. The Regional specific leaderboard contains your entire total weekly time, not the sessions you have only done in that area. It moves you to the new regional leaderboard only when you have done your first session there. Global Leaderboards do not use location. \nAnonymity & Opt-Out – Users can remain anonymous or disable leaderboard visibility entirely.\n\n🏆 Leaderboard Resets:\nWeekly Leaderboards reset every Monday at 3 AM.\nAll-Time"
                         )
 
                         VStack(alignment: .leading, spacing: 15) {
@@ -66,7 +66,7 @@ struct PrivacyPolicyView: View {
                                 .font(.system(size: 18, weight: .bold)).foregroundColor(.white)
 
                             Text(
-                                "Flip is designed with privacy-first principles. You are in complete control of your data, and you can disable location tracking, anonymize your profile, or opt out of leaderboards at any time."
+                                "Flip is designed with privacy-first principles and battery health optimization. You are in complete control of your data, and you can disable location tracking, anonymize your profile, or opt out of leaderboards and group session joins at any time."
                             )
                             .font(.system(size: 15)).foregroundColor(.white.opacity(0.9))
                             .lineSpacing(4)
