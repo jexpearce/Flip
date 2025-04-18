@@ -515,25 +515,22 @@ struct InitialView: View {
 
     // Check if we can proceed to the main app
     private func updateReadyToProceed() {
-        // At minimum, we require motion permission since it's essential
-        let requiredGranted = permissionManager.motionPermissionGranted
-        print("Motion permission granted: \(requiredGranted)")
-        // Check if all permissions are granted
-        let allGranted = PermissionType.allCases.allSatisfy { isPermissionGranted($0) }
-        print("All permissions granted: \(allGranted)")
-
-        // Can proceed if motion permission is granted
-        readyToProceed = requiredGranted
-        print("Ready to proceed: \(readyToProceed)")
-        // If all permissions are granted, make the continue button more prominent
-        if allGranted {
-            // Make animation more noticeable for "all done" state
-            withAnimation(.spring(response: 0.5, dampingFraction: 0.7)) {
-                // This will trigger the animation on the continue button
-                readyToProceed = true
+            // Always allow proceeding
+            readyToProceed = true
+            
+            // Check if all permissions are granted for animation purposes
+            let allGranted = PermissionType.allCases.allSatisfy { isPermissionGranted($0) }
+            print("All permissions granted: \(allGranted)")
+            
+            // If all permissions are granted, make the continue button more prominent
+            if allGranted {
+                // Make animation more noticeable for "all done" state
+                withAnimation(.spring(response: 0.5, dampingFraction: 0.7)) {
+                    // This will trigger a more prominent animation on the continue button
+                    readyToProceed = true
+                }
             }
         }
-    }
 }
 // Enhance the location permission alert - this is a redesigned version aligned with the privacy policy
 struct EnhancedLocationPermissionAlert: View {

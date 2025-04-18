@@ -148,7 +148,7 @@ class PermissionManager: NSObject, ObservableObject {
         // granted but now is denied
         if !motionPermissionGranted && motionPromptCompleted {
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-                self.showMotionSettingsAlert = true
+                self.showMotionSettingsAlert = false
             }
         }
         // Update notification status too
@@ -320,7 +320,7 @@ class PermissionManager: NSObject, ObservableObject {
                         print("Motion permission status after request: \(updatedStatus)")
 
                         // Show settings alert if denied
-                        if updatedStatus == .denied { self.showMotionSettingsAlert = true }
+                        if updatedStatus == .denied { self.showMotionSettingsAlert = false }
 
                         // Update UI state
                         self.updatePermissionState()
@@ -343,7 +343,7 @@ class PermissionManager: NSObject, ObservableObject {
                 self.motionPermissionGranted = (currentStatus == .authorized)
                 print("Motion permission already determined: \(currentStatus)")
                 // Show settings alert if denied
-                if currentStatus == .denied { self.showMotionSettingsAlert = true }
+                if currentStatus == .denied { self.showMotionSettingsAlert = false }
                 // Update UI state
                 self.updatePermissionState()
                 // Reset flag and continue to next permission
