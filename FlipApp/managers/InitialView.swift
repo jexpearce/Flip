@@ -297,15 +297,15 @@ struct InitialView: View {
                     onContinue: { permissionManager.requestMotionPermission() }
                 )
             }
-            if permissionManager.showMotionSettingsAlert {
-                SettingsAlertView(
-                    isPresented: $permissionManager.showMotionSettingsAlert,
-                    title: "Motion Permission Required",
-                    message:
-                        "Motion permission is required to use Flip. Please enable it in Settings to continue.",
-                    settingsAction: { permissionManager.openMotionSettings() }
-                )
-            }
+//            if permissionManager.showMotionSettingsAlert {
+//                SettingsAlertView(
+//                    isPresented: $permissionManager.showMotionSettingsAlert,
+//                    title: "Motion Permission Required",
+//                    message:
+//                        "Motion permission is required to use Flip. Please enable it in Settings to continue.",
+//                    settingsAction: { permissionManager.openMotionSettings() }
+//                )
+//            }
 
             if showNotificationPermission {
                 NotificationPermissionAlert(

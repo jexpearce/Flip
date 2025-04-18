@@ -282,6 +282,7 @@ struct JoinSessionPopup: View {
                     // Join button
                     Button(action: {
                         isJoining = true
+                        
                         // Guard against joining your own session
                         guard !sessionId.contains(Auth.auth().currentUser?.uid ?? "") else {
                             let errorGenerator = UINotificationFeedbackGenerator()
@@ -289,53 +290,52 @@ struct JoinSessionPopup: View {
                             isJoining = false
                             return
                         }
+                        
                         // IMPROVED: Use a timeout mechanism
                         let joinTask = DispatchWorkItem {
                             if self.isJoining {
                                 self.isJoining = false
                                 SessionJoinCoordinator.shared.clearPendingSession()
-                                // Haptic feedback for error
                                 let generator = UINotificationFeedbackGenerator()
                                 generator.notificationOccurred(.error)
                             }
                         }
+                        
                         // Schedule timeout
                         DispatchQueue.main.asyncAfter(deadline: .now() + 8, execute: joinTask)
+                        
                         // Directly join the live session
-                        LiveSessionManager.shared.joinSession(sessionId: sessionId) {
-                            success,
-                            remainingSeconds,
-                            totalDuration in
+                        LiveSessionManager.shared.joinSession(sessionId: sessionId) { success, remainingSeconds, totalDuration in
                             // Cancel the timeout
                             joinTask.cancel()
+                            
                             if success {
                                 // Haptic success feedback
                                 let generator = UINotificationFeedbackGenerator()
                                 generator.notificationOccurred(.success)
-                                // IMPORTANT FIX: First close the popup before modifying app state
-                                // This prevents navigation issues where popup dismissal conflicts with state changes
+                                
+                                // CRITICAL FIX: Start the session FIRST before dismissing popup
+                                // This ensures countdown begins before any view transitions
+                                appManager.joinLiveSession(
+                                    sessionId: sessionId,
+                                    remainingSeconds: remainingSeconds,
+                                    totalDuration: totalDuration
+                                )
+                                
+                                // Clear coordinator state immediately
+                                SessionJoinCoordinator.shared.clearPendingSession()
+                                
+                                // THEN dismiss the popup after session is already started
                                 withAnimation { isPresented = false }
-                                // THEN initialize session with a slight delay to ensure UI transitions properly
-                                DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-                                    // Directly join and start the live session
-                                    appManager.joinLiveSession(
-                                        sessionId: sessionId,
-                                        remainingSeconds: remainingSeconds,
-                                        totalDuration: totalDuration
-                                    )
-                                    // Clear coordinator state
-                                    SessionJoinCoordinator.shared.clearPendingSession()
-                                }
                             }
                             else {
                                 // Show error
                                 SessionJoinCoordinator.shared.clearPendingSession()
-                                // Haptic feedback for error
                                 let generator = UINotificationFeedbackGenerator()
                                 generator.notificationOccurred(.error)
-                                // Close the popup after error
                                 withAnimation { isPresented = false }
                             }
+                            
                             isJoining = false
                         }
                     }) {

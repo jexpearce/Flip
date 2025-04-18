@@ -179,8 +179,7 @@ class AppManager: NSObject, ObservableObject {
             body: "Phone must be face down when timer reaches zero"
         )
     }
-    // In AppManager.swift, replace the joinLiveSession method with this improved version
-    // In AppManager.swift, replace the joinLiveSession method with this improved version
+
     func joinLiveSession(sessionId: String, remainingSeconds: Int, totalDuration: Int) {
         print(
             "Joining live session: \(sessionId), remaining: \(remainingSeconds)s, duration: \(totalDuration)min"
@@ -197,6 +196,14 @@ class AppManager: NSObject, ObservableObject {
         // CRITICAL: Ensure we reset any previous state
         invalidateAllTimers()
         sessionAlreadyRecorded = false
+        // IMPROVED: Always immediately transition to countdown state regardless of current state
+        // This fixes navigation issues and ensures consistent UI
+        self.currentState = .countdown
+        self.countdownSeconds = 5
+        // Save state to ensure persistence across app restarts
+        self.saveSessionState()
+        // Start the countdown immediately without delay - critical fix!
+        self.startCountdown(fromRestoration: false)
 
         // Get joined session data to properly set all parameters
         LiveSessionManager.shared.getSessionDetails(sessionId: sessionId) { sessionData in
@@ -267,31 +274,17 @@ class AppManager: NSObject, ObservableObject {
                         }
                     }
 
-                    // IMPROVED: Always immediately transition to countdown state regardless of current state
-                    // This fixes navigation issues and ensures consistent UI
-                    self.currentState = .countdown
-                    self.countdownSeconds = 5
-                    // Save state to ensure persistence across app restarts
-                    self.saveSessionState()
-                    // Start the countdown immediately without delay - critical fix!
-                    self.startCountdown(fromRestoration: false)
+                    
                 }
             }
             else {
                 // Safety fallback if we can't get session details
                 DispatchQueue.main.async {
-                    // Default values if joined session data isn't available yet
-                    self.allowPauses = false
-                    self.maxPauses = 0
-                    self.remainingPauses = 0
-                    // Force navigation to countdown view and start immediately
-                    self.currentState = .countdown
-                    self.countdownSeconds = 5
-                    // Save state before starting countdown
-                    self.saveSessionState()
-                    // Start countdown without delay - critical fix!
-                    self.startCountdown(fromRestoration: false)
-                }
+                        // Default values if joined session data isn't available yet
+                        self.allowPauses = false
+                        self.maxPauses = 0
+                        self.remainingPauses = 0
+                    }
             }
         }
     }
@@ -1687,29 +1680,36 @@ class AppManager: NSObject, ObservableObject {
 
         // Enhanced validation for live session info
         if liveSessionId != nil && isJoinedSession {
-            // Double check that session still exists before saving
-            LiveSessionManager.shared.getSessionDetails(sessionId: liveSessionId!) { sessionData in
-                if sessionData != nil {
-                    // Session exists, save the info
-                    defaults.set(self.liveSessionId, forKey: "liveSessionId")
-                    defaults.set(self.isJoinedSession, forKey: "isJoinedSession")
-                    defaults.set(self.originalSessionStarter, forKey: "originalSessionStarter")
-                }
-                else {
-                    // Session doesn't exist, clear the data
-                    defaults.removeObject(forKey: "liveSessionId")
-                    defaults.removeObject(forKey: "isJoinedSession")
-                    defaults.removeObject(forKey: "originalSessionStarter")
-
-                    // Also reset local state
-                    DispatchQueue.main.async {
-                        self.liveSessionId = nil
-                        self.isJoinedSession = false
-                        self.originalSessionStarter = nil
+                // Save values directly without Firebase validation
+                defaults.set(self.liveSessionId, forKey: "liveSessionId")
+                defaults.set(self.isJoinedSession, forKey: "isJoinedSession")
+                defaults.set(self.originalSessionStarter, forKey: "originalSessionStarter")
+                
+                // Optionally validate in background without blocking state saving
+                DispatchQueue.global(qos: .background).async {
+                    // Only check once every minute to avoid excessive Firebase calls
+                    let lastValidationTime = defaults.double(forKey: "lastSessionValidationTime")
+                    let now = Date().timeIntervalSince1970
+                    
+                    // Only validate if it's been more than 60 seconds since last check
+                    if now - lastValidationTime > 60 {
+                        LiveSessionManager.shared.getSessionDetails(sessionId: self.liveSessionId!) { sessionData in
+                            if sessionData == nil {
+                                // Session doesn't exist, clear data on main thread
+                                DispatchQueue.main.async {
+                                    // Update validation timestamp to prevent rapid rechecking
+                                    defaults.set(now, forKey: "lastSessionValidationTime")
+                                    
+                                    // Only reset if we're still in the same session when validation completes
+                                    if self.liveSessionId == nil || sessionData?.id != self.liveSessionId {
+                                        self.resetJoinState()
+                                    }
+                                }
+                            }
+                        }
                     }
                 }
             }
-        }
         else if !isJoinedSession {
             // Clear live session info if not joined
             defaults.removeObject(forKey: "liveSessionId")
