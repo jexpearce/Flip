@@ -423,56 +423,134 @@ class LiveSessionManager: ObservableObject {
                         return
                     }
 
-                    // Update session with new participant
-                    var updatedParticipants = sessionData.participants
-                    if !updatedParticipants.contains(userId) { updatedParticipants.append(userId) }
+                    // Continue with session joining process since user is allowed
 
-                    let now = Date()
+                    // FIX: Check if session is too old (last update more than 2 minutes ago)
 
-                    let updateData: [String: Any] = [
-                        "participants": updatedParticipants,
-                        "joinTimes.\(userId)": Timestamp(date: now),
-                        "participantStatus.\(userId)": ParticipantStatus.active.rawValue,
-                        "lastUpdateTime": FieldValue.serverTimestamp(),
-                    ]
+                    if Date().timeIntervalSince(sessionData.lastUpdateTime) > 120 {
 
-                    // IMPROVED: Atomic transaction to update Firebase
-                    self.db.collection("live_sessions").document(sessionId)
-                        .updateData(updateData) { error in
-                            if let error = error {
-                                print("Error joining session: \(error.localizedDescription)")
-                                DispatchQueue.main.async {
-                                    self.isJoiningSession = false
-                                    completion(false, 0, 0)
-                                }
-                            }
-                            else {
-                                print("Successfully joined session")
+                        print("Session is stale - last update was too long ago")
 
-                                // IMPROVEMENT: Set the current session immediately to prevent UI lag
-                                DispatchQueue.main.async { self.currentJoinedSession = sessionData }
-                                // Listen for updates to this session
-                                self.listenToJoinedSession(sessionId: sessionId)
+                        DispatchQueue.main.async {
 
-                                // SIMPLIFIED: Complete the join with the data we already have
-                                // This prevents an additional Firebase call that could fail
-                                DispatchQueue.main.async {
-                                    self.isJoiningSession = false
-                                    // Notify any observers about the join
-                                    self.objectWillChange.send()
-                                    NotificationCenter.default.post(
-                                        name: Notification.Name("LiveSessionJoined"),
-                                        object: nil
-                                    )
-                                    // Return success with the current session data we already have
-                                    completion(
-                                        true,
-                                        sessionData.remainingSeconds,
-                                        sessionData.targetDuration
-                                    )
-                                }
-                            }
+                            self.isJoiningSession = false
+
+                            completion(false, 0, 0)
+
                         }
+
+                        return
+
+                    }
+
+                    // Check if session can be joined
+
+                    if !sessionData.canJoin {
+
+                        print(
+
+                            "Session cannot be joined: full=\(sessionData.isFull), time_remaining=\(sessionData.remainingSeconds)"
+
+                        )
+
+                        DispatchQueue.main.async {
+
+                            self.isJoiningSession = false
+
+                            completion(false, 0, 0)
+
+                        }
+
+                        return
+
+                    }
+
+                    // --- IMMEDIATE COUNTDOWN FIX START ---
+
+                    print("Checks passed, calling completion handler immediately.")
+
+                    // Call completion immediately with fetched data
+
+                    DispatchQueue.main.async {
+
+                        self.isJoiningSession = false // Reset joining flag
+
+                        self.listenToJoinedSession(sessionId: sessionId) // Start listening for updates
+
+                        self.currentJoinedSession = sessionData // Optimistically update local state
+
+                        self.objectWillChange.send()
+
+                        NotificationCenter.default.post(
+
+                            name: Notification.Name("LiveSessionJoined"),
+
+                            object: nil
+
+                        )
+
+                        completion(
+
+                            true,
+
+                            sessionData.remainingSeconds,
+
+                            sessionData.targetDuration
+
+                        )
+
+                    }
+
+                    // Perform Firestore update asynchronously in the background
+
+                    DispatchQueue.global(qos: .background).async {
+
+                        var updatedParticipants = sessionData.participants
+
+                        if !updatedParticipants.contains(userId) { updatedParticipants.append(userId) }
+
+                        let now = Date()
+
+                        let updateData: [String: Any] = [
+
+                            "participants": updatedParticipants,
+
+                            "joinTimes.\(userId)": Timestamp(date: now),
+
+                            "participantStatus.\(userId)": ParticipantStatus.active.rawValue,
+
+                            "lastUpdateTime": FieldValue.serverTimestamp(),
+
+                        ]
+
+                        // Use the same Firestore instance (self.db)
+
+                        self.db.collection("live_sessions").document(sessionId)
+
+                            .updateData(updateData) { error in
+
+                                if let error = error {
+
+                                    // Log error, potentially implement retry or notify user
+
+                                    print("Error updating session in background: \(error.localizedDescription)")
+
+                                    // Optionally: revert optimistic update or inform user
+
+                                }
+
+                                else {
+
+                                    print("Successfully updated session in background")
+
+                                }
+
+                            }
+
+                    }
+
+                    // --- IMMEDIATE COUNTDOWN FIX END ---
+
                 }
             }
     }

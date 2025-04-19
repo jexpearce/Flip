@@ -2,7 +2,8 @@ import FirebaseAuth
 import SwiftUI
 
 struct EnhancedFriendCard: View {
-    let friend: FirebaseManager.FlipUser
+    let friend: FirebaseManager.FlipUser?
+    let liveSession: LiveSessionManager.LiveSessionData
     @State private var isPressed = false
     @State private var isGlowing = false
     @State private var timer: Timer? = nil
@@ -11,33 +12,37 @@ struct EnhancedFriendCard: View {
     @State private var showBlockAlert = false
     @StateObject private var friendManager = FriendManager()
 
-    // LiveSessionData if the friend is in an active session
-    let liveSession: LiveSessionManager.LiveSessionData?
-
     // Computed properties for live sessions
-    private var isLive: Bool { return liveSession != nil }
-    private var isFull: Bool { return liveSession?.isFull ?? false }
+    private var isLive: Bool { return true }
+    private var isFull: Bool { return liveSession.isFull }
     private var canJoin: Bool {
         // If there's a live session and it has proper values, check if joinable
-        guard let session = liveSession else { return false }
         // Make sure remaining seconds is actually populated (could be 0 if not set)
         // We need at least 1 minute to join, not 3 minutes (more permissive)
-        return !session.isFull && session.remainingSeconds > 60
+        return !liveSession.isFull && liveSession.remainingSeconds > 60
+    }
+    private var isFriend: Bool { return friend != nil }
+    private var username: String {
+        return friend?.username ?? liveSession.starterUsername
+    }
+    private var userId: String {
+        return friend?.id ?? liveSession.starterId
+    }
+    private var profileImageURL: String? {
+        return friend?.profileImageURL
     }
 
     // Computed real-time elapsed time string
     private var formattedElapsedTime: String {
-        guard let session = liveSession else { return "0:00" }
-
         // Use sessionTimer.currentTick to force update
         let _ = sessionTimer.currentTick
 
         // Calculate elapsed time including drift compensation
-        let baseElapsed = session.elapsedSeconds
+        let baseElapsed = liveSession.elapsedSeconds
         let timeSinceUpdate = Int(
-            Date().timeIntervalSince1970 - session.lastUpdateTime.timeIntervalSince1970
+            Date().timeIntervalSince1970 - liveSession.lastUpdateTime.timeIntervalSince1970
         )
-        let adjustment = session.isPaused ? 0 : min(timeSinceUpdate, 60)  // Limit adjustment to avoid huge jumps
+        let adjustment = liveSession.isPaused ? 0 : min(timeSinceUpdate, 60)  // Limit adjustment to avoid huge jumps
 
         let totalElapsed = baseElapsed + adjustment
         let minutes = totalElapsed / 60
@@ -50,114 +55,78 @@ struct EnhancedFriendCard: View {
             HStack {
                 // LEFT SIDE: Profile picture with Live indicator if active
                 ZStack(alignment: .topTrailing) {
-                    // Profile picture with streak status
-                    ProfilePictureWithStreak(
-                        imageURL: friend.profileImageURL,
-                        username: friend.username,
-                        size: 56,
-                        streakStatus: streakStatus
-                    )
-                    .shadow(
-                        color: isLive ? Color.green.opacity(0.6) : Theme.lightTealBlue.opacity(0.4),
-                        radius: 8
-                    )
-                    .contextMenu {
-                        Button(action: { showBlockAlert = true }) {
-                            Label("Block User", systemImage: "exclamationmark.shield")
+                    if let friend = friend {
+                        ProfilePictureWithStreak(
+                            imageURL: friend.profileImageURL,
+                            username: friend.username,
+                            size: 56,
+                            streakStatus: streakStatus
+                        )
+                        .shadow(
+                            color: getProfileShadowColor(),
+                            radius: 8
+                        )
+                        .contextMenu {
+                            Button(action: { showBlockAlert = true }) {
+                                Label("Block User", systemImage: "exclamationmark.shield")
+                            }
                         }
+                    } else {
+                        Image(systemName: "person.circle.fill")
+                            .resizable()
+                            .aspectRatio(contentMode: .fit)
+                            .frame(width: 56, height: 56)
+                            .foregroundColor(getProfileColor())
+                            .shadow(color: getProfileShadowColor(), radius: 8)
                     }
 
                     // Live indicator badge with animation
-                    if isLive {
-                        Circle().fill(isFull ? Color.gray : Color.green)
-                            .frame(width: 14, height: 14)
-                            .shadow(color: Color.green.opacity(0.6), radius: isGlowing ? 4 : 2)
-                            .animation(
-                                Animation.easeInOut(duration: 1.2)
-                                    .repeatForever(autoreverses: true),
-                                value: isGlowing
-                            )
-                            .overlay(Circle().stroke(Color.black, lineWidth: 1)).offset(x: 2, y: -2)
-                            .onAppear { isGlowing = true }
-                    }
+                    Circle().fill(isFull ? Color.gray : getLiveIndicatorColor())
+                        .frame(width: 14, height: 14)
+                        .shadow(color: getLiveIndicatorColor().opacity(0.6), radius: isGlowing ? 4 : 2)
+                        .animation(
+                            Animation.easeInOut(duration: 1.2)
+                                .repeatForever(autoreverses: true),
+                            value: isGlowing
+                        )
+                        .overlay(Circle().stroke(Color.black, lineWidth: 1)).offset(x: 2, y: -2)
+                        .onAppear { isGlowing = true }
                 }
 
                 // User info section - Enhanced styling
                 VStack(alignment: .leading, spacing: 5) {
-                    if isLive {
-                        // When Live: LIVE text with pulse animation
-                        HStack(spacing: 6) {
-                            Text("LIVE").font(.system(size: 14, weight: .heavy))
-                                .foregroundColor(isFull ? .gray : .green)
-                                .shadow(color: Color.green.opacity(0.6), radius: isGlowing ? 4 : 2)
-                                .scaleEffect(isGlowing ? 1.05 : 1.0)
-                                .animation(
-                                    Animation.easeInOut(duration: 1.5)
-                                        .repeatForever(autoreverses: true),
-                                    value: isGlowing
-                                )
+                    HStack(spacing: 6) {
+                        Text("LIVE").font(.system(size: 14, weight: .heavy))
+                            .foregroundColor(isFull ? .gray : getLiveTextColor())
+                            .shadow(color: getLiveTextColor().opacity(0.6), radius: isGlowing ? 4 : 2)
+                            .scaleEffect(isGlowing ? 1.05 : 1.0)
+                            .animation(
+                                Animation.easeInOut(duration: 1.5)
+                                    .repeatForever(autoreverses: true),
+                                value: isGlowing
+                            )
 
-                            Circle().fill(Color.green).frame(width: 6, height: 6)
-                                .opacity(isGlowing ? 0.8 : 0.4)
-                                .animation(
-                                    Animation.easeInOut(duration: 0.8)
-                                        .repeatForever(autoreverses: true),
-                                    value: isGlowing
-                                )
-                        }
-                    }
-                    else if streakStatus != .none {
-                        // Show streak status when not live
-                        HStack(spacing: 6) {
-                            Image(systemName: "flame.fill").font(.system(size: 14, weight: .bold))
-                                .foregroundColor(streakStatus == .redFlame ? .red : .orange)
-                                .shadow(
-                                    color: streakStatus == .redFlame
-                                        ? Color.red.opacity(0.6) : Color.orange.opacity(0.6),
-                                    radius: isGlowing ? 4 : 2
-                                )
-                                .scaleEffect(isGlowing ? 1.05 : 1.0)
-                                .animation(
-                                    Animation.easeInOut(duration: 1.5)
-                                        .repeatForever(autoreverses: true),
-                                    value: isGlowing
-                                )
-
-                            Text(streakStatus == .redFlame ? "BLAZING" : "ON FIRE")
-                                .font(.system(size: 12, weight: .bold))
-                                .foregroundColor(streakStatus == .redFlame ? .red : .orange)
-                                .shadow(
-                                    color: streakStatus == .redFlame
-                                        ? Color.red.opacity(0.4) : Color.orange.opacity(0.4),
-                                    radius: 2
-                                )
-                        }
+                        Circle().fill(getLiveIndicatorColor()).frame(width: 6, height: 6)
+                            .opacity(isGlowing ? 0.8 : 0.4)
+                            .animation(
+                                Animation.easeInOut(duration: 0.8)
+                                    .repeatForever(autoreverses: true),
+                                value: isGlowing
+                            )
                     }
 
                     // Username with enhanced styling
-                    Text(friend.username).font(.system(size: 20, weight: .bold))
+                    Text(username).font(.system(size: 20, weight: .bold))
                         .foregroundColor(.white)
-                        .shadow(color: Theme.lightTealBlue.opacity(0.5), radius: 6)
+                        .shadow(color: getUsernameShadowColor(), radius: 6)
 
-                    // Show session count in normal state or live session info
-                    if !isLive {
-                        HStack(spacing: 8) {
-                            Image(systemName: "timer").font(.system(size: 12))
-                                .foregroundColor(Theme.vibrantPurple)
+                    // Show brief session info for live sessions
+                    HStack(spacing: 8) {
+                        Image(systemName: "clock.fill").font(.system(size: 12))
+                            .foregroundColor(getInfoIconColor())
 
-                            Text("\(friend.totalSessions) sessions").font(.system(size: 14))
-                                .foregroundColor(.white.opacity(0.8))
-                        }
-                    }
-                    else {
-                        // Show brief session info for live sessions
-                        HStack(spacing: 8) {
-                            Image(systemName: "clock.fill").font(.system(size: 12))
-                                .foregroundColor(Theme.yellow)
-
-                            Text("Target: \(liveSession?.targetDuration ?? 0)min")
-                                .font(.system(size: 14)).foregroundColor(.white.opacity(0.8))
-                        }
+                        Text("Target: \(liveSession.targetDuration)min")
+                            .font(.system(size: 14)).foregroundColor(.white.opacity(0.8))
                     }
                 }
                 .padding(.leading, 10)
@@ -165,146 +134,123 @@ struct EnhancedFriendCard: View {
                 Spacer()
 
                 // RIGHT SIDE: Join button or stats with enhanced styling
-                if isLive {
-                    if canJoin {
-                        Button(action: {
-                            // Show simple join confirmation alert
-                            let generator = UIImpactFeedbackGenerator(style: .medium)
-                            generator.impactOccurred()
-                            // Prevent joining your own session
-                            if let session = liveSession,
-                                session.starterId == Auth.auth().currentUser?.uid
-                            {
-                                print("Cannot join your own session")
-                                let errorGenerator = UINotificationFeedbackGenerator()
-                                errorGenerator.notificationOccurred(.error)
+                if canJoin {
+                    Button(action: {
+                        // Show simple join confirmation alert
+                        let generator = UIImpactFeedbackGenerator(style: .medium)
+                        generator.impactOccurred()
+                        // Prevent joining your own session
+                        if liveSession.starterId == Auth.auth().currentUser?.uid
+                        {
+                            print("Cannot join your own session")
+                            let errorGenerator = UINotificationFeedbackGenerator()
+                            errorGenerator.notificationOccurred(.error)
+                            return
+                        }
+                        // If first-time user, check if they've completed their first session
+                        FirebaseManager.shared.hasCompletedFirstSession { hasCompleted in
+                            if !hasCompleted && isFriend {
+                                // Show first session required alert
+                                SessionJoinCoordinator.shared.showFirstSessionRequiredAlert =
+                                    true
                                 return
                             }
-                            // If first-time user, check if they've completed their first session
-                            FirebaseManager.shared.hasCompletedFirstSession { hasCompleted in
-                                if !hasCompleted {
-                                    // Show first session required alert
-                                    SessionJoinCoordinator.shared.showFirstSessionRequiredAlert =
-                                        true
-                                    return
-                                }
-                                DispatchQueue.main.async {
-                                    // If all validation passes, prepare to join session
-                                    if let session = liveSession {
-                                        SessionJoinCoordinator.shared.pendingSessionId = session.id
-                                        SessionJoinCoordinator.shared.pendingSessionName =
-                                            session.starterUsername
-                                        SessionJoinCoordinator.shared.pendingTimestamp = Date()
-                                        SessionJoinCoordinator.shared.shouldJoinSession = true
-                                        // Post notification to show confirmation dialog
-                                        NotificationCenter.default.post(
-                                            name: Notification.Name(
-                                                "ShowLiveSessionJoinConfirmation"
-                                            ),
-                                            object: nil
-                                        )
-                                    }
-                                }
-                            }
-                        }) {
-                            Text("JOIN").font(.system(size: 14, weight: .bold)).tracking(1)
-                                .foregroundColor(.white).padding(.vertical, 8)
-                                .padding(.horizontal, 16)
-                                .background(
-                                    ZStack {
-                                        RoundedRectangle(cornerRadius: 10)
-                                            .fill(Color.green.opacity(0.3))
-                                        RoundedRectangle(cornerRadius: 10)
-                                            .stroke(Color.green.opacity(0.6), lineWidth: 1)
-                                    }
+                            DispatchQueue.main.async {
+                                // If all validation passes, prepare to join session
+                                SessionJoinCoordinator.shared.pendingSessionId = liveSession.id
+                                SessionJoinCoordinator.shared.pendingSessionName =
+                                    liveSession.starterUsername
+                                SessionJoinCoordinator.shared.pendingTimestamp = Date()
+                                SessionJoinCoordinator.shared.shouldJoinSession = true
+                                // Post notification to show confirmation dialog
+                                NotificationCenter.default.post(
+                                    name: Notification.Name(
+                                        "ShowLiveSessionJoinConfirmation"
+                                    ),
+                                    object: nil
                                 )
+                            }
                         }
-                        .buttonStyle(PlainButtonStyle())
-                    }
-                    else {
-                        // Show FULL indicator when session can't be joined
-                        Text(isFull ? "FULL" : "< 1 MIN LEFT")
-                            .font(.system(size: 14, weight: .bold)).tracking(1)
-                            .foregroundColor(.gray).padding(.vertical, 8).padding(.horizontal, 16)
+                    }) {
+                        Text("JOIN").font(.system(size: 14, weight: .bold)).tracking(1)
+                            .foregroundColor(.white).padding(.vertical, 8)
+                            .padding(.horizontal, 16)
                             .background(
                                 ZStack {
-                                    RoundedRectangle(cornerRadius: 10).fill(Color.gray.opacity(0.2))
-
                                     RoundedRectangle(cornerRadius: 10)
-                                        .stroke(Color.gray.opacity(0.4), lineWidth: 1)
+                                        .fill(getJoinButtonColor().opacity(0.3))
+                                    RoundedRectangle(cornerRadius: 10)
+                                        .stroke(getJoinButtonColor().opacity(0.6), lineWidth: 1)
                                 }
                             )
                     }
+                    .buttonStyle(PlainButtonStyle())
                 }
                 else {
-                    // Show stats when no live session
-                    VStack(alignment: .trailing, spacing: 5) {
-                        Text("\(friend.totalFocusTime) min").font(.system(size: 18, weight: .bold))
-                            .foregroundColor(.white)
-                            .shadow(color: Theme.yellow.opacity(0.5), radius: 6)
+                    // Show FULL indicator when session can't be joined
+                    Text(isFull ? "FULL" : "< 1 MIN LEFT")
+                        .font(.system(size: 14, weight: .bold)).tracking(1)
+                        .foregroundColor(.gray).padding(.vertical, 8).padding(.horizontal, 16)
+                        .background(
+                            ZStack {
+                                RoundedRectangle(cornerRadius: 10).fill(Color.gray.opacity(0.2))
 
-                        HStack(spacing: 6) {
-                            Text("focus time").font(.system(size: 12))
-                                .foregroundColor(Theme.yellow.opacity(0.8))
-
-                            Image(systemName: "clock.fill").font(.system(size: 12))
-                                .foregroundColor(Theme.yellow.opacity(0.8))
-                        }
-                    }
+                                RoundedRectangle(cornerRadius: 10)
+                                    .stroke(Color.gray.opacity(0.4), lineWidth: 1)
+                            }
+                        )
                 }
             }
 
             // Session timing information - only shown for live sessions
-            if isLive, let session = liveSession {
-                VStack(spacing: 8) {
-                    Divider().background(Color.white.opacity(0.2)).padding(.vertical, 10)
+            VStack(spacing: 8) {
+                Divider().background(Color.white.opacity(0.2)).padding(.vertical, 10)
 
-                    HStack {
-                        VStack(alignment: .leading, spacing: 2) {
-                            Text("TIME").font(.system(size: 12, weight: .medium)).tracking(1)
-                                .foregroundColor(Theme.lightTealBlue.opacity(0.8))
+                HStack {
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("TIME").font(.system(size: 12, weight: .medium)).tracking(1)
+                            .foregroundColor(getInfoIconColor().opacity(0.8))
 
-                            // Use our real-time updated timer here
-                            Text(formattedElapsedTime).font(.system(size: 18, weight: .bold))
-                                .monospacedDigit().foregroundColor(.white)
-                                .id(sessionTimer.currentTick)  // Force refresh when counter changes
-                                .shadow(color: Theme.lightTealBlue.opacity(0.5), radius: 4)
+                        // Use our real-time updated timer here
+                        Text(formattedElapsedTime).font(.system(size: 18, weight: .bold))
+                            .monospacedDigit().foregroundColor(.white)
+                            .id(sessionTimer.currentTick)  // Force refresh when counter changes
+                            .shadow(color: getTimeTextColor().opacity(0.5), radius: 4)
+                    }
+
+                    Spacer()
+
+                    if liveSession.isPaused {
+                        // Show paused status
+                        HStack(spacing: 6) {
+                            Image(systemName: "pause.circle.fill")
+                                .foregroundColor(Theme.mutedRed)
+
+                            Text("PAUSED").font(.system(size: 12, weight: .bold))
+                                .foregroundColor(Theme.mutedRed)
                         }
+                        .padding(.horizontal, 10).padding(.vertical, 4)
+                        .background(
+                            RoundedRectangle(cornerRadius: 10).fill(Theme.mutedRed.opacity(0.2))
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 10)
+                                        .stroke(Theme.mutedRed.opacity(0.3), lineWidth: 1)
+                                )
+                        )
+                    }
+                    else {
+                        VStack(alignment: .trailing, spacing: 2) {
+                            Text("TARGET").font(.system(size: 12, weight: .medium)).tracking(1)
+                                .foregroundColor(getTargetTextColor().opacity(0.8))
 
-                        Spacer()
-
-                        if session.isPaused {
-                            // Show paused status
-                            HStack(spacing: 6) {
-                                Image(systemName: "pause.circle.fill")
-                                    .foregroundColor(Theme.mutedRed)
-
-                                Text("PAUSED").font(.system(size: 12, weight: .bold))
-                                    .foregroundColor(Theme.mutedRed)
-                            }
-                            .padding(.horizontal, 10).padding(.vertical, 4)
-                            .background(
-                                RoundedRectangle(cornerRadius: 10).fill(Theme.mutedRed.opacity(0.2))
-                                    .overlay(
-                                        RoundedRectangle(cornerRadius: 10)
-                                            .stroke(Theme.mutedRed.opacity(0.3), lineWidth: 1)
-                                    )
-                            )
-                        }
-                        else {
-                            VStack(alignment: .trailing, spacing: 2) {
-                                Text("TARGET").font(.system(size: 12, weight: .medium)).tracking(1)
-                                    .foregroundColor(Theme.yellow.opacity(0.8))
-
-                                Text("\(session.targetDuration) min")
-                                    .font(.system(size: 18, weight: .bold)).foregroundColor(.white)
-                                    .shadow(color: Theme.yellow.opacity(0.5), radius: 4)
-                            }
+                            Text("\(liveSession.targetDuration) min")
+                                .font(.system(size: 18, weight: .bold)).foregroundColor(.white)
+                                .shadow(color: getTargetTextColor().opacity(0.5), radius: 4)
                         }
                     }
                 }
-                .padding(.top, -5)
             }
+            .padding(.top, -5)
         }
         .padding()
         .background(
@@ -313,9 +259,11 @@ struct EnhancedFriendCard: View {
                 RoundedRectangle(cornerRadius: 16)
                     .fill(
                         LinearGradient(
-                            colors: isLive && !isFull
+                            colors: isFriend && !isFull
                                 ? [Theme.forestGreen.opacity(0.3), Theme.darkBlue.opacity(0.2)]
-                                : [Theme.darkBlue.opacity(0.2), Theme.deepPurple.opacity(0.2)],
+                                : !isFriend && !isFull
+                                    ? [Theme.darkBlue.opacity(0.3), Theme.blue800.opacity(0.2)]
+                                    : [Theme.darkBlue.opacity(0.2), Theme.deepPurple.opacity(0.2)],
                             startPoint: .topLeading,
                             endPoint: .bottomTrailing
                         )
@@ -332,16 +280,18 @@ struct EnhancedFriendCard: View {
         .scaleEffect(isPressed ? 0.98 : 1.0)
         .animation(.spring(response: 0.3, dampingFraction: 0.6), value: isPressed)
         .onLongPressGesture {
-            // Tactile feedback
-            let generator = UIImpactFeedbackGenerator(style: .medium)
-            generator.impactOccurred()
-            // Show block alert
-            showBlockAlert = true
+            if isFriend {
+                // Tactile feedback
+                let generator = UIImpactFeedbackGenerator(style: .medium)
+                generator.impactOccurred()
+                // Show block alert
+                showBlockAlert = true
+            }
         }
-        .alert("Block \(friend.username)", isPresented: $showBlockAlert) {
+        .alert("Block \(friend?.username ?? "User")", isPresented: $showBlockAlert) {
             Button("Cancel", role: .cancel) {}
             Button("Block", role: .destructive) {
-                friendManager.blockUser(userId: friend.id) { success in
+                friendManager.blockUser(userId: userId) { success in
                     if success {
                         // Optionally show a success message or handle UI updates
                         let generator = UINotificationFeedbackGenerator()
@@ -351,22 +301,24 @@ struct EnhancedFriendCard: View {
             }
         } message: {
             Text(
-                "Are you sure you want to block \(friend.username)? This will remove them from your friends list and prevent them from interacting with you."
+                "Are you sure you want to block \(friend?.username ?? "this user")? This will remove them from your friends list and prevent them from interacting with you."
             )
         }
         .onAppear {
             // Update the session timer with this card's session data
-            if let session = liveSession { sessionTimer.updateSession(session: session) }
+            sessionTimer.updateSession(session: liveSession)
 
             // Load streak status from Firestore
             loadStreakStatus()
+
+            isGlowing = true // Ensure glow starts
         }
         .onDisappear { stopTimer() }
         .onReceive(
             NotificationCenter.default.publisher(for: Notification.Name("RefreshLiveSessions"))
         ) { _ in
             // Update session timer with fresh data
-            if let session = liveSession { sessionTimer.updateSession(session: session) }
+            sessionTimer.updateSession(session: liveSession)
 
             // Force UI update
             //self.objectWillChange.send()
@@ -375,40 +327,54 @@ struct EnhancedFriendCard: View {
 
     // Helper to load streak status for the friend
     private func loadStreakStatus() {
-        FirebaseManager.shared.db.collection("users").document(friend.id).collection("streak")
+        // Ensure friend exists before loading streak
+        guard let friendId = friend?.id else { return }
+        FirebaseManager.shared.db.collection("users").document(friendId).collection("streak")
             .document("current")
             .getDocument { snapshot, error in
                 if let data = snapshot?.data(), let statusString = data["streakStatus"] as? String,
                     let status = StreakStatus(rawValue: statusString)
                 {
                     DispatchQueue.main.async { self.streakStatus = status }
+                } else {
+                    // Default to none if no streak data
+                    DispatchQueue.main.async { self.streakStatus = .none }
                 }
             }
     }
 
     // Helper to get dynamic card border gradient based on state
     private func getCardBorderGradient() -> LinearGradient {
-        if isLive && !isFull {
-            // Live session border
+        if isFriend && !isFull {
+            // Friend Live border
             return LinearGradient(
                 colors: [Color.green.opacity(isGlowing ? 0.8 : 0.5), Color.white.opacity(0.1)],
                 startPoint: .topLeading,
                 endPoint: .bottomTrailing
             )
+        } else if !isFriend && !isFull {
+            // Non-Friend Live border
+            return LinearGradient(
+                colors: [Theme.blue.opacity(isGlowing ? 0.8 : 0.5), Color.white.opacity(0.1)],
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            )
         }
         else {
-            // Default border regardless of streak (since streak is shown on avatar now)
+            // Default border (Full session or error)
             return Theme.silveryGradient2
         }
     }
 
     // Helper to get dynamic card shadow color based on state
     private func getCardShadowColor() -> Color {
-        if isLive && !isFull {
+        if isFriend && !isFull {
             return Color.green.opacity(0.3)
+        } else if !isFriend && !isFull {
+            return Theme.blue.opacity(0.3)
         }
         else {
-            // Consistent shadow regardless of streak status
+            // Consistent shadow for Full sessions
             return Color.black.opacity(0.2)
         }
     }
@@ -417,4 +383,19 @@ struct EnhancedFriendCard: View {
         timer?.invalidate()
         timer = nil
     }
+
+    // Dynamic color helpers based on isFriend
+    private func getProfileColor() -> Color { return isFriend ? Theme.vibrantPurple : Theme.blue }
+    private func getProfileShadowColor() -> Color {
+        return isFriend ? Theme.vibrantPurple.opacity(0.5) : Theme.blue.opacity(0.5)
+    }
+    private func getLiveIndicatorColor() -> Color { return isFriend ? Color.green : Theme.blue }
+    private func getLiveTextColor() -> Color { return isFriend ? Color.green : Theme.blue }
+    private func getUsernameShadowColor() -> Color {
+        return isFriend ? Theme.lightTealBlue.opacity(0.5) : Theme.blue.opacity(0.5)
+    }
+    private func getInfoIconColor() -> Color { return isFriend ? Theme.yellow : Theme.blue }
+    private func getJoinButtonColor() -> Color { return isFriend ? Color.green : Theme.blue }
+    private func getTimeTextColor() -> Color { return isFriend ? Theme.lightTealBlue : Theme.blue }
+    private func getTargetTextColor() -> Color { return isFriend ? Theme.yellow : Theme.blue }
 }

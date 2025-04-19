@@ -6,6 +6,15 @@ import FirebaseFirestore
 import SwiftUI
 
 class AppManager: NSObject, ObservableObject {
+    // ADDED: Helper to check if running on simulator
+    var isSimulator: Bool {
+        #if targetEnvironment(simulator)
+        return true
+        #else
+        return false
+        #endif
+    }
+
     static var backgroundRefreshIdentifier = "com.jexpearce.flip.refresh"
     static let shared = AppManager()
 
@@ -36,6 +45,9 @@ class AppManager: NSObject, ObservableObject {
     @Published var shouldShowFriendRequestName: String?
     @Published var showFriendRequestView = false
     @Published var deferFriendRequestDisplay = false  // Flag to defer displaying friend request
+
+    // ADDED: Published property to control the selected tab index
+    @Published var selectedTab: Int = 2 // Default to first tab (Home)
 
     private var pauseEndTime: Date?
     private var sessionManager = SessionManager.shared
@@ -92,6 +104,11 @@ class AppManager: NSObject, ObservableObject {
 
     // MARK: - Setup Methods
     private func setupMotionManager() {
+        // Bypass setup on simulator
+        guard !isSimulator else {
+            print("SIMULATOR MODE: Skipping CMMotionManager setup.")
+            return
+        }
         guard motionManager.isDeviceMotionAvailable else { return }
         motionManager.deviceMotionUpdateInterval = 0.1
     }
@@ -137,15 +154,27 @@ class AppManager: NSObject, ObservableObject {
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
                     self.checkCurrentOrientation()  // Get fresh orientation reading
 
-                    if let motion = self.motionManager.deviceMotion, motion.gravity.z > 0.8 {
-                        // Phone is face down, start the session
+                    if self.isSimulator {
+                        print("SIMULATOR MODE: Bypassing orientation check, starting session face down.")
+                        self.isFaceDown = true // Assume face down on simulator
                         self.startTrackingSession()
-                    }
-                    else {
-                        // Phone is not face down, fail the session
-                        self.notifyCountdownFailed()
-                        if #available(iOS 16.1, *) { self.endLiveActivity() }
-                        self.currentState = .initial
+                    } else {
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
+                            self.checkCurrentOrientation()  // Get fresh orientation reading
+
+                            if let motion = self.motionManager.deviceMotion, motion.gravity.z > 0.8 {
+                                // Phone is face down, start the session
+                                self.isFaceDown = true // Ensure state is set
+                                self.startTrackingSession()
+                            }
+                            else {
+                                // Phone is not face down, fail the session
+                                self.isFaceDown = false // Ensure state is set
+                                self.notifyCountdownFailed()
+                                if #available(iOS 16.1, *) { self.endLiveActivity() }
+                                self.currentState = .initial
+                            }
+                        }
                     }
                 }
             }
@@ -170,6 +199,12 @@ class AppManager: NSObject, ObservableObject {
                 sessionId: liveSessionId!,
                 appManager: self
             )
+        }
+
+        // ADDED: Navigate to Home tab (index 0) immediately after starting countdown
+        DispatchQueue.main.async {
+            print("Navigating to Home tab after joining session.")
+            self.selectedTab = 2
         }
     }
 
@@ -620,14 +655,22 @@ class AppManager: NSObject, ObservableObject {
                     timer.invalidate()
 
                     // Get fresh orientation reading to ensure accurate state
-                    self.checkCurrentOrientation()
-
-                    // Check if phone is face down
-                    if let motion = self.motionManager.deviceMotion, motion.gravity.z > 0.8 {
+                    // MODIFIED: Simulator bypass for orientation check
+                    if self.isSimulator {
+                        print("SIMULATOR MODE: Bypassing orientation check on resume, resuming face down.")
+                         self.isFaceDown = true // Assume face down on simulator resume
                         self.startTrackingSession(isNewSession: false)
-                    }
-                    else {
-                        self.failSession()
+                    } else {
+                        self.checkCurrentOrientation()
+                        // Check if phone is face down
+                        if let motion = self.motionManager.deviceMotion, motion.gravity.z > 0.8 {
+                             self.isFaceDown = true // Ensure state is set
+                            self.startTrackingSession(isNewSession: false)
+                        }
+                        else {
+                            self.isFaceDown = false // Ensure state is set
+                            self.failSession()
+                        }
                     }
                 }
             }
@@ -642,6 +685,13 @@ class AppManager: NSObject, ObservableObject {
         sessionTimer = nil
 
         guard !isPaused else { return }
+
+        // ADDED: If in a joined session, don't start the local timer.
+        // Time is synced from the host via LiveSessionManager listener.
+        if isJoinedSession {
+            print("In joined session, not starting local session timer.")
+            return
+        }
 
         sessionTimer = Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { [weak self] _ in
             guard let self = self else { return }
@@ -697,6 +747,12 @@ class AppManager: NSObject, ObservableObject {
 
     // MARK: - Motion Handling
     private func startMotionUpdates() {
+        // Bypass updates on simulator
+        guard !isSimulator else {
+            print("SIMULATOR MODE: Skipping motion updates.")
+            return
+        }
+
         guard motionManager.isDeviceMotionAvailable else {
             print("Device motion not available")
             return
@@ -708,7 +764,8 @@ class AppManager: NSObject, ObservableObject {
         // Configure and start motion updates
         motionManager.deviceMotionUpdateInterval = 0.1
         motionManager.startDeviceMotionUpdates(to: .main) { [weak self] motion, error in
-            guard let self = self, let motion = motion, currentState == .tracking else { return }
+            // Bypass updates on simulator
+            guard let self = self, !self.isSimulator, let motion = motion, currentState == .tracking else { return }
 
             let newFaceDown = motion.gravity.z > 0.8
             if newFaceDown != self.isFaceDown {
@@ -864,6 +921,8 @@ class AppManager: NSObject, ObservableObject {
     }
 
     func checkCurrentOrientation() {
+        // Bypass check on simulator
+        guard !isSimulator else { return }
         guard currentState == .tracking else { return }
 
         guard let motion = motionManager.deviceMotion else {
@@ -930,7 +989,8 @@ class AppManager: NSObject, ObservableObject {
             print("Background time exceeded 5 minutes - checking device state")
 
             // First, try to get a fresh device motion reading
-            if let motion = motionManager.deviceMotion {
+            // Bypass motion check on simulator
+            if !isSimulator, let motion = motionManager.deviceMotion {
                 let currentFaceDown = motion.gravity.z > 0.8
 
                 // If the phone is face up after a long background time, fail the session
@@ -945,7 +1005,8 @@ class AppManager: NSObject, ObservableObject {
                     if sessionTimer == nil { startSessionTimer() }
                 }
             }
-            else {
+            // Bypass motion check on simulator
+            else if !isSimulator {
                 // Can't get device motion, restart motion updates
                 print("Cannot get device motion after extended background time")
                 startMotionUpdates()
@@ -1364,10 +1425,11 @@ class AppManager: NSObject, ObservableObject {
                             participantStatusData[participantId]
                             ?? LiveSessionManager.ParticipantStatus.active.rawValue
                         // Create Session.Participant with the expected fields
+                        // FIX: Pass the fetched participantStatus to the initializer
                         let participant = Session.Participant(
                             userId: participantId,
                             joinTime: joinTime,
-                            status: participantStatus
+                            status: participantStatus // Use the status fetched from participantStatusData
                         )
 
                         sessionParticipants.append(participant)
@@ -1898,91 +1960,93 @@ class AppManager: NSObject, ObservableObject {
         }
     }
 
-    // Modify determineCompletionView in AppManager.swift
-    func determineCompletionView(completion: @escaping (FlipState) -> Void) {
-        // If not a joined session, use standard completion
-        if !isJoinedSession {
-            completion(currentState)
+    // NEW: Method to determine the completion view based on participant statuses
+    private func determineCompletionView(completion: @escaping (FlipState) -> Void) {
+        guard let sessionId = liveSessionId, let currentUserId = Auth.auth().currentUser?.uid else {
+            // If no session or user ID, fallback to simple complete/fail
+            completion(self.remainingSeconds <= 0 ? .completed : .failed)
             return
         }
 
-        // For joined sessions, check all participant statuses
-        guard let sessionId = liveSessionId else {
-            completion(currentState)
-            return
+        print("Determining completion view for session: \(sessionId)")
+
+        // PRIORITIZE using listener data if available
+        if let sessionData = LiveSessionManager.shared.currentJoinedSession,
+            sessionData.id == sessionId
+        {
+            print("Using live listener data for completion view determination.")
+            let statuses = sessionData.participantStatus
+            evaluateParticipantStatuses(currentUserId: currentUserId, statuses: statuses, completion: completion)
         }
-
-        LiveSessionManager.shared.db.collection("live_sessions").document(sessionId)
-            .getDocument { [weak self] document, error in
-                guard let self = self else { return }
-
-                if let error = error {
-                    print("Error fetching session data: \(error.localizedDescription)")
-                    DispatchQueue.main.async { completion(self.currentState) }
+        else {
+            // Fallback to fetching details if listener data isn't ready or doesn't match
+            print("Listener data not available or mismatched, fetching session details.")
+            LiveSessionManager.shared.getSessionDetails(sessionId: sessionId) { sessionData in
+                guard let session = sessionData else {
+                    print("Failed to fetch session details for completion view.")
+                    // Fallback if details can't be fetched
+                    completion(self.remainingSeconds <= 0 ? .completed : .failed)
                     return
                 }
 
-                guard let document = document, document.exists, let data = document.data(),
-                    let participantStatus = data["participantStatus"] as? [String: String]
-                else {
-                    DispatchQueue.main.async { completion(self.currentState) }
-                    return
-                }
-
-                // Count different status types
-                var completedCount = 0
-                var failedCount = 0
-                var activeCount = 0
-
-                for (_, status) in participantStatus {
-                    if status == LiveSessionManager.ParticipantStatus.completed.rawValue {
-                        completedCount += 1
-                    }
-                    else if status == LiveSessionManager.ParticipantStatus.failed.rawValue {
-                        failedCount += 1
-                    }
-                    else {
-                        activeCount += 1
-                    }
-                }
-
-                // Determine the appropriate view state
-                let shownState: FlipState
-
-                // Check if any participants are still active
-                if activeCount > 0 {
-                    // If we have active participants, use the new state
-                    shownState = .othersActive
-                }
-                else if completedCount > 0 && failedCount > 0 {
-                    shownState = .mixedOutcome
-                }
-                else if failedCount > 0 {
-                    shownState = .failed
-                }
-                else if completedCount > 0 {
-                    shownState = .joinedCompleted
-                }
-                else {
-                    shownState = self.currentState
-                }
-
-                DispatchQueue.main.async {
-                    completion(shownState)
-
-                    // IMPORTANT: Reset join state after a delay to allow view transition
-                    let shouldResetState =
-                        shownState == .joinedCompleted || shownState == .mixedOutcome
-                        || shownState == .failed
-
-                    if shouldResetState {
-                        DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
-                            self.resetJoinState()
-                        }
-                    }
-                }
+                let statuses = session.participantStatus
+                self.evaluateParticipantStatuses(currentUserId: currentUserId, statuses: statuses, completion: completion)
             }
+        }
     }
+
+    // Helper function to evaluate statuses and determine state
+    private func evaluateParticipantStatuses(
+        currentUserId: String,
+        statuses: [String: LiveSessionManager.ParticipantStatus],
+        completion: @escaping (FlipState) -> Void
+    ) {
+        let currentUserStatus = statuses[currentUserId]
+        let otherParticipants = statuses.filter { $0.key != currentUserId }
+
+        // Check conditions
+        let allOthersCompleted = !otherParticipants.isEmpty && otherParticipants.allSatisfy { $0.value == .completed }
+        let anyOtherActiveOrPaused = otherParticipants.contains { $0.value == .active || $0.value == .paused }
+        let anyFailed = statuses.contains { $0.value == .failed }
+
+        var finalState: FlipState
+
+        if currentUserStatus == .completed && allOthersCompleted {
+            print("Completion State: All completed -> .joinedCompleted")
+            finalState = .joinedCompleted
+        }
+        else if (currentUserStatus == .completed || currentUserStatus == .failed) && anyOtherActiveOrPaused {
+            print("Completion State: User finished, others active -> .othersActive")
+            finalState = .othersActive
+        }
+        else if anyFailed {
+            print("Completion State: At least one failed -> .mixedOutcome")
+            finalState = .mixedOutcome // If anyone failed, it's a mixed outcome
+        }
+        else if currentUserStatus == .completed && otherParticipants.isEmpty {
+             // Only user in session, and they completed
+            print("Completion State: Single user completed -> .completed")
+            finalState = .completed
+        }
+        else if currentUserStatus == .failed && otherParticipants.isEmpty {
+             // Only user in session, and they failed
+            print("Completion State: Single user failed -> .failed")
+            finalState = .failed
+        }
+         else if currentUserStatus == .completed && !anyOtherActiveOrPaused && !anyFailed && !otherParticipants.isEmpty {
+            // User completed, others are not active/paused, nobody failed -> assume all others completed implicitly
+            print("Completion State: User completed, others finished (implicitly) -> .joinedCompleted")
+            finalState = .joinedCompleted
+        }
+        else {
+            // Fallback based on current user's status
+            print("Completion State: Fallback based on user status")
+            finalState = (currentUserStatus == .completed) ? .completed : .failed
+        }
+
+        completion(finalState)
+    }
+
     // Add this function to AppManager.swift
     private func cancelPendingNotifications() {
         // Cancel specifically the pause notification instead of all notifications
@@ -2368,5 +2432,30 @@ class AppManager: NSObject, ObservableObject {
     deinit {
         NotificationCenter.default.removeObserver(self)
         endSession()
+    }
+
+    // MARK: - Simulator Testing Methods
+    func simulateSetFaceDown() {
+        #if targetEnvironment(simulator)
+        guard currentState == .tracking else { return } // Only allow during tracking
+        if !isFaceDown { // Only trigger if changing state
+            print("SIMULATOR: Manually setting isFaceDown = true")
+            isFaceDown = true
+            handleOrientationChange(isFaceDown: true)
+            saveSessionState() // Save the new state
+        }
+        #endif
+    }
+
+    func simulateSetFaceUp() {
+        #if targetEnvironment(simulator)
+        guard currentState == .tracking else { return } // Only allow during tracking
+        if isFaceDown { // Only trigger if changing state
+            print("SIMULATOR: Manually setting isFaceDown = false")
+            isFaceDown = false
+            handleOrientationChange(isFaceDown: false)
+            saveSessionState() // Save the new state
+        }
+        #endif
     }
 }

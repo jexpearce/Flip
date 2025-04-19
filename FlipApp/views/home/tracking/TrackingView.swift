@@ -3,6 +3,7 @@ import SwiftUI
 struct TrackingView: View {
     @EnvironmentObject var appManager: AppManager
     @EnvironmentObject var permissionManager: PermissionManager
+    @EnvironmentObject var liveSessionManager: LiveSessionManager
     @State private var isPausePressed = false
     @State private var isCancelPressed = false
     @State private var showingCancelAlert = false
@@ -48,6 +49,28 @@ struct TrackingView: View {
             }
         }
     }
+
+    // ADDED: Computed property to determine which time string to display
+    private var displayedTimeString: String {
+        if appManager.isJoinedSession {
+            // Use time from the live session data if joined
+            let seconds = liveSessionManager.currentJoinedSession?.remainingSeconds
+            return formatSeconds(seconds)
+        }
+        else {
+            // Otherwise, use the AppManager's local timer string
+            return appManager.remainingTimeString
+        }
+    }
+
+    // ADDED: Helper function to format optional seconds into M:SS string
+    private func formatSeconds(_ seconds: Int?) -> String {
+        guard let s = seconds, s >= 0 else { return "--:--" } // Handle nil or negative
+        let minutes = s / 60
+        let remainingSeconds = s % 60
+        return String(format: "%d:%02d", minutes, remainingSeconds)
+    }
+
     private func statusCard() -> some View {
         VStack(spacing: 20) {
             // First check phone position and display appropriate icon
@@ -174,7 +197,7 @@ struct TrackingView: View {
                     RoundedRectangle(cornerRadius: 15).fill(Color.black.opacity(0.2))
 
                     // Timer text
-                    Text(appManager.remainingTimeString)
+                    Text(displayedTimeString)
                         .font(.system(size: 60, weight: .bold, design: .monospaced))
                         .foregroundColor(.white).shadow(color: Color.white.opacity(0.4), radius: 10)
                 }
