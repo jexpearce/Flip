@@ -27,7 +27,6 @@ struct HomeView: View {
             // Main content based on app state
             VStack(spacing: 30) {
                 switch appManager.currentState {
-                case .completed: CompletionView()
                 case .initial: SetupView().environmentObject(liveSessionManager)
                 case .paused: PausedView().environmentObject(liveSessionManager)
                 case .countdown: CountdownView().environmentObject(liveSessionManager)
