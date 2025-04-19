@@ -1,5 +1,6 @@
 import FirebaseAuth
 import SwiftUI
+import FirebaseFirestore
 
 struct JoinSessionPopup: View {
     let sessionId: String
@@ -318,7 +319,7 @@ struct JoinSessionPopup: View {
                             }
                             
                             // CRITICAL: Simplest possible approach to get session data
-                            db.collection("live_sessions").document(sessionId).getDocument { document, error in
+                            LiveSessionManager.shared.db.collection("live_sessions").document(sessionId).getDocument { document, error in
                                 // Handle errors
                                 if let error = error {
                                     print("Error fetching session: \(error.localizedDescription)")
@@ -350,7 +351,7 @@ struct JoinSessionPopup: View {
                                     "lastUpdateTime": FieldValue.serverTimestamp()
                                 ]
                                 
-                                db.collection("live_sessions").document(sessionId).updateData(updateData) { error in
+                                LiveSessionManager.shared.db.collection("live_sessions").document(sessionId).updateData(updateData) { error in
                                     if let error = error {
                                         print("Error updating session: \(error.localizedDescription)")
                                     }

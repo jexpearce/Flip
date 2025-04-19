@@ -1,10 +1,3 @@
-//
-//  JoinedSessionIndicator.swift
-//  FlipApp
-//
-//  Created by Jex Pearce on 2/28/25.
-//
-
 import SwiftUI
 
 struct JoinedSessionIndicator: View {
@@ -14,13 +7,13 @@ struct JoinedSessionIndicator: View {
     @State private var elapsedSeconds = 0
     @State private var timer: Timer?
     @State private var lastUpdateTime = Date()
-    @State private var isInitializing = true
+    @State private var isInitializing = true  // Added to prevent immediate display
 
     private var joinedSession: LiveSessionManager.LiveSessionData? {
         return liveSessionManager.currentJoinedSession
     }
 
-    // IMPROVED: More reliable elapsed time calculation
+    // Elapsed time calculation
     private var formattedElapsedTime: String {
         // If app manager has accurate time, use it
         if appManager.currentState == .tracking || appManager.currentState == .countdown {
@@ -44,90 +37,93 @@ struct JoinedSessionIndicator: View {
     }
 
     var body: some View {
-        // ✅ CORRECT: Check BOTH conditions
-        if appManager.isJoinedSession && !isInitializing {
-            HStack(spacing: 8) {
-                // Live indicator
-                Circle().fill(appManager.isPaused ? Color.orange : Color.green)
-                    .frame(width: 8, height: 8)
-                    .shadow(
-                        color: (appManager.isPaused ? Color.orange : Color.green).opacity(0.6),
-                        radius: isGlowing ? 4 : 2
-                    )
-                    .animation(
-                        Animation.easeInOut(duration: 1.5).repeatForever(autoreverses: true),
-                        value: isGlowing
-                    )
+        Group {
+            if appManager.isJoinedSession && !isInitializing {
+                HStack(spacing: 8) {
+                    // Live indicator
+                    Circle().fill(appManager.isPaused ? Color.orange : Color.green)
+                        .frame(width: 8, height: 8)
+                        .shadow(
+                            color: (appManager.isPaused ? Color.orange : Color.green).opacity(0.6),
+                            radius: isGlowing ? 4 : 2
+                        )
+                        .animation(
+                            Animation.easeInOut(duration: 1.5).repeatForever(autoreverses: true),
+                            value: isGlowing
+                        )
 
-                // Session info with starter name
-                Text(
-                    appManager.isPaused
-                        ? "PAUSED session with \(joinedSession?.starterUsername ?? "friend")"
-                        : "In session with \(joinedSession?.starterUsername ?? "friend")"
+                    // Session info with starter name
+                    Text(
+                        appManager.isPaused
+                            ? "PAUSED session with \(joinedSession?.starterUsername ?? "friend")"
+                            : "In session with \(joinedSession?.starterUsername ?? "friend")"
+                    )
+                    .font(.system(size: 14, weight: .medium)).foregroundColor(.white)
+
+                    Spacer()
+
+                    // Elapsed time
+                    Text(formattedElapsedTime).font(.system(size: 14, weight: .bold)).monospacedDigit()
+                        .foregroundColor(.white).id(elapsedSeconds)
+                }
+                .padding(10)
+                .background(
+                    RoundedRectangle(cornerRadius: 10)
+                        .fill(
+                            appManager.isPaused ? Color.orange.opacity(0.1) : Color.green.opacity(0.1)
+                        )
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 10)
+                                .strokeBorder(
+                                    LinearGradient(
+                                        colors: [
+                                            (appManager.isPaused ? Color.orange : Color.green)
+                                                .opacity(0.8),
+                                            (appManager.isPaused ? Color.orange : Color.green)
+                                                .opacity(0.2),
+                                        ],
+                                        startPoint: .leading,
+                                        endPoint: .trailing
+                                    ),
+                                    lineWidth: 1
+                                )
+                        )
                 )
-                .font(.system(size: 14, weight: .medium)).foregroundColor(.white)
-
-                Spacer()
-
-                // Elapsed time
-                Text(formattedElapsedTime).font(.system(size: 14, weight: .bold)).monospacedDigit()
-                    .foregroundColor(.white).id(elapsedSeconds)  // Force update when timer ticks
-            }
-            .padding(10)
-            .background(
-                RoundedRectangle(cornerRadius: 10)
-                    .fill(
-                        appManager.isPaused ? Color.orange.opacity(0.1) : Color.green.opacity(0.1)
-                    )
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 10)
-                            .strokeBorder(
-                                LinearGradient(
-                                    colors: [
-                                        (appManager.isPaused ? Color.orange : Color.green)
-                                            .opacity(0.8),
-                                        (appManager.isPaused ? Color.orange : Color.green)
-                                            .opacity(0.2),
-                                    ],
-                                    startPoint: .leading,
-                                    endPoint: .trailing
-                                ),
-                                lineWidth: 1
-                            )
-                    )
-            )
-            .onAppear {
-                isGlowing = true
-                lastUpdateTime = Date()
-                startTimer()
-            }
-            .onDisappear { stopTimer() }
-            .onChange(of: appManager.isPaused) {
-                // Reset the timer when pause state changes
-                stopTimer()
-                elapsedSeconds = 0
-                lastUpdateTime = Date()
-                if !appManager.isPaused { startTimer() }
-            }
-            .onReceive(
-                NotificationCenter.default.publisher(for: Notification.Name("RefreshLiveSessions"))
-            ) { _ in
-                // Update last update time when we get fresh session data
-                lastUpdateTime = Date()
+            } else {
+                EmptyView()
             }
         }
-        else {
-            EmptyView()
-        }
-        // ✅ CORRECT: Put onAppear on the parent view
         .onAppear {
-            // Set initializing to true
+            // Set up initial state
             isInitializing = true
+            isGlowing = true
+            lastUpdateTime = Date()
             
-            // Wait for everything to stabilize before showing
+            // Start timer
+            startTimer()
+            
+            // Delay showing the indicator to allow state to stabilize
             DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
                 isInitializing = false
             }
+        }
+        .onDisappear {
+            stopTimer()
+        }
+        .onChange(of: appManager.isPaused) { _ in
+            // Reset the timer when pause state changes
+            stopTimer()
+            elapsedSeconds = 0
+            lastUpdateTime = Date()
+            if !appManager.isPaused {
+                startTimer()
+            }
+        }
+        .onReceive(
+            NotificationCenter.default.publisher(for: Notification.Name("RefreshLiveSessions"))
+        ) { _ in
+            // Update last update time when we get fresh session data
+            lastUpdateTime = Date()
         }
     }
 
@@ -142,7 +138,9 @@ struct JoinedSessionIndicator: View {
         }
 
         // Make sure timer runs during scrolling
-        if let timer = timer { RunLoop.current.add(timer, forMode: .common) }
+        if let timer = timer {
+            RunLoop.current.add(timer, forMode: .common)
+        }
     }
 
     private func stopTimer() {

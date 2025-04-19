@@ -290,17 +290,16 @@ class AppManager: NSObject, ObservableObject {
                     return
                 }
                 
-                DispatchQueue.main.async {
-                    // FIXED: Here we do need [weak self] and guard
-                    if let self = self {
-                        self.allowPauses = session.allowPauses
-                        self.maxPauses = session.maxPauses
-                        self.remainingPauses = session.maxPauses
-                        self.sessionParticipants = session.participants
-                        
-                        // Save state
-                        self.saveSessionState()
-                    }
+                DispatchQueue.main.async { [weak self] in
+                    guard let self = self else { return }
+                    
+                    self.allowPauses = session.allowPauses
+                    self.maxPauses = session.maxPauses
+                    self.remainingPauses = session.maxPauses
+                    self.sessionParticipants = session.participants
+                    
+                    // Save state
+                    self.saveSessionState()
                 }
             }
         }
