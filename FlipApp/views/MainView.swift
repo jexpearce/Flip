@@ -175,6 +175,17 @@ struct MainView: View {
                     viewRouter.selectedTab = 2  // Switch to home tab
                 }
             }
+            // Add notification listener for forced navigation to home tab (used during session joining)
+            .onReceive(
+                NotificationCenter.default.publisher(
+                    for: Notification.Name("ForceNavigateToHomeTab")
+                )
+            ) { _ in
+                print("Received ForceNavigateToHomeTab notification, switching to Home tab")
+                withAnimation {
+                    viewRouter.selectedTab = 2  // Force switch to home tab
+                }
+            }
             .environmentObject(viewRouter)  // Add the permission manager as an environment object
             .environmentObject(permissionManager)
             .alert("Location Access Required", isPresented: $showLocationSettingsAlert) {

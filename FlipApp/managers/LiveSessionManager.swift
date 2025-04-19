@@ -4,15 +4,21 @@ import FirebaseFirestore
 import SwiftUI
 
 class LiveSessionManager: ObservableObject {
+    // Queue for handling Firestore updates safely
     private let updateQueue = DispatchQueue(
         label: "com.flipapp.sessionUpdateQueue",
         attributes: .concurrent
     )
     private let updateSemaphore = DispatchSemaphore(value: 1)
+    
+    // NEW: Dedicated serial queue for managing session listeners dictionary
+    private let listenerQueue = DispatchQueue(label: "com.flipapp.listenerQueue")
+
     private static let _shared = LiveSessionManager()
     static var shared: LiveSessionManager { return _shared }
 
     let db: Firestore
+    // Protected by listenerQueue
     private var sessionListeners: [String: ListenerRegistration] = [:]
 
     // Published properties for UI updates
@@ -335,63 +341,114 @@ class LiveSessionManager: ObservableObject {
         )
     }
     // In LiveSessionManager.swift, improve the joinSession method
+    // REFACTORED joinSession method
     func joinSession(sessionId: String, completion: @escaping (Bool, Int, Int) -> Void) {
-        // Ensure Firebase is initialized
+        // Ensure Firebase is initialized (redundant check, but safe)
         if FirebaseApp.app() == nil {
             print("Firebase not initialized. Attempting to configure.")
             FirebaseApp.configure()
         }
 
+        // 1. Check Authentication State
         guard let userId = Auth.auth().currentUser?.uid else {
             print("User not authenticated, cannot join session")
-            completion(false, 0, 0)
+            DispatchQueue.main.async {
+                self.isJoiningSession = false // Ensure flag is reset
+                completion(false, 0, 0)
+            }
             return
         }
-        isJoiningSession = true
 
-        // Get the session first with better error handling
+        // Set joining flag immediately on main thread
+        DispatchQueue.main.async {
+            self.isJoiningSession = true
+        }
+
+        // 2. Fetch Session Document
         db.collection("live_sessions").document(sessionId)
             .getDocument { [weak self] document, error in
                 guard let self = self else {
-                    completion(false, 0, 0)
+                    // If self is nil, reset flag and complete
+                    DispatchQueue.main.async {
+                        // Assuming isJoiningSession is static or accessed via shared instance if self is nil
+                        // LiveSessionManager.shared.isJoiningSession = false
+                        completion(false, 0, 0)
+                    }
                     return
                 }
 
+                // Handle fetch errors
                 if let error = error {
-                    print("Error fetching session: \(error.localizedDescription)")
-                    self.isJoiningSession = false
-                    completion(false, 0, 0)
+                    print("Error fetching session document: \(error.localizedDescription)")
+                    DispatchQueue.main.async {
+                        self.isJoiningSession = false
+                        completion(false, 0, 0)
+                    }
                     return
                 }
 
+                // Check if document exists
                 guard let document = document, document.exists else {
-                    print("Session document doesn't exist")
-                    self.isJoiningSession = false
-                    completion(false, 0, 0)
+                    print("Session document doesn't exist: \(sessionId)")
+                    DispatchQueue.main.async {
+                        self.isJoiningSession = false
+                        completion(false, 0, 0)
+                    }
                     return
                 }
 
+                // 3. Parse Session Data (Safely)
                 guard let sessionData = self.parseLiveSessionDocument(document) else {
-                    print("Failed to parse session document")
-                    self.isJoiningSession = false
-                    completion(false, 0, 0)
-                    return
-                }
-                // CRITICAL FIX: Store the starter's username in AppManager
-                DispatchQueue.main.async {
-                    AppManager.shared.shouldShowFriendRequestName = sessionData.starterUsername
-                    AppManager.shared.originalSessionStarter = sessionData.starterId
-                }
-                // Prevent joining your own session
-                if sessionData.starterId == userId {
-                    print("Cannot join your own session - you are the starter")
-                    self.isJoiningSession = false
-                    completion(false, 0, 0)
+                    print("Failed to parse session document: \(sessionId)")
+                    DispatchQueue.main.async {
+                        self.isJoiningSession = false
+                        completion(false, 0, 0)
+                    }
                     return
                 }
 
-                // NEW: Check if session is restricted to friends only
-                self.checkFriendRestriction(starterId: sessionData.starterId) { isAllowed in
+                // Store necessary values locally before async checks
+                let safeStarterId = sessionData.starterId
+                let safeStarterUsername = sessionData.starterUsername
+                let safeSessionId = sessionData.id // Use ID from parsed data
+
+                // 4. Perform Join Checks (Cannot join own, Stale, Joinable, Friend Restriction)
+
+                // Cannot join own session
+                if safeStarterId == userId {
+                    print("Cannot join your own session (starterId == userId)")
+                    DispatchQueue.main.async {
+                        self.isJoiningSession = false
+                        completion(false, 0, 0)
+                    }
+                    return
+                }
+
+                // Session is stale (last update > 2 mins ago)
+                let lastUpdateTime = sessionData.lastUpdateTime
+                if Date().timeIntervalSince(lastUpdateTime) > 120 {
+                    print("Session is stale - last update was too long ago")
+                    DispatchQueue.main.async {
+                        self.isJoiningSession = false
+                        completion(false, 0, 0)
+                    }
+                    return
+                }
+
+                // Session not joinable (full or time too low)
+                if !sessionData.canJoin {
+                    print(
+                        "Session cannot be joined: full=\(sessionData.isFull), time_remaining=\(sessionData.remainingSeconds)"
+                    )
+                    DispatchQueue.main.async {
+                        self.isJoiningSession = false
+                        completion(false, 0, 0)
+                    }
+                    return
+                }
+
+                // Check friend restriction asynchronously
+                self.checkFriendRestriction(starterId: safeStarterId) { isAllowed in
                     if !isAllowed {
                         print("Session is restricted to friends only and user is not a friend")
                         DispatchQueue.main.async {
@@ -400,159 +457,81 @@ class LiveSessionManager: ObservableObject {
                         }
                         return
                     }
-                    // Continue with session joining process since user is allowed
 
-                    // FIX: Check if session is too old (last update more than 2 minutes ago)
-                    if Date().timeIntervalSince(sessionData.lastUpdateTime) > 120 {
-                        print("Session is stale - last update was too long ago")
-                        DispatchQueue.main.async {
-                            self.isJoiningSession = false
-                            completion(false, 0, 0)
-                        }
-                        return
-                    }
-                    // Check if session can be joined
-                    if !sessionData.canJoin {
-                        print(
-                            "Session cannot be joined: full=\(sessionData.isFull), time_remaining=\(sessionData.remainingSeconds)"
-                        )
-                        DispatchQueue.main.async {
-                            self.isJoiningSession = false
-                            completion(false, 0, 0)
-                        }
-                        return
-                    }
+                    // --- All Checks Passed ---
 
-                    // Continue with session joining process since user is allowed
+                    print("Checks passed for session \(safeSessionId), proceeding to join.")
 
-                    // FIX: Check if session is too old (last update more than 2 minutes ago)
-
-                    if Date().timeIntervalSince(sessionData.lastUpdateTime) > 120 {
-
-                        print("Session is stale - last update was too long ago")
-
-                        DispatchQueue.main.async {
-
-                            self.isJoiningSession = false
-
-                            completion(false, 0, 0)
-
-                        }
-
-                        return
-
-                    }
-
-                    // Check if session can be joined
-
-                    if !sessionData.canJoin {
-
-                        print(
-
-                            "Session cannot be joined: full=\(sessionData.isFull), time_remaining=\(sessionData.remainingSeconds)"
-
-                        )
-
-                        DispatchQueue.main.async {
-
-                            self.isJoiningSession = false
-
-                            completion(false, 0, 0)
-
-                        }
-
-                        return
-
-                    }
-
-                    // --- IMMEDIATE COUNTDOWN FIX START ---
-
-                    print("Checks passed, calling completion handler immediately.")
-
-                    // Call completion immediately with fetched data
+                    // 5. Call Completion Immediately on Main Thread
+                    // Create copies of necessary data for the completion handler
+                    let finalRemainingSeconds = sessionData.remainingSeconds
+                    let finalTargetDuration = sessionData.targetDuration // AppManager needs this? Or calculates based on remaining? Let's pass original for now.
+                    let finalSessionData = sessionData // Pass the whole data for AppManager
 
                     DispatchQueue.main.async {
+                        // Set AppManager properties needed before calling completion
+                        AppManager.shared.shouldShowFriendRequestName = safeStarterUsername
+                        AppManager.shared.originalSessionStarter = safeStarterId
 
-                        self.isJoiningSession = false // Reset joining flag
+                        // Update local state
+                        self.currentJoinedSession = finalSessionData // Update with the validated data
+                        self.listenToJoinedSession(sessionId: safeSessionId) // Start listener
 
-                        self.listenToJoinedSession(sessionId: sessionId) // Start listening for updates
+                        // Reset joining flag
+                        self.isJoiningSession = false
+                        self.objectWillChange.send() // Notify UI
 
-                        self.currentJoinedSession = sessionData // Optimistically update local state
-
-                        self.objectWillChange.send()
-
+                        // Post notification
                         NotificationCenter.default.post(
-
                             name: Notification.Name("LiveSessionJoined"),
-
                             object: nil
-
                         )
 
+                        // Call completion to trigger AppManager state change
                         completion(
-
                             true,
-
-                            sessionData.remainingSeconds,
-
-                            sessionData.targetDuration
-
+                            finalRemainingSeconds,
+                            finalTargetDuration // Pass original duration
                         )
-
+                        print("Completion handler called for session join.")
                     }
 
-                    // Perform Firestore update asynchronously in the background
-
+                    // 6. Update Firestore Asynchronously in Background
                     DispatchQueue.global(qos: .background).async {
+                        // Get fresh user ID inside background task
+                        guard let backgroundUserId = Auth.auth().currentUser?.uid else {
+                            print("Background Task: User ID became nil, cannot update Firestore.")
+                            return
+                        }
 
                         var updatedParticipants = sessionData.participants
-
-                        if !updatedParticipants.contains(userId) { updatedParticipants.append(userId) }
+                        if !updatedParticipants.contains(backgroundUserId) {
+                            updatedParticipants.append(backgroundUserId)
+                        }
 
                         let now = Date()
-
                         let updateData: [String: Any] = [
-
                             "participants": updatedParticipants,
-
-                            "joinTimes.\(userId)": Timestamp(date: now),
-
-                            "participantStatus.\(userId)": ParticipantStatus.active.rawValue,
-
-                            "lastUpdateTime": FieldValue.serverTimestamp(),
-
+                            "joinTimes.\(backgroundUserId)": Timestamp(date: now),
+                            "participantStatus.\(backgroundUserId)": ParticipantStatus.active.rawValue,
+                            "lastUpdateTime": FieldValue.serverTimestamp(), // Use server time for consistency
                         ]
 
-                        // Use the same Firestore instance (self.db)
-
-                        self.db.collection("live_sessions").document(sessionId)
-
+                        self.db.collection("live_sessions").document(safeSessionId)
                             .updateData(updateData) { error in
-
                                 if let error = error {
-
-                                    // Log error, potentially implement retry or notify user
-
-                                    print("Error updating session in background: \(error.localizedDescription)")
-
-                                    // Optionally: revert optimistic update or inform user
-
+                                    print(
+                                        "Background Task: Error updating session \(safeSessionId): \(error.localizedDescription)"
+                                    )
+                                } else {
+                                    print(
+                                        "Background Task: Successfully updated session \(safeSessionId) for user \(backgroundUserId)"
+                                    )
                                 }
-
-                                else {
-
-                                    print("Successfully updated session in background")
-
-                                }
-
                             }
-
                     }
-
-                    // --- IMMEDIATE COUNTDOWN FIX END ---
-
-                }
-            }
+                } // End of checkFriendRestriction completion
+            } // End of getDocument completion
     }
     private var cleanupTimer: Timer?
 
@@ -598,9 +577,12 @@ class LiveSessionManager: ObservableObject {
             DispatchQueue.main.async { self.activeFriendSessions.removeValue(forKey: sessionId) }
 
             // Also remove any session listeners for this session
-            if let listener = sessionListeners[sessionId] {
-                listener.remove()
-                sessionListeners.removeValue(forKey: sessionId)
+            // Use listenerQueue for safe access
+            listenerQueue.async { // Use async to avoid blocking the cleanup timer thread
+                if let listener = self.sessionListeners.removeValue(forKey: sessionId) {
+                    listener.remove()
+                    print("Removed listener via cleanup for session: \(sessionId)")
+                }
             }
 
             // Also remove from Firestore if it appears to be completed
@@ -621,47 +603,113 @@ class LiveSessionManager: ObservableObject {
 
     func listenToJoinedSession(sessionId: String) {
         print("Setting up listener for session: \(sessionId)")
-        // Remove any existing listener
-        if let existingListener = sessionListeners[sessionId] {
-            existingListener.remove()
-            sessionListeners.removeValue(forKey: sessionId)
+        
+        // CRITICAL: Safety check - don't proceed with empty session ID
+        guard !sessionId.isEmpty else {
+            print("ERROR: Cannot listen to session with empty ID")
+            return
         }
-
-        // Create new listener
-        let listener = db.collection("live_sessions").document(sessionId)
-            .addSnapshotListener { [weak self] document, error in
-                guard let self = self else {
-                    print("Self reference lost in session listener")
-                    return
-                }
-                if let error = error {
-                    print("Error listening to session \(sessionId): \(error.localizedDescription)")
-                    DispatchQueue.main.async { self.currentJoinedSession = nil }
-                    return
-                }
-                guard let document = document, document.exists else {
-                    print("Session document no longer exists: \(sessionId)")
-                    DispatchQueue.main.async {
-                        self.currentJoinedSession = nil
-                        self.objectWillChange.send()
-                    }
-                    return
-                }
-                guard let sessionData = self.parseLiveSessionDocument(document) else {
-                    print("Failed to parse session document for \(sessionId)")
-                    DispatchQueue.main.async { self.currentJoinedSession = nil }
-                    return
-                }
-
-                DispatchQueue.main.async {
-                    self.currentJoinedSession = sessionData
-                    self.objectWillChange.send()
-                }
+        
+        // Use the instance listenerQueue for thread safety
+        listenerQueue.sync { // Use sync to ensure listener is setup before function returns? Or async? Let's try sync first.
+            // Remove any existing listener for this specific session ID
+            if let existingListener = self.sessionListeners.removeValue(forKey: sessionId) {
+                existingListener.remove()
+                print("Removed existing listener before adding new one for session: \(sessionId)")
             }
+            
+            // Create new listener with robust error handling
+            // No need for try-catch here, addSnapshotListener doesn't throw Swift errors directly
+            let listener = db.collection("live_sessions").document(sessionId)
+                .addSnapshotListener { [weak self] document, error in
+                    guard let self = self else {
+                        print("Self reference lost in session listener for \(sessionId)")
+                        // Consider removing the listener if self is gone? Might require accessing sessionListeners again.
+                        return
+                    }
 
-        // Store the listener
-        sessionListeners[sessionId] = listener
-        print("Successfully set up listener for session: \(sessionId)")
+                    // Process all Firestore results on a background queue first
+                    DispatchQueue.global(qos: .userInitiated).async {
+                        // Handle errors
+                        if let error = error {
+                            print("Error listening to session \(sessionId): \(error.localizedDescription)")
+                            // Check if the error indicates the document was deleted
+                            if let firestoreError = error as NSError?, firestoreError.code == FirestoreErrorCode.notFound.rawValue {
+                                print("Session document \(sessionId) not found (deleted?). Removing listener.")
+                                self.stopTrackingSession(sessionId: sessionId) // Stop tracking if doc deleted
+                            } else {
+                                // For other errors, maybe just clear the session data?
+                                DispatchQueue.main.async {
+                                    if self.currentJoinedSession?.id == sessionId {
+                                        self.currentJoinedSession = nil
+                                        self.objectWillChange.send()
+                                    }
+                                }
+                            }
+                            return
+                        }
+
+                        // Check document exists
+                        guard let document = document, document.exists else {
+                            print("Session document no longer exists: \(sessionId). Removing listener.")
+                            self.stopTrackingSession(sessionId: sessionId) // Stop tracking if doc deleted
+                            return
+                        }
+
+                        // Parse document on background thread with better error handling
+                        let optionalSessionData = self.parseLiveSessionDocument(document)
+                        guard let sessionData = optionalSessionData else {
+                            print("Failed to parse session document for \(sessionId).")
+                            // Don't clear currentJoinedSession here, maybe just log?
+                            // Or clear if parsing consistently fails?
+                            return
+                        }
+
+                        // Make a thread-safe copy
+                        let safeCopy = sessionData
+
+                        // Update UI on main thread
+                        DispatchQueue.main.async {
+                            // Only update if this is still the session we care about
+                            guard self.currentJoinedSession?.id == sessionId else {
+                                // No longer tracking this session, maybe listener removal was delayed?
+                                print("Listener update received for \(sessionId), but no longer the current joined session.")
+                                // Attempt to remove listener again just in case
+                                self.listenerQueue.async {
+                                    if let listener = self.sessionListeners[sessionId] {
+                                        listener.remove()
+                                        self.sessionListeners.removeValue(forKey: sessionId)
+                                        print("Cleaned up listener for non-current session \(sessionId)")
+                                    }
+                                }
+                                return
+                            }
+                            
+                            // Check if session is stale before updating
+                            // Use a shorter timeout within the listener? Maybe 60s?
+                            let isStale = Date().timeIntervalSince(safeCopy.lastUpdateTime) > 120 // Keep 2 mins for now
+
+                            if isStale {
+                                print("Session \(sessionId) is stale (listener update). Stopping tracking.")
+                                self.stopTrackingSession(sessionId: sessionId) // Also removes listener internally
+                            } else {
+                                // Update with our safe copy
+                                if self.currentJoinedSession != safeCopy { // Avoid redundant updates
+                                    self.currentJoinedSession = safeCopy
+                                    self.objectWillChange.send()
+                                    print("Updated currentJoinedSession for \(sessionId)")
+                                }
+                            }
+                        }
+                    }
+                } // End of addSnapshotListener closure
+
+            // Store the listener safely using the instance queue
+            // No nested sync needed here.
+            self.sessionListeners[sessionId] = listener
+            print("Successfully set up listener using instance queue for session: \(sessionId)")
+
+        } // End of listenerQueue.sync
     }
 
     func updateParticipantStatus(sessionId: String, userId: String, status: ParticipantStatus) {
@@ -864,19 +912,29 @@ class LiveSessionManager: ObservableObject {
 
     func stopTrackingSession(sessionId: String) {
         print("Explicitly stopping tracking for session: \(sessionId)")
-        // Remove the session from active tracking
-        activeFriendSessions.removeValue(forKey: sessionId)
-        // Reset current joined session if it matches
-        if currentJoinedSession?.id == sessionId { currentJoinedSession = nil }
-
-        // Remove any listeners for this session
-        if let listener = sessionListeners[sessionId] {
-            listener.remove()
-            sessionListeners.removeValue(forKey: sessionId)
+        DispatchQueue.main.async { // UI updates on main thread
+            // Reset current joined session if it matches
+            if self.currentJoinedSession?.id == sessionId {
+                self.currentJoinedSession = nil
+                print("Cleared currentJoinedSession")
+            }
+            // Remove the session from active tracking (if it was a friend's session)
+            if self.activeFriendSessions.removeValue(forKey: sessionId) != nil {
+                 print("Removed session from activeFriendSessions")
+            }
+            // Force update UI
+            self.objectWillChange.send()
         }
 
-        // Force update UI
-        objectWillChange.send()
+        // Remove listener using the dedicated queue
+        listenerQueue.async { // Use async to avoid blocking caller
+            if let listener = self.sessionListeners.removeValue(forKey: sessionId) {
+                listener.remove()
+                print("Removed listener via stopTrackingSession for session: \(sessionId)")
+            } else {
+                print("No listener found to remove for session \(sessionId) in stopTrackingSession")
+            }
+        }
     }
 
     // 5. Set up notification handler for refresh
@@ -891,12 +949,21 @@ class LiveSessionManager: ObservableObject {
     }
 
     func cleanupListeners() {
-        print("Cleaning up all live session listeners")
-        // Remove all session listeners
-        for (_, listener) in sessionListeners { listener.remove() }
-        sessionListeners.removeAll()
-        // Reset tracked sessions
-        currentJoinedSession = nil
+        print("Cleaning up all live session listeners using listenerQueue")
+        // Use the queue to safely access and remove listeners
+        listenerQueue.sync { // Use sync here as it's part of deinit
+            for (id, listener) in self.sessionListeners {
+                listener.remove()
+                print("Removed listener for session: \(id) during cleanup")
+            }
+            self.sessionListeners.removeAll()
+        }
+        // Reset tracked sessions (safe to do outside queue as it's UI related)
+        DispatchQueue.main.async {
+             self.currentJoinedSession = nil
+             self.activeFriendSessions = [:]
+             self.objectWillChange.send() // Notify UI if needed during cleanup phase
+        }
     }
     // NEW: Check if user is allowed to join a session based on friend restrictions
     private func checkFriendRestriction(starterId: String, completion: @escaping (Bool) -> Void) {

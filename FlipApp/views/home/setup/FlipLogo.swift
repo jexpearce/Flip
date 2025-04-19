@@ -40,7 +40,6 @@ struct FlipLogo: View {
 
 struct BeginButton: View {
     let action: () -> Void
-    var joinMode: Bool = false
     @State private var isPressed = false
     @State private var isPulsing = false
     @ObservedObject private var permissionManager = PermissionManager.shared
@@ -104,6 +103,6 @@ struct BeginButton: View {
                 .scaleEffect(isPressed ? 0.97 : 1.0)
                 .opacity(permissionManager.motionPermissionGranted ? 1.0 : 0.6)
         }
-        .padding(.horizontal, 30).disabled(joinMode || !permissionManager.motionPermissionGranted)
+        .padding(.horizontal, 30).disabled(!permissionManager.motionPermissionGranted)
     }
 }

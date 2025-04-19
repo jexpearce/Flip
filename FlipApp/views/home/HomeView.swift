@@ -27,15 +27,16 @@ struct HomeView: View {
             // Main content based on app state
             VStack(spacing: 30) {
                 switch appManager.currentState {
-                case .initial: SetupView()
-                case .paused: PausedView()
-                case .countdown: CountdownView()
-                case .tracking: TrackingView()
-                case .failed: FailureView()
                 case .completed: CompletionView()
-                case .joinedCompleted: JoinedCompletionView()
-                case .mixedOutcome: MixedOutcomeView()
-                case .othersActive: OthersActiveView()
+                case .initial: SetupView().environmentObject(liveSessionManager)
+                case .paused: PausedView().environmentObject(liveSessionManager)
+                case .countdown: CountdownView().environmentObject(liveSessionManager)
+                case .tracking: TrackingView().environmentObject(liveSessionManager)
+                case .failed: FailureView().environmentObject(liveSessionManager)
+                case .completed: CompletionView().environmentObject(liveSessionManager)
+                case .joinedCompleted: JoinedCompletionView().environmentObject(liveSessionManager)
+                case .mixedOutcome: MixedOutcomeView().environmentObject(liveSessionManager)
+                case .othersActive: OthersActiveView().environmentObject(liveSessionManager)
                 }
             }
 
@@ -75,6 +76,7 @@ struct HomeView: View {
                 isPresented: $showJoinConfirmation
             )
             .environmentObject(appManager)
+            .environmentObject(liveSessionManager)
         }
         .onAppear {
             // Check if there's a pending session join request
@@ -144,6 +146,21 @@ struct HomeView: View {
                         }
                     }
                 }
+            }
+
+            // Ensure we initialize the LiveSessionManager when the home view appears
+            if appManager.isJoinedSession, let sessionId = appManager.liveSessionId {
+                // Ensure the LiveSessionManager is listening to the joined session
+                LiveSessionManager.shared.listenToJoinedSession(sessionId: sessionId)
+                
+                // Log the session state for debugging
+                print("HOME VIEW APPEARED - Current state: \(appManager.currentState.rawValue)")
+                print("Joined session: \(appManager.isJoinedSession), Session ID: \(sessionId)")
+            } else if appManager.isJoinedSession && appManager.liveSessionId == nil {
+                // Log inconsistency if it occurs
+                print("WARNING: HomeView appeared with isJoinedSession=true but liveSessionId=nil")
+                // Optionally reset state here if this indicates an error
+                // appManager.resetJoinState()
             }
         }
     }

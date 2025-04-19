@@ -52,7 +52,7 @@ struct TrackingView: View {
 
     // ADDED: Computed property to determine which time string to display
     private var displayedTimeString: String {
-        if appManager.isJoinedSession {
+        if appManager.isJoinedSession, liveSessionManager.currentJoinedSession != nil {
             // Use time from the live session data if joined
             let seconds = liveSessionManager.currentJoinedSession?.remainingSeconds
             return formatSeconds(seconds)
@@ -65,7 +65,10 @@ struct TrackingView: View {
 
     // ADDED: Helper function to format optional seconds into M:SS string
     private func formatSeconds(_ seconds: Int?) -> String {
-        guard let s = seconds, s >= 0 else { return "--:--" } // Handle nil or negative
+        guard let s = seconds, s >= 0 else { 
+            // If nil or negative, fall back to AppManager's time
+            return appManager.remainingTimeString 
+        }
         let minutes = s / 60
         let remainingSeconds = s % 60
         return String(format: "%d:%02d", minutes, remainingSeconds)

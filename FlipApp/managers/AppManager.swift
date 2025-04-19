@@ -157,7 +157,7 @@ class AppManager: NSObject, ObservableObject {
                     if self.isSimulator {
                         print("SIMULATOR MODE: Bypassing orientation check, starting session face down.")
                         self.isFaceDown = true // Assume face down on simulator
-                        self.startTrackingSession()
+                        self.startTrackingSession(isNewSession: !self.isJoinedSession)
                     } else {
                         DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
                             self.checkCurrentOrientation()  // Get fresh orientation reading
@@ -165,7 +165,7 @@ class AppManager: NSObject, ObservableObject {
                             if let motion = self.motionManager.deviceMotion, motion.gravity.z > 0.8 {
                                 // Phone is face down, start the session
                                 self.isFaceDown = true // Ensure state is set
-                                self.startTrackingSession()
+                                self.startTrackingSession(isNewSession: !self.isJoinedSession)
                             }
                             else {
                                 // Phone is not face down, fail the session
@@ -217,109 +217,143 @@ class AppManager: NSObject, ObservableObject {
 
     func joinLiveSession(sessionId: String, remainingSeconds: Int, totalDuration: Int) {
         print(
-            "Joining live session: \(sessionId), remaining: \(remainingSeconds)s, duration: \(totalDuration)min"
+            "Joining live session: \(sessionId), remaining: \(remainingSeconds)s, original duration: \(totalDuration)min"
         )
 
-        // Initialize all values first BEFORE changing state
-        self.liveSessionId = sessionId
-        self.isJoinedSession = true
-        // FIX: Use remaining time to calculate the correct session duration
-        // This prevents the session from being set to the full duration instead of remaining time
-        let remainingMinutes = Int(ceil(Double(remainingSeconds) / 60.0))
-        self.selectedMinutes = remainingMinutes  // Set to remaining minutes, not total duration
-        self.remainingSeconds = remainingSeconds
-        // CRITICAL: Ensure we reset any previous state
-        invalidateAllTimers()
-        sessionAlreadyRecorded = false
-        // IMPROVED: Always immediately transition to countdown state regardless of current state
-        // This fixes navigation issues and ensures consistent UI
-        self.currentState = .countdown
-        self.countdownSeconds = 5
-        // Save state to ensure persistence across app restarts
-        self.saveSessionState()
-        // Start the countdown immediately without delay - critical fix!
-        self.startCountdown(fromRestoration: false)
+        // CRITICAL: Guard against invalid inputs
+        guard !sessionId.isEmpty, remainingSeconds >= 0, totalDuration > 0 else {
+            print("ERROR: Invalid join session parameters")
+            // Potentially reset isJoiningSession flag here if it was set earlier
+            LiveSessionManager.shared.isJoiningSession = false
+            return
+        }
 
-        // Get joined session data to properly set all parameters
-        LiveSessionManager.shared.getSessionDetails(sessionId: sessionId) { sessionData in
-            if let session = sessionData {
-                DispatchQueue.main.async {
-                    // Set pause settings based on the original session's settings
-                    self.allowPauses = session.allowPauses
-                    self.maxPauses = session.maxPauses
-                    self.remainingPauses = session.maxPauses
-                    self.originalSessionStarter = session.starterId
-                    // Store the session starter's username for friend request
-                    self.shouldShowFriendRequestName = session.starterUsername
+        // Run essential state updates on the main thread
+        DispatchQueue.main.async {
+            // 1. Invalidate existing timers and reset flags
+            self.invalidateAllTimers()
+            self.sessionAlreadyRecorded = false
+            self.locationSessionSaved = false // Reset location saving flag
 
-                    // Save the list of participants for display in completion screens
-                    self.sessionParticipants = session.participants
-                    LiveSessionManager.shared.db.collection("live_sessions").document(sessionId)
-                        .getDocument { document, error in
-                            if let data = document?.data(),
-                                let pauseDuration = data["pauseDuration"] as? Int
-                            {
-                                DispatchQueue.main.async {
-                                    self.pauseDuration = pauseDuration
-                                    print(
-                                        "Set pause duration to \(pauseDuration) minutes from session"
-                                    )
-                                }
+            // 2. Set Core Session Properties
+            self.liveSessionId = sessionId
+            self.isJoinedSession = true
+
+            // 3. Calculate and Set Time Properties
+            // Use the *remaining* seconds to set the state
+            self.remainingSeconds = remainingSeconds
+            // Calculate the effective "selected minutes" based on remaining time for UI/logic consistency
+            // This represents the duration *from the point of joining*
+            self.selectedMinutes = Int(ceil(Double(remainingSeconds) / 60.0))
+            print("Setting AppManager state: remainingSeconds=\(self.remainingSeconds), effective selectedMinutes=\(self.selectedMinutes)")
+
+            // 4. Set Initial State and Countdown
+            self.currentState = .countdown
+            self.countdownSeconds = 5 // Standard countdown
+
+            // 5. Force UI Navigation
+            print("NAVIGATION: Explicitly setting tab to Home (index 2) for session")
+            self.selectedTab = 2
+            NotificationCenter.default.post(
+                name: Notification.Name("ForceNavigateToHomeTab"),
+                object: nil
+            )
+
+            // 6. Persist State
+            self.saveSessionState()
+
+            // 7. Start the Countdown Immediately
+            print("Starting countdown for joined session...")
+            self.startCountdown(fromRestoration: true) // Use fromRestoration: true to prevent overwriting remainingSeconds
+        }
+
+        // Fetch additional session details asynchronously (pause settings, etc.)
+        // This happens *after* the session has visually started for the user
+        LiveSessionManager.shared.getSessionDetails(sessionId: sessionId) { [weak self] sessionData in
+            guard let self = self, let session = sessionData else {
+                print("Failed to get full session details after joining, using defaults.")
+                // If details fail, potentially stick with initial defaults or handle error
+                // For now, we already set basic state, so we might just log this.
+                 DispatchQueue.main.async {
+                     // FIX: Safely unwrap self inside the async block
+                     guard let self = self else { return }
+                     
+                     // Ensure defaults are applied if session data is missing
+                     self.allowPauses = false
+                     self.maxPauses = 0
+                     self.remainingPauses = 0
+                 }
+                return
+            }
+
+            // Update pause settings and other details on the main thread
+            DispatchQueue.main.async {
+                // REMOVED: Redundant guard, self is already non-optional here.
+                // guard let self = self else { return }
+
+                print("Applying full session details: allowPauses=\(session.allowPauses), maxPauses=\(session.maxPauses)")
+                self.allowPauses = session.allowPauses
+                self.maxPauses = session.maxPauses
+                // Set remaining pauses based on the *original* session's maxPauses
+                self.remainingPauses = session.maxPauses
+                // originalSessionStarter and shouldShowFriendRequestName are already set by LiveSessionManager
+
+                // Save the list of participants for display
+                self.sessionParticipants = session.participants
+
+                // Get pause duration safely (can remain async)
+                let safeSessionId = sessionId // Create a local copy
+                LiveSessionManager.shared.db.collection("live_sessions").document(safeSessionId)
+                    .getDocument { document, error in
+                        if let error = error {
+                            print("Error getting pause duration: \(error.localizedDescription)")
+                            return
+                        }
+                        if let data = document?.data(), let pauseDuration = data["pauseDuration"] as? Int {
+                            DispatchQueue.main.async {
+                                self.pauseDuration = pauseDuration
+                                print("Set pause duration to \(pauseDuration) minutes from session")
                             }
                         }
-
-                    // Make sure we're properly setting LiveSessionManager's currentJoinedSession
-                    LiveSessionManager.shared.listenToJoinedSession(sessionId: sessionId)
-
-                    // IMPORTANT: Increment building leaderboard if location is enabled
-                    if let building = RegionalViewModel.shared.selectedBuilding {
-                        print(
-                            "🏢 Incrementing leaderboard for joined session in building: \(building.name) [ID: \(building.id)]"
-                        )
-                        if let userId = Auth.auth().currentUser?.uid {
-                            // Create a location record for this session
-                            let sessionLocationData: [String: Any] = [
-                                "userId": userId, "buildingId": building.id,
-                                "buildingName": building.name,
-                                "buildingLatitude": building.coordinate.latitude,
-                                "buildingLongitude": building.coordinate.longitude,
-                                "sessionStartTime": FieldValue.serverTimestamp(),
-                                "sessionEndTime": FieldValue.serverTimestamp(),
-                                "isJoinedSession": true, "originalStarterId": session.starterId,
-                                "liveSessionId": sessionId,
-                                "location": GeoPoint(
-                                    latitude: building.coordinate.latitude,
-                                    longitude: building.coordinate.longitude
-                                ),
-                            ]
-                            // Add to session_locations collection for leaderboard
-                            FirebaseManager.shared.db.collection("session_locations").document()
-                                .setData(sessionLocationData) { error in
-                                    if let error = error {
-                                        print(
-                                            "Error recording session location: \(error.localizedDescription)"
-                                        )
-                                    }
-                                    else {
-                                        print(
-                                            "Successfully recorded session location for leaderboard"
-                                        )
-                                    }
-                                }
-                        }
                     }
 
-                    
-                }
+                // IMPORTANT: Record building location if applicable (can remain async)
+                 self.recordJoinedSessionLocation(session: session)
+                 
+                 // Ensure the state is saved *after* applying these settings
+                 self.saveSessionState()
             }
-            else {
-                // Safety fallback if we can't get session details
-                DispatchQueue.main.async {
-                        // Default values if joined session data isn't available yet
-                        self.allowPauses = false
-                        self.maxPauses = 0
-                        self.remainingPauses = 0
-                    }
+        }
+    }
+    
+    // Extracted helper function for clarity
+    private func recordJoinedSessionLocation(session: LiveSessionManager.LiveSessionData) {
+        if let building = RegionalViewModel.shared.selectedBuilding, let userId = Auth.auth().currentUser?.uid {
+            print(
+                "🏢 Recording location for joined session in building: \(building.name) [ID: \(building.id)]"
+            )
+            let sessionLocationData: [String: Any] = [
+                "userId": userId,
+                "buildingId": building.id,
+                "buildingName": building.name,
+                "buildingLatitude": building.coordinate.latitude,
+                "buildingLongitude": building.coordinate.longitude,
+                "sessionStartTime": FieldValue.serverTimestamp(), // Record join time
+                "sessionEndTime": FieldValue.serverTimestamp(),   // Placeholder, update on completion/fail
+                "isJoinedSession": true,
+                "originalStarterId": session.starterId,
+                "liveSessionId": session.id,
+                "location": GeoPoint(
+                    latitude: building.coordinate.latitude,
+                    longitude: building.coordinate.longitude
+                ),
+            ]
+            FirebaseManager.shared.db.collection("session_locations").addDocument(data: sessionLocationData) { error in
+                if let error = error {
+                    print("Error recording joined session location: \(error.localizedDescription)")
+                } else {
+                    print("Successfully recorded joined session location for leaderboard")
+                }
             }
         }
     }
@@ -1478,7 +1512,7 @@ class AppManager: NSObject, ObservableObject {
     }
 
     @available(iOS 16.1, *) private func startLiveActivity() {
-        // Skip Live Activities on simulator to prevent crashes
+        // Skip Live Activities on simulator
         guard !isSimulator else {
             print("SIMULATOR MODE: Skipping Live Activity creation.")
             return
@@ -1532,14 +1566,21 @@ class AppManager: NSObject, ObservableObject {
                 )
                 let attributes = FlipActivityAttributes()
 
-                activity = try Activity.request(
-                    attributes: attributes,
-                    content: activityContent,
-                    pushType: nil
-                )
-                print("Live Activity started successfully")
+                do {
+                    activity = try Activity.request(
+                        attributes: attributes,
+                        content: activityContent,
+                        pushType: nil
+                    )
+                    print("Live Activity started successfully")
+                } catch {
+                    print("Activity Error: \(error). Continuing without Live Activity.")
+                    // Don't rethrow - fail gracefully
+                }
+            } catch {
+                print("Activity Error during cleanup: \(error). Continuing without Live Activity.")
+                // Don't rethrow - fail gracefully
             }
-            catch { print("Activity Error: \(error)") }
         }
     }
 
@@ -2030,20 +2071,30 @@ class AppManager: NSObject, ObservableObject {
         let allOthersCompleted = !otherParticipants.isEmpty && otherParticipants.allSatisfy { $0.value == .completed }
         let anyOtherActiveOrPaused = otherParticipants.contains { $0.value == .active || $0.value == .paused }
         let anyFailed = statuses.contains { $0.value == .failed }
+        
+        // Debug log all statuses
+        print("SESSION COMPLETION STATUS CHECK:")
+        print("- Current user (\(currentUserId)): \(currentUserStatus?.rawValue ?? "unknown")")
+        for (id, status) in statuses {
+            if id != currentUserId {
+                print("- Participant (\(id)): \(status.rawValue)")
+            }
+        }
 
         var finalState: FlipState
-
-        if currentUserStatus == .completed && allOthersCompleted {
+        
+        // If anyone failed, it's a mixed outcome - this takes priority
+        if anyFailed || (currentUserStatus == .failed && !otherParticipants.isEmpty) {
+            print("Completion State: At least one failed -> .mixedOutcome")
+            finalState = .mixedOutcome // IMPORTANT: This takes priority over other cases
+        }
+        else if currentUserStatus == .completed && allOthersCompleted {
             print("Completion State: All completed -> .joinedCompleted")
             finalState = .joinedCompleted
         }
         else if (currentUserStatus == .completed || currentUserStatus == .failed) && anyOtherActiveOrPaused {
             print("Completion State: User finished, others active -> .othersActive")
             finalState = .othersActive
-        }
-        else if anyFailed {
-            print("Completion State: At least one failed -> .mixedOutcome")
-            finalState = .mixedOutcome // If anyone failed, it's a mixed outcome
         }
         else if currentUserStatus == .completed && otherParticipants.isEmpty {
              // Only user in session, and they completed
@@ -2065,7 +2116,8 @@ class AppManager: NSObject, ObservableObject {
             print("Completion State: Fallback based on user status")
             finalState = (currentUserStatus == .completed) ? .completed : .failed
         }
-
+        
+        print("FINAL COMPLETION STATE: \(finalState)")
         completion(finalState)
     }
 

@@ -13,13 +13,14 @@ struct EnhancedFriendCard: View {
     @StateObject private var friendManager = FriendManager()
 
     // Computed properties for live sessions
-    private var isLive: Bool { return true }
+    private var isLive: Bool {
+        // Session is considered live if recently updated and still has time
+        return liveSession.remainingSeconds > 0 && Date().timeIntervalSince(liveSession.lastUpdateTime) < 120 // 2 minutes threshold
+    }
     private var isFull: Bool { return liveSession.isFull }
     private var canJoin: Bool {
-        // If there's a live session and it has proper values, check if joinable
-        // Make sure remaining seconds is actually populated (could be 0 if not set)
-        // We need at least 1 minute to join, not 3 minutes (more permissive)
-        return !liveSession.isFull && liveSession.remainingSeconds > 60
+        // Stricter check for joinability (must be live AND meet join criteria)
+        return isLive && !liveSession.isFull && liveSession.remainingSeconds > 60 // Use the constant from LiveSessionData if available, otherwise hardcode (e.g., 180 for 3 min)
     }
     private var isFriend: Bool { return friend != nil }
     private var username: String {
@@ -48,6 +49,22 @@ struct EnhancedFriendCard: View {
         let minutes = totalElapsed / 60
         let seconds = totalElapsed % 60
         return String(format: "%d:%02d", minutes, seconds)
+    }
+
+    // Computed property to determine join status text
+    private var joinStatusText: String {
+        if !isLive {
+            return "ENDED"
+        } else if isFull {
+            return "FULL"
+        } else if liveSession.remainingSeconds <= 60 {
+            return "< 1 MIN"
+        } else if Date().timeIntervalSince(liveSession.lastUpdateTime) >= 60 {
+            return "INACTIVE"
+        } else {
+            // Should not be reached if canJoin is false and other conditions met
+            return "ENDING SOON"
+        }
     }
 
     var body: some View {
@@ -80,39 +97,44 @@ struct EnhancedFriendCard: View {
                             .shadow(color: getProfileShadowColor(), radius: 8)
                     }
 
-                    // Live indicator badge with animation
-                    Circle().fill(isFull ? Color.gray : getLiveIndicatorColor())
-                        .frame(width: 14, height: 14)
-                        .shadow(color: getLiveIndicatorColor().opacity(0.6), radius: isGlowing ? 4 : 2)
-                        .animation(
-                            Animation.easeInOut(duration: 1.2)
-                                .repeatForever(autoreverses: true),
-                            value: isGlowing
-                        )
-                        .overlay(Circle().stroke(Color.black, lineWidth: 1)).offset(x: 2, y: -2)
-                        .onAppear { isGlowing = true }
+                    // Live indicator badge with animation - Use isLive
+                    if isLive {
+                        Circle().fill(isFull ? Color.gray : getLiveIndicatorColor())
+                            .frame(width: 14, height: 14)
+                            .shadow(color: getLiveIndicatorColor().opacity(0.6), radius: isGlowing ? 4 : 2)
+                            .animation(
+                                Animation.easeInOut(duration: 1.2)
+                                    .repeatForever(autoreverses: true),
+                                value: isGlowing
+                            )
+                            .overlay(Circle().stroke(Color.black, lineWidth: 1)).offset(x: 2, y: -2)
+                            .onAppear { isGlowing = true }
+                    }
                 }
 
                 // User info section - Enhanced styling
                 VStack(alignment: .leading, spacing: 5) {
-                    HStack(spacing: 6) {
-                        Text("LIVE").font(.system(size: 14, weight: .heavy))
-                            .foregroundColor(isFull ? .gray : getLiveTextColor())
-                            .shadow(color: getLiveTextColor().opacity(0.6), radius: isGlowing ? 4 : 2)
-                            .scaleEffect(isGlowing ? 1.05 : 1.0)
-                            .animation(
-                                Animation.easeInOut(duration: 1.5)
-                                    .repeatForever(autoreverses: true),
-                                value: isGlowing
-                            )
+                    // Use isLive for the LIVE text and indicator dot
+                    if isLive {
+                        HStack(spacing: 6) {
+                            Text("LIVE").font(.system(size: 14, weight: .heavy))
+                                .foregroundColor(isFull ? .gray : getLiveTextColor()) // Keep gray if full
+                                .shadow(color: getLiveTextColor().opacity(0.6), radius: isGlowing ? 4 : 2)
+                                .scaleEffect(isGlowing ? 1.05 : 1.0)
+                                .animation(
+                                    Animation.easeInOut(duration: 1.5)
+                                        .repeatForever(autoreverses: true),
+                                    value: isGlowing
+                                )
 
-                        Circle().fill(getLiveIndicatorColor()).frame(width: 6, height: 6)
-                            .opacity(isGlowing ? 0.8 : 0.4)
-                            .animation(
-                                Animation.easeInOut(duration: 0.8)
-                                    .repeatForever(autoreverses: true),
-                                value: isGlowing
-                            )
+                            Circle().fill(getLiveIndicatorColor()).frame(width: 6, height: 6)
+                                .opacity(isGlowing ? 0.8 : 0.4)
+                                .animation(
+                                    Animation.easeInOut(duration: 0.8)
+                                        .repeatForever(autoreverses: true),
+                                    value: isGlowing
+                                )
+                        }
                     }
 
                     // Username with enhanced styling
@@ -187,9 +209,8 @@ struct EnhancedFriendCard: View {
                     .buttonStyle(PlainButtonStyle())
                 }
                 else {
-                    // Show FULL indicator when session can't be joined
-                    Text(isFull ? "FULL" : "< 1 MIN LEFT")
-                        .font(.system(size: 14, weight: .bold)).tracking(1)
+                    // Show status text (FULL, INACTIVE, ENDED, etc.) based on joinStatusText
+                    Text(joinStatusText).font(.system(size: 14, weight: .bold)).tracking(1)
                         .foregroundColor(.gray).padding(.vertical, 8).padding(.horizontal, 16)
                         .background(
                             ZStack {
@@ -203,54 +224,56 @@ struct EnhancedFriendCard: View {
             }
 
             // Session timing information - only shown for live sessions
-            VStack(spacing: 8) {
-                Divider().background(Color.white.opacity(0.2)).padding(.vertical, 10)
+            if isLive {
+                VStack(spacing: 8) {
+                    Divider().background(Color.white.opacity(0.2)).padding(.vertical, 10)
 
-                HStack {
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text("TIME").font(.system(size: 12, weight: .medium)).tracking(1)
-                            .foregroundColor(getInfoIconColor().opacity(0.8))
+                    HStack {
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text("TIME").font(.system(size: 12, weight: .medium)).tracking(1)
+                                .foregroundColor(getInfoIconColor().opacity(0.8))
 
-                        // Use our real-time updated timer here
-                        Text(formattedElapsedTime).font(.system(size: 18, weight: .bold))
-                            .monospacedDigit().foregroundColor(.white)
-                            .id(sessionTimer.currentTick)  // Force refresh when counter changes
-                            .shadow(color: getTimeTextColor().opacity(0.5), radius: 4)
-                    }
-
-                    Spacer()
-
-                    if liveSession.isPaused {
-                        // Show paused status
-                        HStack(spacing: 6) {
-                            Image(systemName: "pause.circle.fill")
-                                .foregroundColor(Theme.mutedRed)
-
-                            Text("PAUSED").font(.system(size: 12, weight: .bold))
-                                .foregroundColor(Theme.mutedRed)
+                            // Use our real-time updated timer here
+                            Text(formattedElapsedTime).font(.system(size: 18, weight: .bold))
+                                .monospacedDigit().foregroundColor(.white)
+                                .id(sessionTimer.currentTick)  // Force refresh when counter changes
+                                .shadow(color: getTimeTextColor().opacity(0.5), radius: 4)
                         }
-                        .padding(.horizontal, 10).padding(.vertical, 4)
-                        .background(
-                            RoundedRectangle(cornerRadius: 10).fill(Theme.mutedRed.opacity(0.2))
-                                .overlay(
-                                    RoundedRectangle(cornerRadius: 10)
-                                        .stroke(Theme.mutedRed.opacity(0.3), lineWidth: 1)
-                                )
-                        )
-                    }
-                    else {
-                        VStack(alignment: .trailing, spacing: 2) {
-                            Text("TARGET").font(.system(size: 12, weight: .medium)).tracking(1)
-                                .foregroundColor(getTargetTextColor().opacity(0.8))
 
-                            Text("\(liveSession.targetDuration) min")
-                                .font(.system(size: 18, weight: .bold)).foregroundColor(.white)
-                                .shadow(color: getTargetTextColor().opacity(0.5), radius: 4)
+                        Spacer()
+
+                        if liveSession.isPaused {
+                            // Show paused status
+                            HStack(spacing: 6) {
+                                Image(systemName: "pause.circle.fill")
+                                    .foregroundColor(Theme.mutedRed)
+
+                                Text("PAUSED").font(.system(size: 12, weight: .bold))
+                                    .foregroundColor(Theme.mutedRed)
+                            }
+                            .padding(.horizontal, 10).padding(.vertical, 4)
+                            .background(
+                                RoundedRectangle(cornerRadius: 10).fill(Theme.mutedRed.opacity(0.2))
+                                    .overlay(
+                                        RoundedRectangle(cornerRadius: 10)
+                                            .stroke(Theme.mutedRed.opacity(0.3), lineWidth: 1)
+                                    )
+                            )
+                        }
+                        else {
+                            VStack(alignment: .trailing, spacing: 2) {
+                                Text("TARGET").font(.system(size: 12, weight: .medium)).tracking(1)
+                                    .foregroundColor(getTargetTextColor().opacity(0.8))
+
+                                Text("\(liveSession.targetDuration) min")
+                                    .font(.system(size: 18, weight: .bold)).foregroundColor(.white)
+                                    .shadow(color: getTargetTextColor().opacity(0.5), radius: 4)
+                            }
                         }
                     }
                 }
+                .padding(.top, -5)
             }
-            .padding(.top, -5)
         }
         .padding()
         .background(
@@ -259,11 +282,11 @@ struct EnhancedFriendCard: View {
                 RoundedRectangle(cornerRadius: 16)
                     .fill(
                         LinearGradient(
-                            colors: isFriend && !isFull
+                            colors: isLive && !isFull && isFriend // Check isLive here
                                 ? [Theme.forestGreen.opacity(0.3), Theme.darkBlue.opacity(0.2)]
-                                : !isFriend && !isFull
+                                : isLive && !isFull && !isFriend // Check isLive here
                                     ? [Theme.darkBlue.opacity(0.3), Theme.blue800.opacity(0.2)]
-                                    : [Theme.darkBlue.opacity(0.2), Theme.deepPurple.opacity(0.2)],
+                                    : [Theme.darkBlue.opacity(0.2), Theme.deepPurple.opacity(0.2)], // Default/Ended/Full
                             startPoint: .topLeading,
                             endPoint: .bottomTrailing
                         )
@@ -345,14 +368,14 @@ struct EnhancedFriendCard: View {
 
     // Helper to get dynamic card border gradient based on state
     private func getCardBorderGradient() -> LinearGradient {
-        if isFriend && !isFull {
+        if isLive && !isFull && isFriend { // Check isLive
             // Friend Live border
             return LinearGradient(
                 colors: [Color.green.opacity(isGlowing ? 0.8 : 0.5), Color.white.opacity(0.1)],
                 startPoint: .topLeading,
                 endPoint: .bottomTrailing
             )
-        } else if !isFriend && !isFull {
+        } else if isLive && !isFull && !isFriend { // Check isLive
             // Non-Friend Live border
             return LinearGradient(
                 colors: [Theme.blue.opacity(isGlowing ? 0.8 : 0.5), Color.white.opacity(0.1)],
@@ -368,9 +391,9 @@ struct EnhancedFriendCard: View {
 
     // Helper to get dynamic card shadow color based on state
     private func getCardShadowColor() -> Color {
-        if isFriend && !isFull {
+        if isLive && !isFull && isFriend { // Check isLive
             return Color.green.opacity(0.3)
-        } else if !isFriend && !isFull {
+        } else if isLive && !isFull && !isFriend { // Check isLive
             return Theme.blue.opacity(0.3)
         }
         else {

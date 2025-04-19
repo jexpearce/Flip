@@ -14,10 +14,6 @@ struct SetupView: View {
     @State private var showRules = false
     @State private var showLocationSettingsAlert = false
 
-    // Check if we're navigating back from a joined session view
-    @State private var joinLiveSessionMode = false
-    @State private var sessionToJoin: (id: String, name: String)? = nil
-
     // Pause durations in minutes
     private let pauseDurations = [3, 5, 10, 15, 20]
     private let pauseDurationLabels = ["3m", "5m", "10m", "15m", "20m"]
@@ -131,33 +127,21 @@ struct SetupView: View {
 
                     // Set Time Title
                     VStack(spacing: 2) {  // Reduced spacing from 4 to 2
-                        if joinLiveSessionMode, let sessionInfo = sessionToJoin {
-                            Text("JOIN \(sessionInfo.name.uppercased())'S SESSION")
-                                .font(.system(size: 20, weight: .black)).tracking(6)
-                                .foregroundColor(.white).retroGlow().multilineTextAlignment(.center)
-
-                            Text("友達と一緒に").font(.system(size: 12, weight: .medium)).tracking(3)
-                                .foregroundColor(.white.opacity(0.7))
-                        }
-                        else {
-                            Text("SET TIME").font(.system(size: 24, weight: .black)).tracking(8)
-                                .foregroundColor(Theme.yellow).retroGlow()
-
-                        }
+                        Text("SET TIME").font(.system(size: 24, weight: .black)).tracking(8)
+                            .foregroundColor(Theme.yellow).retroGlow()
                     }
                     .padding(.top, -5)
 
                     // Circular Time Picker
                     CircularTimeView(
                         selectedMinutes: $appManager.selectedMinutes,
-                        isDisabled: joinLiveSessionMode,
-                        opacity: joinLiveSessionMode ? 0.7 : 1
+                        isDisabled: false,
+                        opacity: 1.0
                     )
 
                     // Controls Section - Redesigned with horizontal layout
                     ControlsSection(
                         appManager: appManager,
-                        joinLiveSessionMode: joinLiveSessionMode,
                         isInfinitePauses: $isInfinitePauses,
                         selectedPauseDurationIndex: $selectedPauseDurationIndex,
                         pauseDurations: pauseDurations,
@@ -171,41 +155,11 @@ struct SetupView: View {
                     BeginButtonWithOverlay(
                         appManager: appManager,
                         permissionManager: permissionManager,
-                        joinLiveSessionMode: joinLiveSessionMode,
                         showJoiningIndicator: showJoiningIndicator
                     )
                     .padding(.top, 5)
                 }
                 .padding(.top, 15)  // Reduced from 20 to 10
-            }
-
-            // Join Session Mode Control - shown only during join mode
-            if joinLiveSessionMode {
-                VStack {
-                    Spacer()
-                    Button(action: {
-                        // FIXED: This button now correctly cancels join mode instead of trying to join
-                        joinLiveSessionMode = false
-                        sessionToJoin = nil
-                    }) {
-                        Text("CANCEL").font(.system(size: 16, weight: .bold)).tracking(2)
-                            .foregroundColor(.white).frame(width: 120, height: 40)
-                            .background(
-                                ZStack {
-                                    RoundedRectangle(cornerRadius: 20).fill(Color.red.opacity(0.7))
-
-                                    RoundedRectangle(cornerRadius: 20)
-                                        .fill(Color.white.opacity(0.1))
-
-                                    RoundedRectangle(cornerRadius: 20)
-                                        .stroke(Color.white.opacity(0.3), lineWidth: 1)
-                                }
-                            )
-                            .shadow(color: Color.red.opacity(0.3), radius: 4)
-                    }
-                    .disabled(showJoiningIndicator)  // Disable during join process
-                    .padding(.bottom, 50)
-                }
             }
 
             // Loading Overlay
@@ -366,73 +320,9 @@ struct SetupView: View {
             FirebaseManager.shared.hasCompletedFirstSession { hasCompleted in
                 DispatchQueue.main.async {
                     // If user hasn't completed first session, don't allow joining
-                    if !hasCompleted && joinLiveSessionMode {
+                    if !hasCompleted && showJoiningIndicator {
                         withAnimation {
-                            joinLiveSessionMode = false
-                            sessionToJoin = nil
-                            SessionJoinCoordinator.shared.showFirstSessionRequiredAlert = true
-                        }
-                    }
-                }
-            }
-
-            // Check if we're being called to join a session
-            if let sessionData = SessionJoinCoordinator.shared.getJoinSession() {
-                joinLiveSessionMode = true
-                sessionToJoin = sessionData
-
-                // Show joining indicator
-                withAnimation { showJoiningIndicator = true }
-
-                // First ensure any existing session state is properly reset
-                appManager.resetJoinState()
-
-                // Get session details
-                LiveSessionManager.shared.getSessionDetails(sessionId: sessionData.id) { session in
-                    if let session = session {
-                        DispatchQueue.main.async {
-                            // Set values first
-                            self.appManager.selectedMinutes = session.targetDuration
-
-                            // Now try to join
-                            LiveSessionManager.shared.joinSession(sessionId: sessionData.id) {
-                                success,
-                                remainingSeconds,
-                                totalDuration in
-                                if success {
-                                    self.appManager.joinLiveSession(
-                                        sessionId: sessionData.id,
-                                        remainingSeconds: remainingSeconds,
-                                        totalDuration: totalDuration
-                                    )
-
-                                    // Clear coordinator state
-                                    SessionJoinCoordinator.shared.clearPendingSession()
-
-                                    // Hide join indicator after short delay
-                                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-                                        withAnimation { self.showJoiningIndicator = false }
-                                    }
-                                }
-                                else {
-                                    // Handle failure
-                                    SessionJoinCoordinator.shared.clearPendingSession()
-                                    withAnimation {
-                                        self.showJoiningIndicator = false
-                                        self.joinLiveSessionMode = false
-                                    }
-                                }
-                            }
-                        }
-                    }
-                    else {
-                        // Session doesn't exist
-                        DispatchQueue.main.async {
-                            SessionJoinCoordinator.shared.clearPendingSession()
-                            withAnimation {
-                                self.showJoiningIndicator = false
-                                self.joinLiveSessionMode = false
-                            }
+                            showJoiningIndicator = false
                         }
                     }
                 }
@@ -798,7 +688,6 @@ struct CircularTimeView: View {
 // Define this new extracted view at bottom of the file
 struct ControlsSection: View {
     @ObservedObject var appManager: AppManager
-    let joinLiveSessionMode: Bool
     @Binding var isInfinitePauses: Bool
     @Binding var selectedPauseDurationIndex: Int
     let pauseDurations: [Int]
@@ -812,7 +701,6 @@ struct ControlsSection: View {
                 // 1. Allow Pause Toggle - Reduced width
                 ControlButton(title: "ALLOW PAUSE") {
                     Toggle("", isOn: $appManager.allowPauses).toggleStyle(ModernToggleStyle())
-                        .disabled(joinLiveSessionMode)  // Disable in join mode
                         .onChange(of: appManager.allowPauses) {
                             if !appManager.allowPauses {
                                 // Only show the warning if it hasn't been shown before
@@ -833,13 +721,13 @@ struct ControlsSection: View {
                 // 2. Number of Pauses with Infinite option incorporated into the picker
                 ControlButton(
                     title: "# OF PAUSES",
-                    isDisabled: !appManager.allowPauses || joinLiveSessionMode
+                    isDisabled: !appManager.allowPauses
                 ) {
                     NumberPickerWithInfinity(
                         range: 1...5,
                         selection: $appManager.maxPauses,
                         isInfinite: $isInfinitePauses,
-                        isDisabled: !appManager.allowPauses || joinLiveSessionMode
+                        isDisabled: !appManager.allowPauses
                     )
                     .onChange(of: isInfinitePauses) {
                         if isInfinitePauses {
@@ -858,13 +746,13 @@ struct ControlsSection: View {
             // 3. Pause Duration Selector
             ControlButton(
                 title: "PAUSE DURATION",
-                isDisabled: !appManager.allowPauses || joinLiveSessionMode,
+                isDisabled: !appManager.allowPauses,
                 reducedHeight: true
             ) {
                 ModernPickerStyle(
                     options: pauseDurationLabels,
                     selection: $selectedPauseDurationIndex,
-                    isDisabled: !appManager.allowPauses || joinLiveSessionMode
+                    isDisabled: !appManager.allowPauses
                 )
                 .onChange(of: selectedPauseDurationIndex) {
                     appManager.pauseDuration = pauseDurations[selectedPauseDurationIndex]
@@ -877,34 +765,24 @@ struct ControlsSection: View {
 struct BeginButtonWithOverlay: View {
     @ObservedObject var appManager: AppManager
     @ObservedObject var permissionManager: PermissionManager
-    let joinLiveSessionMode: Bool
     let showJoiningIndicator: Bool
     var body: some View {
         BeginButton(
             action: {
                 // Check if we have proper permissions
                 if permissionManager.motionPermissionGranted {
-                    // Check if we're in joining mode
-                    if !joinLiveSessionMode {
-                        // Set the appropriate flag in AppManager based on permission status
-                        appManager.usingLimitedLocationPermission =
-                            permissionManager.hasLimitedLocationPermission
-                            && !permissionManager.hasFullLocationPermission
-
-                        // Start the countdown regardless of location permission type
-                        appManager.startCountdown()
-                    }
+                    // Start the countdown regardless of location permission type
+                    appManager.startCountdown()
                 }
                 else {
                     // Show permission alert if motion permission is missing
                     permissionManager.showPermissionRequiredAlert = true
                 }
-            },
-            joinMode: joinLiveSessionMode
+            }
         )
         .overlay(
             Group {
-                if joinLiveSessionMode {
+                if showJoiningIndicator {
                     Text("JOINING...").font(.system(size: 36, weight: .black)).tracking(8)
                         .foregroundColor(.white).shadow(color: Color.green.opacity(0.6), radius: 8)
                         .opacity(showJoiningIndicator ? 1 : 0)
