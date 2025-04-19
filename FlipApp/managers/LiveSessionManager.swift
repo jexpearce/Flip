@@ -25,6 +25,7 @@ class LiveSessionManager: ObservableObject {
     @Published var activeFriendSessions: [String: LiveSessionData] = [:]
     @Published var currentJoinedSession: LiveSessionData?
     @Published var isJoiningSession = false
+    private var preventListenersDuringJoin = false
 
     // MARK: - Initialization
 
@@ -342,7 +343,12 @@ class LiveSessionManager: ObservableObject {
     }
     // In LiveSessionManager.swift, improve the joinSession method
     // REFACTORED joinSession method
+    // In LiveSessionManager.swift, improve the joinSession method
+    // REFACTORED joinSession method
     func joinSession(sessionId: String, completion: @escaping (Bool, Int, Int) -> Void) {
+        // CRITICAL: Set flag to prevent listener creation during join
+        preventListenersDuringJoin = true
+        
         // Ensure Firebase is initialized (redundant check, but safe)
         if FirebaseApp.app() == nil {
             print("Firebase not initialized. Attempting to configure.")
@@ -475,7 +481,8 @@ class LiveSessionManager: ObservableObject {
 
                         // Update local state
                         self.currentJoinedSession = finalSessionData // Update with the validated data
-                        self.listenToJoinedSession(sessionId: safeSessionId) // Start listener
+                        
+                        // Listener will be set up later after join is complete
 
                         // Reset joining flag
                         self.isJoiningSession = false
@@ -494,6 +501,16 @@ class LiveSessionManager: ObservableObject {
                             finalTargetDuration // Pass original duration
                         )
                         print("Completion handler called for session join.")
+                        
+                        // Re-enable listeners after join process is complete with a delay
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 3.0) {
+                            // Re-enable listeners after join process is complete
+                            self.preventListenersDuringJoin = false
+                            // Now it's safe to start listening
+                            if self.currentJoinedSession?.id == safeSessionId {
+                                self.listenToJoinedSession(sessionId: safeSessionId)
+                            }
+                        }
                     }
 
                     // 6. Update Firestore Asynchronously in Background
@@ -603,6 +620,10 @@ class LiveSessionManager: ObservableObject {
 
     func listenToJoinedSession(sessionId: String) {
         print("Setting up listener for session: \(sessionId)")
+        guard !preventListenersDuringJoin else {
+                print("CRITICAL: Prevented listener setup during join process")
+                return
+            }
         
         // CRITICAL: Safety check - don't proceed with empty session ID
         guard !sessionId.isEmpty else {
@@ -1054,6 +1075,31 @@ class LiveSessionManager: ObservableObject {
             completion(sortedSessions)
         }
     }
+    private func safeGetDocument(sessionId: String, completion: @escaping (DocumentSnapshot?, Error?) -> Void) {
+        // Add retry logic for Firestore operations
+        let maxRetries = 2
+        var currentRetry = 0
+        
+        func attemptGet() {
+            db.collection("live_sessions").document(sessionId)
+                .getDocument { document, error in
+                    if let error = error {
+                        if currentRetry < maxRetries {
+                            currentRetry += 1
+                            print("Firestore error, retrying (\(currentRetry)/\(maxRetries)): \(error.localizedDescription)")
+                            // Add exponential backoff
+                            DispatchQueue.main.asyncAfter(deadline: .now() + Double(currentRetry) * 0.5) {
+                                attemptGet()
+                            }
+                            return
+                        }
+                    }
+                    completion(document, error)
+                }
+        }
+        
+        attemptGet()
+    }
     // Update session creation to include building information
     func startSession(sessionId: String, appManager: AppManager, building: BuildingInfo?) {
         guard let userId = Auth.auth().currentUser?.uid,
@@ -1097,5 +1143,108 @@ class LiveSessionManager: ObservableObject {
                     print("Live session created successfully with building info")
                 }
             }
+    }
+    // Add this method to LiveSessionManager class:
+
+    func emergencyJoinSession(sessionId: String, completion: @escaping (Bool, Int, Int) -> Void) {
+        print("CRASH DEBUG: Starting emergency join process for session \(sessionId)")
+        
+        // Set joining flag
+        DispatchQueue.main.async {
+            self.isJoiningSession = true
+        }
+        
+        // Guard for authentication
+        guard let userId = Auth.auth().currentUser?.uid else {
+            print("CRASH DEBUG: User not authenticated")
+            DispatchQueue.main.async {
+                self.isJoiningSession = false
+                completion(false, 0, 0)
+            }
+            return
+        }
+        
+        // SIMPLIFIED APPROACH: Get session directly with minimal processing
+        db.collection("live_sessions").document(sessionId).getDocument { [weak self] document, error in
+            guard let self = self else {
+                print("CRASH DEBUG: Self reference lost")
+                completion(false, 0, 0)
+                return
+            }
+            
+            // Handle any errors
+            if let error = error {
+                print("CRASH DEBUG: Firebase error - \(error.localizedDescription)")
+                DispatchQueue.main.async {
+                    self.isJoiningSession = false
+                    completion(false, 0, 0)
+                }
+                return
+            }
+            
+            // Process document safely
+            guard let document = document, document.exists else {
+                print("CRASH DEBUG: Session document doesn't exist")
+                DispatchQueue.main.async {
+                    self.isJoiningSession = false
+                    completion(false, 0, 0)
+                }
+                return
+            }
+            
+            // Extract just the minimal required data
+            guard let data = document.data(),
+                  let remainingSeconds = data["remainingSeconds"] as? Int,
+                  let targetDuration = data["targetDuration"] as? Int,
+                  let starterUsername = data["starterUsername"] as? String,
+                  let starterId = data["starterId"] as? String else {
+                
+                print("CRASH DEBUG: Missing required session data")
+                DispatchQueue.main.async {
+                    self.isJoiningSession = false
+                    completion(false, 0, 0)
+                }
+                return
+            }
+            
+            // Set minimal state for join process
+            DispatchQueue.main.async {
+                // Set AppManager properties
+                AppManager.shared.shouldShowFriendRequestName = starterUsername
+                AppManager.shared.originalSessionStarter = starterId
+                
+                // Reset joining flag
+                self.isJoiningSession = false
+                
+                // Call completion with the extracted data
+                print("CRASH DEBUG: Join data extracted: remaining=\(remainingSeconds), target=\(targetDuration)")
+                completion(true, remainingSeconds, targetDuration)
+            }
+            
+            // Update Firestore separately to avoid blocking UI
+            DispatchQueue.global(qos: .background).async {
+                // Update participant list
+                var updatedParticipants = data["participants"] as? [String] ?? []
+                if !updatedParticipants.contains(userId) {
+                    updatedParticipants.append(userId)
+                }
+                
+                let updateData: [String: Any] = [
+                    "participants": updatedParticipants,
+                    "joinTimes.\(userId)": Timestamp(date: Date()),
+                    "participantStatus.\(userId)": "active",
+                    "lastUpdateTime": FieldValue.serverTimestamp()
+                ]
+                
+                self.db.collection("live_sessions").document(sessionId)
+                    .updateData(updateData) { error in
+                        if let error = error {
+                            print("CRASH DEBUG: Error updating session: \(error.localizedDescription)")
+                        } else {
+                            print("CRASH DEBUG: Successfully updated session participant data")
+                        }
+                    }
+            }
+        }
     }
 }

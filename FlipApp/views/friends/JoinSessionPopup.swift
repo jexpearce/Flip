@@ -281,64 +281,107 @@ struct JoinSessionPopup: View {
                     }
                     // Join button
                     Button(action: {
+                        // Set loading state
                         isJoining = true
                         
-                        // Guard against joining your own session
-                        guard !sessionId.contains(Auth.auth().currentUser?.uid ?? "") else {
-                            let errorGenerator = UINotificationFeedbackGenerator()
-                            errorGenerator.notificationOccurred(.error)
-                            isJoining = false
-                            return
-                        }
+                        print("CRITICAL FIX: Using ultra-safe join process")
                         
-                        // IMPROVED: Use a timeout mechanism
-                        let joinTask = DispatchWorkItem {
-                            if self.isJoining {
+                        // CRITICAL: Dismiss the popup BEFORE doing anything else
+                        withAnimation { isPresented = false }
+                        
+                        // Add a delay to ensure the popup is fully dismissed
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                            // Only continue if we're still in joining state
+                            guard isJoining else { return }
+                            
+                            // Get current user info
+                            guard let userId = Auth.auth().currentUser?.uid else {
                                 self.isJoining = false
-                                SessionJoinCoordinator.shared.clearPendingSession()
-                                let generator = UINotificationFeedbackGenerator()
-                                generator.notificationOccurred(.error)
-                            }
-                        }
-                        
-                        // Schedule timeout
-                        DispatchQueue.main.asyncAfter(deadline: .now() + 8, execute: joinTask)
-                        
-                        // Directly join the live session
-                        LiveSessionManager.shared.joinSession(sessionId: sessionId) { success, remainingSeconds, totalDuration in
-                            // Cancel the timeout
-                            joinTask.cancel()
-                            
-                            if success {
-                                // Haptic success feedback
-                                let generator = UINotificationFeedbackGenerator()
-                                generator.notificationOccurred(.success)
-                                
-                                // CRITICAL FIX: Start the session FIRST before dismissing popup
-                                // This ensures countdown begins before any view transitions
-                                appManager.joinLiveSession(
-                                    sessionId: sessionId,
-                                    remainingSeconds: remainingSeconds,
-                                    totalDuration: totalDuration
-                                )
-                                
-                                // Clear coordinator state immediately
-                                SessionJoinCoordinator.shared.clearPendingSession()
-                                
-                                // THEN dismiss the popup after session is already started
-                                withAnimation { isPresented = false }
-                            }
-                            else {
-                                // Show error
-                                SessionJoinCoordinator.shared.clearPendingSession()
-                                let generator = UINotificationFeedbackGenerator()
-                                generator.notificationOccurred(.error)
-                                withAnimation { isPresented = false }
+                                return
                             }
                             
-                            isJoining = false
+                            // Check if trying to join own session
+                            if sessionId.contains(userId) {
+                                print("Cannot join your own session")
+                                self.isJoining = false
+                                let generator = UINotificationFeedbackGenerator()
+                                generator.notificationOccurred(.error)
+                                return
+                            }
+                            
+                            // CRITICAL: Use a timeout
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 8) {
+                                if self.isJoining {
+                                    print("Join operation timed out")
+                                    self.isJoining = false
+                                }
+                            }
+                            
+                            // CRITICAL: Simplest possible approach to get session data
+                            db.collection("live_sessions").document(sessionId).getDocument { document, error in
+                                // Handle errors
+                                if let error = error {
+                                    print("Error fetching session: \(error.localizedDescription)")
+                                    self.isJoining = false
+                                    return
+                                }
+                                
+                                // Check document exists
+                                guard let data = document?.data() else {
+                                    print("Session document doesn't exist or is empty")
+                                    self.isJoining = false
+                                    return
+                                }
+                                
+                                // Extract minimal required data
+                                guard let remainingSeconds = data["remainingSeconds"] as? Int,
+                                      let targetDuration = data["targetDuration"] as? Int,
+                                      let starterUsername = data["starterUsername"] as? String else {
+                                    print("Missing critical session data")
+                                    self.isJoining = false
+                                    return
+                                }
+                                
+                                // CRITICAL: Update Firebase in background FIRST
+                                let updateData: [String: Any] = [
+                                    "participants": FieldValue.arrayUnion([userId]),
+                                    "joinTimes.\(userId)": Timestamp(date: Date()),
+                                    "participantStatus.\(userId)": "active",
+                                    "lastUpdateTime": FieldValue.serverTimestamp()
+                                ]
+                                
+                                db.collection("live_sessions").document(sessionId).updateData(updateData) { error in
+                                    if let error = error {
+                                        print("Error updating session: \(error.localizedDescription)")
+                                    }
+                                    
+                                    // CRITICAL: Now safely join with reliable data on main thread
+                                    DispatchQueue.main.async {
+                                        // Set minimal AppManager properties
+                                        AppManager.shared.shouldShowFriendRequestName = starterUsername
+                                        
+                                        // Reset state
+                                        self.isJoining = false
+                                        
+                                        // CRITICAL: Significant delay before actual join
+                                        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+                                            print("Starting actual join process with clean state")
+                                            
+                                            // Clear any pending session state
+                                            SessionJoinCoordinator.shared.clearPendingSession()
+                                            
+                                            // Finally start the join
+                                            AppManager.shared.joinLiveSession(
+                                                sessionId: sessionId,
+                                                remainingSeconds: remainingSeconds,
+                                                totalDuration: targetDuration
+                                            )
+                                        }
+                                    }
+                                }
+                            }
                         }
-                    }) {
+                    }){
                         ZStack {
                             // Pulsing background effect for the button
                             RoundedRectangle(cornerRadius: 15).fill(Color.green.opacity(0.3))

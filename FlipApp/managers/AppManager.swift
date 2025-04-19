@@ -79,6 +79,7 @@ class AppManager: NSObject, ObservableObject {
         let seconds = remainingSeconds % 60
         return String(format: "%d:%02d", minutes, seconds)
     }
+    private var joinInProgress = false
 
     // MARK: - This is Friend Notification Section
     private var lastFriendNotificationTime: Date?
@@ -216,115 +217,95 @@ class AppManager: NSObject, ObservableObject {
     }
 
     func joinLiveSession(sessionId: String, remainingSeconds: Int, totalDuration: Int) {
-        print(
-            "Joining live session: \(sessionId), remaining: \(remainingSeconds)s, original duration: \(totalDuration)min"
-        )
-
+        print("CRITICAL FIX: Starting join with Live Activity protection")
+        
+        // Set the join flag to prevent Live Activity updates
+        joinInProgress = true
+        
         // CRITICAL: Guard against invalid inputs
         guard !sessionId.isEmpty, remainingSeconds >= 0, totalDuration > 0 else {
             print("ERROR: Invalid join session parameters")
-            // Potentially reset isJoiningSession flag here if it was set earlier
             LiveSessionManager.shared.isJoiningSession = false
+            joinInProgress = false // Reset flag
             return
         }
-
-        // Run essential state updates on the main thread
+        
+        // Run on main thread - FIXED: Don't use guard let self = self without [weak self]
         DispatchQueue.main.async {
-            // 1. Invalidate existing timers and reset flags
+            // 1. Invalidate timers
             self.invalidateAllTimers()
             self.sessionAlreadyRecorded = false
-            self.locationSessionSaved = false // Reset location saving flag
-
+            self.locationSessionSaved = false
+            
             // 2. Set Core Session Properties
             self.liveSessionId = sessionId
             self.isJoinedSession = true
-
-            // 3. Calculate and Set Time Properties
-            // Use the *remaining* seconds to set the state
+            
+            // 3. Set Time Properties
             self.remainingSeconds = remainingSeconds
-            // Calculate the effective "selected minutes" based on remaining time for UI/logic consistency
-            // This represents the duration *from the point of joining*
             self.selectedMinutes = Int(ceil(Double(remainingSeconds) / 60.0))
-            print("Setting AppManager state: remainingSeconds=\(self.remainingSeconds), effective selectedMinutes=\(self.selectedMinutes)")
-
-            // 4. Set Initial State and Countdown
+            
+            // 4. Set Initial State
             self.currentState = .countdown
-            self.countdownSeconds = 5 // Standard countdown
-
-            // 5. Force UI Navigation
-            print("NAVIGATION: Explicitly setting tab to Home (index 2) for session")
+            self.countdownSeconds = 5
+            
+            // 5. Reset selectedTab BEFORE posting navigation notification
             self.selectedTab = 2
-            NotificationCenter.default.post(
-                name: Notification.Name("ForceNavigateToHomeTab"),
-                object: nil
-            )
-
-            // 6. Persist State
+            
+            // 6. Save State
             self.saveSessionState()
-
-            // 7. Start the Countdown Immediately
-            print("Starting countdown for joined session...")
-            self.startCountdown(fromRestoration: true) // Use fromRestoration: true to prevent overwriting remainingSeconds
-        }
-
-        // Fetch additional session details asynchronously (pause settings, etc.)
-        // This happens *after* the session has visually started for the user
-        LiveSessionManager.shared.getSessionDetails(sessionId: sessionId) { [weak self] sessionData in
-            guard let self = self, let session = sessionData else {
-                print("Failed to get full session details after joining, using defaults.")
-                // If details fail, potentially stick with initial defaults or handle error
-                // For now, we already set basic state, so we might just log this.
-                 DispatchQueue.main.async {
-                     // FIX: Safely unwrap self inside the async block
-                     guard let self = self else { return }
-                     
-                     // Ensure defaults are applied if session data is missing
-                     self.allowPauses = false
-                     self.maxPauses = 0
-                     self.remainingPauses = 0
-                 }
-                return
+            
+            // CRITICAL: Delay any UI or state updates to ensure stability
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                // Now post notification
+                NotificationCenter.default.post(
+                    name: Notification.Name("ForceNavigateToHomeTab"),
+                    object: nil
+                )
+                
+                // Wait a bit longer before starting countdown
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                    // CRITICAL: Only now enable Live Activities
+                    self.joinInProgress = false
+                    
+                    // Start countdown
+                    self.startCountdown(fromRestoration: true)
+                }
             }
-
-            // Update pause settings and other details on the main thread
-            DispatchQueue.main.async {
-                // REMOVED: Redundant guard, self is already non-optional here.
-                // guard let self = self else { return }
-
-                print("Applying full session details: allowPauses=\(session.allowPauses), maxPauses=\(session.maxPauses)")
-                self.allowPauses = session.allowPauses
-                self.maxPauses = session.maxPauses
-                // Set remaining pauses based on the *original* session's maxPauses
-                self.remainingPauses = session.maxPauses
-                // originalSessionStarter and shouldShowFriendRequestName are already set by LiveSessionManager
-
-                // Save the list of participants for display
-                self.sessionParticipants = session.participants
-
-                // Get pause duration safely (can remain async)
-                let safeSessionId = sessionId // Create a local copy
-                LiveSessionManager.shared.db.collection("live_sessions").document(safeSessionId)
-                    .getDocument { document, error in
-                        if let error = error {
-                            print("Error getting pause duration: \(error.localizedDescription)")
-                            return
-                        }
-                        if let data = document?.data(), let pauseDuration = data["pauseDuration"] as? Int {
-                            DispatchQueue.main.async {
-                                self.pauseDuration = pauseDuration
-                                print("Set pause duration to \(pauseDuration) minutes from session")
-                            }
+        }
+        
+        // Fetch additional session details in background
+        DispatchQueue.global(qos: .userInitiated).async {
+            LiveSessionManager.shared.getSessionDetails(sessionId: sessionId) { [weak self] sessionData in
+                guard let self = self, let session = sessionData else {
+                    print("Failed to get session details, using defaults")
+                    DispatchQueue.main.async {
+                        // FIXED: Here we do need [weak self] and guard
+                        if let self = self {
+                            self.allowPauses = false
+                            self.maxPauses = 0
+                            self.remainingPauses = 0
                         }
                     }
-
-                // IMPORTANT: Record building location if applicable (can remain async)
-                 self.recordJoinedSessionLocation(session: session)
-                 
-                 // Ensure the state is saved *after* applying these settings
-                 self.saveSessionState()
+                    return
+                }
+                
+                DispatchQueue.main.async {
+                    // FIXED: Here we do need [weak self] and guard
+                    if let self = self {
+                        self.allowPauses = session.allowPauses
+                        self.maxPauses = session.maxPauses
+                        self.remainingPauses = session.maxPauses
+                        self.sessionParticipants = session.participants
+                        
+                        // Save state
+                        self.saveSessionState()
+                    }
+                }
             }
         }
     }
+
     
     // Extracted helper function for clarity
     private func recordJoinedSessionLocation(session: LiveSessionManager.LiveSessionData) {
@@ -784,6 +765,7 @@ class AppManager: NSObject, ObservableObject {
         // Bypass updates on simulator
         guard !isSimulator else {
             print("SIMULATOR MODE: Skipping motion updates.")
+            isFaceDown = true  // Default to face down on simulator
             return
         }
 
@@ -1517,6 +1499,10 @@ class AppManager: NSObject, ObservableObject {
             print("SIMULATOR MODE: Skipping Live Activity creation.")
             return
         }
+        guard !joinInProgress else {
+                print("CRITICAL: Skipping Live Activity creation during join process")
+                return
+            }
         
         // Check if Live Activities are enabled
         guard ActivityAuthorizationInfo().areActivitiesEnabled else {
@@ -1660,6 +1646,10 @@ class AppManager: NSObject, ObservableObject {
         guard !isSimulator else {
             return
         }
+        guard !joinInProgress else {
+                print("CRITICAL: Skipping Live Activity update during join process")
+                return
+            }
         
         guard currentState != .completed && currentState != .failed else { return }
 

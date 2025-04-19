@@ -14,6 +14,7 @@ struct JoinedSessionIndicator: View {
     @State private var elapsedSeconds = 0
     @State private var timer: Timer?
     @State private var lastUpdateTime = Date()
+    @State private var isInitializing = true
 
     private var joinedSession: LiveSessionManager.LiveSessionData? {
         return liveSessionManager.currentJoinedSession
@@ -43,7 +44,8 @@ struct JoinedSessionIndicator: View {
     }
 
     var body: some View {
-        if appManager.isJoinedSession {
+        // ✅ CORRECT: Check BOTH conditions
+        if appManager.isJoinedSession && !isInitializing {
             HStack(spacing: 8) {
                 // Live indicator
                 Circle().fill(appManager.isPaused ? Color.orange : Color.green)
@@ -116,6 +118,16 @@ struct JoinedSessionIndicator: View {
         }
         else {
             EmptyView()
+        }
+        // ✅ CORRECT: Put onAppear on the parent view
+        .onAppear {
+            // Set initializing to true
+            isInitializing = true
+            
+            // Wait for everything to stabilize before showing
+            DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
+                isInitializing = false
+            }
         }
     }
 
