@@ -1478,6 +1478,12 @@ class AppManager: NSObject, ObservableObject {
     }
 
     @available(iOS 16.1, *) private func startLiveActivity() {
+        // Skip Live Activities on simulator to prevent crashes
+        guard !isSimulator else {
+            print("SIMULATOR MODE: Skipping Live Activity creation.")
+            return
+        }
+        
         // Check if Live Activities are enabled
         guard ActivityAuthorizationInfo().areActivitiesEnabled else {
             print("Live Activities not enabled")
@@ -1538,6 +1544,12 @@ class AppManager: NSObject, ObservableObject {
     }
 
     @available(iOS 16.1, *) private func endLiveActivity() {
+        // Skip Live Activities on simulator
+        guard !isSimulator else {
+            print("SIMULATOR MODE: Skipping Live Activity termination.")
+            return
+        }
+        
         Task {
             // 1. End the specific activity we're tracking if it exists
             if let currentActivity = activity {
@@ -1603,6 +1615,11 @@ class AppManager: NSObject, ObservableObject {
     }
 
     @available(iOS 16.1, *) private func updateLiveActivity() {
+        // Skip Live Activities on simulator
+        guard !isSimulator else {
+            return
+        }
+        
         guard currentState != .completed && currentState != .failed else { return }
 
         guard let activity = activity else {
@@ -1696,6 +1713,11 @@ class AppManager: NSObject, ObservableObject {
 
     private func cleanupStaleActivities() {
         if #available(iOS 16.1, *) {
+            // Skip Live Activities on simulator
+            guard !isSimulator else {
+                return
+            }
+            
             Task {
                 // Clean up any potentially stale activities from previous runs
                 for activity in Activity<FlipActivityAttributes>.activities {
